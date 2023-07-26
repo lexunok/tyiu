@@ -22,4 +22,5 @@ public class Task{
     private String assignedTo;
     private int priority; // 1-маленький приоритет, 2 - средний, 3 - высокий
     private String deadline;
+    private String status;
 }
