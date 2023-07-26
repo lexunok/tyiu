@@ -1,4 +1,4 @@
-package model;
+package com.tyiu.corn.model;
 
 
 import jakarta.persistence.Entity;
