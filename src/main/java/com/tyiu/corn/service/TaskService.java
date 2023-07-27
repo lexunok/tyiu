@@ -1,19 +1,27 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.Task;
+import com.tyiu.corn.repository.ScramRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import com.tyiu.corn.repositories.TaskRepository;
 
+
+import java.util.Date;
 import java.util.List;
 
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
+<<<<<<< Updated upstream
+=======
+    private final ScramRepository scramRepository;
+>>>>>>> Stashed changes
 
     @Autowired
-    TaskService(TaskRepository taskRepository) {
+    TaskService(TaskRepository taskRepository, ScramRepository scramRepository) {
         this.taskRepository = taskRepository;
+        this.scramRepository = scramRepository;
     }
 
     public List<Task> listTask() {
@@ -21,6 +29,7 @@ public class TaskService {
     }
 
     public void saveTask(Task task) {
+        task.setCreatedAt(new Date());
         taskRepository.save(task);
     }
 
@@ -38,5 +47,6 @@ public class TaskService {
         task.setStatus(updatedTask.getStatus());
         taskRepository.save(task);
     }
+
 
 }
