@@ -13,7 +13,7 @@ public class IdeaService {
     private final IdeaRepository ideaRepository;
 
     @Autowired
-    IdeaService(IdeaRepository ideaRepository) {
+    public IdeaService(IdeaRepository ideaRepository) {
         this.ideaRepository = ideaRepository;
     }
 
@@ -29,9 +29,9 @@ public class IdeaService {
         ideaRepository.deleteById(id);
     }
     
-        public void updateTask(Long id, Idea updatedIdea) {
-            Idea idea = ideaRepository.findById(id).orElseThrow();
-            idea.setStatus(updatedIdea.getStatus());
-            ideaRepository.save(idea);}
+    public void updateIdea(Long id, Idea updatedIdea) {
+        Idea idea = ideaRepository.findById(id).orElseThrow();
+        idea.setStatus(updatedIdea.getStatus());
+        ideaRepository.save(idea);}
 
 }

@@ -18,5 +18,4 @@ public class Idea {
     private String idea;
     private String status;
 
-
 }

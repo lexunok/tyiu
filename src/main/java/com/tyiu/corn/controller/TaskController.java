@@ -9,32 +9,28 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/task")
+@RequestMapping("/api/v1/task")
 @RequiredArgsConstructor
 public class TaskController {
     private final TaskService taskService;
 
     @GetMapping("/")
-    public String showTask(Model model) {
-        List<Task> tasks = taskService.listTask();
-        model.addAttribute("tasks", tasks);
-        return "task";
+    public List<Task> showTask() {
+        return taskService.listTask();
     }
 
     @PostMapping("/add")
-    public String addTask(Task task) {
+    public void addTask(@RequestBody Task task) {
         taskService.saveTask(task);
-        return "redirect:/";
     }
 
     @DeleteMapping("/delete/{id}")
-    public String delTask(@PathVariable Long id) {
+    public void delTask(@PathVariable Long id) {
         taskService.deleteTask(id);
-        return "redirect/";
     }
 
     @PutMapping("/update/{id}")
-    public void updateTask(@PathVariable Long id, Task updatedTask) {
+    public void updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
         taskService.updateTask(id, updatedTask);
     }
 }

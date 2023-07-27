@@ -8,5 +8,4 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.tyiu.corn.model.Task;
 
 public interface IdeaRepository extends JpaRepository<Idea, Long> {
-    List<Idea> findByStatus(String status);
 }
