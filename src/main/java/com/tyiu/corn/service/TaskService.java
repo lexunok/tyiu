@@ -3,14 +3,13 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.model.Task;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.tyiu.corn.repositories.TaskRepository;
+import com.tyiu.corn.repository.TaskRepository;
 
 import java.util.List;
 
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
-
     @Autowired
     TaskService(TaskRepository taskRepository) {
         this.taskRepository = taskRepository;

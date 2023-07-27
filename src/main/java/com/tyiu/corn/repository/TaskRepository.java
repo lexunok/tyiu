@@ -1,4 +1,4 @@
-package com.tyiu.corn.repositories;
+package com.tyiu.corn.repository;
 
 import com.tyiu.corn.model.Task;
 import org.springframework.data.jpa.repository.JpaRepository;
