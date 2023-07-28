@@ -31,6 +31,16 @@ public class IdeaService {
     
     public void updateIdea(Long id, Idea updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow();
+        idea.setTitle(updatedIdea.getTitle());
+        idea.setType(updatedIdea.getType());
+        idea.setProblem(updatedIdea.getProblem());
+        idea.setSolution(updatedIdea.getSolution());
+        idea.setResult(updatedIdea.getResult());
+        idea.setCustomer(updatedIdea.getCustomer());
+        idea.setDescription(updatedIdea.getDescription());
+        idea.setBudget(updatedIdea.getBudget());
+        idea.setFeasibility(updatedIdea.getFeasibility());
+        idea.setSuitability(updatedIdea.getSuitability());
         idea.setStatus(updatedIdea.getStatus());
         ideaRepository.save(idea);}
 
