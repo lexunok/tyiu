@@ -4,7 +4,7 @@ import com.tyiu.corn.model.Task;
 import com.tyiu.corn.repository.ScramRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import com.tyiu.corn.repositories.TaskRepository;
+import com.tyiu.corn.repository.TaskRepository;
 
 
 import java.util.Date;
@@ -13,10 +13,7 @@ import java.util.List;
 @Service
 public class TaskService {
     private final TaskRepository taskRepository;
-<<<<<<< Updated upstream
-=======
     private final ScramRepository scramRepository;
->>>>>>> Stashed changes
 
     @Autowired
     TaskService(TaskRepository taskRepository, ScramRepository scramRepository) {

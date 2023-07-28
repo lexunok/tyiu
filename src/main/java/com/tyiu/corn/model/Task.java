@@ -1,8 +1,9 @@
 package com.tyiu.corn.model;
 
 
-import com.tyiu.corn.enumerate.Priority;
-import com.tyiu.corn.enumerate.Status;
+
+import com.tyiu.corn.model.enums.Priority;
+import com.tyiu.corn.model.enums.Status;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
