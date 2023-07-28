@@ -17,5 +17,7 @@ public class Idea {
     private Long id;
     private String idea;
     private String status;
-
+    private String date;
+    private double rating;
+    private double risk;
 }
