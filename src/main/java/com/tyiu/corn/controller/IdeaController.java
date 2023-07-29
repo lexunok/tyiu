@@ -1,9 +1,9 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.Idea;
-import com.tyiu.corn.service.IdeaService;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import com.tyiu.corn.service.IdeaService;
+import com.tyiu.corn.model.Idea;
+import lombok.RequiredArgsConstructor;
 
 import java.util.List;
 
@@ -11,24 +11,26 @@ import java.util.List;
 @RequestMapping("/api/v1/idea")
 @RequiredArgsConstructor
 public class IdeaController {
+    
     private final IdeaService ideaService;
 
-    @GetMapping("/")
-    public List<Idea> listIdea() {
+    @GetMapping("/get")
+    public List<Idea> getIdea(){
         return ideaService.listIdea();
     }
+
     @PostMapping("/add")
-    public void addTask(@RequestBody Idea idea) {
+    public void addScram(@RequestBody Idea idea) {
         ideaService.saveIdea(idea);
     }
 
     @DeleteMapping("/delete/{id}")
-    public void delTask(@PathVariable Long id) {
+    public void deleteIdea(@PathVariable Long id) {
         ideaService.deleteIdea(id);
     }
 
     @PutMapping("/update/{id}")
-    public void updateTask(@PathVariable Long id, @RequestBody Idea updatedIdea) {
+    public void updateIdea(@PathVariable Long id, @RequestBody Idea updatedIdea) {
         ideaService.updateIdea(id, updatedIdea);
     }
 }
