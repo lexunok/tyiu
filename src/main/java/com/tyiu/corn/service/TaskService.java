@@ -1,8 +1,7 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.Task;
-import com.tyiu.corn.repository.ScramRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.tyiu.corn.repository.TaskRepository;
 
@@ -11,17 +10,13 @@ import java.util.Date;
 import java.util.List;
 
 @Service
+@RequiredArgsConstructor
 public class TaskService {
     private final TaskRepository taskRepository;
-    private final ScramRepository scramRepository;
 
-    @Autowired
-    TaskService(TaskRepository taskRepository, ScramRepository scramRepository) {
-        this.taskRepository = taskRepository;
-        this.scramRepository = scramRepository;
-    }
 
-    public List<Task> listTask() {
+
+    public List<Task> getListTask() {
         return taskRepository.findAll();
     }
 

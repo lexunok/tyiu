@@ -1,4 +1,12 @@
 services:
+  tyiu:
+    build: .
+    ports:
+      - 8080:8080
+    depends_on:
+          - postgres
+    networks:
+      - postgres
   postgres:
     container_name: postgres
     image: postgres

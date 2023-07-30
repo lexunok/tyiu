@@ -14,13 +14,13 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
-    @GetMapping("/get")
-    public List<Idea> getIdea(){
-        return ideaService.listIdea();
+    @GetMapping
+    public List<Idea> showListIdea(){
+        return ideaService.getListIdea();
     }
 
     @PostMapping("/add")
-    public void addScram(@RequestBody Idea idea) {
+    public void addIdea(@RequestBody Idea idea) {
         ideaService.saveIdea(idea);
     }
 

@@ -12,11 +12,12 @@ import java.util.List;
 @RequestMapping("/api/v1/task")
 @RequiredArgsConstructor
 public class TaskController {
+
     private final TaskService taskService;
 
-    @GetMapping("/")
-    public List<Task> showTask() {
-        return taskService.listTask();
+    @GetMapping
+    public List<Task> showListTask() {
+        return taskService.getListTask();
     }
 
     @PostMapping("/add")
@@ -25,7 +26,7 @@ public class TaskController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public void delTask(@PathVariable Long id) {
+    public void deleteTask(@PathVariable Long id) {
         taskService.deleteTask(id);
     }
 

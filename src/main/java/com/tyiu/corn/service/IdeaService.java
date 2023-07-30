@@ -3,21 +3,19 @@ package com.tyiu.corn.service;
 import java.util.List;
 
 import com.tyiu.corn.model.Idea;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.model.Task;
 import com.tyiu.corn.repository.IdeaRepository;
 @Service
+@RequiredArgsConstructor
 public class IdeaService {
     private final IdeaRepository ideaRepository;
 
-    @Autowired
-    public IdeaService(IdeaRepository ideaRepository) {
-        this.ideaRepository = ideaRepository;
-    }
 
-    public List<Idea> listIdea() {
+    public List<Idea> getListIdea() {
         return ideaRepository.findAll();
     }
 

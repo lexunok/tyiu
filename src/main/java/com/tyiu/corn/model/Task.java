@@ -32,7 +32,7 @@ public class Task{
     private Priority priority;
     private String deadline;
     private Status status;
-    private String scram;
+    private String scrum;
     @CreationTimestamp
     private Date createdAt;
 }

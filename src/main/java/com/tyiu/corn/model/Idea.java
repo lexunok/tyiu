@@ -5,6 +5,7 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -12,6 +13,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Builder
 public class Idea {
     @Id
     @GeneratedValue
@@ -23,7 +25,7 @@ public class Idea {
     private String result;
     private String customer;
     private String description;
-    private int budget;
+    private Long budget;
     private Feasibility feasibility;
     private String suitability;
     private String status;

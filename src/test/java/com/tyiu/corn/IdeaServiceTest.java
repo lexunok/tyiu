@@ -1,4 +1,4 @@
-package model;
+package com.tyiu.corn;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
@@ -14,8 +14,9 @@ import org.mockito.Mock;
 import com.tyiu.corn.model.Idea;
 import com.tyiu.corn.repository.IdeaRepository;
 import com.tyiu.corn.service.IdeaService;
+import org.springframework.boot.test.context.SpringBootTest;
 
-
+@SpringBootTest
 public class IdeaServiceTest {
     
     @Mock
@@ -43,7 +44,7 @@ public class IdeaServiceTest {
     }
     @Test
     public void testListIdea() {
-        List<Idea> ideas = ideaService.listIdea();
+        List<Idea> ideas = ideaService.getListIdea();
         assertNotEmpty(ideas);
         assertEquals(2, ideas.size());
         
