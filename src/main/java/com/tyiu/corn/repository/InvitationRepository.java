@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import java.util.Date;
 
 public interface InvitationRepository extends JpaRepository<Invitation, Long>{
-    @Query("DELETE i FROM Invitation i WHERE i.expiredAt > :date")
+    @Query("DELETE i FROM Invitation i WHERE i.dateExpired > :date")
     public void deleteExpiredInvitations(Date date);
 
 }
