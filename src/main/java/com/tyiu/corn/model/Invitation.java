@@ -3,8 +3,9 @@ package com.tyiu.corn.model;
 
 import com.tyiu.corn.model.enums.Role;
 
-import java.util.Set;
 import java.util.Date;
+import java.util.List;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -23,8 +24,9 @@ public class Invitation {
     @Id
     @GeneratedValue
     private Long id;
-    private Set<Role> roles;
     @Column(unique = true)
     private String url;
     private Date dateExpired;
+    private List<String> emails;
+    private List<Role> roles;
 }
