@@ -28,5 +28,11 @@ public class Idea {
     private Long budget;
     private Feasibility feasibility;
     private String suitability;
+    //Поля для фронтенда
+    private String idea;
     private String status;
+    private String date;
+    private double rating;
+    private double risk;
+
 }

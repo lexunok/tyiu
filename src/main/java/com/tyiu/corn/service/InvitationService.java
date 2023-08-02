@@ -24,8 +24,7 @@ public class InvitationService {
     private JavaMailSender emailSender;
 
     private void sendEmail(List<String> toAdresses, String subject, String message){
-        String[] to = toAdresses.toArray(new String[toAdresses.size()]);
-
+        String[] to = toAdresses.toArray(new String[0]);
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setTo(to);
         simpleMailMessage.setSubject(subject);
@@ -43,14 +42,14 @@ public class InvitationService {
         invitationRepository.save(invitation);
 
         sendEmail(
-            invitation.getEmails(), 
-            "Приглашение", 
+            invitation.getEmails(),
+            "Приглашение",
             String.format("Приглашение на регистрацию http/localhost:8080/%s", invitation.getUrl())
             );
     }
 
     @Scheduled(cron = "@daily")
-    public void deleteInvitation(Invitation invitation){
+    public void deleteInvitation(){
         Date date = new Date();
         invitationRepository.deleteExpiredInvitations(date);
     }

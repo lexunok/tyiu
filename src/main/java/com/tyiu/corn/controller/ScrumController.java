@@ -4,12 +4,12 @@ import com.tyiu.corn.model.Scrum;
 import com.tyiu.corn.service.ScrumService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
-
 import java.util.List;
 @RestController
 @RequestMapping("/api/v1/scrum")
 @RequiredArgsConstructor
 public class ScrumController {
+
     private final ScrumService scrumService;
 
     @GetMapping
