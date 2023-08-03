@@ -27,6 +27,6 @@ public class Invitation {
     @Column(unique = true)
     private String url;
     private Date dateExpired;
-    private List<String> emails;
+    private String email;
     private List<Role> roles;
 }
