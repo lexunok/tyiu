@@ -4,13 +4,14 @@ import com.tyiu.corn.model.enums.Feasibility;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.ManyToMany;
+import lombok.*;
+
+import java.util.List;
 
 @Entity
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -28,6 +29,9 @@ public class Idea {
     private Long budget;
     private Feasibility feasibility;
     private String suitability;
+
+    @ManyToMany
+    private List<Profile> profiles;
     //Поля для фронтенда
     private String idea;
     private String status;

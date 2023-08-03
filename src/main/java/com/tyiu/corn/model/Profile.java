@@ -1,14 +1,13 @@
 package com.tyiu.corn.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+
 import java.util.List;
 
 @Entity
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -19,4 +18,11 @@ public class Profile {
 
     @ManyToMany
     private List<Scrum> scrums;
+
+    @ManyToMany
+    private List<Idea> ideas;
+
+    @OneToMany
+    private List<Task> tasks;
+
 }

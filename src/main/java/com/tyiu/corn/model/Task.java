@@ -4,21 +4,16 @@ package com.tyiu.corn.model;
 
 import com.tyiu.corn.model.enums.Priority;
 import com.tyiu.corn.model.enums.Status;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.util.Date;
 
 
 @Entity
-@Data
+@Setter
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
@@ -32,7 +27,13 @@ public class Task{
     private Priority priority;
     private String deadline;
     private Status status;
-    private String scrum;
+
     @CreationTimestamp
     private Date createdAt;
+
+    @ManyToOne
+    private Scrum scrum;
+
+    @ManyToOne
+    private Profile profile;
 }

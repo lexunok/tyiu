@@ -1,17 +1,15 @@
 package com.tyiu.corn.model;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
 @Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
+@Setter
+@Getter
 @Builder
 public class Scrum {
     @Id
@@ -23,4 +21,7 @@ public class Scrum {
 
     @ManyToMany
     private List<Profile> profiles;
+
+    @OneToMany
+    private List<Task> tasks;
 }
