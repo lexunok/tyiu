@@ -1,10 +1,7 @@
 package com.tyiu.corn.model;
 
 import com.tyiu.corn.model.enums.Feasibility;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import jakarta.persistence.ManyToMany;
+import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
@@ -32,6 +29,9 @@ public class Idea {
 
     @ManyToMany
     private List<Profile> profiles;
+
+    @OneToMany
+    private List<Comment> comments;
     //Поля для фронтенда
     private String idea;
     private String status;

@@ -25,4 +25,7 @@ public class Profile {
     @OneToMany
     private List<Task> tasks;
 
+    @OneToOne
+    private Comment comment;
+
 }
