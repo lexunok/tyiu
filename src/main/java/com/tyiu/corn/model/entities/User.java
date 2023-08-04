@@ -1,4 +1,4 @@
-package com.tyiu.corn.model;
+package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.Role;
 import jakarta.persistence.*;
@@ -17,8 +17,6 @@ public class User {
     @Id
     @GeneratedValue
     private Long id;
-    @Column(unique = true)
-    private String username;
     @Column(unique = true)
     private String email;
     private String lastName;

@@ -1,6 +1,6 @@
 package com.tyiu.corn.repository;
 
-import com.tyiu.corn.model.Invitation;
+import com.tyiu.corn.model.entities.Invitation;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

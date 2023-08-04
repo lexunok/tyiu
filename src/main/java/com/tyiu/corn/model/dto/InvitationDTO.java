@@ -1,4 +1,4 @@
-package com.tyiu.corn.dto;
+package com.tyiu.corn.model.dto;
 
 import java.util.List;
 

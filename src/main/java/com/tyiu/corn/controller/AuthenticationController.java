@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
+import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.service.AuthenticationService;
 import com.tyiu.corn.util.security.UserService;
 import lombok.RequiredArgsConstructor;
@@ -23,12 +24,11 @@ public class AuthenticationController {
         return principal.getName();
     }
     @PostMapping("/login")
-    public String signIn(@RequestBody LoginRequest request){
+    public AuthenticationResponse signIn(@RequestBody LoginRequest request){
         return authenticationService.login(request);
     }
     @PostMapping("/register")
-    public void signUp(@RequestBody RegisterRequest request){
-        log.info(request.toString());
-        authenticationService.register(request);
+    public AuthenticationResponse signUp(@RequestBody RegisterRequest request){
+        return authenticationService.register(request);
     }
   }

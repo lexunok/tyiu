@@ -2,7 +2,7 @@ package com.tyiu.corn.controller;
 
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
-import com.tyiu.corn.model.Idea;
+import com.tyiu.corn.model.entities.Idea;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;

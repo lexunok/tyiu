@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.Scrum;
+import com.tyiu.corn.model.entities.Scrum;
 import com.tyiu.corn.repository.ScrumRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

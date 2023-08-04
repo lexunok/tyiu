@@ -1,7 +1,7 @@
 package com.tyiu.corn.util.security;
 
 
-import com.tyiu.corn.model.User;
+import com.tyiu.corn.model.entities.User;
 import lombok.AllArgsConstructor;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -29,7 +29,7 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public String getUsername() {
-        return user.getUsername();
+        return user.getEmail();
     }
 
     @Override

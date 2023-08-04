@@ -1,8 +1,9 @@
 services:
   tyiu:
     build: .
+    platform: linux/amd64
     ports:
-      - 80:80
+      - 3000:3000
     depends_on:
           - postgres
     networks:
@@ -32,7 +33,7 @@ services:
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:
-      - "5050:5050"
+      - "5050:80"
     networks:
       - postgres
     restart: unless-stopped

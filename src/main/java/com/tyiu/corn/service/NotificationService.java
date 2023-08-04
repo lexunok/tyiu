@@ -3,7 +3,7 @@ package com.tyiu.corn.service;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.tyiu.corn.model.Notification;
+import com.tyiu.corn.model.entities.Notification;
 import com.tyiu.corn.repository.NotificationRepository;
 @Service
 public class NotificationService {

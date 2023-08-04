@@ -1,6 +1,6 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.Scrum;
+import com.tyiu.corn.model.entities.Scrum;
 import com.tyiu.corn.service.ScrumService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

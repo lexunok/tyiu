@@ -1,6 +1,6 @@
 package com.tyiu.corn;
 
-import com.tyiu.corn.model.Task;
+import com.tyiu.corn.model.entities.Task;
 import com.tyiu.corn.repository.TaskRepository;
 import com.tyiu.corn.service.TaskService;
 
@@ -14,7 +14,6 @@ import org.mockito.exceptions.base.MockitoException;
 
 import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;

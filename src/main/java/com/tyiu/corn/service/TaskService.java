@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.Task;
+import com.tyiu.corn.model.entities.Task;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import com.tyiu.corn.repository.TaskRepository;

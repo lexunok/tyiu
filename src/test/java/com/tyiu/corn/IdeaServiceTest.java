@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import com.tyiu.corn.model.Idea;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.repository.IdeaRepository;
 import com.tyiu.corn.service.IdeaService;
 import org.springframework.boot.test.context.SpringBootTest;

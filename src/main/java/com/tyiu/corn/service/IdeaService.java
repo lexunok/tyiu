@@ -2,12 +2,10 @@ package com.tyiu.corn.service;
 
 import java.util.List;
 
-import com.tyiu.corn.model.Idea;
+import com.tyiu.corn.model.entities.Idea;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.tyiu.corn.model.Task;
 import com.tyiu.corn.repository.IdeaRepository;
 @Service
 @RequiredArgsConstructor

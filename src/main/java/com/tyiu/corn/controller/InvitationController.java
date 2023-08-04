@@ -9,7 +9,7 @@ import lombok.RequiredArgsConstructor;
 
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.service.InvitationService;
-import com.tyiu.corn.dto.InvitationDTO;
+import com.tyiu.corn.model.dto.InvitationDTO;
 
 @RestController
 @RequestMapping("/api/v1/invitation")

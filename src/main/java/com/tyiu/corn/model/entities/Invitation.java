@@ -1,4 +1,4 @@
-package com.tyiu.corn.model;
+package com.tyiu.corn.model.entities;
 
 
 import com.tyiu.corn.model.enums.Role;

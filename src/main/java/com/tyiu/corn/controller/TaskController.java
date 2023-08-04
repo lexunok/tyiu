@@ -1,9 +1,8 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.Task;
+import com.tyiu.corn.model.entities.Task;
 import com.tyiu.corn.service.TaskService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
