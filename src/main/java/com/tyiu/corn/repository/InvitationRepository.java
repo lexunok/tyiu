@@ -10,4 +10,6 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long>{
     @Query("DELETE FROM Invitation i WHERE i.dateExpired > ?1")
     void deleteExpiredInvitations(Date date);
 
+    Invitation findByUrl(String url);
+
 }
