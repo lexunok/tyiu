@@ -2,6 +2,8 @@ package com.tyiu.corn.dto;
 
 import java.util.List;
 
+import org.springframework.web.multipart.MultipartFile;
+
 import com.tyiu.corn.model.enums.Role;
 
 import lombok.Data;
@@ -10,4 +12,5 @@ import lombok.Data;
 public class InvitationDTO {
     List<String> emails;
     List<Role> roles;
+    MultipartFile file;
 }
