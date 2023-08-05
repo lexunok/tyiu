@@ -1,10 +1,10 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.dto.InvitationDTO;
+import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.exception.EmailSendException;
 import com.tyiu.corn.exception.FileReadException;
 import com.tyiu.corn.exception.NullException;
-import com.tyiu.corn.model.Invitation;
+import com.tyiu.corn.model.entities.Invitation;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.repository.InvitationRepository;
 

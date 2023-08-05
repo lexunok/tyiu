@@ -6,9 +6,10 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
-import com.tyiu.corn.model.Invitation;
+import com.tyiu.corn.model.entities.Invitation;
 import com.tyiu.corn.service.InvitationService;
-import com.tyiu.corn.dto.InvitationDTO;
+import com.tyiu.corn.exception.FileReadException;
+import com.tyiu.corn.model.dto.InvitationDTO;
 
 @RestController
 @RequestMapping("/api/v1/invitation")
