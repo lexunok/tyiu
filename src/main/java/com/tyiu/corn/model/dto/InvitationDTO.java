@@ -10,7 +10,6 @@ import lombok.Data;
 
 @Data
 public class InvitationDTO {
-    List<String> emails;
     List<Role> roles;
     MultipartFile file;
 }

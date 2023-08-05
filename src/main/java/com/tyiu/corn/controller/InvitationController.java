@@ -1,5 +1,6 @@
 package com.tyiu.corn.controller;
 
+import java.util.Date;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
@@ -17,9 +18,9 @@ import com.tyiu.corn.model.dto.InvitationDTO;
 public class InvitationController {
     private final InvitationService invitationService;
 
-    @PostMapping("/list")
-    public Map<String, String> InvitationSend(@RequestBody InvitationDTO invitations){
-        invitationService.sendListInvitations(invitations);
+    @PostMapping("/email")
+    public Map<String, String> InvitationSend(@RequestBody Invitation invitation){
+        invitationService.sendInvitation(invitation);
         return Map.of("success", "Успешное приглашение");
     }
 

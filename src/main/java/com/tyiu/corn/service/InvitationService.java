@@ -45,24 +45,17 @@ public class InvitationService {
         this.emailSender.send(simpleMailMessage);
     }
 
-    private void createInvitations(List<String> emails, List<Role> roles) throws MailSendException, NullException{
+    private void sendInvitations(List<String> emails, List<Role> roles) throws MailSendException, NullException{
         try {
-            Invitation invitation = new Invitation();
             Date date = new Date();
             long milliseconds = date.getTime() + 259200000;
             date.setTime(milliseconds);
             emails.stream().forEach((email) ->
                 {
-                    invitation.setUrl(UUID.randomUUID().toString());
-                    invitation.setDateExpired(date);
+                    Invitation invitation = new Invitation();
                     invitation.setRoles(roles);
                     invitation.setEmail(email);
-                    invitationRepository.save(invitation);
-                    sendEmail(
-                        email, 
-                        "Приглашение", 
-                        String.format("Приглашение на регистрацию http/localhost:8080/%s", invitation.getUrl())
-                    );
+                    sendInvitation(invitation);
                 }
             );
         } catch ( MailSendException e){
@@ -90,7 +83,6 @@ public class InvitationService {
     }
 
     private List<String> getEmailsFromFile(MultipartFile file) throws FileReadException, NullException{
-        
         try{
             String content = new String(file.getBytes(), StandardCharsets.UTF_8);
             System.out.println(content);
@@ -101,11 +93,21 @@ public class InvitationService {
     }
 
     public void sendFileInvitations(InvitationDTO invitations) throws FileReadException{
-        createInvitations(getEmailsFromFile(invitations.getFile()), invitations.getRoles());
+        sendInvitations(getEmailsFromFile(invitations.getFile()), invitations.getRoles());
     }
 
-    public void sendListInvitations(InvitationDTO invitations){
-        createInvitations(invitations.getEmails(), invitations.getRoles());
+    public void sendInvitation(Invitation invitation){
+        Date date = new Date();
+        long milliseconds = date.getTime() + 259200000;
+        date.setTime(milliseconds);
+        invitation.setDateExpired(date);
+        invitation.setUrl(UUID.randomUUID().toString());
+        sendEmail(
+                    invitation.getEmail(), 
+                    "Приглашение", 
+                    String.format("Приглашение на регистрацию http/localhost:8080/%s", invitation.getUrl())
+        );
+        invitationRepository.save(invitation);
     }
 
     public Invitation findByUrl(String url) {
