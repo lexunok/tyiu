@@ -32,7 +32,7 @@ public class InvitationController {
         return Map.of("success", "Успешное приглашение");
     }
 
-    @GetMapping("{url}")
+    @GetMapping("get-invitation/{url}")
     public Invitation RegistrateByInvitation(@PathVariable String url){
         return invitationService.findByUrl(url);
     }
