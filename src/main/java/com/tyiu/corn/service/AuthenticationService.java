@@ -74,6 +74,7 @@ public class AuthenticationService {
                     .token(jwt)
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
+                    .roles(user.getRoles())
                     .build();
         }
         catch (Exception e){

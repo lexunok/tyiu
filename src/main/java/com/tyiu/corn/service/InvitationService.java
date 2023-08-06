@@ -96,17 +96,21 @@ public class InvitationService {
         sendInvitations(getEmailsFromFile(invitations.getFile()), invitations.getRoles());
     }
 
-    public void sendInvitation(Invitation invitation){
+    public void sendInvitation(Invitation invitation) throws EmailSendException{
         Date date = new Date();
         long milliseconds = date.getTime() + 259200000;
         date.setTime(milliseconds);
         invitation.setDateExpired(date);
         invitation.setUrl(UUID.randomUUID().toString());
-        sendEmail(
-                    invitation.getEmail(), 
-                    "Приглашение", 
-                    String.format("Приглашение на регистрацию http/localhost:8080/%s", invitation.getUrl())
-        );
+        try {
+            sendEmail(
+                invitation.getEmail(), 
+                "Приглашение", 
+                String.format("Приглашение на регистрацию http/localhost:8080/register/%s", invitation.getUrl())
+            );
+        } catch (MailSendException e) {
+            throw new EmailSendException("Неправильный формат почты");
+        }
         invitationRepository.save(invitation);
     }
 
