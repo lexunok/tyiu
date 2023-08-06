@@ -1,9 +1,9 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.exception.EmailSendException;
 import com.tyiu.corn.exception.FileReadException;
-import com.tyiu.corn.exception.NullException;
 import com.tyiu.corn.model.entities.Invitation;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.repository.InvitationRepository;
@@ -45,12 +45,12 @@ public class InvitationService {
         this.emailSender.send(simpleMailMessage);
     }
 
-    private void sendInvitations(List<String> emails, List<Role> roles) throws MailSendException, NullException{
+    private void sendInvitations(List<String> emails, List<Role> roles) throws MailSendException, NotFoundException {
         try {
             Date date = new Date();
             long milliseconds = date.getTime() + 259200000;
             date.setTime(milliseconds);
-            emails.stream().forEach((email) ->
+            emails.forEach((email) ->
                 {
                     Invitation invitation = new Invitation();
                     invitation.setRoles(roles);
@@ -61,11 +61,11 @@ public class InvitationService {
         } catch ( MailSendException e){
             throw new EmailSendException("В списке есть почта в неправильном формате");
         } catch ( NullPointerException e){
-            throw new NullException("Добавьте почту");
+            throw new NotFoundException("Добавьте почту");
         }
     }
 
-    private List<String> findEmails(String text) throws NullException{
+    private List<String> findEmails(String text) throws NotFoundException{
         Pattern p = Pattern.compile("([\\w\\-]([\\.\\w])+[\\w]+@([\\w\\-]+\\.)+[A-Za-z]{1,10})");
 
         List<String> emails = new ArrayList<>();
@@ -73,16 +73,16 @@ public class InvitationService {
         Matcher m = p.matcher(text);
         while (m.find()){
             String email = m.group();
-            System.out.println(String.format("Найденная почта - %s", email));
+            System.out.printf("Найденная почта - %s%n", email);
             emails.add(email);
         }
         if (emails.size() == 0){
-            throw new NullException("В фаиле нет почт");
+            throw new NotFoundException("В фаиле нет почт");
         }
         return emails;
     }
 
-    private List<String> getEmailsFromFile(MultipartFile file) throws FileReadException, NullException{
+    private List<String> getEmailsFromFile(MultipartFile file) throws FileReadException, NotFoundException{
         try{
             String content = new String(file.getBytes(), StandardCharsets.UTF_8);
             System.out.println(content);
@@ -111,8 +111,7 @@ public class InvitationService {
     }
 
     public Invitation findByUrl(String url) {
-        Invitation invitation = invitationRepository.findByUrl(url);
-        return invitation; 
+        return invitationRepository.findByUrl(url);
     }
 
     @Scheduled(cron = "@daily")

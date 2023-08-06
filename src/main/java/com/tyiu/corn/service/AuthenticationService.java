@@ -30,7 +30,7 @@ public class AuthenticationService {
 
     public AuthenticationResponse login(LoginRequest request){
         Authentication authentication = null;
-        User user = null;
+        User user;
         try {
             authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
@@ -45,42 +45,40 @@ public class AuthenticationService {
                     .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
-                    .jwt(jwt)
+                    .token(jwt)
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
+                    .roles(user.getRoles())
                     .build();
         }
         else return null;
     }
     public AuthenticationResponse register(RegisterRequest request){
-        Authentication authentication = null;
         User user = User.builder()
-                .roles(List.of(Role.ADMIN))
+                .roles(request.getRoles())
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .build();
-        user = userRepository.save(user);
+        userRepository.save(user);
         try {
-            authentication = authenticationManager
+            Authentication authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-        }
-        catch (Exception e){
-            log.error(e.toString());
-        }
-        if (authentication != null) {
             String jwt = jwtCore.generateToken(authentication);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             user = userRepository.findByEmail(request.getEmail())
                     .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
-                    .jwt(jwt)
+                    .token(jwt)
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
                     .build();
         }
-        else return null;
+        catch (Exception e){
+            log.error(e.toString());
+            return null;
+        }
     }
 }
