@@ -12,19 +12,19 @@ public class AppError {
         this.statusCode = statusCode;
     }
 
-    public String getMessage() {
+    public String getError() {
         return this.error;
     }
 
-    public void setMessage(String message) {
-        this.error = message;
+    public void setError(String error) {
+        this.error = error;
     }
 
     public AppError() {
     }
 
-    public AppError(int statusCode, String message) {
+    public AppError(int statusCode, String error) {
         this.statusCode = statusCode;
-        this.error = message;
+        this.error = error;
     }
 }

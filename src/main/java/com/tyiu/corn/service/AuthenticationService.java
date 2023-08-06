@@ -45,9 +45,10 @@ public class AuthenticationService {
                     .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
-                    .jwt(jwt)
+                    .token(jwt)
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
+                    .roles(user.getRoles())
                     .build();
         }
         else return null;
@@ -55,7 +56,7 @@ public class AuthenticationService {
     public AuthenticationResponse register(RegisterRequest request){
         Authentication authentication = null;
         User user = User.builder()
-                .roles(List.of(Role.ADMIN))
+                .roles(request.getRoles())
                 .email(request.getEmail())
                 .firstName(request.getFirstName())
                 .lastName(request.getLastName())
@@ -76,9 +77,10 @@ public class AuthenticationService {
                     .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
-                    .jwt(jwt)
+                    .token(jwt)
                     .firstName(user.getFirstName())
                     .lastName(user.getLastName())
+                    .roles(user.getRoles())
                     .build();
         }
         else return null;
