@@ -1,5 +1,7 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.exception.AuthorizationNotSuccessException;
+import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.LoginRequest;
@@ -36,7 +38,7 @@ public class AuthenticationService {
                     .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
         }
         catch (Exception e){
-            throw new RuntimeException("Авторизация не удалась");
+            throw new AuthorizationNotSuccessException("Авторизация не удалась");
         }
         if (authentication != null) {
             String jwt = jwtCore.generateToken(authentication);
@@ -77,9 +79,9 @@ public class AuthenticationService {
                         .build();
             }
             catch (Exception e){
-                throw new RuntimeException("Аутентификация не удалась");
+                throw new AuthorizationNotSuccessException("Авторизация не удалась");
             }
         }
-        else throw new RuntimeException("Пользователь с такой почтой существует");
+        else throw new UserExistsException("Пользователь с такой почтой существует");
     }
 }

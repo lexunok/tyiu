@@ -27,11 +27,11 @@ public class Idea {
     private Feasibility feasibility;
     private String suitability;
 
-    @ManyToMany
-    private List<Profile> profiles;
+    //@ManyToMany
+    //private List<Profile> profiles;
 
-    @OneToMany
-    private List<Comment> comments;
+    //@OneToMany
+    //private List<Comment> comments;
     //Поля для фронтенда
     private String idea;
     private String status;
