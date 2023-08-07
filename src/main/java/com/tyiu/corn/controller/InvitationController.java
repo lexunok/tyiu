@@ -26,7 +26,7 @@ public class InvitationController {
 
     @PostMapping("/file")
     public Map<String, String> InvitationFileSend(
-        @ModelAttribute InvitationDTO invitationDTO
+        @RequestBody InvitationDTO invitationDTO
     ) throws FileReadException{
         invitationService.sendFileInvitations(invitationDTO);
         return Map.of("success", "Успешное приглашение");

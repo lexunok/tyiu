@@ -4,6 +4,7 @@ import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
+import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.repository.UserRepository;
 import com.tyiu.corn.util.security.CustomUserDetails;
 import com.tyiu.corn.util.security.JwtCore;
@@ -12,10 +13,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentMatchers;
-import org.mockito.Mock;
-import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
+import org.mockito.*;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,9 +26,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.refEq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class AuthenticationServiceTest {
@@ -62,22 +60,35 @@ class AuthenticationServiceTest {
     }
 
     @Test
-    void register() {
+    void registerSuccess() {
         // Given
         RegisterRequest request = new RegisterRequest(
-                "email","lastname","firstname","password",List.of(Role.ADMIN));
-        User user = User.builder()
-                .roles(List.of(Role.ADMIN))
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
+                "edmail","lastnasme","firsdstname","psdassword",List.of(Role.ADMIN,Role.EXPERT));
+        UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword());
+        Authentication authentication = authenticationManager.authenticate(token);
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(false);
+        when(authenticationManager.authenticate(token)).thenReturn(authentication);
+        when(jwtCore.generateToken(authentication)).thenReturn("sdfsdfsdfsdfsd");
         // When
-        underTest.register(request);
+        AuthenticationResponse response = underTest.register(request);
         // Then
-        verify(userRepository).save(refEq(user));
-        verify(authenticationManager)
-                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
+        ArgumentCaptor<User> captor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(captor.capture());
+        verify(passwordEncoder).encode(request.getPassword());
+        User user = captor.getValue();
+        assertEquals(user.getEmail(),request.getEmail());
+        assertNotNull(response.getToken());
+        assertDoesNotThrow(() -> underTest.register(request));
+    }
+    @Test
+    void registerWhenUserExists() {
+        // Given
+        RegisterRequest request = new RegisterRequest(
+                "edmail","lastnasme","firsdstname","psdassword",List.of(Role.ADMIN,Role.EXPERT));
+        when(userRepository.existsByEmail(request.getEmail())).thenReturn(true);
+        // When
+        // Then
+        verify(userRepository, never()).save(any());
+        assertThrows(RuntimeException.class, ()->underTest.register(request));
     }
 }

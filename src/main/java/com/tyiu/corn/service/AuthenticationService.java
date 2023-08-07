@@ -36,13 +36,13 @@ public class AuthenticationService {
                     .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
         }
         catch (Exception e){
-            log.error(e.toString());
+            throw new RuntimeException("Авторизация не удалась");
         }
         if (authentication != null) {
             String jwt = jwtCore.generateToken(authentication);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
+                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
                     .token(jwt)
@@ -54,32 +54,32 @@ public class AuthenticationService {
         else return null;
     }
     public AuthenticationResponse register(RegisterRequest request){
-        User user = User.builder()
-                .roles(request.getRoles())
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
-        userRepository.save(user);
-        try {
-            Authentication authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-            String jwt = jwtCore.generateToken(authentication);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
-            return AuthenticationResponse.builder()
-                    .email(user.getEmail())
-                    .token(jwt)
-                    .firstName(user.getFirstName())
-                    .lastName(user.getLastName())
-                    .roles(user.getRoles())
+        if (!userRepository.existsByEmail(request.getEmail())){
+            User user = User.builder()
+                    .roles(request.getRoles())
+                    .email(request.getEmail())
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .password(passwordEncoder.encode(request.getPassword()))
                     .build();
+            userRepository.save(user);
+            try {
+                Authentication authentication = authenticationManager
+                        .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
+                String jwt = jwtCore.generateToken(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                return AuthenticationResponse.builder()
+                        .email(user.getEmail())
+                        .token(jwt)
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .roles(user.getRoles())
+                        .build();
+            }
+            catch (Exception e){
+                throw new RuntimeException("Аутентификация не удалась");
+            }
         }
-        catch (Exception e){
-            log.error(e.toString());
-            return null;
-        }
+        else throw new RuntimeException("Пользователь с такой почтой существует");
     }
 }
