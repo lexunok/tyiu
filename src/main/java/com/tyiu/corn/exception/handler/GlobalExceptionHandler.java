@@ -3,7 +3,7 @@ package com.tyiu.corn.exception.handler;
 import com.tyiu.corn.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -29,20 +29,15 @@ public class GlobalExceptionHandler {
         log.error(e.getMessage(), e);
         return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
     }
-    @ExceptionHandler
-    public ResponseEntity<ErrorResponse> catchFileReadException(FileReadException e){
-        log.error(e.getMessage(), e);
-        return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
-    }
 
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleException(MethodArgumentNotValidException e){
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ErrorResponse> handleException(HttpMessageNotReadableException e){
         log.error(e.getMessage(), e);
         return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), "Неправильные входные данные"), HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler
-    public ResponseEntity<ErrorResponse> catchFileReadException(NotFoundException e){
+    public ResponseEntity<ErrorResponse> catchNotFoundException(NotFoundException e){
         log.error(e.getMessage(), e);
         return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
     }
