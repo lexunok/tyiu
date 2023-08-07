@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 
 import java.util.Date;
 import java.util.List;
+import java.util.NoSuchElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -35,7 +36,8 @@ class InvitationRepositoryTest extends PostgresTest {
         // When
         underTest.deleteExpiredInvitations(new Date());
         // Then
-        assertNull(underTest.findByUrl("sdfdsfsdfds"));
+        assertThrows(NoSuchElementException.class, 
+                        () -> underTest.findByUrl("sdfdsfsdfds").get(), "No such element");
     }
     @Test
     void deleteInvitationsWhenNotExpired() {
@@ -53,7 +55,25 @@ class InvitationRepositoryTest extends PostgresTest {
         // When
         underTest.deleteExpiredInvitations(new Date());
         // Then
-        assertNotNull(underTest.findByUrl("sdfdsf"));
+        assertNotNull(underTest.findByUrl("sdfdsf").get());
     }
-
+    @Test
+    void deleteInvitationByEmail(){
+        // Given
+        Date date = new Date();
+        long milsec = date.getTime() + 25920004;
+        date.setTime(milsec);
+        Invitation invitation = Invitation.builder()
+                .email("Emaifeasl")
+                .roles(List.of(Role.ADMIN))
+                .url("sdfdseeff")
+                .dateExpired(date)
+                .build();
+        underTest.save(invitation);
+        //When
+        underTest.deleteByEmail(invitation.getEmail());
+        //Then
+        assertThrows(NoSuchElementException.class, 
+                        () -> underTest.findByUrl("sdfdseeff").get(), "No such element");
+    }
 }
