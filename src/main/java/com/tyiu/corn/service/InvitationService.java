@@ -4,7 +4,9 @@ import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.exception.EmailSendException;
 import com.tyiu.corn.model.entities.Invitation;
+import com.tyiu.corn.model.responses.InvitationResponse;
 import com.tyiu.corn.repository.InvitationRepository;
+import com.tyiu.corn.repository.UserRepository;
 
 import java.util.Date;
 import java.util.UUID;
@@ -25,6 +27,8 @@ import org.springframework.mail.SimpleMailMessage;
 public class InvitationService {
     private final InvitationRepository invitationRepository;
 
+    private final UserRepository userRepository;
+
     @Autowired
     private JavaMailSender emailSender;
 
@@ -37,9 +41,12 @@ public class InvitationService {
     }
 
     public void sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException {
+        if (invitations.getRoles() == null){
+            throw new NotFoundException("Добавьте роли");
+        }
         try {
-            invitations.getEmails().stream().forEach((email) ->
-                {
+            invitations.getEmails().stream().filter(email -> userRepository.existsByEmail(email)).forEach((email) ->
+                {   
                     Invitation invitation = new Invitation();
                     invitation.setRoles(invitations.getRoles());
                     invitation.setEmail(email);
@@ -53,14 +60,17 @@ public class InvitationService {
         }
     }
 
-    public void sendInvitation(Invitation invitation) throws EmailSendException{
+    public void sendInvitation(Invitation invitation) throws EmailSendException, NotFoundException{
         Date date = new Date();
         long milliseconds = date.getTime() + 259200000;
         date.setTime(milliseconds);
         invitation.setDateExpired(date);
         invitation.setUrl(UUID.randomUUID().toString());
         if (invitation.getRoles() == null){
-            throw new NotFoundException("Добавьте роли");
+            throw new NotFoundException("Добавьте роль");
+        }
+        if (invitationRepository.existsByEmail(invitation.getEmail())){
+                invitationRepository.deleteByEmail(invitation.getEmail());
         }
         try {
             sendEmail(
@@ -76,8 +86,13 @@ public class InvitationService {
         invitationRepository.save(invitation);
     }
 
-    public Invitation findByUrl(String url) {
-        return invitationRepository.findByUrl(url);
+    public InvitationResponse findByUrl(String url) {
+        Invitation invitation = invitationRepository.findByUrl(url).orElseThrow(
+            () -> new NotFoundException("Приглашения " + url + " не существует"));
+        return InvitationResponse.builder()
+                .email(invitation.getEmail())
+                .roles(invitation.getRoles())
+                .build();
     }
 
     @Scheduled(cron = "@daily")
