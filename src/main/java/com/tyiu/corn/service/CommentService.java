@@ -1,7 +1,7 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.Comment;
-import com.tyiu.corn.model.Idea;
+import com.tyiu.corn.model.entities.Comment;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.repository.CommentRepository;
 import com.tyiu.corn.repository.IdeaRepository;
 import lombok.RequiredArgsConstructor;

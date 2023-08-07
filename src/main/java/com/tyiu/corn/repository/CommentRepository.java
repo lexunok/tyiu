@@ -1,6 +1,6 @@
 package com.tyiu.corn.repository;
 
-import com.tyiu.corn.model.Comment;
+import com.tyiu.corn.model.entities.Comment;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 

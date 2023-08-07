@@ -1,6 +1,6 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.Comment;
+import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

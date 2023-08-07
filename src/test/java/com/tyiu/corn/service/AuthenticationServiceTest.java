@@ -24,6 +24,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -58,7 +59,6 @@ class AuthenticationServiceTest {
         verify(authenticationManager)
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
     }
-
     @Test
     void registerSuccess() {
         // Given

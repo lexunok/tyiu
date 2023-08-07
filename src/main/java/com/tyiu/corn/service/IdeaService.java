@@ -3,6 +3,7 @@ package com.tyiu.corn.service;
 import java.util.List;
 
 import com.tyiu.corn.model.entities.Idea;
+import com.tyiu.corn.model.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 

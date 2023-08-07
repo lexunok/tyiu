@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
+import com.tyiu.corn.model.responses.AuthenticationResponse;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -26,7 +27,6 @@ public class AuthenticationControllerTest {
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
-                .expectStatus()
-                .isOk();
+                .expectBody(AuthenticationResponse.class);
     }
 }
