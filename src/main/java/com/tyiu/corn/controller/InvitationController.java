@@ -7,6 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import lombok.RequiredArgsConstructor;
 
 import com.tyiu.corn.model.entities.Invitation;
+import com.tyiu.corn.model.responses.InvitationResponse;
 import com.tyiu.corn.service.InvitationService;
 import com.tyiu.corn.model.dto.InvitationDTO;
 
@@ -29,7 +30,7 @@ public class InvitationController {
     }
 
     @GetMapping("/get-invitation/{url}")
-    public Invitation RegistrateByInvitation(@PathVariable String url){
+    public InvitationResponse RegistrateByInvitation(@PathVariable String url){
         return invitationService.findByUrl(url);
     }
 }
