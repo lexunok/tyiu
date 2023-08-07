@@ -18,8 +18,8 @@ public class IdeaService {
         return ideaRepository.findAll();
     }
 
-    public void saveIdea(Idea idea) {
-        ideaRepository.save(idea);
+    public Idea saveIdea(Idea idea) {
+        return ideaRepository.save(idea);
     }
 
     public void deleteIdea(Long id) {

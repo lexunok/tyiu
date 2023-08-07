@@ -20,8 +20,8 @@ public class IdeaController {
     }
 
     @PostMapping("/add")
-    public void addIdea(@RequestBody Idea idea) {
-        ideaService.saveIdea(idea);
+    public Idea addIdea(@RequestBody Idea idea) {
+        return ideaService.saveIdea(idea);
     }
 
     @DeleteMapping("/delete/{id}")

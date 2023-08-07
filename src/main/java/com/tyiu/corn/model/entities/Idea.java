@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 public class Idea {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String title;
     private String type;
