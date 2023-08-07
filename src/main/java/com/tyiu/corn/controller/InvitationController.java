@@ -1,6 +1,5 @@
 package com.tyiu.corn.controller;
 
-import java.util.Date;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
@@ -9,7 +8,6 @@ import lombok.RequiredArgsConstructor;
 
 import com.tyiu.corn.model.entities.Invitation;
 import com.tyiu.corn.service.InvitationService;
-import com.tyiu.corn.exception.FileReadException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 
 @RestController
@@ -24,11 +22,9 @@ public class InvitationController {
         return Map.of("success", "Успешное приглашение");
     }
 
-    @PostMapping("/file")
-    public Map<String, String> InvitationFileSend(
-        @RequestBody InvitationDTO invitationDTO
-    ) throws FileReadException{
-        invitationService.sendFileInvitations(invitationDTO);
+    @PostMapping("/emails")
+    public Map<String, String> InvitationFileSend(@RequestBody InvitationDTO invitationDTO){
+        invitationService.sendInvitations(invitationDTO);
         return Map.of("success", "Успешное приглашение");
     }
 
