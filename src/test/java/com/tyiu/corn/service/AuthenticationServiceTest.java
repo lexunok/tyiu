@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.LoginRequest;
@@ -89,6 +90,6 @@ class AuthenticationServiceTest {
         // When
         // Then
         verify(userRepository, never()).save(any());
-        assertThrows(RuntimeException.class, ()->underTest.register(request));
+        assertThrows(UserExistsException.class, ()->underTest.register(request));
     }
 }
