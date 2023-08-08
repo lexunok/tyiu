@@ -1,5 +1,6 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.enums.StatusIdea;
 import org.springframework.web.bind.annotation.*;
@@ -7,6 +8,7 @@ import com.tyiu.corn.service.IdeaService;
 import com.tyiu.corn.model.entities.Idea;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -16,14 +18,39 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
-    @PostMapping("/add")
-    public Idea addIdea(@RequestBody Idea idea) {
-        return ideaService.saveIdea(idea);
+    @GetMapping("/initiator")
+    public List<Idea> showListIdeaForInitiator(Principal principal){
+        return ideaService.getListIdeaForInitiator(principal.getName());
     }
 
-    @DeleteMapping("/delete/{id}")
-    public void deleteIdea(@PathVariable Long id) {
-        ideaService.deleteIdea(id);
+    @GetMapping("/project-office")
+    public List<Idea> showListIdeaForProjectOffice(@RequestBody StatusIdea status){
+        return ideaService.getListIdeaByStatus(status);
+    }
+
+    @GetMapping("/expert")
+    public List<Idea> showListIdeaForExpert(@RequestBody StatusIdea status){
+        return ideaService.getListIdeaByStatus(status);
+    }
+
+    @GetMapping("/admin")
+    public List<Idea> showListIdeaForAdmin(){
+        return ideaService.getListIdea();
+    }
+
+    @PostMapping("/initiator/add")
+    public Idea addIdea(@RequestBody Idea idea, Principal principal) {
+        return ideaService.saveIdea(idea, principal.getName());
+    }
+
+    @DeleteMapping("/initiator/delete/{ideaId}")
+    public void deleteIdeaByInitiator(@PathVariable Long ideaId, Principal principal) {
+        ideaService.deleteIdeaByInitiator(ideaId, principal.getName());
+    }
+
+    @DeleteMapping("/admin/delete/{ideaId}")
+    public void deleteIdeaByAdmin(@PathVariable Long ideaId) {
+        ideaService.deleteIdeaByAdmin(ideaId);
     }
 
     @PutMapping("/admin/update/{ideaId}")
@@ -31,31 +58,23 @@ public class IdeaController {
         ideaService.updateIdeaByAdmin(ideaId, updatedIdea);
     }
 
-    @PutMapping("/admin/{ideaId}/add-comment")
-    public void createCommentAdmin(@PathVariable Long ideaId, @RequestBody Comment comment, @RequestBody String commentByAdmin){
-        ideaService.createComment(ideaId, comment, commentByAdmin);
+    @PutMapping("/admin/comment/{ideaId}")
+    public void createCommentAdmin(@PathVariable Long ideaId, @RequestBody Comment comment){
+        ideaService.createComment(ideaId, comment);
     }
 
-    @PutMapping("/project-office/update-status/{ideaId}")
+    @PutMapping("/project-office/update/{ideaId}")
     public void updateStatusIdeaByProjectOffice(@PathVariable Long ideaId, @RequestBody StatusIdea newStatus){
         ideaService.updateStatusByProjectOffice(ideaId, newStatus);
     }
 
-    @PutMapping("/project-office/{ideaId}/add-comment")
-    public void createCommentProjectOffice(@PathVariable Long ideaId, @RequestBody Comment comment, @RequestBody String commentByProjectOffice){
-        ideaService.createComment(ideaId, comment, commentByProjectOffice);
+    @PutMapping("/project-office/comment/{ideaId}")
+    public void createCommentProjectOffice(@PathVariable Long ideaId, @RequestBody Comment comment){
+        ideaService.createComment(ideaId, comment);
     }
 
-    @PutMapping("/expert/update-status/{ideaId}")
-    public void updateStatusByExpert(@PathVariable Long ideaId, @RequestBody StatusIdea newStatus){
-        ideaService.updateStatusByExpert(ideaId, newStatus);
+    @PutMapping("/expert/update/{ideaId}")
+    public void updateStatusByExpert(@PathVariable Long ideaId, @RequestBody RiskDTO riskDTO){
+        ideaService.updateStatusByExpert(ideaId, riskDTO);
     }
-
-    @PutMapping("expert/add-risk/{ideaId}")
-    public void addRisk(@PathVariable Long ideaId, @RequestBody double riskValue){
-        ideaService.updateRiskByExpert(ideaId, riskValue);
-    }
-
-
-
 }

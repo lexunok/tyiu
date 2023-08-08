@@ -5,12 +5,15 @@ import java.util.List;
 
 import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.entities.Idea;
+import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
+
+import jakarta.transaction.Transactional;
 @Service
 @RequiredArgsConstructor
 public class IdeaService {
@@ -21,15 +24,22 @@ public class IdeaService {
         return ideaRepository.findAllByInitiator(initiator);
     }
 
-    public List<Idea> getListIdeaForExperts(StatusIdea status) {
+    public List<Idea> getListIdeaByStatus(StatusIdea status) {
         return ideaRepository.findAllByStatus(status);
     }
 
-    public Idea saveIdea(Idea idea) {
+    public List<Idea> getListIdea() {
+        return ideaRepository.findAll();
+    }
+
+    public Idea saveIdea(Idea idea, String initiator) {
+        idea.setDateCreated(new Date());
+        idea.setInitiator(initiator);
         return ideaRepository.save(idea);
     }
 
-    public void deleteIdeaByInitiator(Long id, Idea idea, String email) {
+    public void deleteIdeaByInitiator(Long id, String email) {
+        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException());
         if (idea.getInitiator() == email){
             ideaRepository.deleteById(id);
         }
@@ -43,7 +53,7 @@ public class IdeaService {
 
 
     public void updateIdeaByAdmin(Long id, Idea updatedIdea) {
-        Idea idea = ideaRepository.findById(id).orElseThrow();
+        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException());
         idea.setInitiator(updatedIdea.getInitiator());
         idea.setName(updatedIdea.getName());
         idea.setProjectType(updatedIdea.getProjectType());
@@ -63,27 +73,29 @@ public class IdeaService {
         ideaRepository.save(idea);
     }
 
-    public void createComment(Long ideaId, Comment comment, String commentAdmin) {
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow();
+    @Transactional
+    public void createComment(Long ideaId, Comment comment) {
+        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
         comment.setIdea(idea);
         Comment savedComment = commentRepository.save(comment);
-        idea.addComment(savedComment);
+        idea.getComments().add(savedComment);
         ideaRepository.save(idea);
 
     }
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow();
+        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
         idea.setStatus(newStatus);
+        ideaRepository.save(idea);
     }
 
-    public void updateStatusByExpert(Long ideaId, StatusIdea newStatus){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow();
-        idea.setStatus(newStatus);
+    public void updateStatusByExpert(Long ideaId, RiskDTO riskDTO){
+        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
+        idea.setStatus(riskDTO.getStatus());
+        idea.setRisk(riskDTO.getRisk());
+        idea.setPrice(riskDTO.getPrice());
+        idea.setOriginality(riskDTO.getOriginality());
+        idea.setTechnicalFeasibility(riskDTO.getTechnicalFeasibility());
+        idea.setUnderstanding(riskDTO.getUnderstanding());
+        ideaRepository.save(idea);
     }
-
-    public void updateRiskByExpert(Long ideaId, double riskValue){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow();
-        idea.setRisk(riskValue);
-    }
-
 }

@@ -36,15 +36,11 @@ public class Idea {
     private double risk;
     private Date dateCreated;
     private Date dateModified;
-
-    //@ManyToMany
-    //private List<Profile> profiles;
+    private String price;
+    private String originality;
+    private String technicalFeasibility;
+    private String understanding;
 
     @OneToMany
     private List<Comment> comments;
-
-    public void addComment(Comment comment) {
-        comments.add(comment);
-    }
-
 }
