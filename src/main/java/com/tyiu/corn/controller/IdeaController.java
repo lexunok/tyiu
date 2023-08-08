@@ -14,10 +14,10 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
-    @GetMapping
-    public List<Idea> showListIdea(){
-        return ideaService.getListIdea();
-    }
+//    @GetMapping
+//    public List<Idea> showListIdea(){
+//        return ideaService.getListIdea();
+//    }
 
     @PostMapping("/add")
     public Idea addIdea(@RequestBody Idea idea) {
@@ -29,8 +29,8 @@ public class IdeaController {
         ideaService.deleteIdea(id);
     }
 
-    @PutMapping("/update/{id}")
-    public void updateIdea(@PathVariable Long id, @RequestBody Idea updatedIdea) {
-        ideaService.updateIdea(id, updatedIdea);
+    @PutMapping("/admin/update/{id}")
+    public void updateIdeaByAdmin(@PathVariable Long id, @RequestBody Idea updatedIdea) {
+        ideaService.updateIdeaByAdmin(id, updatedIdea);
     }
 }

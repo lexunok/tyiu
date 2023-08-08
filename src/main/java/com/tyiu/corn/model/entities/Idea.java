@@ -6,7 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.Date;
-
+import java.util.List;
 
 
 @Entity
@@ -40,8 +40,8 @@ public class Idea {
     //@ManyToMany
     //private List<Profile> profiles;
 
-    //@OneToMany
-    //private List<Comment> comments;
+    @OneToMany
+    private List<Comment> comments;
 
 
 
