@@ -1,5 +1,7 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.exception.AuthorizationNotSuccessException;
+import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.LoginRequest;
@@ -30,19 +32,19 @@ public class AuthenticationService {
 
     public AuthenticationResponse login(LoginRequest request){
         Authentication authentication = null;
-        User user = null;
+        User user;
         try {
             authentication = authenticationManager
                     .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
         }
         catch (Exception e){
-            log.error(e.toString());
+            throw new AuthorizationNotSuccessException("Авторизация не удалась");
         }
         if (authentication != null) {
             String jwt = jwtCore.generateToken(authentication);
             SecurityContextHolder.getContext().setAuthentication(authentication);
             user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
+                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
                     .token(jwt)
@@ -54,35 +56,32 @@ public class AuthenticationService {
         else return null;
     }
     public AuthenticationResponse register(RegisterRequest request){
-        Authentication authentication = null;
-        User user = User.builder()
-                .roles(request.getRoles())
-                .email(request.getEmail())
-                .firstName(request.getFirstName())
-                .lastName(request.getLastName())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
-        user = userRepository.save(user);
-        try {
-            authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-        }
-        catch (Exception e){
-            log.error(e.toString());
-        }
-        if (authentication != null) {
-            String jwt = jwtCore.generateToken(authentication);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("Not Found"));
-            return AuthenticationResponse.builder()
-                    .email(user.getEmail())
-                    .token(jwt)
-                    .firstName(user.getFirstName())
-                    .lastName(user.getLastName())
-                    .roles(user.getRoles())
+        if (!userRepository.existsByEmail(request.getEmail())){
+            User user = User.builder()
+                    .roles(request.getRoles())
+                    .email(request.getEmail())
+                    .firstName(request.getFirstName())
+                    .lastName(request.getLastName())
+                    .password(passwordEncoder.encode(request.getPassword()))
                     .build();
+            userRepository.save(user);
+            try {
+                Authentication authentication = authenticationManager
+                        .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
+                String jwt = jwtCore.generateToken(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authentication);
+                return AuthenticationResponse.builder()
+                        .email(user.getEmail())
+                        .token(jwt)
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .roles(user.getRoles())
+                        .build();
+            }
+            catch (Exception e){
+                throw new AuthorizationNotSuccessException("Авторизация не удалась");
+            }
         }
-        else return null;
+        else throw new UserExistsException("Пользователь с такой почтой существует");
     }
 }

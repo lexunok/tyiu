@@ -19,10 +19,7 @@ import java.security.Principal;
 @RestController
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
-    @GetMapping("/user")
-    public String getUser(Principal principal){
-        return principal.getName();
-    }
+
     @PostMapping("/login")
     public AuthenticationResponse signIn(@RequestBody LoginRequest request){
         return authenticationService.login(request);

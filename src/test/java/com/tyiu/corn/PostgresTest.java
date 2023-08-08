@@ -10,7 +10,7 @@ import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
 @Testcontainers
-public class PostgresTest {
+public abstract class PostgresTest {
     @Container
     private static final PostgreSQLContainer<?> container =
             new PostgreSQLContainer<>("postgres:latest")

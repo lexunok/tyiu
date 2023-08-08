@@ -1,27 +1,32 @@
 package com.tyiu.corn.model.entities;
 
+import com.tyiu.corn.model.entities.Comment;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.util.List;
 
 @Entity
-@AllArgsConstructor
-@NoArgsConstructor
 @Setter
 @Getter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
-public class Scrum {
+public class Profile {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String name;
-    private String description;
-    private Integer count;
 
     @ManyToMany
-    private List<Profile> profiles;
+    private List<Scrum> scrums;
+
+    @ManyToMany
+    private List<Idea> ideas;
 
     @OneToMany
     private List<Task> tasks;
+
+    @OneToOne
+    private Comment comment;
+
 }

@@ -3,6 +3,7 @@ package com.tyiu.corn.service;
 import java.util.List;
 
 import com.tyiu.corn.model.entities.Idea;
+import com.tyiu.corn.model.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -17,8 +18,8 @@ public class IdeaService {
         return ideaRepository.findAll();
     }
 
-    public void saveIdea(Idea idea) {
-        ideaRepository.save(idea);
+    public Idea saveIdea(Idea idea) {
+        return ideaRepository.save(idea);
     }
 
     public void deleteIdea(Long id) {

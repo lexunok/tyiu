@@ -1,22 +1,20 @@
 package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.Feasibility;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.List;
 
 @Entity
-@Data
+@Setter
+@Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class Idea {
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String title;
     private String type;
@@ -28,6 +26,12 @@ public class Idea {
     private Long budget;
     private Feasibility feasibility;
     private String suitability;
+
+    //@ManyToMany
+    //private List<Profile> profiles;
+
+    //@OneToMany
+    //private List<Comment> comments;
     //Поля для фронтенда
     private String idea;
     private String status;
