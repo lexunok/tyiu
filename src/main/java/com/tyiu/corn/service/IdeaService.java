@@ -17,15 +17,23 @@ public class IdeaService {
     private final IdeaRepository ideaRepository;
     private final CommentRepository commentRepository;
 
-    public List<Idea> getAllListIdea() {
-        return ideaRepository.findAll();
+    public List<Idea> getListIdea(StatusIdea status) {
+        return ideaRepository.findAllByStatus(status);
     }
 
     public Idea saveIdea(Idea idea) {
         return ideaRepository.save(idea);
     }
 
-    public void deleteIdea(Long id) {
+    public void deleteIdeaInitiator(Long id, Idea idea, String email) {
+        if (idea.getInitiator() == email){
+            ideaRepository.deleteById(id);
+        }
+        else {
+            throw new RuntimeException("Идея не принадлежит инициатору");
+        }
+    }
+    public void deleteIdeaAdmin(Long id) {
         ideaRepository.deleteById(id);
     }
 
