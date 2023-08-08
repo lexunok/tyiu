@@ -44,8 +44,6 @@ public class IdeaServiceTest {
                 .budget(2000L)
                 .feasibility(Feasibility.POSSIBLE)
                 .suitability("Пригодность 1")
-                .profiles(new ArrayList<>())
-                .comments(new ArrayList<>())
                 .build();
 
 
@@ -60,8 +58,6 @@ public class IdeaServiceTest {
                 .budget(2000L)
                 .feasibility(Feasibility.POSSIBLE)
                 .suitability("Пригодность 2")
-                .profiles(new ArrayList<>())
-                .comments(new ArrayList<>())
                 .build();
 
         ideas.add(idea1);
@@ -91,8 +87,6 @@ public class IdeaServiceTest {
                 .budget(2000L)
                 .feasibility(Feasibility.POSSIBLE)
                 .suitability("Пригодность 1")
-                .profiles(new ArrayList<>())
-                .comments(new ArrayList<>())
                 .build();
 
         // When
@@ -118,8 +112,6 @@ public class IdeaServiceTest {
                 .budget(2000L)
                 .feasibility(Feasibility.POSSIBLE)
                 .suitability("Пригодность 1")
-                .profiles(new ArrayList<>())
-                .comments(new ArrayList<>())
                 .build();
         // When
         ideaService.deleteIdea(idea.getId());
@@ -143,8 +135,6 @@ public class IdeaServiceTest {
                 .budget(2600L)
                 .feasibility(Feasibility.POSSIBLE)
                 .suitability("Пригодность 100")
-                .profiles(new ArrayList<>())
-                .comments(new ArrayList<>())
                 .build();
 
         Idea idea = Idea.builder()
@@ -158,8 +148,6 @@ public class IdeaServiceTest {
                 .budget(2000L)
                 .feasibility(Feasibility.POSSIBLE)
                 .suitability("Пригодность 1")
-                .profiles(new ArrayList<>())
-                .comments(new ArrayList<>())
                 .build();
 
         // When
