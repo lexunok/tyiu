@@ -58,7 +58,12 @@ public class IdeaService {
         ideaRepository.save(idea);
     }
 
-    public void addCommentByAdmin(Long ideaId, Comment comment) {
+    public void createComment(Long ideaId, Comment comment, String commentAdmin) {
+        Idea idea = ideaRepository.findById(ideaId).orElseThrow();
+        comment.setIdea(idea);
+        Comment savedComment = commentRepository.save(comment);
+        idea.addComment(savedComment);
+        ideaRepository.save(idea);
 
     }
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){

@@ -43,6 +43,8 @@ public class Idea {
     @OneToMany
     private List<Comment> comments;
 
-
+    public void addComment(Comment comment) {
+        comments.add(comment);
+    }
 
 }
