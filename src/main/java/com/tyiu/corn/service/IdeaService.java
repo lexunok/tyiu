@@ -3,7 +3,6 @@ package com.tyiu.corn.service;
 import java.util.List;
 
 import com.tyiu.corn.model.entities.Idea;
-import com.tyiu.corn.model.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -39,6 +38,7 @@ public class IdeaService {
         idea.setFeasibility(updatedIdea.getFeasibility());
         idea.setSuitability(updatedIdea.getSuitability());
         idea.setStatus(updatedIdea.getStatus());
-        ideaRepository.save(idea);}
+        ideaRepository.save(idea);
+    }
 
 }
