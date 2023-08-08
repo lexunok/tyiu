@@ -21,6 +21,8 @@ public class Idea {
     private Long id;
     private String initiator;
     private String name;
+
+    @Enumerated
     private ProjectType projectType;
     private String experts;
     private String problem;
@@ -31,6 +33,8 @@ public class Idea {
     private String realizability;
     private String suitability;
     private Long budget;
+
+    @Enumerated
     private StatusIdea status;
     private double rating;
     private double risk;
