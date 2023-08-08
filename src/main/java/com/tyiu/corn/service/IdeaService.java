@@ -17,7 +17,11 @@ public class IdeaService {
     private final IdeaRepository ideaRepository;
     private final CommentRepository commentRepository;
 
-    public List<Idea> getListIdea(StatusIdea status) {
+    public List<Idea> getListIdeaForInitiator(String initiator) {
+        return ideaRepository.findAllByInitiator(initiator);
+    }
+
+    public List<Idea> getListIdeaForExperts(StatusIdea status) {
         return ideaRepository.findAllByStatus(status);
     }
 
@@ -25,7 +29,7 @@ public class IdeaService {
         return ideaRepository.save(idea);
     }
 
-    public void deleteIdeaInitiator(Long id, Idea idea, String email) {
+    public void deleteIdeaByInitiator(Long id, Idea idea, String email) {
         if (idea.getInitiator() == email){
             ideaRepository.deleteById(id);
         }
@@ -33,9 +37,10 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
-    public void deleteIdeaAdmin(Long id) {
+    public void deleteIdeaByAdmin(Long id) {
         ideaRepository.deleteById(id);
     }
+
 
     public void updateIdeaByAdmin(Long id, Idea updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow();
