@@ -18,5 +18,7 @@ public interface InvitationRepository extends JpaRepository<Invitation, Long>{
     @Modifying
     @Query("DELETE FROM Invitation i WHERE i.email = ?1")
     void deleteByEmail(String email);
-
+    @Modifying
+    @Query("DELETE FROM Invitation i WHERE i.url = ?1")
+    void deleteByUrl(String url);
 }
