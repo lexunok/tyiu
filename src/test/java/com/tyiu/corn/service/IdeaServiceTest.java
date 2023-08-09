@@ -312,13 +312,8 @@ public class IdeaServiceTest {
 
     @Test
     void testUpdateStatusByExpert(){
-        RiskDTO riskDTO = new RiskDTO();
-        riskDTO.setStatus(StatusIdea.CONFIRMED);
-        riskDTO.setRisk(3.5);
-        riskDTO.setPrice("3000");
-        riskDTO.setOriginality("Очень оригинально");
-        riskDTO.setTechnicalFeasibility("Очень возможно");
-        riskDTO.setUnderstanding("Очень понятно");
+        RiskDTO riskDTO = RiskDTO.builder().status(StatusIdea.CONFIRMED).risk(3.5).price("3000")
+                                    .originality("Очень оригинально").technicalFeasibility("Очень возможно").understanding("Очень понятно").build();
 
         Idea idea = Idea.builder()
                 .status(StatusIdea.ON_APPROVAL)
