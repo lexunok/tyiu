@@ -8,16 +8,16 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/v1/comment")
 @RequiredArgsConstructor
-public class CommentContoller {
+public class CommentController {
     private final CommentService commentService;
 
-    @PostMapping("{ideaId}/add")
+    @PostMapping("/add/{ideaId}")
     public Comment saveComment(@RequestBody Comment comment, @PathVariable Long ideaId) {
         return commentService.saveComment(comment, ideaId);
     }
 
-    @DeleteMapping("/delete/{commentID}")
-    public void deleteComment(@PathVariable Long commentID) {
-        commentService.deleteComment(commentID);
+    @DeleteMapping("/delete/{commentId}")
+    public void deleteComment(@PathVariable Long commentId) {
+        commentService.deleteComment(commentId);
     }
 }
