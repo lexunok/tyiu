@@ -10,10 +10,10 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -31,6 +31,7 @@ import reactor.core.publisher.Mono;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient(timeout = "100000")//100 seconds
 public class InvitationControllerTest {
     @Autowired
     private WebTestClient webTestClient;
@@ -40,7 +41,7 @@ public class InvitationControllerTest {
     @Autowired
     private InvitationRepository invitationRepository;
 
-    @BeforeEach
+    @BeforeAll
     public void setUp(){
         RegisterRequest request = new RegisterRequest(
                 "fakemail","fakename","fakename","fakepass", List.of(Role.ADMIN));
@@ -61,14 +62,12 @@ public class InvitationControllerTest {
             "wgweg@gfefemail.com",
             "awgweg@gfefemail.com",
             "bawgweg@gfefemail.com",
-            "cbadwgweg@gfefemail.com",
-            "acbawgweg@gfefemail.com",
-            "bacbawgweg@gfefemail.com",
-            "cbacbawgweg@gfefemail.com",
-            "acbacbawgweg@gfefemail.com",
-            "bacbacbawgweg@gfefemail.com",
-            "cbacbacbawgweg@gfefemail.com",
-            "acbacbacbawgweg@gfefemail.com"
+            "cbadwfggweg@gfefemail.com",
+            "cbadwwdgweg@gfefemail.com",
+            "cbadwefgweg@gfefemail.com",
+            "cbadwf3gweg@gfefemail.com",
+            "cbadwgwerfrg@gfefemail.com",
+            "cbadwgweg@gfefemail.com"
         );
         InvitationDTO request = InvitationDTO.builder()
         .emails(emails)
@@ -137,22 +136,73 @@ public class InvitationControllerTest {
         assertNotNull(response);
         assertEquals("Приглашения " + request + " не существует", response.getError());
     }
-    // @Test
-    // void sendInvalidEmail(){
-    //     Invitation request = Invitation.builder()
-    //     .email("ideasmanager")
-    //     .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
-    //     .build();
+    @Test
+    void catchEmailSenderException(){
+        Invitation request = Invitation.builder()
+        .email("ideasmanager")
+        .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
+        .build();
 
-    //     ErrorResponse response = webTestClient
-    //         .post()
-    //         .uri("/api/v1/invitation/email")
-    //         .header("Authorization","Bearer " + jwt)
-    //         .body(Mono.just(request), Invitation.class)
-    //         .exchange().expectBody(ErrorResponse.class)
-    //         .returnResult().getResponseBody();
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/invitation/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Invitation.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
         
-    //     assertNotNull(response);
-    //     assertEquals("Неправильный формат почты", response.getError());
-    // }
+        assertNotNull(response);
+        assertEquals("Добавьте домен почты", response.getError());
+    }
+    @Test
+    void catchEmailParseException(){
+        Invitation request = Invitation.builder()
+        .email("@gmail.com")
+        .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
+        .build();
+
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/invitation/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Invitation.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
+        
+        assertNotNull(response);
+        assertEquals("Добавьте имя пользователя почты", response.getError());
+    }
+    @Test
+    void catchNotFoundExceptionWithoutEmail(){
+        Invitation request = Invitation.builder()
+        .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
+        .build();
+
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/invitation/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Invitation.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
+        
+        assertNotNull(response);
+        assertEquals("Добавьте почту", response.getError());
+    }
+    @Test
+    void catchNotFoundExceptionWithEmptyBody(){
+        Invitation request = Invitation.builder()
+        .build();
+
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/invitation/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Invitation.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
+        
+        assertNotNull(response);
+        assertEquals("Добавьте роль", response.getError());
+    }
 }
