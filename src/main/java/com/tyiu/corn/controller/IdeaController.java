@@ -3,6 +3,10 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.enums.StatusIdea;
+import org.springframework.context.annotation.Role;
+import org.springframework.security.access.annotation.Secured;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import com.tyiu.corn.model.entities.Idea;
@@ -17,6 +21,7 @@ import java.util.List;
 public class IdeaController {
     
     private final IdeaService ideaService;
+
 
     @GetMapping("/initiator")
     public List<Idea> showListIdeaForInitiator(Principal principal){
@@ -58,19 +63,10 @@ public class IdeaController {
         ideaService.updateIdeaByAdmin(ideaId, updatedIdea);
     }
 
-    @PutMapping("/admin/comment/{ideaId}")
-    public void createCommentAdmin(@PathVariable Long ideaId, @RequestBody Comment comment){
-        ideaService.createComment(ideaId, comment);
-    }
 
     @PutMapping("/project-office/update/{ideaId}")
     public void updateStatusIdeaByProjectOffice(@PathVariable Long ideaId, @RequestBody StatusIdea newStatus){
         ideaService.updateStatusByProjectOffice(ideaId, newStatus);
-    }
-
-    @PutMapping("/project-office/comment/{ideaId}")
-    public void createCommentProjectOffice(@PathVariable Long ideaId, @RequestBody Comment comment){
-        ideaService.createComment(ideaId, comment);
     }
 
     @PutMapping("/expert/update/{ideaId}")

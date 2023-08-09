@@ -22,7 +22,7 @@ public class Idea {
     private String initiator;
     private String name;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private ProjectType projectType;
     private String experts;
     private String problem;
@@ -34,7 +34,7 @@ public class Idea {
     private String suitability;
     private Long budget;
 
-    @Enumerated
+    @Enumerated(EnumType.STRING)
     private StatusIdea status;
     private double rating;
     private double risk;
