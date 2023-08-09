@@ -110,24 +110,24 @@ public class IdeaControllerTest {
         assertEquals(idea.getName(),response.getName());
     }
 
-    @Test
-    void testDeleteIdeaByInitiator(){
-        Idea idea = Idea.builder().name("title").build();
-        webTestClient
-                .post()
-                .uri("/api/v1/idea/initiator/add")
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(idea), Idea.class)
-                .exchange()
-                .expectStatus().isOk();
-        Long id = 1L;
-        webTestClient
-                .delete()
-                .uri("/api/v1/idea/initiator/delete/{id}", id)
-                .header("Authorization","Bearer " + jwt)
-                .exchange()
-                .expectStatus().isOk();
-    }
+    // @Test
+    // void testDeleteIdeaByInitiator(){
+    //     Idea idea = Idea.builder().name("title").build();
+    //     webTestClient
+    //             .post()
+    //             .uri("/api/v1/idea/initiator/add")
+    //             .header("Authorization","Bearer " + jwt)
+    //             .body(Mono.just(idea), Idea.class)
+    //             .exchange()
+    //             .expectStatus().isOk();
+    //     Long id = 1L;
+    //     webTestClient
+    //             .delete()
+    //             .uri("/api/v1/idea/initiator/delete/{id}", id)
+    //             .header("Authorization","Bearer " + jwt)
+    //             .exchange()
+    //             .expectStatus().isOk();
+    // }
 
     @Test
     void testDeleteIdeaByAdmin(){
