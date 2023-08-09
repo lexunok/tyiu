@@ -76,4 +76,23 @@ class InvitationRepositoryTest extends PostgresTest {
         assertThrows(NoSuchElementException.class, 
                         () -> underTest.findByUrl("sdfdseeff").get(), "No such element");
     }
+    @Test
+    void deleteInvitationByUrl(){
+        // Given
+        Date date = new Date();
+        long milsec = date.getTime() + 25920004;
+        date.setTime(milsec);
+        Invitation invitation = Invitation.builder()
+                .email("Emaifeasl")
+                .roles(List.of(Role.ADMIN))
+                .url("sdfdseeff")
+                .dateExpired(date)
+                .build();
+        underTest.save(invitation);
+        //When
+        underTest.deleteByUrl(invitation.getUrl());
+        //Then
+        assertThrows(NoSuchElementException.class, 
+                        () -> underTest.findByUrl("sdfdseeff").get(), "No such element");
+    }
 }
