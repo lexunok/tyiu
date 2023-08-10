@@ -28,6 +28,7 @@ public class Invitation {
     private String url;
     private Date dateExpired;
     private String email;
+    private String newEmail;
     private String oldEmail;
     private int code;
     private List<Role> roles;

@@ -130,39 +130,38 @@ public class InvitationService {
     public ChangeEmailResponse findByUrlAndSendCode(String url) {
         Invitation invitation = invitationRepository.findByUrl(url).orElseThrow(
             () -> new NotFoundException("Доступ зарпрещен"));
-        if (userRepository.existsByEmail(invitation.getEmail())){
+        if (userRepository.existsByEmail(invitation.getNewEmail())){
             throw new UserExistsException("Пользователь с такой почтой существует");
         }
-        
         sendEmail(
             invitation.getOldEmail(),
             "Код для изменения почты",
             String.format("Введите этот код для изменения почты %d", invitation.getCode())
         );
         return ChangeEmailResponse.builder()
-            .email(invitation.getEmail())
+            .newEmail(invitation.getNewEmail())
             .oldEmail(invitation.getOldEmail())
             .build();
     }
 
     public void sendChangeEmailbyEmail(Invitation invitation){
-        if (userRepository.existsByEmail(invitation.getEmail())){
+        if (userRepository.existsByEmail(invitation.getNewEmail())){
             throw new UserExistsException("Пользователь с такой почтой существует");
         }
-        int code = new Random(System.currentTimeMillis()).nextInt(900000)+100000;
+
         try{
             Date date = new Date();
-            date.setTime(date.getTime()+86400000);
+            date.setTime(date.getTime()+43200000);
             invitation.setUrl(UUID.randomUUID().toString());
             invitation.setDateExpired(date);
-            invitation.setCode(code);
+            invitation.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
             sendEmail(
-                invitation.getEmail(),
+                invitation.getNewEmail(),
                 "Изменение почты",
                 String.format("Ссылка для смены почты: http/localhost:8080/change-email/%s", invitation.getUrl())
             );
-            if (invitationRepository.existsByEmail(invitation.getEmail())){
-                invitationRepository.deleteByEmail(invitation.getEmail());
+            if (invitationRepository.existsByEmail(invitation.getOldEmail())){
+                invitationRepository.deleteByEmail(invitation.getOldEmail());
             }
         }catch (MailSendException e) {
             throw new EmailSendException("Добавьте домен почты");
@@ -176,11 +175,11 @@ public class InvitationService {
     @Transactional
     public void changeEmailByUser(ChangeEmailRequest request){
         Invitation invitation = invitationRepository.findByUrl(request.getUrl()).get();
-        if (request.getCode() != invitation.getCode()){
+        if (invitation.getCode() != request.getCode()){
             throw new AuthorizationNotSuccessException("Неправильный код");
         }
         User user = userRepository.findByEmail(request.getOldEmail()).get();
-        userRepository.setEmail(request.getEmail(), user.getId());
+        userRepository.setEmail(request.getNewEmail(), user.getId());
         invitationRepository.delete(invitation);
     }
 

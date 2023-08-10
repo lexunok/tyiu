@@ -6,7 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class ChangeEmailRequest {
-    private String email;
+    private String newEmail;
     private String oldEmail;
     private String url;
     private int code;
