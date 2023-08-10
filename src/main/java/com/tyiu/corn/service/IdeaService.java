@@ -39,8 +39,8 @@ public class IdeaService {
     }
 
     public void deleteIdeaByInitiator(Long id, String email) {
-        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException());
-        if (idea.getInitiator() == email){
+        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException("Идея не найдена"));
+        if (email.equals(idea.getInitiator())){
             ideaRepository.deleteById(id);
         }
         else {
