@@ -1,32 +1,59 @@
 package com.tyiu.corn.util.security;
 
+import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.util.security.CustomUserDetails;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import java.security.Key;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 
 @Component
 public class JwtCore {
     @Value("${jwt.secret}")
     private String secret;
-    @Value("${jwt.expiration}")
-    private Long expiration;
 
-    public String generateToken(Authentication authentication){
-        CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-        Date date = new Date();
+    public String issueToken(String subject, List<Role> scopes){
+        return issueToken(subject, Map.of("scopes",scopes));
+    }
+    public String issueToken(String subject, Map<String, Object> claims){
         return Jwts.builder()
-                    .setSubject(userDetails.getUsername())
-                    .setIssuedAt(date)
-                    .setExpiration(new Date(date.getTime() + expiration))
-                    .signWith(SignatureAlgorithm.HS256,secret)
+                .setClaims(claims)
+                .setSubject(subject)
+                .setIssuer("localhost:3000")
+                .setIssuedAt(Date.from(Instant.now()))
+                .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
+                .signWith(getKey(),SignatureAlgorithm.HS256)
                 .compact();
     }
-    public String getNameFromJwt(String token){
-        return Jwts.parser().setSigningKey(secret).parseClaimsJws(token).getBody().getSubject();
+    private Key getKey(){
+        return Keys.hmacShaKeyFor(secret.getBytes());
+    }
+    public String getSubject(String token){
+        return getClaims(token).getSubject();
+    }
+    public Claims getClaims(String token){
+        return Jwts.parserBuilder()
+                .setSigningKey(getKey())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+    public boolean isTokenValid(String jwt, String username){
+        String subject = getSubject(jwt);
+        return subject.equals(username) && !isTokenExpired(jwt);
+    }
+    public boolean isTokenExpired(String jwt){
+        return getClaims(jwt).getExpiration().before(Date.from(Instant.now()));
     }
 }

@@ -8,6 +8,7 @@ import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.repository.UserRepository;
+import com.tyiu.corn.util.security.CustomUserDetails;
 import com.tyiu.corn.util.security.JwtCore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,20 +32,13 @@ public class AuthenticationService {
     private final JwtCore jwtCore;
 
     public AuthenticationResponse login(LoginRequest request){
-        Authentication authentication;
-        User user;
-        try {
-            authentication = authenticationManager
-                    .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-        }
-        catch (Exception e){
-            throw new AuthorizationNotSuccessException("Авторизация не удалась");
-        }
-        if (authentication != null) {
-            String jwt = jwtCore.generateToken(authentication);
-            SecurityContextHolder.getContext().setAuthentication(authentication);
-            user = userRepository.findByEmail(request.getEmail())
-                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден"));
+        Authentication authentication = authenticationManager
+                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
+        if (authentication!=null){
+            CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+            User user = userRepository.findByEmail(userDetails.getUsername())
+                    .orElseThrow(() -> new UsernameNotFoundException("Пользователь не зарегистрирован"));
+            String jwt = jwtCore.issueToken(user.getEmail(),user.getRoles());
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
                     .token(jwt)
@@ -53,8 +47,9 @@ public class AuthenticationService {
                     .roles(user.getRoles())
                     .build();
         }
-        else return null;
+        else throw new AuthorizationNotSuccessException("Авторизация не удалась");
     }
+
     public AuthenticationResponse register(RegisterRequest request){
         if (!userRepository.existsByEmail(request.getEmail())){
             User user = User.builder()
@@ -68,8 +63,8 @@ public class AuthenticationService {
                 userRepository.save(user);
                 Authentication authentication = authenticationManager
                         .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-                String jwt = jwtCore.generateToken(authentication);
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+                String jwt = jwtCore.issueToken(userDetails.getUsername(),user.getRoles());
                 return AuthenticationResponse.builder()
                         .email(user.getEmail())
                         .token(jwt)
