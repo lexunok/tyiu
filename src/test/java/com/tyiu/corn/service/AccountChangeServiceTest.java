@@ -21,18 +21,19 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.dto.InvitationDTO;
-import com.tyiu.corn.model.entities.Invitation;
+import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
-import com.tyiu.corn.repository.InvitationRepository;
+import com.tyiu.corn.repository.AccountChangeRepository;
 import com.tyiu.corn.repository.UserRepository;
 
 @ExtendWith(MockitoExtension.class)
-public class InvitationServiceTest {
-    private InvitationService underTest;
+public class AccountChangeServiceTest {
+    private AccountChangeService underTest;
 
     boolean containsEmail(final List<String> emails, final String email){
         return emails.stream().filter(listEmail -> listEmail == email).findFirst().isPresent();
@@ -41,9 +42,11 @@ public class InvitationServiceTest {
     @Mock
     private JavaMailSender emailSender;
     @Mock
-    private InvitationRepository invitationRepository;
+    private AccountChangeRepository invitationRepository;
     @Mock
     private UserRepository userRepository;
+    @Mock
+    private PasswordEncoder passwordEncoder;
 
     @BeforeEach
     void setUp(){
@@ -56,22 +59,22 @@ public class InvitationServiceTest {
         .build();
 
         userRepository.save(user);
-        underTest = new InvitationService(emailSender, invitationRepository ,userRepository);
+        underTest = new AccountChangeService(emailSender, invitationRepository ,userRepository, passwordEncoder);
     }
     @Test
     void saveInvitation(){
         //Given
-        Invitation request = new Invitation();
+        Temporary request = new Temporary();
         request.setRoles(List.of(Role.ADMIN));
         request.setEmail("dgwrh@gmail.com");
         //When
         underTest.sendInvitation(request);
         //Then
-        ArgumentCaptor<Invitation> captor = ArgumentCaptor.forClass(Invitation.class);
+        ArgumentCaptor<Temporary> captor = ArgumentCaptor.forClass(Temporary.class);
         ArgumentCaptor<SimpleMailMessage> emailCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(invitationRepository).save(captor.capture());
         verify(emailSender).send(emailCaptor.capture());
-        Invitation invitation = captor.getValue();
+        Temporary invitation = captor.getValue();
         assertEquals(invitation.getRoles(), request.getRoles());
         assertEquals(invitation.getEmail(), request.getEmail());
         assertDoesNotThrow(() -> underTest.sendInvitation(request));
@@ -98,7 +101,7 @@ public class InvitationServiceTest {
         .build();
         underTest.sendInvitations(request);
         //Then
-        ArgumentCaptor<Invitation> captor = ArgumentCaptor.forClass(Invitation.class);
+        ArgumentCaptor<Temporary> captor = ArgumentCaptor.forClass(Temporary.class);
         ArgumentCaptor<SimpleMailMessage> emailCaptor = ArgumentCaptor.forClass(SimpleMailMessage.class);
         captor.getAllValues().stream().forEach(invitation -> {
             verify(invitationRepository).save(invitation);
@@ -114,7 +117,7 @@ public class InvitationServiceTest {
     @Test
     void saveInvitationIfUserExists(){
         //Given
-        Invitation request = new Invitation();
+        Temporary request = new Temporary();
         request.setRoles(List.of(Role.ADMIN));
         request.setEmail("12345@gmail.com");
         //When
@@ -126,7 +129,7 @@ public class InvitationServiceTest {
     @Test
     void saveInvitationIfInvitationExists(){
         //Before 
-        Invitation lastInvitation = new Invitation();
+        Temporary lastInvitation = new Temporary();
         lastInvitation.setRoles(List.of(Role.ADMIN));
         lastInvitation.setEmail("123456@gmail.com");
         lastInvitation.setUrl("12345");
@@ -134,13 +137,13 @@ public class InvitationServiceTest {
         invitationRepository.save(lastInvitation);
 
         //Given
-        Invitation request = new Invitation();
+        Temporary request = new Temporary();
         request.setRoles(List.of(Role.ADMIN));
         request.setEmail("123456@gmail.com");
         //When
         underTest.sendInvitation(request);
         //Then
-        ArgumentCaptor<Invitation> captor = ArgumentCaptor.forClass(Invitation.class);
+        ArgumentCaptor<Temporary> captor = ArgumentCaptor.forClass(Temporary.class);
         captor.getAllValues().stream().filter(invitation -> invitation.getUrl()!="12345").forEach(invitation -> {
             verify(invitationRepository).save(invitation);
             assertNotEquals("12345", invitation.getUrl());
