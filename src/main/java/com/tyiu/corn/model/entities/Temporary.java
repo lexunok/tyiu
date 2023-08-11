@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Invitation {
+public class Temporary {
     @Id
     @GeneratedValue
     private Long id;
