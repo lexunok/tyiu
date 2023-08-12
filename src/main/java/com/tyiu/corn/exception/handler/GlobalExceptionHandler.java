@@ -41,4 +41,22 @@ public class GlobalExceptionHandler {
         log.error(e.getMessage(), e);
         return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> catchParseException(ParseException e){
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(new ErrorResponse(HttpStatus.BAD_REQUEST.value(), e.getMessage()), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> catchDateExpiredException(DateExpiredException e){
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(new ErrorResponse(HttpStatus.REQUEST_TIMEOUT.value(), e.getMessage()), HttpStatus.REQUEST_TIMEOUT);
+    }
+
+    @ExceptionHandler
+    public ResponseEntity<ErrorResponse> catchAccessException(AccessException e){
+        log.error(e.getMessage(), e);
+        return new ResponseEntity<>(new ErrorResponse(HttpStatus.FORBIDDEN.value(), e.getMessage()), HttpStatus.FORBIDDEN);
+    }
 }

@@ -18,9 +18,6 @@ public class Comment {
     private String sender;
     private boolean status;
 
-    @OneToOne
-    private Profile profile;
-
     @ManyToOne
     private Idea idea;
 

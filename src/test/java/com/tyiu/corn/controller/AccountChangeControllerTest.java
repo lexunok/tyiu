@@ -10,37 +10,38 @@ import java.util.Map;
 import java.util.UUID;
 
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.tyiu.corn.model.dto.InvitationDTO;
-import com.tyiu.corn.model.entities.Invitation;
+import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.model.responses.ErrorResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
-import com.tyiu.corn.repository.InvitationRepository;
+import com.tyiu.corn.repository.AccountChangeRepository;
 
 import reactor.core.publisher.Mono;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-public class InvitationControllerTest {
+@AutoConfigureWebTestClient(timeout = "100000")//100 seconds
+public class AccountChangeControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
     private String jwt;
 
     @Autowired
-    private InvitationRepository invitationRepository;
+    private AccountChangeRepository accountChangeRepository;
 
-    @BeforeEach
+    @BeforeAll
     public void setUp(){
         RegisterRequest request = new RegisterRequest(
                 "fakemail","fakename","fakename","fakepass", List.of(Role.ADMIN));
@@ -61,14 +62,12 @@ public class InvitationControllerTest {
             "wgweg@gfefemail.com",
             "awgweg@gfefemail.com",
             "bawgweg@gfefemail.com",
-            "cbadwgweg@gfefemail.com",
-            "acbawgweg@gfefemail.com",
-            "bacbawgweg@gfefemail.com",
-            "cbacbawgweg@gfefemail.com",
-            "acbacbawgweg@gfefemail.com",
-            "bacbacbawgweg@gfefemail.com",
-            "cbacbacbawgweg@gfefemail.com",
-            "acbacbacbawgweg@gfefemail.com"
+            "cbadwfggweg@gfefemail.com",
+            "cbadwwdgweg@gfefemail.com",
+            "cbadwefgweg@gfefemail.com",
+            "cbadwf3gweg@gfefemail.com",
+            "cbadwgwerfrg@gfefemail.com",
+            "cbadwgweg@gfefemail.com"
         );
         InvitationDTO request = InvitationDTO.builder()
         .emails(emails)
@@ -77,7 +76,7 @@ public class InvitationControllerTest {
         
         webTestClient
             .post()
-            .uri("/api/v1/invitation/emails")
+            .uri("/api/v1/profile-action/send/emails")
             .header("Authorization","Bearer " + jwt)
             .body(Mono.just(request), InvitationDTO.class)
             .exchange().expectBody(Map.class);
@@ -85,16 +84,16 @@ public class InvitationControllerTest {
 
     @Test
     void sendRightOneEmail(){
-        Invitation request = Invitation.builder()
+        Temporary request = Temporary.builder()
         .email("timur.minyazeff@gmail.com")
         .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
         .build();
 
         webTestClient
             .post()
-            .uri("/api/v1/invitation/email")
+            .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(request), Invitation.class)
+            .body(Mono.just(request), Temporary.class)
             .exchange()
             .expectBody(Map.class);
     }
@@ -104,17 +103,17 @@ public class InvitationControllerTest {
         Date date = new Date();
         long milsec = date.getTime() + 259200000;
         date.setTime(milsec);
-        Invitation invitation = Invitation.builder()
+        Temporary invitation = Temporary.builder()
                 .email("Emailssd")
                 .roles(List.of(Role.ADMIN))
                 .url(request)
                 .dateExpired(date)
                 .build();
-        invitationRepository.save(invitation);
+        accountChangeRepository.save(invitation);
         
         InvitationResponse response = webTestClient
         .get()
-        .uri(String.format("/api/v1/invitation/get-invitation/%s", request))
+        .uri("/api/v1/profile-action/get/invitation/{request}", request)
         .exchange()
         .expectBody(InvitationResponse.class)
         .returnResult().getResponseBody();
@@ -129,7 +128,7 @@ public class InvitationControllerTest {
         
         ErrorResponse response = webTestClient
         .get()
-        .uri("/api/v1/invitation/get-invitation/{request}", request)
+        .uri("/api/v1/profile-action/get/invitation/{request}", request)
         .exchange()
         .expectBody(ErrorResponse.class)
         .returnResult().getResponseBody();
@@ -137,22 +136,73 @@ public class InvitationControllerTest {
         assertNotNull(response);
         assertEquals("Приглашения " + request + " не существует", response.getError());
     }
-    // @Test
-    // void sendInvalidEmail(){
-    //     Invitation request = Invitation.builder()
-    //     .email("ideasmanager")
-    //     .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
-    //     .build();
+    @Test
+    void catchEmailSenderException(){
+        Temporary request = Temporary.builder()
+        .email("ideasmanager")
+        .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
+        .build();
 
-    //     ErrorResponse response = webTestClient
-    //         .post()
-    //         .uri("/api/v1/invitation/email")
-    //         .header("Authorization","Bearer " + jwt)
-    //         .body(Mono.just(request), Invitation.class)
-    //         .exchange().expectBody(ErrorResponse.class)
-    //         .returnResult().getResponseBody();
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/profile-action/send/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Temporary.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
         
-    //     assertNotNull(response);
-    //     assertEquals("Неправильный формат почты", response.getError());
-    // }
+        assertNotNull(response);
+        assertEquals("Добавьте домен почты", response.getError());
+    }
+    @Test
+    void catchEmailParseException(){
+        Temporary request = Temporary.builder()
+        .email("@gmail.com")
+        .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
+        .build();
+
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/profile-action/send/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Temporary.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
+        
+        assertNotNull(response);
+        assertEquals("Добавьте имя пользователя почты", response.getError());
+    }
+    @Test
+    void catchNotFoundExceptionWithoutEmail(){
+        Temporary request = Temporary.builder()
+        .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
+        .build();
+
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/profile-action/send/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Temporary.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
+        
+        assertNotNull(response);
+        assertEquals("Добавьте почту", response.getError());
+    }
+    @Test
+    void catchNotFoundExceptionWithEmptyBody(){
+        Temporary request = Temporary.builder()
+        .build();
+
+        ErrorResponse response = webTestClient
+            .post()
+            .uri("/api/v1/profile-action/send/email")
+            .header("Authorization","Bearer " + jwt)
+            .body(Mono.just(request), Temporary.class)
+            .exchange().expectBody(ErrorResponse.class)
+            .returnResult().getResponseBody();
+        
+        assertNotNull(response);
+        assertEquals("Добавьте почту", response.getError());
+    }
 }

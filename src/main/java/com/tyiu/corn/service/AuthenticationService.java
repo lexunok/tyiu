@@ -31,7 +31,7 @@ public class AuthenticationService {
     private final JwtCore jwtCore;
 
     public AuthenticationResponse login(LoginRequest request){
-        Authentication authentication = null;
+        Authentication authentication;
         User user;
         try {
             authentication = authenticationManager
@@ -64,8 +64,8 @@ public class AuthenticationService {
                     .lastName(request.getLastName())
                     .password(passwordEncoder.encode(request.getPassword()))
                     .build();
-            userRepository.save(user);
             try {
+                userRepository.save(user);
                 Authentication authentication = authenticationManager
                         .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
                 String jwt = jwtCore.generateToken(authentication);
@@ -79,6 +79,7 @@ public class AuthenticationService {
                         .build();
             }
             catch (Exception e){
+                userRepository.delete(user);
                 throw new AuthorizationNotSuccessException("Авторизация не удалась");
             }
         }

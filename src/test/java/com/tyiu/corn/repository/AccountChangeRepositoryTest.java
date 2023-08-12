@@ -1,7 +1,7 @@
 package com.tyiu.corn.repository;
 
 import com.tyiu.corn.PostgresTest;
-import com.tyiu.corn.model.entities.Invitation;
+import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.enums.Role;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,9 +16,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-class InvitationRepositoryTest extends PostgresTest {
+class AccountChangeRepositoryTest extends PostgresTest {
     @Autowired
-    private InvitationRepository underTest;
+    private AccountChangeRepository underTest;
 
     @Test
     void deleteInvitationsWhenExpired() {
@@ -26,7 +26,7 @@ class InvitationRepositoryTest extends PostgresTest {
         Date date = new Date();
         long milsec = date.getTime() - 1000;
         date.setTime(milsec);
-        Invitation invitation = Invitation.builder()
+        Temporary invitation = Temporary.builder()
                 .email("Emaisdfl")
                 .roles(List.of(Role.ADMIN))
                 .url("sdfdsfsdfds")
@@ -34,7 +34,7 @@ class InvitationRepositoryTest extends PostgresTest {
                 .build();
         underTest.save(invitation);
         // When
-        underTest.deleteExpiredInvitations(new Date());
+        underTest.deleteExpiredData(new Date());
         // Then
         assertThrows(NoSuchElementException.class, 
                         () -> underTest.findByUrl("sdfdsfsdfds").get(), "No such element");
@@ -45,7 +45,7 @@ class InvitationRepositoryTest extends PostgresTest {
         Date date = new Date();
         long milsec = date.getTime() + 259200000;
         date.setTime(milsec);
-        Invitation invitation = Invitation.builder()
+        Temporary invitation = Temporary.builder()
                 .email("Email")
                 .roles(List.of(Role.ADMIN))
                 .url("sdfdsf")
@@ -53,7 +53,7 @@ class InvitationRepositoryTest extends PostgresTest {
                 .build();
         underTest.save(invitation);
         // When
-        underTest.deleteExpiredInvitations(new Date());
+        underTest.deleteExpiredData(new Date());
         // Then
         assertNotNull(underTest.findByUrl("sdfdsf").get());
     }
@@ -63,7 +63,7 @@ class InvitationRepositoryTest extends PostgresTest {
         Date date = new Date();
         long milsec = date.getTime() + 25920004;
         date.setTime(milsec);
-        Invitation invitation = Invitation.builder()
+        Temporary invitation = Temporary.builder()
                 .email("Emaifeasl")
                 .roles(List.of(Role.ADMIN))
                 .url("sdfdseeff")
@@ -72,6 +72,25 @@ class InvitationRepositoryTest extends PostgresTest {
         underTest.save(invitation);
         //When
         underTest.deleteByEmail(invitation.getEmail());
+        //Then
+        assertThrows(NoSuchElementException.class, 
+                        () -> underTest.findByUrl("sdfdseeff").get(), "No such element");
+    }
+    @Test
+    void deleteInvitationByUrl(){
+        // Given
+        Date date = new Date();
+        long milsec = date.getTime() + 25920004;
+        date.setTime(milsec);
+        Temporary invitation = Temporary.builder()
+                .email("Emaifeasl")
+                .roles(List.of(Role.ADMIN))
+                .url("sdfdseeff")
+                .dateExpired(date)
+                .build();
+        underTest.save(invitation);
+        //When
+        underTest.deleteByUrl(invitation.getUrl());
         //Then
         assertThrows(NoSuchElementException.class, 
                         () -> underTest.findByUrl("sdfdseeff").get(), "No such element");

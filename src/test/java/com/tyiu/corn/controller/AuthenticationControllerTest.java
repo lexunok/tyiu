@@ -49,6 +49,8 @@ public class AuthenticationControllerTest {
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
+        assertNotNull(response);
+        assertNull(response.getToken());
     }
     @Test
     void canLoginWhenUserExists(){
@@ -105,11 +107,15 @@ public class AuthenticationControllerTest {
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class);
-        webTestClient
+        AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
-                .expectStatus().isBadRequest();
+                .expectStatus().isBadRequest()
+                .expectBody(AuthenticationResponse.class)
+                .returnResult().getResponseBody();
+        assertNotNull(response);
+        assertNull(response.getToken());
     }
 }
