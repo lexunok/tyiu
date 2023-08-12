@@ -84,7 +84,7 @@ public class AccountChangeService {
                     sendEmail(
                         invitation.getEmail(), 
                         "Приглашение", 
-                        String.format("Приглашение на регистрацию http/localhost:8080/register/%s", invitation.getUrl())
+                        String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
                     );
                     accountChangeRepository.save(invitation);
                 }
@@ -113,7 +113,7 @@ public class AccountChangeService {
             sendEmail(
                 invitation.getEmail(), 
                 "Приглашение", 
-                String.format("Приглашение на регистрацию http/localhost:8080/register/%s", invitation.getUrl())
+                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
             );
             if (accountChangeRepository.existsByEmail(invitation.getEmail())){
             accountChangeRepository.deleteByEmail(invitation.getEmail());
@@ -170,7 +170,7 @@ public class AccountChangeService {
             sendEmail(
                 emailChange.getNewEmail(),
                 "Изменение почты",
-                String.format("Ссылка для смены почты: http/localhost:8080/change-email/%s", emailChange.getUrl())
+                String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
             );
             if (accountChangeRepository.existsByEmail(emailChange.getOldEmail())){
                 accountChangeRepository.deleteByEmail(emailChange.getOldEmail());
@@ -266,6 +266,7 @@ public class AccountChangeService {
         );
     }
 
+    @Transactional
     public void deleteDataByUrl(String url){
         accountChangeRepository.deleteByUrl(url);
     }
