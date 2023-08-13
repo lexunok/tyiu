@@ -16,10 +16,14 @@ public interface AccountChangeRepository extends JpaRepository<Temporary, Long>{
     Optional<Temporary> findByUrl(String url);
     Optional<Temporary> findByEmail(String email);
     boolean existsByEmail(String email);
-    @Modifying
+    boolean existsByOldEmail(String oldEmail);
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Temporary i WHERE i.email = ?1")
     void deleteByEmail(String email);
-    @Modifying
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Temporary i WHERE i.oldEmail = ?1")
+    void deleteByOldEmail(String email);
+    @Modifying(clearAutomatically = true)
     @Query("DELETE FROM Temporary i WHERE i.url = ?1")
     void deleteByUrl(String url);
 }

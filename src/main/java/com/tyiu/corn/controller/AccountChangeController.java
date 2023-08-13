@@ -42,8 +42,7 @@ public class AccountChangeController {
 
     @PostMapping("/send/request-to-change-password")
     public Map<String, String> requestToChangePassword(@RequestBody Temporary changePassword){
-        accountChangeService.sendEmailToChangePassword(changePassword);
-        return Map.of("succes", String.format("Код отправлен на вашу почту %s", changePassword.getEmail()));
+        return Map.of("key", accountChangeService.sendEmailToChangePassword(changePassword));
     }
 
     @PutMapping("/change/password")
@@ -76,7 +75,7 @@ public class AccountChangeController {
     
     @GetMapping("/get/users-info")
     public Map<String, List<UserInfoResponse>> getUsersInfo(){
-        return Map.of("users",accountChangeService.getUsersInfo());
+        return Map.of("users", accountChangeService.getUsersInfo());
     }
 
     @DeleteMapping("/delete/invitation/{url}")

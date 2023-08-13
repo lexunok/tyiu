@@ -12,4 +12,5 @@ public class ChangeRequest {
     private int code;
     private String email;
     private String password;
+    private String key;
 }
