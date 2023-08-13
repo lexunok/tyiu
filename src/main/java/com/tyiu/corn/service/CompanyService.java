@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.stereotype.Service;
 
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Company;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.repository.CompanyRepository;
@@ -16,12 +17,18 @@ public class CompanyService {
     private final CompanyRepository companyRepository;
 
     public List<Company> getListCompany() {
-        return companyRepository.findAll();
+        List<Company> company = companyRepository.findAll();
+        List<Company> companyName = company.stream()
+        .map(u -> Company.builder().id(u.getId()).name(u.getName()).build()).toList();
+        return companyName;
     }
 
-    public List<User> getListStaff(Long id) {
+    public List<UserDTO> getListStaff(Long id) {
         Company company = companyRepository.findById(id).orElseThrow(() -> new RuntimeException("Компания не найдена"));
-        return company.getStaff();
+        List<User> users = company.getStaff();
+        List<UserDTO> userDTO = users.stream()
+                .map(u -> UserDTO.builder().email(u.getEmail()).firstName(u.getFirstName()).lastName(u.getLastName()).roles(u.getRoles()).build()).toList();
+        return userDTO;
     }
 
     public Company addCompany(Company company) {

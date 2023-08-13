@@ -2,8 +2,8 @@ package com.tyiu.corn.controller;
 
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.CompanyService;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Company;
-import com.tyiu.corn.model.entities.User;
 
 import lombok.RequiredArgsConstructor;
 
@@ -22,7 +22,7 @@ public class CompanyController {
     }
 
     @GetMapping("/staff/{id}")
-    public List<User> getCompanyStaff(@PathVariable Long id){
+    public List<UserDTO> getCompanyStaff(@PathVariable Long id){
         return companyService.getListStaff(id);
     }
 

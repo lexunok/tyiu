@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import java.util.List;
 
+
 import jakarta.persistence.*;
 import lombok.*;
 
