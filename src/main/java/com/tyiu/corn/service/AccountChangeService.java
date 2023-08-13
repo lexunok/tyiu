@@ -185,41 +185,40 @@ public class AccountChangeService {
         accountChangeRepository.save(emailChange);
     }
 
-    public void sendEmailToChangePassword(Temporary passwordChange){
-        if (!userRepository.existsByEmail(passwordChange.getEmail())){
-            throw new NotFoundException(String.format("Пользователя с почтой %s не существует",  passwordChange.getEmail()));
-        }
-        if (accountChangeRepository.existsByEmail(passwordChange.getEmail())){
-            accountChangeRepository.deleteByEmail(passwordChange.getEmail());
+    public String sendEmailToChangePassword(Temporary passwordChange) {
+        if (!userRepository.existsByEmail(passwordChange.getEmail())) {
+            throw new NotFoundException(
+                    String.format("Пользователя с почтой %s не существует", passwordChange.getEmail()));
         }
         Date date = new Date();
-        date.setTime(date.getTime()+300000);
+        date.setTime(date.getTime() + 300000);
         passwordChange.setDateExpired(date);
-        passwordChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
+        passwordChange.setUrl(UUID.randomUUID().toString());
+        passwordChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000) + 100000);
         sendEmail(
-            passwordChange.getEmail(), 
-            "Восстановление пароля", 
-            String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode())
-        );
+                passwordChange.getEmail(),
+                "Восстановление пароля",
+                String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()));
         accountChangeRepository.save(passwordChange);
+        return passwordChange.getUrl();
     }
 
     @Transactional
-    public void changePasswordByUser(ChangeRequest request){
-        Temporary changePassword = accountChangeRepository.findByEmail(request.getEmail()).orElseThrow(
-            () -> new NotFoundException("Доступ зарпрещен")
-        );
-        if (new Date().getTime()>changePassword.getDateExpired().getTime()){
+    public void changePasswordByUser(ChangeRequest request) {
+        Temporary changePassword = accountChangeRepository.findByUrl(request.getKey()).orElseThrow(
+                () -> new NotFoundException("Доступ зарпрещен"));
+        if (new Date().getTime() > changePassword.getDateExpired().getTime()) {
             throw new DateExpiredException("Время действия кода истекло");
+
         }
-        if (request.getCode() == changePassword.getCode()){
+        if (request.getCode() == changePassword.getCode()) {
             User user = userRepository.findByEmail(changePassword.getEmail()).get();
             userRepository.setPassword(passwordEncoder.encode(request.getPassword()), user.getId());
             accountChangeRepository.delete(changePassword);
         } else {
             throw new AuthorizationNotSuccessException("Неправильный код");
         }
-        
+
     }
 
     @Transactional
