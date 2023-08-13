@@ -3,6 +3,8 @@ package com.tyiu.corn.controller;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.CompanyService;
 import com.tyiu.corn.model.entities.Company;
+import com.tyiu.corn.model.entities.User;
+
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -14,9 +16,14 @@ public class CompanyController {
 
     private final CompanyService companyService;
 
-    @GetMapping("/get")
+    @GetMapping()
     public List<Company> getCompanyList(){
         return companyService.getListCompany();
+    }
+
+    @GetMapping("/staff/{id}")
+    public List<User> getCompanyStaff(@PathVariable Long id){
+        return companyService.getListStaff(id);
     }
 
     @PostMapping("/add")
