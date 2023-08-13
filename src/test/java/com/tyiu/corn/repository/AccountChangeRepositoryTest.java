@@ -95,4 +95,23 @@ class AccountChangeRepositoryTest extends PostgresTest {
         assertThrows(NoSuchElementException.class, 
                         () -> underTest.findByUrl("sdfdseeff").get(), "No such element");
     }
+    @Test
+    void deleteInvitationByOldEmail(){
+        // Given
+        Date date = new Date();
+        long milsec = date.getTime() + 25920004;
+        date.setTime(milsec);
+        Temporary invitation = Temporary.builder()
+                .oldEmail("Emaifeasr4l")
+                .roles(List.of(Role.ADMIN))
+                .url("sdfdseeff")
+                .dateExpired(date)
+                .build();
+        underTest.save(invitation);
+        //When
+        underTest.deleteByOldEmail(invitation.getOldEmail());
+        //Then
+        assertThrows(NoSuchElementException.class, 
+                        () -> underTest.findByUrl("sdfdseeff").get(), "No such element");
+    }
 }
