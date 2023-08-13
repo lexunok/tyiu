@@ -475,7 +475,7 @@ public class AccountChangeControllerTest {
     void changeEmailInvalidCode(){
         //Before
          RegisterRequest request = new RegisterRequest(
-                "123456@gmdaifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
+                "123456@gmdaewegwegifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -487,19 +487,19 @@ public class AccountChangeControllerTest {
         Date date = new Date();
         date.setTime(date.getTime() + 300000);
         Temporary emailChange = Temporary.builder()
-        .oldEmail("123456@gmdaifl.com")
+        .oldEmail("123456@gmdaewegwegifl.com")
         .newEmail("1234567@gmdaifl.com")
         .code(123456)
-        .url("12345")
+        .url("12345d")
         .dateExpired(date)
         .build();
         accountChangeRepository.save(emailChange);
 
         //Test
         ChangeRequest requestChange = new ChangeRequest(
-            "1234567@gmdaifl.com",
+            "123456@gmdaewegwegifl.com",
             "123456@gmdaifl.com", 
-            "12345", 
+            "12345d", 
             12345, 
             null, 
             null,
