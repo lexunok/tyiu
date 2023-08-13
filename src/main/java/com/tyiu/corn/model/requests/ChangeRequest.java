@@ -9,8 +9,8 @@ public class ChangeRequest {
     private String newEmail;
     private String oldEmail;
     private String url;
-    private String key;
     private int code;
     private String email;
     private String password;
+    private String key;
 }

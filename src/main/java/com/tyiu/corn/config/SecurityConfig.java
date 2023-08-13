@@ -37,9 +37,10 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/invitation/get-invitation/**").permitAll()
-                        .requestMatchers("/api/v1/invitation/change-email/**").permitAll()
-                        .requestMatchers("/api/v1/invitation/delete-invitation/**").permitAll()
+                        .requestMatchers("/api/v1/profile-action/get/invitation/**").permitAll()
+                        .requestMatchers("/api/v1/profile-action/change/password").permitAll()
+                        .requestMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
+                        .requestMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);

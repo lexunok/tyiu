@@ -24,7 +24,6 @@ import java.util.Date;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
-import java.util.regex.Pattern;
 
 import lombok.RequiredArgsConstructor;
 
@@ -51,8 +50,6 @@ public class AccountChangeService {
 
     private final PasswordEncoder passwordEncoder;
 
-    private Pattern p = Pattern.compile("([\\w\\-]([\\.\\w])+[\\w]+@([\\w\\-]+\\.)+[A-Za-z]{1,10})");
-
     private void sendEmail(String toAdresses, String subject, String message){
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
         simpleMailMessage.setTo(toAdresses);
@@ -70,8 +67,7 @@ public class AccountChangeService {
             throw new NotFoundException("Добавьте роли");
         }
         try {
-            invitations.getEmails().stream().filter(email -> !userRepository.existsByEmail(email) 
-            && p.matcher(email).matches()).forEach((email) ->
+            invitations.getEmails().stream().filter(email -> !userRepository.existsByEmail(email)).forEach((email) ->
                 {   
                     Date date = new Date();
                     long milliseconds = date.getTime() + 259200000;
@@ -117,7 +113,7 @@ public class AccountChangeService {
             );
             if (accountChangeRepository.existsByEmail(invitation.getEmail())){
             accountChangeRepository.deleteByEmail(invitation.getEmail());
-        }
+            }
         } catch (MailSendException e) {
             throw new EmailSendException("Добавьте домен почты");
         } catch (NullPointerException e) {
@@ -158,8 +154,8 @@ public class AccountChangeService {
         if (userRepository.existsByEmail(emailChange.getNewEmail())){
             throw new UserExistsException("Пользователь с такой почтой существует");
         }
-        if (accountChangeRepository.existsByEmail(emailChange.getEmail())){
-            accountChangeRepository.deleteByEmail(emailChange.getEmail());
+        if (accountChangeRepository.existsByOldEmail(emailChange.getOldEmail())){
+            accountChangeRepository.deleteByOldEmail(emailChange.getOldEmail());
         }
         try{
             Date date = new Date();
@@ -172,9 +168,7 @@ public class AccountChangeService {
                 "Изменение почты",
                 String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
             );
-            if (accountChangeRepository.existsByEmail(emailChange.getOldEmail())){
-                accountChangeRepository.deleteByEmail(emailChange.getOldEmail());
-            }
+            accountChangeRepository.save(emailChange);
         }catch (MailSendException e) {
             throw new EmailSendException("Добавьте домен почты");
         } catch (NullPointerException e) {
@@ -182,7 +176,6 @@ public class AccountChangeService {
         } catch (MailParseException e){
             throw new ParseException("Добавьте имя пользователя почты");
         }
-        accountChangeRepository.save(emailChange);
     }
 
     public String sendEmailToChangePassword(Temporary passwordChange) {
@@ -204,10 +197,12 @@ public class AccountChangeService {
     }
 
     @Transactional
-    public void changePasswordByUser(ChangeRequest request) {
+    public void changePasswordByUser(ChangeRequest request){
         Temporary changePassword = accountChangeRepository.findByUrl(request.getKey()).orElseThrow(
-                () -> new NotFoundException("Доступ зарпрещен"));
-        if (new Date().getTime() > changePassword.getDateExpired().getTime()) {
+            () -> new NotFoundException("Доступ зарпрещен")
+        );
+        if (new Date().getTime()>changePassword.getDateExpired().getTime()){
+            accountChangeRepository.deleteByUrl(changePassword.getUrl());
             throw new DateExpiredException("Время действия кода истекло");
 
         }
@@ -272,7 +267,7 @@ public class AccountChangeService {
 
     @Transactional
     @Scheduled(fixedRate = 43200000)
-    public void deleteInvitation(){
+    public void deleteExpiredData(){
         Date date = new Date();
         accountChangeRepository.deleteExpiredData(date);
     }
