@@ -5,7 +5,7 @@ import lombok.Data;
 
 @Data
 @Builder
-public class ChangeEmailResponse {
-    private String email;
+public class ChangeResponse {
+    private String newEmail;
     private String oldEmail;
 }

@@ -58,11 +58,10 @@ public class IdeaController {
         ideaService.deleteIdeaByAdmin(ideaId);
     }
 
-    @PutMapping("/admin/update/{ideaId}")
-    public void updateIdeaByAdmin(@PathVariable Long ideaId, @RequestBody Idea updatedIdea) {
-        ideaService.updateIdeaByAdmin(ideaId, updatedIdea);
+    @PutMapping("/initiator/update/{ideaId}")
+    public void updateIdeaByInitiator(@PathVariable Long ideaId, Principal principal, @RequestBody Idea updatedIdea) {
+        ideaService.updateIdeaByInitiator(ideaId, principal.getName(), updatedIdea);
     }
-
 
     @PutMapping("/project-office/update/{ideaId}")
     public void updateStatusIdeaByProjectOffice(@PathVariable Long ideaId, @RequestBody StatusIdea newStatus){
@@ -72,5 +71,10 @@ public class IdeaController {
     @PutMapping("/expert/update/{ideaId}")
     public void updateStatusByExpert(@PathVariable Long ideaId, @RequestBody RiskDTO riskDTO){
         ideaService.updateStatusByExpert(ideaId, riskDTO);
+    }
+
+    @PutMapping("/admin/update/{ideaId}")
+    public void updateIdeaByAdmin(@PathVariable Long ideaId, @RequestBody Idea updatedIdea) {
+        ideaService.updateIdeaByAdmin(ideaId, updatedIdea);
     }
 }

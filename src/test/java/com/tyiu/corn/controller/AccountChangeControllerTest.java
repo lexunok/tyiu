@@ -19,27 +19,27 @@ import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.tyiu.corn.model.dto.InvitationDTO;
-import com.tyiu.corn.model.entities.Invitation;
+import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.model.responses.ErrorResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
-import com.tyiu.corn.repository.InvitationRepository;
+import com.tyiu.corn.repository.AccountChangeRepository;
 
 import reactor.core.publisher.Mono;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
 @AutoConfigureWebTestClient(timeout = "100000")//100 seconds
-public class InvitationControllerTest {
+public class AccountChangeControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
     private String jwt;
 
     @Autowired
-    private InvitationRepository invitationRepository;
+    private AccountChangeRepository accountChangeRepository;
 
     @BeforeAll
     public void setUp(){
@@ -76,7 +76,7 @@ public class InvitationControllerTest {
         
         webTestClient
             .post()
-            .uri("/api/v1/invitation/emails")
+            .uri("/api/v1/profile-action/send/emails")
             .header("Authorization","Bearer " + jwt)
             .body(Mono.just(request), InvitationDTO.class)
             .exchange().expectBody(Map.class);
@@ -84,16 +84,16 @@ public class InvitationControllerTest {
 
     @Test
     void sendRightOneEmail(){
-        Invitation request = Invitation.builder()
+        Temporary request = Temporary.builder()
         .email("timur.minyazeff@gmail.com")
         .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
         .build();
 
         webTestClient
             .post()
-            .uri("/api/v1/invitation/email")
+            .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(request), Invitation.class)
+            .body(Mono.just(request), Temporary.class)
             .exchange()
             .expectBody(Map.class);
     }
@@ -103,17 +103,17 @@ public class InvitationControllerTest {
         Date date = new Date();
         long milsec = date.getTime() + 259200000;
         date.setTime(milsec);
-        Invitation invitation = Invitation.builder()
+        Temporary invitation = Temporary.builder()
                 .email("Emailssd")
                 .roles(List.of(Role.ADMIN))
                 .url(request)
                 .dateExpired(date)
                 .build();
-        invitationRepository.save(invitation);
+        accountChangeRepository.save(invitation);
         
         InvitationResponse response = webTestClient
         .get()
-        .uri(String.format("/api/v1/invitation/get-invitation/%s", request))
+        .uri("/api/v1/profile-action/get/invitation/{request}", request)
         .exchange()
         .expectBody(InvitationResponse.class)
         .returnResult().getResponseBody();
@@ -128,7 +128,7 @@ public class InvitationControllerTest {
         
         ErrorResponse response = webTestClient
         .get()
-        .uri("/api/v1/invitation/get-invitation/{request}", request)
+        .uri("/api/v1/profile-action/get/invitation/{request}", request)
         .exchange()
         .expectBody(ErrorResponse.class)
         .returnResult().getResponseBody();
@@ -138,16 +138,16 @@ public class InvitationControllerTest {
     }
     @Test
     void catchEmailSenderException(){
-        Invitation request = Invitation.builder()
+        Temporary request = Temporary.builder()
         .email("ideasmanager")
         .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
         .build();
 
         ErrorResponse response = webTestClient
             .post()
-            .uri("/api/v1/invitation/email")
+            .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(request), Invitation.class)
+            .body(Mono.just(request), Temporary.class)
             .exchange().expectBody(ErrorResponse.class)
             .returnResult().getResponseBody();
         
@@ -156,16 +156,16 @@ public class InvitationControllerTest {
     }
     @Test
     void catchEmailParseException(){
-        Invitation request = Invitation.builder()
+        Temporary request = Temporary.builder()
         .email("@gmail.com")
         .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
         .build();
 
         ErrorResponse response = webTestClient
             .post()
-            .uri("/api/v1/invitation/email")
+            .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(request), Invitation.class)
+            .body(Mono.just(request), Temporary.class)
             .exchange().expectBody(ErrorResponse.class)
             .returnResult().getResponseBody();
         
@@ -174,15 +174,15 @@ public class InvitationControllerTest {
     }
     @Test
     void catchNotFoundExceptionWithoutEmail(){
-        Invitation request = Invitation.builder()
+        Temporary request = Temporary.builder()
         .roles(List.of(Role.ADMIN, Role.PROJECT_OFFICE))
         .build();
 
         ErrorResponse response = webTestClient
             .post()
-            .uri("/api/v1/invitation/email")
+            .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(request), Invitation.class)
+            .body(Mono.just(request), Temporary.class)
             .exchange().expectBody(ErrorResponse.class)
             .returnResult().getResponseBody();
         
@@ -191,18 +191,18 @@ public class InvitationControllerTest {
     }
     @Test
     void catchNotFoundExceptionWithEmptyBody(){
-        Invitation request = Invitation.builder()
+        Temporary request = Temporary.builder()
         .build();
 
         ErrorResponse response = webTestClient
             .post()
-            .uri("/api/v1/invitation/email")
+            .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(request), Invitation.class)
+            .body(Mono.just(request), Temporary.class)
             .exchange().expectBody(ErrorResponse.class)
             .returnResult().getResponseBody();
         
         assertNotNull(response);
-        assertEquals("Добавьте роль", response.getError());
+        assertEquals("Добавьте почту", response.getError());
     }
 }

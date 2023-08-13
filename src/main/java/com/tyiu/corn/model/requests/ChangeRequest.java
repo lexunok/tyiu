@@ -5,9 +5,12 @@ import lombok.Data;
 
 @Data
 @AllArgsConstructor
-public class ChangeEmailRequest {
-    private String email;
+public class ChangeRequest {
+    private String newEmail;
     private String oldEmail;
     private String url;
+    private String key;
     private int code;
+    private String email;
+    private String password;
 }
