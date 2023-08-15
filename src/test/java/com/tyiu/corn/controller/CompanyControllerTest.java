@@ -1,6 +1,8 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Company;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -64,6 +66,7 @@ public class CompanyControllerTest {
 
     @Test
     void testGetCompanyStaff(){
+        List<User> users = List.of(User.builder().email("fakeeeeeeee").build());
         Company company = Company.builder().name("company").staff(null).build();
         Company response = webTestClient
                 .post()
@@ -74,16 +77,16 @@ public class CompanyControllerTest {
                 .expectBody(Company.class)
                 .returnResult().getResponseBody();
         Long id = response.getId();
-        List<Company> response3 = webTestClient
+        List<UserDTO> response2 = webTestClient
                 .get()
                 .uri("/api/v1/company/staff/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
-                .expectBodyList(Company.class)
+                .expectBodyList(UserDTO.class)
                 .returnResult().getResponseBody();
-        // assertNotNull(response3);
-        // List<Company> actualCompanys = response3.stream().filter(u -> company.getStaff().equals(response.getStaff())).toList();
-        // assertTrue(actualCompanys.size() >= 1);
+        assertNotNull(response2);
+        // List<UserDTO> actualStaff = response2.stream().filter(u -> company.getStaff().equals(response.getStaff())).toList();
+        // assertTrue(actualStaff.size() >= 1);
     }
     
 

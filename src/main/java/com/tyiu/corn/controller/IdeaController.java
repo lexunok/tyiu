@@ -1,12 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.RiskDTO;
-import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.enums.StatusIdea;
-import org.springframework.context.annotation.Role;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import com.tyiu.corn.model.entities.Idea;
@@ -61,6 +56,11 @@ public class IdeaController {
     @PutMapping("/initiator/update/{ideaId}")
     public void updateIdeaByInitiator(@PathVariable Long ideaId, Principal principal, @RequestBody Idea updatedIdea) {
         ideaService.updateIdeaByInitiator(ideaId, principal.getName(), updatedIdea);
+    }
+
+    @PutMapping("/initiator/send/{ideaId}")
+    public void updateStatusByInitiator(@PathVariable Long ideaId, Principal principal) {
+        ideaService.updateStatusByInitiator(ideaId, principal.getName());
     }
 
     @PutMapping("/project-office/update/{ideaId}")

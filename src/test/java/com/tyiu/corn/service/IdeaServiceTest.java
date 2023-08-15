@@ -1,11 +1,9 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.RiskDTO;
-import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
-import com.tyiu.corn.repository.CommentRepository;
 import com.tyiu.corn.repository.IdeaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -275,19 +273,17 @@ public class IdeaServiceTest {
     @Test
     void testUpdateStatusByProjectOffice(){
         //Given
-        StatusIdea newStatus = StatusIdea.ON_CONFIRMATION;
-        Idea idea = Idea.builder()
-                .status(StatusIdea.ON_EDITING)
-                .build();
+        StatusIdea status = StatusIdea.ON_APPROVAL;
+        Idea idea = Idea.builder().name("title").build();
 
         when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
         when(ideaRepository.save(idea)).thenReturn(idea);
 
         // When
-        ideaService.updateStatusByProjectOffice(idea.getId(), newStatus);
+        ideaService.updateStatusByProjectOffice(idea.getId(),status);
 
         // Then
-        assertEquals(newStatus, idea.getStatus());
+        assertEquals(status, idea.getStatus());
     }
 
     @Test

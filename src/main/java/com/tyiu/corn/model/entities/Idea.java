@@ -29,6 +29,7 @@ public class Idea {
     private String solution;
     private String result;
     private String customer;
+    private String contactPerson;
     private String description;
     private String realizability;
     private String suitability;

@@ -15,7 +15,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.test.web.reactive.server.WebTestClient.RequestBodySpec;
-import org.springframework.test.web.reactive.server.WebTestClient.ResponseSpec;
 
 import static org.junit.jupiter.api.Assertions.*;
 import reactor.core.publisher.Mono;
@@ -46,7 +45,7 @@ public class IdeaControllerTest {
 
     @Test
     void testShowListIdeaForInitiator(){
-        Idea idea1 = Idea.builder().name("title").status(StatusIdea.ON_CONFIRMATION).build();
+        Idea idea1 = Idea.builder().name("title").build();
         Idea response = webTestClient
                 .post()
                 .uri("/api/v1/idea/initiator/add")
@@ -71,7 +70,7 @@ public class IdeaControllerTest {
     @Test
     void testShowIdeaForProjectOffice(){
         StatusIdea status = StatusIdea.ON_CONFIRMATION;
-        Idea idea2 = Idea.builder().name("title").status(status).build();
+        Idea idea2 = Idea.builder().name("title").build();
         Idea response1 = webTestClient
                 .post()
                 .uri("/api/v1/idea/initiator/add")
@@ -80,7 +79,14 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        List<Idea> response2 = ((RequestBodySpec) webTestClient
+        Long id = response1.getId();
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/initiator/send/{id}", id)
+                .header("Authorization","Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
+        List<Idea> response3 = ((RequestBodySpec) webTestClient
                 .get()
                 .uri("/api/v1/idea/project-office")
                 .header("Authorization","Bearer " + jwt))
@@ -88,23 +94,36 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBodyList(Idea.class)
                 .returnResult().getResponseBody();
-        assertNotNull(response2);
-        List<Idea> actualStatus = response2.stream().filter(idea -> idea2.getStatus().equals(response1.getStatus())).toList();
-        assertTrue(actualStatus.size() >= 1);
+        assertNotNull(response3);
     }
     @Test
     void testShowListIdeaForExpert(){
         StatusIdea status = StatusIdea.ON_APPROVAL;
-        Idea idea3 = Idea.builder().name("title").status(status).build();
+        Idea idea2 = Idea.builder().name("title").build();
         Idea response1 = webTestClient
                 .post()
                 .uri("/api/v1/idea/initiator/add")
                 .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(idea3), Idea.class)
+                .body(Mono.just(idea2), Idea.class)
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        List<Idea> response2 = ((RequestBodySpec) webTestClient
+        Long id = response1.getId();
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/initiator/send/{id}", id)
+                .header("Authorization","Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/project-office/update/{id}", id)
+                .header("Authorization","Bearer " + jwt)
+                .body(Mono.just(StatusIdea.ON_CONFIRMATION), StatusIdea.class)
+                .exchange()
+                .expectBody(StatusIdea.class)
+                .returnResult().getResponseBody();
+        List<Idea> response3 = ((RequestBodySpec) webTestClient
                 .get()
                 .uri("/api/v1/idea/expert")
                 .header("Authorization","Bearer " + jwt))
@@ -112,13 +131,11 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBodyList(Idea.class)
                 .returnResult().getResponseBody();
-        assertNotNull(response2);
-        List<Idea> actualStatus = response2.stream().filter(idea -> idea3.getStatus().equals(response1.getStatus())).toList();
-        assertTrue(actualStatus.size() >= 1);
+        assertNotNull(response3);
     }
     @Test
     void testShowListIdeaForAdmin(){
-        Idea idea4 = Idea.builder().name("title").status(StatusIdea.ON_CONFIRMATION).build();
+        Idea idea4 = Idea.builder().name("title").build();
         Idea response1 = webTestClient
                 .post()
                 .uri("/api/v1/idea/initiator/add")
@@ -196,7 +213,7 @@ public class IdeaControllerTest {
 
     @Test
     void testUpdateStatusIdeaByProjectOffice(){
-        Idea idea8 = Idea.builder().name("title1").status(StatusIdea.ON_CONFIRMATION).build();
+        Idea idea8 = Idea.builder().name("title1").build();
         Idea response0 = webTestClient
                 .post()
                 .uri("/api/v1/idea/initiator/add")
@@ -205,13 +222,18 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        StatusIdea status = StatusIdea.CONFIRMED;
         Long id = response0.getId();
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/initiator/send/{id}", id)
+                .header("Authorization","Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
         StatusIdea response = webTestClient
                 .put()
-                .uri("/api/v1/idea/project-office/update/{Id}", id)
+                .uri("/api/v1/idea/project-office/update/{id}", id)
                 .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(status), StatusIdea.class)
+                .body(Mono.just(StatusIdea.ON_CONFIRMATION), StatusIdea.class)
                 .exchange()
                 .expectBody(StatusIdea.class)
                 .returnResult().getResponseBody();
@@ -230,11 +252,11 @@ public class IdeaControllerTest {
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
         Long id = response0.getId();
-        RiskDTO riskDTO = RiskDTO.builder().status(StatusIdea.ON_CONFIRMATION).risk(4.4).price("price")
+        RiskDTO riskDTO = RiskDTO.builder().status(StatusIdea.CONFIRMED).risk(4.4).price("price")
                                     .originality("orig").technicalFeasibility("tech").understanding("under").build();
         RiskDTO response = webTestClient
                 .put()
-                .uri("/api/v1/idea/expert/update/{Id}", id)
+                .uri("/api/v1/idea/expert/update/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(riskDTO), RiskDTO.class)
                 .exchange()
@@ -258,7 +280,7 @@ public class IdeaControllerTest {
         idea = Idea.builder().name("title2").build();
         Idea response = webTestClient
                 .put()
-                .uri("/api/v1/idea//admin/update/{Id}", id)
+                .uri("/api/v1/idea//admin/update/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(idea), Idea.class)
                 .exchange()

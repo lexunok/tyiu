@@ -31,6 +31,7 @@ public class IdeaService {
     public Idea saveIdea(Idea idea, String initiator) {
         idea.setDateCreated(new Date());
         idea.setInitiator(initiator);
+        idea.setStatus(StatusIdea.NEW);
         return ideaRepository.save(idea);
     }
 
@@ -43,8 +44,20 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
+
     public void deleteIdeaByAdmin(Long id) {
         ideaRepository.deleteById(id);
+    }
+
+    public void updateStatusByInitiator (Long ideaId, String email){
+        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
+        if (email.equals(idea.getInitiator())){
+            idea.setStatus(StatusIdea.ON_CONFIRMATION);
+            ideaRepository.save(idea);
+        }
+        else {
+            throw new RuntimeException("Идея не принадлежит инициатору");
+        }
     }
 
     public void updateIdeaByInitiator(Long id, String email, Idea updatedIdea) {
@@ -52,16 +65,15 @@ public class IdeaService {
         if (email.equals(idea.getInitiator())){
             idea.setName(updatedIdea.getName());
             idea.setProjectType(updatedIdea.getProjectType());
-            idea.setExperts(updatedIdea.getExperts());
             idea.setProblem(updatedIdea.getProblem());
             idea.setSolution(updatedIdea.getSolution());
             idea.setResult(updatedIdea.getResult());
             idea.setCustomer(updatedIdea.getCustomer());
+            idea.setContactPerson(updatedIdea.getContactPerson());
             idea.setDescription(updatedIdea.getDescription());
             idea.setRealizability(updatedIdea.getRealizability());
             idea.setSuitability(updatedIdea.getSuitability());
             idea.setBudget(updatedIdea.getBudget());
-            idea.setStatus(updatedIdea.getStatus());
             idea.setRating(updatedIdea.getRating());
             idea.setDateModified(new Date());
             ideaRepository.save(idea);
