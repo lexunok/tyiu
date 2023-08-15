@@ -27,12 +27,10 @@ public class IdeaServiceTest {
     private IdeaService ideaService;
     @Mock
     private IdeaRepository  ideaRepository;
-    @Mock
-    private CommentRepository commentRepository;
 
     @BeforeEach
     void setUp() {
-        ideaService = new IdeaService(ideaRepository, commentRepository);
+        ideaService = new IdeaService(ideaRepository);
     }
 
     @Test
@@ -272,24 +270,6 @@ public class IdeaServiceTest {
         verify(ideaRepository).save(idea);
         verify(ideaRepository).save(idea);
 
-    }
-
-    @Test
-    void testCreateComment(){
-        Idea idea = Idea.builder()
-                .name("Идея 1")
-                .comments(new ArrayList<>())
-                .build();
-        Comment comment = Comment.builder()
-                .status(true)
-                .comment("Комментарий")
-                .sender("Отправитель")
-                .build();
-
-        when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
-        when(commentRepository.save(comment)).thenReturn(comment);
-
-        ideaService.createComment(idea.getId(), comment);
     }
 
     @Test

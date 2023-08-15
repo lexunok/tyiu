@@ -3,22 +3,18 @@ package com.tyiu.corn.service;
 import java.util.Date;
 import java.util.List;
 
-import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
-import com.tyiu.corn.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
 
-import jakarta.transaction.Transactional;
 @Service
 @RequiredArgsConstructor
 public class IdeaService {
     private final IdeaRepository ideaRepository;
-    private final CommentRepository commentRepository;
 
     public List<Idea> getListIdeaForInitiator(String initiator) {
         return ideaRepository.findAllByInitiator(initiator);
@@ -75,15 +71,6 @@ public class IdeaService {
         }
     }
 
-    @Transactional
-    public void createComment(Long ideaId, Comment comment) {
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
-        comment.setIdea(idea);
-        Comment savedComment = commentRepository.save(comment);
-        idea.getComments().add(savedComment);
-        ideaRepository.save(idea);
-
-    }
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
         idea.setStatus(newStatus);

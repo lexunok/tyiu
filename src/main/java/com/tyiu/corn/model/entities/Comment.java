@@ -3,6 +3,8 @@ package com.tyiu.corn.model.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
+
 @Entity
 @Setter
 @Getter
@@ -16,7 +18,7 @@ public class Comment {
 
     private String comment;
     private String sender;
-    private boolean status;
+    private List<String> checkedBy;
 
     @ManyToOne
     private Idea idea;
