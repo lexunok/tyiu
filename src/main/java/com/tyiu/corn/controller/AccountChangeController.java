@@ -57,7 +57,7 @@ public class AccountChangeController {
         return Map.of("success", "Успешное изменение почты");
     }
 
-    @PutMapping("/change/userInfo")
+    @PutMapping("/change/user-info")
     public Map<String, String> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
         accountChangeService.changeUserInfo(request);
         return Map.of("success", "Успешное изменение пользователя");
@@ -76,6 +76,11 @@ public class AccountChangeController {
     @GetMapping("/get/users-info")
     public Map<String, List<UserInfoResponse>> getUsersInfo(){
         return Map.of("users", accountChangeService.getUsersInfo());
+    }
+
+    @GetMapping("/get/users-email")
+    public Map<String, List<String>> getUsersEmail(){
+        return Map.of("emails", accountChangeService.getAllEmails());
     }
 
     @DeleteMapping("/delete/invitation/{url}")

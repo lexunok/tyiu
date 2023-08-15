@@ -246,6 +246,16 @@ public class AccountChangeService {
         return usersInfo;
     }
 
+    public List<String> getAllEmails(){
+        List<String> usersEmails = new ArrayList<String>();
+        userRepository.findAll().stream().forEach(
+            user -> {
+                usersEmails.add(user.getEmail());
+            }
+        );
+        return usersEmails;
+    }
+
     @Transactional
     public void changeUserInfo(UserInfoRequest request){
         User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
