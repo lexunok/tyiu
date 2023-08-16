@@ -1,8 +1,5 @@
 package com.tyiu.corn.model.entities;
 
-import java.util.List;
-
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -12,12 +9,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Company {
+public class Message {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    private String name;
-      
-    @OneToMany(fetch = FetchType.LAZY)
-    private List<User> staff;
+    private String sender;
+    private String text;
 }
