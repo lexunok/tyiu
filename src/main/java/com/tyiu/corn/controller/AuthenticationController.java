@@ -19,7 +19,6 @@ import java.security.Principal;
 @RestController
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
-
     @PostMapping("/login")
     public AuthenticationResponse signIn(@RequestBody LoginRequest request){
         return authenticationService.login(request);

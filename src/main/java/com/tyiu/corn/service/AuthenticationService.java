@@ -60,9 +60,10 @@ public class AuthenticationService {
                     .password(passwordEncoder.encode(request.getPassword()))
                     .build();
             try {
-                userRepository.save(user);
+                user = userRepository.save(user);
                 Authentication authentication = authenticationManager
                         .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
+                log.info(authentication.toString());
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                 String jwt = jwtCore.issueToken(userDetails.getUsername(),user.getRoles());
                 return AuthenticationResponse.builder()
