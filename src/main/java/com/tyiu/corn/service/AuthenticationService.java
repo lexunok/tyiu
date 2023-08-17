@@ -12,6 +12,9 @@ import com.tyiu.corn.util.security.CustomUserDetails;
 import com.tyiu.corn.util.security.JwtCore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -31,6 +34,7 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtCore jwtCore;
 
+    @Cacheable(cacheNames = {"AuthenticationResponseloginCache"}, key = "request")
     public AuthenticationResponse login(LoginRequest request){
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
@@ -50,6 +54,7 @@ public class AuthenticationService {
         else throw new AuthorizationNotSuccessException("Авторизация не удалась");
     }
 
+    @Cacheable(cacheNames = {"AuthenticationResponseregisterCache"}, key = "request")
     public AuthenticationResponse register(RegisterRequest request){
         if (!userRepository.existsByEmail(request.getEmail())){
             User user = User.builder()
@@ -60,10 +65,9 @@ public class AuthenticationService {
                     .password(passwordEncoder.encode(request.getPassword()))
                     .build();
             try {
-                user = userRepository.save(user);
+                userRepository.save(user);
                 Authentication authentication = authenticationManager
                         .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-                log.info(authentication.toString());
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                 String jwt = jwtCore.issueToken(userDetails.getUsername(),user.getRoles());
                 return AuthenticationResponse.builder()

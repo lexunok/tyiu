@@ -3,6 +3,8 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.model.entities.Scrum;
 import com.tyiu.corn.repository.ScrumRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -11,11 +13,12 @@ import java.util.List;
 public class ScrumService {
     private final ScrumRepository scrumRepository;
 
-
+    
     public List<Scrum> getListScrum() {
         return scrumRepository.findAll();
     }
 
+    @Cacheable(cacheNames = {"saveScrumCache"}, key = "scrum")
     public void saveScrum(Scrum scrum) {
         scrumRepository.save(scrum);
     }
@@ -23,7 +26,7 @@ public class ScrumService {
     public void deleteScrum(Long id) {
         scrumRepository.deleteById(id);
     }
-
+    @Cacheable(cacheNames = {"updateScrumCache"}, key = "updatedScrumid")
     public void updateScrum(Long id, Scrum updatedScrum) {
         Scrum scrum = scrumRepository.findById(id).orElseThrow();
         scrum.setDescription(updatedScrum.getDescription());

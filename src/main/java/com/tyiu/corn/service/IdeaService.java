@@ -3,18 +3,24 @@ package com.tyiu.corn.service;
 import java.util.Date;
 import java.util.List;
 
+import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.repository.CommentRepository;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
 
+import jakarta.transaction.Transactional;
 @Service
 @RequiredArgsConstructor
 public class IdeaService {
     private final IdeaRepository ideaRepository;
+    private final CommentRepository commentRepository;
 
     public List<Idea> getListIdeaForInitiator(String initiator) {
         return ideaRepository.findAllByInitiator(initiator);
@@ -31,7 +37,6 @@ public class IdeaService {
     public Idea saveIdea(Idea idea, String initiator) {
         idea.setDateCreated(new Date());
         idea.setInitiator(initiator);
-        idea.setStatus(StatusIdea.NEW);
         return ideaRepository.save(idea);
     }
 
@@ -44,20 +49,8 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
-
     public void deleteIdeaByAdmin(Long id) {
         ideaRepository.deleteById(id);
-    }
-
-    public void updateStatusByInitiator (Long ideaId, String email){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
-        if (email.equals(idea.getInitiator())){
-            idea.setStatus(StatusIdea.ON_CONFIRMATION);
-            ideaRepository.save(idea);
-        }
-        else {
-            throw new RuntimeException("Идея не принадлежит инициатору");
-        }
     }
 
     public void updateIdeaByInitiator(Long id, String email, Idea updatedIdea) {
@@ -65,15 +58,16 @@ public class IdeaService {
         if (email.equals(idea.getInitiator())){
             idea.setName(updatedIdea.getName());
             idea.setProjectType(updatedIdea.getProjectType());
+            idea.setExperts(updatedIdea.getExperts());
             idea.setProblem(updatedIdea.getProblem());
             idea.setSolution(updatedIdea.getSolution());
             idea.setResult(updatedIdea.getResult());
             idea.setCustomer(updatedIdea.getCustomer());
-            idea.setContactPerson(updatedIdea.getContactPerson());
             idea.setDescription(updatedIdea.getDescription());
             idea.setRealizability(updatedIdea.getRealizability());
             idea.setSuitability(updatedIdea.getSuitability());
             idea.setBudget(updatedIdea.getBudget());
+            idea.setStatus(updatedIdea.getStatus());
             idea.setRating(updatedIdea.getRating());
             idea.setDateModified(new Date());
             ideaRepository.save(idea);
@@ -83,12 +77,26 @@ public class IdeaService {
         }
     }
 
+    @Transactional
+
+    @Cacheable(cacheNames = {"createCommentCache"}, key = "commentideaid")
+    public void createComment(Long ideaId, Comment comment) {
+        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
+        comment.setIdea(idea);
+        Comment savedComment = commentRepository.save(comment);
+        idea.getComments().add(savedComment);
+        ideaRepository.save(idea);
+
+    }
+
+    @Cacheable(cacheNames = {"updateStatusByProjectOfficeCache"}, key = "commentideaid")
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
         idea.setStatus(newStatus);
         ideaRepository.save(idea);
     }
 
+    @Cacheable(cacheNames = {"updateStatusByExpertCache"}, key = "riskDTOideaid")
     public void updateStatusByExpert(Long ideaId, RiskDTO riskDTO){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException());
         idea.setStatus(riskDTO.getStatus());
@@ -100,6 +108,7 @@ public class IdeaService {
         ideaRepository.save(idea);
     }
 
+    @Cacheable(cacheNames = {"updateIdeaByAdminCache"}, key = "updatedIdea")
     public void updateIdeaByAdmin(Long id, Idea updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException());
         idea.setName(updatedIdea.getName());

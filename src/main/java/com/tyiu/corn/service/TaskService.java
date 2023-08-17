@@ -2,6 +2,8 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.entities.Task;
 import lombok.RequiredArgsConstructor;
+
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import com.tyiu.corn.repository.TaskRepository;
 
@@ -19,6 +21,7 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
+    @Cacheable(cacheNames = {"saveTaskCache"}, key = "task")
     public void saveTask(Task task) {
         task.setCreatedAt(new Date());
         taskRepository.save(task);
@@ -28,6 +31,7 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
+    @Cacheable(cacheNames = {"updateTaskCache"}, key = "updatedTaskid")
     public void updateTask(Long id, Task updatedTask) {
         Task task = taskRepository.findById(id).orElseThrow();
         task.setTitle(updatedTask.getTitle());
