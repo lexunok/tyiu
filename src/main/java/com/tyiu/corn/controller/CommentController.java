@@ -4,6 +4,7 @@ import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.service.CommentService;
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +19,13 @@ public class CommentController {
     public Comment saveComment(@RequestBody Comment comment, @PathVariable Long ideaId) {
         return commentService.createComment(ideaId, comment);
     }
-    @DeleteMapping("/delete/{commentId}")
-    public Map<String, String> deleteComment(@PathVariable Long commentId) {
+    @DeleteMapping("/delete/{ideaId}/{commentId}")
+    public Map<String, String> deleteComment(@PathVariable Long ideaId, @PathVariable Long commentId, Principal principal) {
+        commentService.deleteComment(ideaId, commentId, principal.getName());
         return Map.of("success", "Успешное удаление комментария");
     }
-    @PutMapping("/check")
-    public void checkComment(Comment comment){
-        commentService.checkCommentByUser(comment);
+    @PutMapping("/check/{ideaId}")
+    public void checkComment(Comment comment, @PathVariable Long ideaId){
+        commentService.checkCommentByUser(comment, ideaId);
     }
 }
