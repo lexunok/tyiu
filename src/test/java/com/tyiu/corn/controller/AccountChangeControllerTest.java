@@ -586,7 +586,7 @@ public class AccountChangeControllerTest {
 
         Map<String,String> responseChange = webTestClient
             .put()
-            .uri("/api/v1/profile-action/change/userInfo")
+            .uri("/api/v1/profile-action/change/user-info")
             .header("Authorization","Bearer " + jwt)
             .body(Mono.just(changeRequest), UserInfoRequest.class)
             .exchange().expectBody(Map.class)

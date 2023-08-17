@@ -1,12 +1,11 @@
 package com.tyiu.corn.service;
 
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -14,6 +13,7 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -110,6 +110,7 @@ public class AccountChangeServiceTest {
         });
         emailCaptor.getAllValues().stream().forEach(mailMessage -> {
             verify(emailSender).send(mailMessage);
+            assertNotNull(mailMessage.getTo());
             assertTrue(containsEmail(emails, mailMessage.getTo()[0]));
         });
         assertDoesNotThrow(() -> underTest.sendInvitations(request));
