@@ -24,13 +24,13 @@ public class IdeaController {
     }
 
     @GetMapping("/project-office")
-    public List<Idea> showListIdeaForProjectOffice(@RequestBody StatusIdea status){
-        return ideaService.getListIdeaByStatus(status);
+    public List<Idea> showListIdeaForProjectOffice(){
+        return ideaService.getListIdeaOnConfirmation();
     }
 
     @GetMapping("/expert")
-    public List<Idea> showListIdeaForExpert(@RequestBody StatusIdea status){
-        return ideaService.getListIdeaByStatus(status);
+    public List<Idea> showListIdeaForExpert(){
+        return ideaService.getListIdeaOnApproval();
     }
 
     @GetMapping("/admin")

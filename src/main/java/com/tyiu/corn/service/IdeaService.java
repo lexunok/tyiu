@@ -20,8 +20,12 @@ public class IdeaService {
         return ideaRepository.findAllByInitiator(initiator);
     }
 
-    public List<Idea> getListIdeaByStatus(StatusIdea status) {
-        return ideaRepository.findAllByStatus(status);
+    public List<Idea> getListIdeaOnApproval() {
+        return ideaRepository.findAllByStatus(StatusIdea.ON_APPROVAL);
+    }
+
+    public List<Idea> getListIdeaOnConfirmation() {
+        return ideaRepository.findAllByStatus(StatusIdea.ON_CONFIRMATION);
     }
 
     public List<Idea> getListIdea() {

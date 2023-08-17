@@ -60,7 +60,7 @@ public class IdeaServiceTest {
     }
 
     @Test
-    void testGetListIdeaByStatus() {
+    void testGetListIdeaOnConfirmation() {
         List<Idea> ideas = new ArrayList<>();
         StatusIdea status = StatusIdea.ON_CONFIRMATION;
 
@@ -77,7 +77,33 @@ public class IdeaServiceTest {
         // When
         List<Idea> ideasByStatus = ideas.stream().filter(i -> i.getStatus().equals(status)).toList();
         when(ideaRepository.findAllByStatus(status)).thenReturn(ideasByStatus);
-        List<Idea> result = ideaService.getListIdeaByStatus(status);
+        List<Idea> result = ideaService.getListIdeaOnConfirmation();
+
+        // Then
+        assertEquals(1, result.size());
+        assertEquals(status, result.get(0).getStatus());
+        verify(ideaRepository).findAllByStatus(status);
+    }
+
+    @Test
+    void testGetListIdeaOnApproval() {
+        List<Idea> ideas = new ArrayList<>();
+        StatusIdea status = StatusIdea.ON_APPROVAL;
+
+        Idea idea = Idea.builder()
+                .status(status)
+                .build();
+        ideas.add(idea);
+
+        Idea idea1 = Idea.builder()
+                .status(StatusIdea.ON_CONFIRMATION)
+                .build();
+        ideas.add(idea1);
+
+        // When
+        List<Idea> ideasByStatus = ideas.stream().filter(i -> i.getStatus().equals(status)).toList();
+        when(ideaRepository.findAllByStatus(status)).thenReturn(ideasByStatus);
+        List<Idea> result = ideaService.getListIdeaOnApproval();
 
         // Then
         assertEquals(1, result.size());
