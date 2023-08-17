@@ -15,8 +15,8 @@ public class Chat {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-    @OneToMany(cascade= CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL)
     private List<Message> messages;
-    @ManyToMany(fetch = FetchType.LAZY)
+    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<User> members;
 }
