@@ -21,7 +21,7 @@ public class TaskService {
         return taskRepository.findAll();
     }
 
-    @Cacheable(cacheNames = {"saveTaskCache"}, key = "task")
+
     public void saveTask(Task task) {
         task.setCreatedAt(new Date());
         taskRepository.save(task);
@@ -31,7 +31,7 @@ public class TaskService {
         taskRepository.deleteById(id);
     }
 
-    @Cacheable(cacheNames = {"updateTaskCache"}, key = "updatedTaskid")
+
     public void updateTask(Long id, Task updatedTask) {
         Task task = taskRepository.findById(id).orElseThrow();
         task.setTitle(updatedTask.getTitle());

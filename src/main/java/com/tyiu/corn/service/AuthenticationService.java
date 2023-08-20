@@ -34,7 +34,6 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtCore jwtCore;
 
-    @Cacheable(cacheNames = {"AuthenticationResponseloginCache"}, key = "request")
     public AuthenticationResponse login(LoginRequest request){
         Authentication authentication = authenticationManager
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
@@ -54,7 +53,6 @@ public class AuthenticationService {
         else throw new AuthorizationNotSuccessException("Авторизация не удалась");
     }
 
-    @Cacheable(cacheNames = {"AuthenticationResponseregisterCache"}, key = "request")
     public AuthenticationResponse register(RegisterRequest request){
         if (!userRepository.existsByEmail(request.getEmail())){
             User user = User.builder()

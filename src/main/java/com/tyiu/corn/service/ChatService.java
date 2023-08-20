@@ -25,20 +25,20 @@ public class ChatService {
     }
 
     public Chat createChat(Chat chat, String email) {
-        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException());
+        User user = userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException(""));
         chat.setMembers(List.of(user));
         return chatRepository.save(chat);
     }
 
     public Message addMessageToChat(Long chatId, Message message) {
-        Chat chat = chatRepository.findById(chatId).orElseThrow(() -> new RuntimeException());
+        Chat chat = chatRepository.findById(chatId).orElseThrow(() -> new RuntimeException(""));
         chat.getMessages().add(message);
         chatRepository.save(chat);
         return message;
     }
 
     public List<Message> getChatMessages(Long chatId) {
-        Chat chat = chatRepository.findById(chatId).orElseThrow(() -> new RuntimeException());
+        Chat chat = chatRepository.findById(chatId).orElseThrow(() -> new RuntimeException(""));
         return chat.getMessages();
     }
 

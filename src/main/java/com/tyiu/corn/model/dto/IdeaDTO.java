@@ -1,28 +1,23 @@
-package com.tyiu.corn.model.entities;
+package com.tyiu.corn.model.dto;
 
+import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import jakarta.persistence.*;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.Date;
 import java.util.List;
-
-
-@Entity
-@Setter
-@Getter
-@NoArgsConstructor
+@Data
 @AllArgsConstructor
-@Builder
-public class Idea {
-    @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+@NoArgsConstructor
+public class IdeaDTO {
+
     private Long id;
     private String initiator;
     private String name;
-
-    @Enumerated(EnumType.STRING)
     private ProjectType projectType;
     private String experts;
     private String problem;
@@ -34,8 +29,6 @@ public class Idea {
     private String realizability;
     private String suitability;
     private Long budget;
-
-    @Enumerated(EnumType.STRING)
     private StatusIdea status;
     private double rating;
     private double risk;
@@ -46,6 +39,4 @@ public class Idea {
     private String technicalFeasibility;
     private String understanding;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Comment> comments;
 }

@@ -3,11 +3,23 @@ services:
     build: .
     platform: linux/amd64
     ports:
-      - 3000:3000
+      - "3000:3000"
     depends_on:
           - postgres
     networks:
       - postgres
+  redis:
+    image: redis:7.2.0-alpine
+    environment:
+      REDIS_USERNAME: admin
+      REDIS_PASSWORD: admin
+    ports:
+      - "6379:6379"
+    networks:
+      - redis
+    volumes:
+      - redis:/data/redis
+    restart: unless-stopped
   postgres:
     container_name: postgres
     image: postgres
@@ -40,6 +52,9 @@ services:
 networks:
   postgres:
     driver: bridge
+  redis:
+    driver: bridge
 volumes:
   postgres:
   pgadmin:
+  redis:

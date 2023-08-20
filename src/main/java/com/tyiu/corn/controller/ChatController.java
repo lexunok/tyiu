@@ -3,6 +3,10 @@ package com.tyiu.corn.controller;
 import java.security.Principal;
 import java.util.List;
 
+import org.springframework.messaging.handler.annotation.DestinationVariable;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 import com.tyiu.corn.model.entities.Chat;
@@ -12,7 +16,7 @@ import com.tyiu.corn.service.ChatService;
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("api/v1/chat")
+@RequestMapping("/api/v1/chat")
 @RequiredArgsConstructor
 public class ChatController {
 
@@ -36,5 +40,6 @@ public class ChatController {
     @PostMapping("/create")
     public Chat createChat(@RequestBody Chat chat,Principal principal){
         return chatService.createChat(chat, principal.getName());
-    } 
+    }
+
 }

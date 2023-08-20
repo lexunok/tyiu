@@ -1,5 +1,6 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import org.springframework.web.bind.annotation.*;
@@ -19,27 +20,27 @@ public class IdeaController {
 
 
     @GetMapping("/initiator")
-    public List<Idea> showListIdeaForInitiator(Principal principal){
+    public List<IdeaDTO> showListIdeaForInitiator(Principal principal){
         return ideaService.getListIdeaForInitiator(principal.getName());
     }
 
     @GetMapping("/project-office")
-    public List<Idea> showListIdeaForProjectOffice(){
+    public List<IdeaDTO> showListIdeaForProjectOffice(){
         return ideaService.getListIdeaOnConfirmation();
     }
 
     @GetMapping("/expert")
-    public List<Idea> showListIdeaForExpert(){
+    public List<IdeaDTO> showListIdeaForExpert(){
         return ideaService.getListIdeaOnApproval();
     }
 
     @GetMapping("/admin")
-    public List<Idea> showListIdeaForAdmin(){
+    public List<IdeaDTO> showListIdeaForAdmin(){
         return ideaService.getListIdea();
     }
 
     @PostMapping("/initiator/add")
-    public Idea addIdea(@RequestBody Idea idea, Principal principal) {
+    public IdeaDTO addIdea(@RequestBody IdeaDTO idea, Principal principal) {
         return ideaService.saveIdea(idea, principal.getName());
     }
 
@@ -54,7 +55,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/update/{ideaId}")
-    public void updateIdeaByInitiator(@PathVariable Long ideaId, Principal principal, @RequestBody Idea updatedIdea) {
+    public void updateIdeaByInitiator(@PathVariable Long ideaId, Principal principal, @RequestBody IdeaDTO updatedIdea) {
         ideaService.updateIdeaByInitiator(ideaId, principal.getName(), updatedIdea);
     }
 
@@ -74,7 +75,7 @@ public class IdeaController {
     }
 
     @PutMapping("/admin/update/{ideaId}")
-    public void updateIdeaByAdmin(@PathVariable Long ideaId, @RequestBody Idea updatedIdea) {
+    public void updateIdeaByAdmin(@PathVariable Long ideaId, @RequestBody IdeaDTO updatedIdea) {
         ideaService.updateIdeaByAdmin(ideaId, updatedIdea);
     }
 }

@@ -17,15 +17,12 @@ import lombok.RequiredArgsConstructor;
 public class CompanyService {
     private final CompanyRepository companyRepository;
 
-    @Cacheable(cacheNames = {"getListCompanyCache"}, key = "company")
     public List<Company> getListCompany() {
         List<Company> company = companyRepository.findAll();
-        List<Company> companyName = company.stream()
+        return company.stream()
         .map(u -> Company.builder().id(u.getId()).name(u.getName()).build()).toList();
-        return companyName;
     }
 
-    @Cacheable(cacheNames = {"getListStaffCache"}, key = "companyid")
     public List<UserDTO> getListStaff(Long id) {
         Company company = companyRepository.findById(id).orElseThrow(() -> new RuntimeException("Компания не найдена"));
         List<User> users = company.getStaff();
@@ -34,7 +31,6 @@ public class CompanyService {
         return userDTO;
     }
     
-    @Cacheable(cacheNames = {"addCompanyCache"}, key = "company")
     public Company addCompany(Company company) {
         return companyRepository.save(company);
     }
@@ -44,7 +40,6 @@ public class CompanyService {
         companyRepository.deleteById(id);
     }
 
-    @Cacheable(cacheNames = {"updateCompanyCache"}, key = "companyid")
     public void updateCompany(Long id, Company updatedCompany) {
         Company company = companyRepository.findById(id).orElseThrow();
         company.setName(updatedCompany.getName());

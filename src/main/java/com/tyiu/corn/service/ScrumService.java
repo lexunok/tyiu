@@ -18,7 +18,7 @@ public class ScrumService {
         return scrumRepository.findAll();
     }
 
-    @Cacheable(cacheNames = {"saveScrumCache"}, key = "scrum")
+
     public void saveScrum(Scrum scrum) {
         scrumRepository.save(scrum);
     }
@@ -26,7 +26,7 @@ public class ScrumService {
     public void deleteScrum(Long id) {
         scrumRepository.deleteById(id);
     }
-    @Cacheable(cacheNames = {"updateScrumCache"}, key = "updatedScrumid")
+
     public void updateScrum(Long id, Scrum updatedScrum) {
         Scrum scrum = scrumRepository.findById(id).orElseThrow();
         scrum.setDescription(updatedScrum.getDescription());

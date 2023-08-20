@@ -1,5 +1,6 @@
 package com.tyiu.corn.config;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpHeaders;
@@ -23,7 +24,10 @@ import java.util.List;
 
 @Configuration
 public class ApplicationConfig{
-
+    @Bean
+    public ModelMapper modelMapper(){
+        return new ModelMapper();
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder(){
