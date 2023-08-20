@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import java.util.Date;
 
@@ -24,8 +24,12 @@ public class Comment {
     private String sender;
     private List<String> checkedBy;
     private Date dateCreated;
-
-    @ManyToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    
+    @JoinColumn(name = "IDEA_ID")
+    @ManyToOne(targetEntity = Idea.class, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private Idea idea;
+
+    @Column(name = "IDEA_ID", insertable = false, updatable = false)
+    private Long ideaId;
 }
