@@ -5,6 +5,7 @@ import com.tyiu.corn.service.CommentService;
 import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
@@ -15,17 +16,22 @@ import org.springframework.web.bind.annotation.*;
 public class CommentController {
     private final CommentService commentService;
 
-    @PostMapping("/add/{ideaId}")
-    public Comment saveComment(@RequestBody Comment comment, @PathVariable Long ideaId) {
-        return commentService.createComment(ideaId, comment);
+    @GetMapping("/get-idea-comments/{ideaId}")
+    public Map<String, List<Comment>> getAllIdeaComments(@PathVariable Long ideaId){
+        return Map.of("comments", commentService.getAllIdeaComments(ideaId));
     }
-    @DeleteMapping("/delete/{ideaId}/{commentId}")
-    public Map<String, String> deleteComment(@PathVariable Long ideaId, @PathVariable Long commentId, Principal principal) {
-        commentService.deleteComment(ideaId, commentId, principal.getName());
+
+    @PostMapping("/add/{ideaId}")
+    public Comment saveComment(@RequestBody Comment comment, @PathVariable Long ideaId, Principal principal) {
+        return commentService.createComment(ideaId, comment, principal.getName());
+    }
+    @DeleteMapping("/delete/{commentId}")
+    public Map<String, String> deleteComment(@PathVariable Long commentId, Principal principal) {
+        commentService.deleteComment(commentId, principal.getName());
         return Map.of("success", "Успешное удаление комментария");
     }
-    @PutMapping("/check/{ideaId}")
-    public void checkComment(Comment comment, @PathVariable Long ideaId){
-        commentService.checkCommentByUser(comment, ideaId);
+    @PutMapping("/check/{commentId}")
+    public void checkComment(@PathVariable Long commentId, Principal principal){
+        commentService.checkCommentByUser(commentId, principal.getName());
     }
 }

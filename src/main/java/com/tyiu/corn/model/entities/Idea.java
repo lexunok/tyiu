@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import jakarta.persistence.*;
@@ -18,6 +19,7 @@ import java.util.List;
 public class Idea {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
+    @Column(name = "IDEA_ID")
     private Long id;
     private String initiator;
     private String name;
@@ -46,6 +48,7 @@ public class Idea {
     private String technicalFeasibility;
     private String understanding;
 
-    @OneToMany
+    @OneToMany(mappedBy = "idea", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @JsonIgnore
     private List<Comment> comments;
 }
