@@ -17,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import com.tyiu.corn.model.dto.InvitationDTO;
@@ -96,7 +97,6 @@ public class AccountChangeControllerTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     void sendRightOneEmail(){
         Temporary request = Temporary.builder()
         .email("timur.minyazeff@gmail.com")
@@ -107,7 +107,7 @@ public class AccountChangeControllerTest {
             .uri("/api/v1/profile-action/send/email")
             .header("Authorization","Bearer " + jwt)
             .body(Mono.just(request), Temporary.class)
-            .exchange().expectBody(Map.class)
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
             .returnResult().getResponseBody();
         
         assertNotNull(response);
@@ -222,7 +222,6 @@ public class AccountChangeControllerTest {
         assertEquals("Добавьте почту", response.getError());
     }
     @Test
-    @SuppressWarnings("unchecked")
     void sendRightRequestToResetEmail(){
         Temporary emailChange = Temporary.builder()
         .oldEmail("dontfakemail@gmfefail.com")
@@ -234,7 +233,7 @@ public class AccountChangeControllerTest {
             .uri("/api/v1/profile-action/send/request-to-change-email")
             .header("Authorization","Bearer " + jwt)
             .body(Mono.just(emailChange), Temporary.class)
-            .exchange().expectBody(Map.class)
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
             .returnResult().getResponseBody();
 
         assertNotNull(response);
@@ -242,7 +241,6 @@ public class AccountChangeControllerTest {
         assertEquals("Ссылка на изменение почты находится на новой почте", response.get("success"));
     }
     @Test
-    @SuppressWarnings("unchecked")
     void sendRightRequestToResetPassword(){
         Temporary passwordChange = Temporary.builder()
         .email("dontfakemail@gmfefail.com")
@@ -252,7 +250,7 @@ public class AccountChangeControllerTest {
             .post()
             .uri("/api/v1/profile-action/send/request-to-change-password")
             .body(Mono.just(passwordChange), Temporary.class)
-            .exchange().expectBody(Map.class)
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
             .returnResult().getResponseBody();
 
         assertNotNull(response);
@@ -293,7 +291,6 @@ public class AccountChangeControllerTest {
         assertEquals(errorResponse.getError(), "Пользователь с такой почтой существует");
     }
     @Test
-    @SuppressWarnings("unchecked")
     void changePassword(){
         //Before
         RegisterRequest request = new RegisterRequest(
@@ -330,14 +327,13 @@ public class AccountChangeControllerTest {
             .put()
             .uri("/api/v1/profile-action/change/password")
             .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(Map.class)
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
             .returnResult().getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals("Успешное изменение пароля", responseChange.get("success"));
     }
     @Test
-    @SuppressWarnings("unchecked")
     void changeEmail(){
         //Before
          RegisterRequest request = new RegisterRequest(
@@ -376,7 +372,7 @@ public class AccountChangeControllerTest {
             .uri("/api/v1/profile-action/change/email")
             .header("Authorization","Bearer " + response.getToken())
             .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(Map.class)
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
             .returnResult().getResponseBody();
 
         assertNotNull(responseChange);
@@ -562,7 +558,6 @@ public class AccountChangeControllerTest {
         assertEquals(responseChange.getError(), "Неправильный код");
     }
     @Test
-    @SuppressWarnings("unchecked")
     void changeFullUserInfo(){
         //Before
         RegisterRequest request = new RegisterRequest(
@@ -589,7 +584,7 @@ public class AccountChangeControllerTest {
             .uri("/api/v1/profile-action/change/user-info")
             .header("Authorization","Bearer " + jwt)
             .body(Mono.just(changeRequest), UserInfoRequest.class)
-            .exchange().expectBody(Map.class)
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
             .returnResult().getResponseBody();
 
         assertNotNull(responseChange);
