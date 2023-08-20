@@ -2,6 +2,7 @@ package com.tyiu.corn.service;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.model.dto.UserDTO;
@@ -16,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 public class CompanyService {
     private final CompanyRepository companyRepository;
 
+    @Cacheable(cacheNames = {"getListCompanyCache"}, key = "company")
     public List<Company> getListCompany() {
         List<Company> company = companyRepository.findAll();
         List<Company> companyName = company.stream()
@@ -23,6 +25,7 @@ public class CompanyService {
         return companyName;
     }
 
+    @Cacheable(cacheNames = {"getListStaffCache"}, key = "companyid")
     public List<UserDTO> getListStaff(Long id) {
         Company company = companyRepository.findById(id).orElseThrow(() -> new RuntimeException("Компания не найдена"));
         List<User> users = company.getStaff();
@@ -30,15 +33,18 @@ public class CompanyService {
                 .map(u -> UserDTO.builder().email(u.getEmail()).firstName(u.getFirstName()).lastName(u.getLastName()).roles(u.getRoles()).build()).toList();
         return userDTO;
     }
-
+    
+    @Cacheable(cacheNames = {"addCompanyCache"}, key = "company")
     public Company addCompany(Company company) {
         return companyRepository.save(company);
     }
 
+    
     public void deleteCompany(Long id) {
         companyRepository.deleteById(id);
     }
 
+    @Cacheable(cacheNames = {"updateCompanyCache"}, key = "companyid")
     public void updateCompany(Long id, Company updatedCompany) {
         Company company = companyRepository.findById(id).orElseThrow();
         company.setName(updatedCompany.getName());

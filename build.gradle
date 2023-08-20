@@ -39,6 +39,7 @@ dependencies {
 	testImplementation 'org.testcontainers:postgresql'
 	testImplementation 'org.testcontainers:junit-jupiter'
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+	implementation 'org.springframework.boot: spring-boot-starter-validation'
 }
 
 tasks.named('test') {
