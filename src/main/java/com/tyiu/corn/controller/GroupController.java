@@ -13,10 +13,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.service.GroupService;
 
-@RestController
+import lombok.RequiredArgsConstructor;
 
+@RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/group")
 public class GroupController {
+    
     
     @Autowired
     private final GroupService groupService;
