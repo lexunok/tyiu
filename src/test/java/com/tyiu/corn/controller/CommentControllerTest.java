@@ -1,7 +1,7 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.entities.Comment;
-import com.tyiu.corn.model.entities.Idea;
+import com.tyiu.corn.model.dto.CommentDTO;
+import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -55,13 +55,15 @@ public class CommentControllerTest {
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(projectOfficeResponse);
-        Idea idea = Idea.builder().budget(12345L).name("Пирожки")
-        .customer("f").build();
-        Idea ideaResponse = webTestClient.post()
+        IdeaDTO idea = new IdeaDTO();
+        idea.setName("Пирожки");
+        idea.setBudget(1351L);
+        idea.setCustomer("f");
+        IdeaDTO ideaResponse = webTestClient.post()
         .uri("/api/v1/idea/initiator/add")
         .header("Authorization","Bearer " + initiatorResponse.getToken())
-        .body(Mono.just(idea), Idea.class)
-        .exchange().expectBody(Idea.class)
+        .body(Mono.just(idea), IdeaDTO.class)
+        .exchange().expectBody(IdeaDTO.class)
         .returnResult().getResponseBody();
 
         assertNotNull(ideaResponse);
@@ -71,13 +73,15 @@ public class CommentControllerTest {
         initiatorJwt = initiatorResponse.getToken();
         
         //For getAllIdeaComments test
-        Idea secondIdea = Idea.builder().budget(123424525L).name("Биометрические данные")
-        .customer("f").build();
-        Idea secondIdeaResponse = webTestClient.post()
+        IdeaDTO secondIdea = new IdeaDTO();
+        secondIdea.setBudget(123424525L);
+        secondIdea.setName("Биометрические данные");
+        secondIdea.setCustomer("f");
+        IdeaDTO secondIdeaResponse = webTestClient.post()
         .uri("/api/v1/idea/initiator/add")
         .header("Authorization","Bearer " + initiatorJwt)
-        .body(Mono.just(secondIdea), Idea.class)
-        .exchange().expectBody(Idea.class)
+        .body(Mono.just(secondIdea), IdeaDTO.class)
+        .exchange().expectBody(IdeaDTO.class)
         .returnResult().getResponseBody();
         assertNotNull(secondIdeaResponse);
         secondIdeaId = secondIdeaResponse.getId();
@@ -99,14 +103,14 @@ public class CommentControllerTest {
                     .returnResult().getResponseBody();
             assertNotNull(authenticationResponse);
 
-            Comment comment = Comment.builder()
+            CommentDTO comment = CommentDTO.builder()
             .comment(sender.get("comment")).build();
 
-            Comment response = webTestClient.post()
+            CommentDTO response = webTestClient.post()
             .uri("/api/v1/comment/add/{secondIdeaId}", secondIdeaId)
             .header("Authorization","Bearer " + authenticationResponse.getToken())
-            .body(Mono.just(comment), Comment.class)
-            .exchange().expectBody(Comment.class)
+            .body(Mono.just(comment), CommentDTO.class)
+            .exchange().expectBody(CommentDTO.class)
             .returnResult().getResponseBody();
 
             assertNotNull(response);
@@ -123,13 +127,13 @@ public class CommentControllerTest {
     
     @Test
     void createComment(){
-        Comment comment = Comment.builder().comment("Доделай").build();
+        CommentDTO comment = CommentDTO.builder().comment("Доделай").build();
         
-        Comment response = webTestClient.post()
+        CommentDTO response = webTestClient.post()
         .uri("/api/v1/comment/add/{firstIdeaId}", firstIdeaId)
         .header("Authorization","Bearer " + jwt)
-        .body(Mono.just(comment), Comment.class)
-        .exchange().expectBody(Comment.class)
+        .body(Mono.just(comment), CommentDTO.class)
+        .exchange().expectBody(CommentDTO.class)
         .returnResult().getResponseBody();
 
         assertNotNull(response);
@@ -141,12 +145,12 @@ public class CommentControllerTest {
 
     @Test
     void createCommentIfIdeaNotExist(){
-        Comment comment = Comment.builder().comment("Доделай").build();
+        CommentDTO comment = CommentDTO.builder().comment("Доделай").build();
         Long id = 1314513L;
         ErrorResponse response = webTestClient.post()
         .uri("/api/v1/comment/add/{id}", id)
         .header("Authorization","Bearer " + jwt)
-        .body(Mono.just(comment), Comment.class)
+        .body(Mono.just(comment), CommentDTO.class)
         .exchange().expectBody(ErrorResponse.class)
         .returnResult().getResponseBody();
 
@@ -157,10 +161,10 @@ public class CommentControllerTest {
     int counter = 0;
     @Test
     void getAllIdeaComments(){
-        Map<String, List<Comment>> comments = webTestClient.get()
+        Map<String, List<CommentDTO>> comments = webTestClient.get()
             .uri("/api/v1/comment/get-idea-comments/{secondIdeaId}", secondIdeaId)
             .header("Authorization","Bearer " + jwt)
-            .exchange().expectBody(new ParameterizedTypeReference<Map<String, List<Comment>>>() {})
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, List<CommentDTO>>>() {})
             .returnResult().getResponseBody();
         
         assertNotNull(comments);
@@ -189,13 +193,13 @@ public class CommentControllerTest {
 
     @Test
     void checkComment(){
-        Comment commentRequest = Comment.builder().comment("Неплохо").build();
+        CommentDTO commentRequest = CommentDTO.builder().comment("Неплохо").build();
         
-        Comment response = webTestClient.post()
+        CommentDTO response = webTestClient.post()
         .uri("/api/v1/comment/add/{firstIdeaId}", firstIdeaId)
         .header("Authorization","Bearer " + jwt)
-        .body(Mono.just(commentRequest), Comment.class)
-        .exchange().expectBody(Comment.class)
+        .body(Mono.just(commentRequest), CommentDTO.class)
+        .exchange().expectBody(CommentDTO.class)
         .returnResult().getResponseBody();
 
         assertNotNull(response);
@@ -209,15 +213,15 @@ public class CommentControllerTest {
         .header("Authorization","Bearer " + initiatorJwt)
         .exchange().expectStatus().isOk().expectBody(Void.class);
 
-        Map<String, List<Comment>> comments = webTestClient.get()
+        Map<String, List<CommentDTO>> comments = webTestClient.get()
             .uri("/api/v1/comment/get-idea-comments/{firstIdeaId}", firstIdeaId)
             .header("Authorization","Bearer " + jwt)
-            .exchange().expectBody(new ParameterizedTypeReference<Map<String, List<Comment>>>() {})
+            .exchange().expectBody(new ParameterizedTypeReference<Map<String, List<CommentDTO>>>() {})
             .returnResult().getResponseBody();
         
         assertNotNull(comments);
 
-        Comment finalValue = comments.get("comments").stream()
+        CommentDTO finalValue = comments.get("comments").stream()
         .filter(ideaComment -> ideaComment.getId() == response.getId())
         .findFirst().get();
 
@@ -227,13 +231,13 @@ public class CommentControllerTest {
     }
     @Test
     void deleteYourComment(){
-        Comment commentRequest = Comment.builder().comment("Все плохо").build();
+        CommentDTO commentRequest = CommentDTO.builder().comment("Все плохо").build();
         
-        Comment commentResponse = webTestClient.post()
+        CommentDTO commentResponse = webTestClient.post()
         .uri("/api/v1/comment/add/{firstIdeaId}", firstIdeaId)
         .header("Authorization","Bearer " + jwt)
-        .body(Mono.just(commentRequest), Comment.class)
-        .exchange().expectBody(Comment.class)
+        .body(Mono.just(commentRequest), CommentDTO.class)
+        .exchange().expectBody(CommentDTO.class)
         .returnResult().getResponseBody();
 
         assertNotNull(commentResponse);
@@ -256,13 +260,13 @@ public class CommentControllerTest {
 
     @Test
     void deleteNotYourComment(){
-        Comment commentRequest = Comment.builder().comment("Все плохо").build();
+        CommentDTO commentRequest = CommentDTO.builder().comment("Все плохо").build();
         
-        Comment commentResponse = webTestClient.post()
+        CommentDTO commentResponse = webTestClient.post()
         .uri("/api/v1/comment/add/{firstIdeaId}", firstIdeaId)
         .header("Authorization","Bearer " + jwt)
-        .body(Mono.just(commentRequest), Comment.class)
-        .exchange().expectBody(Comment.class)
+        .body(Mono.just(commentRequest), CommentDTO.class)
+        .exchange().expectBody(CommentDTO.class)
         .returnResult().getResponseBody();
 
         assertNotNull(commentResponse);

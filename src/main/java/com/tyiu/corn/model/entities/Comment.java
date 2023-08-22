@@ -27,9 +27,5 @@ public class Comment {
     
     @JoinColumn(name = "IDEA_ID")
     @ManyToOne(targetEntity = Idea.class, fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    @JsonIgnore
     private Idea idea;
-
-    @Column(name = "IDEA_ID", insertable = false, updatable = false)
-    private Long ideaId;
 }
