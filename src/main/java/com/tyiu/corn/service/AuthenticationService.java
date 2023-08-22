@@ -68,6 +68,7 @@ public class AuthenticationService {
                         .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                 String jwt = jwtCore.issueToken(userDetails.getUsername(),user.getRoles());
+                log.info(jwt);
                 return AuthenticationResponse.builder()
                         .email(user.getEmail())
                         .token(jwt)

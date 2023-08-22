@@ -3,14 +3,16 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
+
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
-import com.tyiu.corn.model.entities.Idea;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.security.Principal;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/idea")
 @RequiredArgsConstructor
@@ -61,6 +63,7 @@ public class IdeaController {
 
     @PutMapping("/initiator/send/{ideaId}")
     public void updateStatusByInitiator(@PathVariable Long ideaId, Principal principal) {
+        log.info("INCONTROL");
         ideaService.updateStatusByInitiator(ideaId, principal.getName());
     }
 

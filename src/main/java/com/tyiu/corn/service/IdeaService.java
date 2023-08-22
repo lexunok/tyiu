@@ -8,6 +8,8 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.cache.annotation.CacheConfig;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = {"ideas"})
@@ -66,10 +69,13 @@ public class IdeaService {
     public void deleteIdeaByAdmin(Long id) {
         ideaRepository.deleteById(id);
     }
-    @CachePut
-    public void updateStatusByInitiator (Long ideaId, String email){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
+
+    @CacheEvict
+    public void updateStatusByInitiator (Long id, String email){
+        log.info(email);
+        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         if (email.equals(idea.getInitiator())){
+            log.info(email);
             idea.setStatus(StatusIdea.ON_CONFIRMATION);
             ideaRepository.save(idea);
         }

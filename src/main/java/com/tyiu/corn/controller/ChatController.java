@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 public class ChatController {
 
     private final ChatService chatService;
-
+    
     @MessageMapping("/chat")
     @SendTo("/topic/messages")
     public Message sendMessage(@Payload Message message) {
