@@ -1,5 +1,7 @@
 package com.tyiu.corn.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -25,9 +27,9 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Group> getGroupById(@PathVariable Long id) {
-        final Group group = groupService.getGroupById(id);
-        return ResponseEntity.ok(group);
+    public ResponseEntity<List<Group>> getGroupById(@PathVariable Long id) {
+        List<Group> groups = groupService.getGroupsById(id);
+        return ResponseEntity.ok(groups);
     }
     
     @PostMapping
