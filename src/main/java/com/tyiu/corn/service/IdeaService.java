@@ -81,11 +81,10 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateStatusByInitiator (Long id, String email){
-        log.info(email);
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         if (email.equals(idea.getInitiator())){
-            log.info(email);
             idea.setStatus(StatusIdea.ON_CONFIRMATION);
             ideaRepository.save(idea);
         }
