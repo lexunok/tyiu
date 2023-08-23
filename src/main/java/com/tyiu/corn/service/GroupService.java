@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
@@ -15,8 +16,12 @@ public class GroupService {
     @Autowired
     private final GroupRepository groupRepository;
 
+
     public List<Group> getGroupsById(Long id) {
         return groupRepository.findAllById(id);
+
+    public Group getGroupById(Long id) {
+        return groupRepository.findById(id).orElseThrow();
     }
     
     public Group createGroup(Group group) {

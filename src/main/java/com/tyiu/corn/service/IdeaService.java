@@ -8,6 +8,8 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RiskDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.cache.annotation.CacheConfig;
@@ -18,6 +20,7 @@ import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = {"ideas"})
@@ -66,9 +69,10 @@ public class IdeaService {
     public void deleteIdeaByAdmin(Long id) {
         ideaRepository.deleteById(id);
     }
-    @CachePut
-    public void updateStatusByInitiator (Long ideaId, String email){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
+
+    @CacheEvict(allEntries = true)
+    public void updateStatusByInitiator (Long id, String email){
+        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         if (email.equals(idea.getInitiator())){
             idea.setStatus(StatusIdea.ON_CONFIRMATION);
             ideaRepository.save(idea);
@@ -77,7 +81,7 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
-    @CachePut
+    @CacheEvict(allEntries = true)
     public void updateIdeaByInitiator(Long id, String email, IdeaDTO updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         if (email.equals(idea.getInitiator())){
@@ -100,13 +104,13 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
-    @CachePut
+    @CacheEvict(allEntries = true)
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
         idea.setStatus(newStatus);
         ideaRepository.save(idea);
     }
-    @CachePut
+    @CacheEvict(allEntries = true)
     public void updateStatusByExpert(Long ideaId, RiskDTO riskDTO){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
         idea.setStatus(riskDTO.getStatus());
@@ -117,7 +121,7 @@ public class IdeaService {
         idea.setUnderstanding(riskDTO.getUnderstanding());
         ideaRepository.save(idea);
     }
-    @CachePut
+    @CacheEvict(allEntries = true)
     public void updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         idea.setName(updatedIdea.getName());

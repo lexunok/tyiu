@@ -17,7 +17,6 @@ import com.tyiu.corn.service.GroupService;
 
 import lombok.RequiredArgsConstructor;
 
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/group")
