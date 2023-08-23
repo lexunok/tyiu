@@ -32,6 +32,16 @@ public class IdeaService {
         List<Idea> ideas = ideaRepository.findAllByInitiator(initiator);
         return mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType());
     }
+    
+    @Cacheable(key = "#id")
+    public IdeaDTO getIdeaForInitiator(Long id, String email) {
+        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException("Идея не найдена"));
+        if (email.equals(idea.getInitiator())) {
+            return mapper.map(idea, IdeaDTO.class);
+        } else {
+            throw new RuntimeException("Идея не принадлежит инициатору");
+        }
+    }
     @Cacheable
     public List<IdeaDTO> getListIdeaOnApproval() {
         List<Idea> ideas = ideaRepository.findAllByStatus(StatusIdea.ON_APPROVAL);
@@ -70,7 +80,7 @@ public class IdeaService {
         ideaRepository.deleteById(id);
     }
 
-    @CacheEvict
+    @CacheEvict(allEntries = true)
     public void updateStatusByInitiator (Long id, String email){
         log.info(email);
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
@@ -83,7 +93,8 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
-    @CachePut
+    
+    @CacheEvict(allEntries = true)
     public void updateIdeaByInitiator(Long id, String email, IdeaDTO updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         if (email.equals(idea.getInitiator())){
@@ -106,13 +117,15 @@ public class IdeaService {
             throw new RuntimeException("Идея не принадлежит инициатору");
         }
     }
-    @CachePut
+    
+    @CacheEvict(allEntries = true)
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
         idea.setStatus(newStatus);
         ideaRepository.save(idea);
     }
-    @CachePut
+    
+    @CacheEvict(allEntries = true)
     public void updateStatusByExpert(Long ideaId, RiskDTO riskDTO){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
         idea.setStatus(riskDTO.getStatus());
@@ -123,7 +136,8 @@ public class IdeaService {
         idea.setUnderstanding(riskDTO.getUnderstanding());
         ideaRepository.save(idea);
     }
-    @CachePut
+    
+    @CacheEvict(allEntries = true)
     public void updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         idea.setName(updatedIdea.getName());

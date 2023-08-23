@@ -25,6 +25,11 @@ public class IdeaController {
     public List<IdeaDTO> showListIdeaForInitiator(Principal principal){
         return ideaService.getListIdeaForInitiator(principal.getName());
     }
+    
+    @GetMapping("/initiator/{ideaId}")
+    public IdeaDTO getIdeaForInitiator(@PathVariable Long ideaId, Principal principal) {
+        return ideaService.getIdeaForInitiator(ideaId, principal.getName());
+    }
 
     @GetMapping("/project-office")
     public List<IdeaDTO> showListIdeaForProjectOffice(){
