@@ -1,5 +1,7 @@
 package com.tyiu.corn.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -13,18 +15,22 @@ import org.springframework.web.bind.annotation.RestController;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.service.GroupService;
 
-@RestController
+import lombok.RequiredArgsConstructor;
 
+
+@RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/group")
 public class GroupController {
+    
     
     @Autowired
     private final GroupService groupService;
 
     @GetMapping("/{id}")
-    public ResponseEntity<Group> getGroupById(@PathVariable Long id) {
-        final Group group = groupService.getGroupById(id);
-        return ResponseEntity.ok(group);
+    public ResponseEntity<List<Group>> getGroupById(@PathVariable Long id) {
+        List<Group> groups = groupService.getGroupsById(id);
+        return ResponseEntity.ok(groups);
     }
     
     @PostMapping
