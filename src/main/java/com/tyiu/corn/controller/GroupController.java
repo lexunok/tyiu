@@ -21,21 +21,21 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/group")
 public class GroupController {
-    
-    
     @Autowired
     private final GroupService groupService;
 
-    @GetMapping("/{id}")
-    public ResponseEntity<List<Group>> getGroupById(@PathVariable Long id) {
-        List<Group> groups = groupService.getGroupsById(id);
-        return ResponseEntity.ok(groups);
+    @GetMapping("/all")
+    public List<Group> getGroupById() {
+        return groupService.getGroups();
     }
-    
-    @PostMapping
-    public ResponseEntity<Group> createGroup(@RequestBody Group group) {
-        final Group createdGroup = groupService.createGroup(group);
-        return ResponseEntity.status(HttpStatus.CREATED).body(createdGroup);
+    @GetMapping("/{id}")
+    public Group getGroupById(@PathVariable Long id) {
+        return groupService.getGroupById(id);
+    }
+
+    @PostMapping("/add")
+    public Group createGroup(@RequestBody Group group) {
+        return groupService.createGroup(group);
     }
     
 }

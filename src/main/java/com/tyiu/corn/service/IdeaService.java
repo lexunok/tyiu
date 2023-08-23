@@ -81,7 +81,6 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    @CacheEvict(allEntries = true)
     public void updateStatusByInitiator (Long id, String email){
         Idea idea = ideaRepository.findById(id).orElseThrow(() -> new RuntimeException(""));
         if (email.equals(idea.getInitiator())){

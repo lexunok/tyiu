@@ -8,7 +8,4 @@ import com.tyiu.corn.model.entities.Group;
 
 public interface GroupRepository extends JpaRepository<Group, Long>{
 
-    List<Group> findAllById(Long id);
-
-
 }
