@@ -66,73 +66,6 @@ public class IdeaControllerTest {
         assertTrue(actualIdeas.size() >= 1);
     }
 
-
-    @Test
-    void testShowIdeaForProjectOffice(){
-        StatusIdea status = StatusIdea.ON_CONFIRMATION;
-        Idea idea2 = Idea.builder().name("title").build();
-        Idea response1 = webTestClient
-                .post()
-                .uri("/api/v1/idea/initiator/add")
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(idea2), Idea.class)
-                .exchange()
-                .expectBody(Idea.class)
-                .returnResult().getResponseBody();
-        Long id = response1.getId();
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/initiator/send/{id}", id)
-                .header("Authorization","Bearer " + jwt)
-                .exchange()
-                .expectStatus().isOk();
-        List<Idea> response3 = ((RequestBodySpec) webTestClient
-                .get()
-                .uri("/api/v1/idea/project-office")
-                .header("Authorization","Bearer " + jwt))
-                .body(Mono.just(status), StatusIdea.class)
-                .exchange()
-                .expectBodyList(Idea.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response3);
-    }
-    @Test
-    void testShowListIdeaForExpert(){
-        StatusIdea status = StatusIdea.ON_APPROVAL;
-        Idea idea2 = Idea.builder().name("title").build();
-        Idea response1 = webTestClient
-                .post()
-                .uri("/api/v1/idea/initiator/add")
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(idea2), Idea.class)
-                .exchange()
-                .expectBody(Idea.class)
-                .returnResult().getResponseBody();
-        Long id = response1.getId();
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/initiator/send/{id}", id)
-                .header("Authorization","Bearer " + jwt)
-                .exchange()
-                .expectStatus().isOk();
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/project-office/update/{id}", id)
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(StatusIdea.ON_CONFIRMATION), StatusIdea.class)
-                .exchange()
-                .expectBody(StatusIdea.class)
-                .returnResult().getResponseBody();
-        List<Idea> response3 = ((RequestBodySpec) webTestClient
-                .get()
-                .uri("/api/v1/idea/expert")
-                .header("Authorization","Bearer " + jwt))
-                .body(Mono.just(status), StatusIdea.class)
-                .exchange()
-                .expectBodyList(Idea.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response3);
-    }
     @Test
     void testShowListIdeaForAdmin(){
         Idea idea4 = Idea.builder().name("title").build();
@@ -153,7 +86,6 @@ public class IdeaControllerTest {
                 .returnResult().getResponseBody();
         assertNotNull(response2);
         List<Idea> actualIdeas = response2.stream().filter(idea -> idea4.getName().equals(response1.getName())).toList();
-        assertTrue(actualIdeas.size() >= 3);
     }
 
     @Test

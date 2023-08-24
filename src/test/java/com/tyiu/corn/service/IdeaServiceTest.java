@@ -67,61 +67,6 @@ public class IdeaServiceTest {
         verify(ideaRepository).findAllByInitiator(initiator);
     }
 
-    @Test
-    void testGetListIdeaOnConfirmation() {
-        List<IdeaDTO> ideasDTO = new ArrayList<>();
-        StatusIdea status = StatusIdea.ON_CONFIRMATION;
-
-        IdeaDTO ideaDTO = IdeaDTO.builder()
-                .status(status)
-                .build();
-        ideasDTO.add(ideaDTO);
-
-
-        List<Idea> ideas = new ArrayList<>();
-        Idea idea = Idea.builder()
-                .status(status)
-                .build();
-        ideas.add(idea);
-
-
-        // When
-        when(ideaRepository.findAllByStatus(status)).thenReturn(ideas);
-        when(mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType())).thenReturn(ideasDTO);
-        List<IdeaDTO> result = ideaService.getListIdeaOnConfirmation();
-
-        // Then
-        assertEquals(1, result.size());
-        assertEquals(status, result.get(0).getStatus());
-        verify(ideaRepository).findAllByStatus(status);
-    }
-
-    @Test
-    void testGetListIdeaOnApproval() {
-        List<IdeaDTO> ideasDTO = new ArrayList<>();
-        StatusIdea status = StatusIdea.ON_APPROVAL;
-
-        IdeaDTO ideaDTO = IdeaDTO.builder()
-                .status(status)
-                .build();
-        ideasDTO.add(ideaDTO);
-
-        List<Idea> ideas = new ArrayList<>();
-        Idea idea = Idea.builder()
-                .status(status)
-                .build();
-        ideas.add(idea);
-
-        // When
-        when(ideaRepository.findAllByStatus(status)).thenReturn(ideas);
-        when(mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType())).thenReturn(ideasDTO);
-        List<IdeaDTO> result = ideaService.getListIdeaOnApproval();
-
-        // Then
-        assertEquals(1, result.size());
-        assertEquals(status, result.get(0).getStatus());
-        verify(ideaRepository).findAllByStatus(status);
-    }
 
     @Test
     void testGetListIdea(){

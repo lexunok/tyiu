@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.Date;
@@ -28,14 +29,14 @@ public class CommentRepositoryTest {
         Idea idea = Idea.builder().name("Пирожки").build();
         idea = ideaRepository.save(idea);
         assertTrue(ideaRepository.existsById(idea.getId()));
-        Comment comment = Comment.builder().comment("Хорошо").dateCreated(new Date()).idea(idea).ideaId(idea.getId()).build();
+        Comment comment = Comment.builder().comment("Хорошо").dateCreated(new Date()).idea(idea).build();
 
         comment = underTest.save(comment);
         assertTrue(underTest.existsById(comment.getId()));
         //When
         underTest.deleteById(comment.getId());
         //Then
-        assertTrue(!underTest.existsById(comment.getId()));
+        assertFalse(underTest.existsById(comment.getId()));
         assertTrue(ideaRepository.existsById(idea.getId()));
     }
 }
