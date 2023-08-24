@@ -20,7 +20,6 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
-
     @GetMapping("/initiator")
     public List<IdeaDTO> showListIdeaForInitiator(Principal principal){
         return ideaService.getListIdeaForInitiator(principal.getName());
@@ -68,7 +67,6 @@ public class IdeaController {
 
     @PutMapping("/initiator/send/{ideaId}")
     public void updateStatusByInitiator(@PathVariable Long ideaId, Principal principal) {
-        log.info("INCONTROL");
         ideaService.updateStatusByInitiator(ideaId, principal.getName());
     }
 

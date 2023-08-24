@@ -34,6 +34,7 @@ public class Idea {
     private String realizability;
     private String suitability;
     private Long budget;
+    private Long preAssessment;
 
     @Enumerated(EnumType.STRING)
     private StatusIdea status;

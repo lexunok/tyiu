@@ -25,6 +25,7 @@ public class IdeaDTO {
     private String problem;
     private String solution;
     private String result;
+    private Long preAssessment;
     private String customer;
     private String contactPerson;
     private String description;

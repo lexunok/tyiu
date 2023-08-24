@@ -23,6 +23,6 @@ public class Group {
     private Long id;
     private String name;
     @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<User> email;
+    private List<User> users;
     
 }
