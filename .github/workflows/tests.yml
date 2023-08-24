@@ -26,5 +26,5 @@ jobs:
           docker-compose up -d
 
       - name: Build JAR file
-        run: ./gradlew -PspringProfile=prod build
+        run: ./gradlew -PspringProfile=test build
 
