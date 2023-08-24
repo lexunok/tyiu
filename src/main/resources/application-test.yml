@@ -1,4 +1,9 @@
 spring:
+  main:
+      banner-mode: off
+  output:
+    ansi:
+      enabled: ALWAYS
   mail:
     host: smtp.gmail.com
     port: 587
