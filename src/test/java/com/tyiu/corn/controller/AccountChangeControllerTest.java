@@ -38,7 +38,6 @@ import reactor.core.publisher.Mono;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = WebEnvironment.RANDOM_PORT)
-@ActiveProfiles("test")
 @AutoConfigureWebTestClient(timeout = "100000")//100 seconds
 public class AccountChangeControllerTest {
     @Autowired

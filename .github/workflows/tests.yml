@@ -1,6 +1,9 @@
 name: TESTS
 
-on: workflow_dispatch
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   run_tests:
@@ -27,4 +30,7 @@ jobs:
 
       - name: Build JAR file
         run: ./gradlew -PspringProfile=test build -x test
+
+      - name: Run tests
+        run: ./gradlew test -PspringProfile=test
 

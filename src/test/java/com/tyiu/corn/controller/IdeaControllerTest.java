@@ -25,7 +25,6 @@ import java.util.List;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-@ActiveProfiles("test")
 public class IdeaControllerTest {
     @Autowired
     private WebTestClient webTestClient;
