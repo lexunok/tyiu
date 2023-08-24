@@ -27,14 +27,14 @@ public class CommentController {
         return Map.of("comments", commentService.getAllIdeaComments(ideaId));
     }
 
-    @MessageMapping("/comments/{ideaId}/createComment")
+    @MessageMapping("/comments/create-comment/{ideaId}")
     @SendTo("/topic/comments/{ideaId}")
     public CommentDTO createComment(@DestinationVariable Long ideaId, @Payload CommentDTO commentDTO, Principal principal) {
         return commentService.createComment(ideaId, commentDTO, principal.getName());
     }
 
-    @MessageMapping("/comments/{ideaId}/deleteComment")
-    @SendTo("/topic/comments/{ideaId}/{commentId}")
+    @MessageMapping("/comments/delete-comment/{commentId}")
+    @SendTo("/topic/comments/{ideaId}")
     public Map<String, Long> deleteComment(@DestinationVariable Long commentId, Principal principal) {
         commentService.deleteComment(commentId, principal.getName());
         return Map.of("commentId", commentId);
