@@ -37,4 +37,4 @@ out/
 .vscode/
 
 ### recourses ###
-/src/main/resources/
+/src/main/resources/application.yml

@@ -1,13 +1,4 @@
 services:
-  tyiu:
-    build: .
-    platform: linux/amd64
-    ports:
-      - "3000:3000"
-    depends_on:
-          - postgres
-    networks:
-      - postgres
   redis:
     image: redis:7.2.0-alpine
     environment:

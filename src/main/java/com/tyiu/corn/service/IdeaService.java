@@ -43,16 +43,6 @@ public class IdeaService {
         }
     }
     @Cacheable
-    public List<IdeaDTO> getListIdeaOnApproval() {
-        List<Idea> ideas = ideaRepository.findAllByStatus(StatusIdea.ON_APPROVAL);
-        return mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType());
-    }
-    @Cacheable
-    public List<IdeaDTO> getListIdeaOnConfirmation() {
-        List<Idea> ideas = ideaRepository.findAllByStatus(StatusIdea.ON_CONFIRMATION);
-        return mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType());
-    }
-    @Cacheable
     public List<IdeaDTO> getListIdea() {
         List<Idea> ideas = ideaRepository.findAll();
         return mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType());

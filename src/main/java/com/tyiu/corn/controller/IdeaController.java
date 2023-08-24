@@ -30,17 +30,7 @@ public class IdeaController {
         return ideaService.getIdeaForInitiator(ideaId, principal.getName());
     }
 
-    @GetMapping("/project-office")
-    public List<IdeaDTO> showListIdeaForProjectOffice(){
-        return ideaService.getListIdeaOnConfirmation();
-    }
-
-    @GetMapping("/expert")
-    public List<IdeaDTO> showListIdeaForExpert(){
-        return ideaService.getListIdeaOnApproval();
-    }
-
-    @GetMapping("/admin")
+    @GetMapping("/all")
     public List<IdeaDTO> showListIdeaForAdmin(){
         return ideaService.getListIdea();
     }
