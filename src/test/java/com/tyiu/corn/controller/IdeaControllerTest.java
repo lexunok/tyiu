@@ -1,6 +1,6 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.dto.RiskDTO;
+import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.entities.Idea;
 
 import com.tyiu.corn.model.enums.Role;
@@ -13,10 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import org.springframework.test.web.reactive.server.WebTestClient.RequestBodySpec;
 
 import static org.junit.jupiter.api.Assertions.*;
 import reactor.core.publisher.Mono;
@@ -186,15 +183,15 @@ public class IdeaControllerTest {
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
         Long id = response0.getId();
-        RiskDTO riskDTO = RiskDTO.builder().status(StatusIdea.CONFIRMED).risk(4.4).price("price")
+        RatingDTO ratingDTO = RatingDTO.builder().status(StatusIdea.CONFIRMED).rating(4.4).marketValue("price")
                                     .originality("orig").technicalFeasibility("tech").understanding("under").build();
-        RiskDTO response = webTestClient
+        RatingDTO response = webTestClient
                 .put()
                 .uri("/api/v1/idea/expert/update/{id}", id)
                 .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(riskDTO), RiskDTO.class)
+                .body(Mono.just(ratingDTO), RatingDTO.class)
                 .exchange()
-                .expectBody(RiskDTO.class)
+                .expectBody(RatingDTO.class)
                 .returnResult().getResponseBody();
         assertNull(response);
     }

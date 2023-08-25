@@ -7,10 +7,10 @@ import lombok.Data;
 
 @Data
 @Builder
-public class RiskDTO {
+public class RatingDTO {
     private StatusIdea status;
-    private double risk;
-    private String price;
+    private double rating;
+    private String marketValue;
     private String originality;
     private String technicalFeasibility;
     private String understanding;

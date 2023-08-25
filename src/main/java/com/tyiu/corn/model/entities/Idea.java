@@ -42,7 +42,7 @@ public class Idea {
     private double risk;
     private Date dateCreated;
     private Date dateModified;
-    private String price;
+    private String marketValue;
     private String originality;
     private String technicalFeasibility;
     private String understanding;

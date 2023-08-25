@@ -1,7 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
-import com.tyiu.corn.model.dto.RiskDTO;
+import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 
 import org.springframework.web.bind.annotation.*;
@@ -66,8 +66,8 @@ public class IdeaController {
     }
 
     @PutMapping("/expert/update/{ideaId}")
-    public void updateStatusByExpert(@PathVariable Long ideaId, @RequestBody RiskDTO riskDTO){
-        ideaService.updateStatusByExpert(ideaId, riskDTO);
+    public void updateStatusByExpert(@PathVariable Long ideaId, @RequestBody RatingDTO ratingDTO){
+        ideaService.updateStatusByExpert(ideaId, ratingDTO);
     }
 
     @PutMapping("/admin/update/{ideaId}")

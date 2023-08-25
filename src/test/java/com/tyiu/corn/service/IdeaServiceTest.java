@@ -1,12 +1,11 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
-import com.tyiu.corn.model.dto.RiskDTO;
+import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.repository.IdeaRepository;
-import jakarta.persistence.Id;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -256,9 +255,9 @@ public class IdeaServiceTest {
 
     @Test
     void testUpdateStatusByExpert(){
-        RiskDTO riskDTO = RiskDTO.builder()
+        RatingDTO ratingDTO = RatingDTO.builder()
                 .status(StatusIdea.CONFIRMED)
-                .risk(3.5).price("3000")
+                .rating(2).marketValue("3000")
                 .originality("Очень оригинально")
                 .technicalFeasibility("Очень возможно")
                 .understanding("Очень понятно")
@@ -266,8 +265,8 @@ public class IdeaServiceTest {
 
         Idea idea = Idea.builder()
                 .status(StatusIdea.ON_APPROVAL)
-                .risk(2)
-                .price("2000")
+                .rating(2)
+                .marketValue("2000")
                 .originality("Оригинально")
                 .technicalFeasibility("Возможно")
                 .understanding("Понятно")
@@ -276,8 +275,8 @@ public class IdeaServiceTest {
         when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
         when(ideaRepository.save(idea)).thenReturn(idea);
 
-        ideaService.updateStatusByExpert(idea.getId(), riskDTO);
-        assertEquals(riskDTO.getStatus(), idea.getStatus());
-        assertEquals(riskDTO.getRisk(), idea.getRisk());
+        ideaService.updateStatusByExpert(idea.getId(), ratingDTO);
+        assertEquals(ratingDTO.getStatus(), idea.getStatus());
+        assertEquals(ratingDTO.getRating(), idea.getRating());
     }
 }

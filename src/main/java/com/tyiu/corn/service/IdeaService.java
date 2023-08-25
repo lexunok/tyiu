@@ -5,7 +5,7 @@ import java.util.List;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
-import com.tyiu.corn.model.dto.RiskDTO;
+import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +14,6 @@ import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -114,14 +113,14 @@ public class IdeaService {
     }
     
     @CacheEvict(allEntries = true)
-    public void updateStatusByExpert(Long ideaId, RiskDTO riskDTO){
+    public void updateStatusByExpert(Long ideaId, RatingDTO ratingDTO){
         Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new RuntimeException(""));
-        idea.setStatus(riskDTO.getStatus());
-        idea.setRisk(riskDTO.getRisk());
-        idea.setPrice(riskDTO.getPrice());
-        idea.setOriginality(riskDTO.getOriginality());
-        idea.setTechnicalFeasibility(riskDTO.getTechnicalFeasibility());
-        idea.setUnderstanding(riskDTO.getUnderstanding());
+        idea.setStatus(ratingDTO.getStatus());
+        idea.setRating(ratingDTO.getRating());
+        idea.setMarketValue(ratingDTO.getMarketValue());
+        idea.setOriginality(ratingDTO.getOriginality());
+        idea.setTechnicalFeasibility(ratingDTO.getTechnicalFeasibility());
+        idea.setUnderstanding(ratingDTO.getUnderstanding());
         ideaRepository.save(idea);
     }
     
