@@ -34,16 +34,6 @@ jobs:
       - name: Run tests
         run: ./gradlew test -Pprofile=test
 
-      - name: Clean test build
-        run: ./gradlew clean
-
-      - name: Delete docker images
-        run: |
-          docker stop $(docker ps -qa)
-          docker rm $(docker ps -qa)
-          docker rmi -f $(docker images -qa)
-          docker volume rm $(docker volume ls -q)
-
   build-and-push:
     needs: run_tests
     runs-on: ubuntu-latest
@@ -54,6 +44,17 @@ jobs:
       SERVICE_USERNAME: ${{ secrets.SERVICE_USERNAME }}
       SERVICE_PASSWORD: ${{ secrets.SERVICE_PASSWORD }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
 
       - name: Build containers
         run: |
