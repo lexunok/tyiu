@@ -1,5 +1,6 @@
 services:
   redis:
+    container_name: redis
     image: redis:7.2.0-alpine
     environment:
       REDIS_PASSWORD: ${SERVICE_PASSWORD}
@@ -26,6 +27,7 @@ services:
       - postgres
     restart: unless-stopped
   rabbitmq:
+    container_name: rabbitmq
     image: rabbitmq:3.10.7-management
     hostname: rabbitmq
     restart: always
