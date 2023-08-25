@@ -2,7 +2,6 @@ services:
   redis:
     image: redis:7.2.0-alpine
     environment:
-      REDIS_USERNAME: ${SERVICE_USERNAME}
       REDIS_PASSWORD: ${SERVICE_PASSWORD}
     ports:
       - "6379:6379"
