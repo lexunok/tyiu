@@ -32,7 +32,7 @@ public class Idea {
     private String contactPerson;
     private String description;
     private String realizability;
-    private String suitability;
+    private Long suitability;
     private Long budget;
     private Long preAssessment;
 
