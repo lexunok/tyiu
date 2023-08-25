@@ -1,0 +1,36 @@
+services:
+  redis:
+    image: redis:7.2.0-alpine
+    environment:
+      REDIS_USERNAME: ${SERVICE_USERNAME}
+      REDIS_PASSWORD: ${SERVICE_PASSWORD}
+    ports:
+      - "6379:6379"
+    networks:
+      - redis
+    volumes:
+      - redis:/data/redis
+    restart: unless-stopped
+  postgres:
+    container_name: postgres
+    image: postgres
+    environment:
+      POSTGRES_DB: tyiu
+      POSTGRES_USER: ${SERVICE_USERNAME}
+      POSTGRES_PASSWORD: ${SERVICE_PASSWORD}
+      PGDATA: /data/postgres
+    volumes:
+      - postgres:/data/postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres
+    restart: unless-stopped
+networks:
+  postgres:
+    driver: bridge
+  redis:
+    driver: bridge
+volumes:
+  postgres:
+  redis:
