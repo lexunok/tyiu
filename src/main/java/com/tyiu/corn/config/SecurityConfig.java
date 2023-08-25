@@ -45,6 +45,7 @@ public class SecurityConfig {
                         .requestMatchers("/api/v1/profile-action/change/password").permitAll()
                         .requestMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
                         .requestMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
+                        .requestMatchers("/ws").permitAll()
                         .anyRequest().authenticated())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
