@@ -26,6 +26,18 @@ services:
     networks:
       - postgres
     restart: unless-stopped
+  rabbitmq:
+    image: rabbitmq:3.10.7-management
+    hostname: rabbitmq
+    restart: always
+    environment:
+      - RABBITMQ_DEFAULT_USER= ${SERVICE_USERNAME}
+      - RABBITMQ_DEFAULT_PASS= ${SERVICE_PASSWORD}
+    volumes:
+      - rabbitmq:/var/lib/rabbitmq
+    ports:
+      - 15672:15672
+      - 5672:5672
 networks:
   postgres:
     driver: bridge
@@ -34,3 +46,4 @@ networks:
 volumes:
   postgres:
   redis:
+  rabbitmq:

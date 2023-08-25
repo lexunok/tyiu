@@ -1,3 +1,10 @@
+ДЛЯ ФРОНТЕНДЕРОВ
+---------------------------------------
+Вам нужен только файл docker-compose-start.yml который я могу скинуть
+и прописать команду
+docker-compose -f docker-compose-start.yml up -d
+---------------------------------------
+
 В первую очередь запуск контейнеров Docker в cmd
 docker compose up -d
 
@@ -13,4 +20,5 @@ docker compose up -d
       Запуск jar файла
       java -jar /build/libs/corn-1.jar
 --------------------------------------
+
 
