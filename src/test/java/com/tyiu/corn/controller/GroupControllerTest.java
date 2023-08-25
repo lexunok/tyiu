@@ -33,7 +33,7 @@ public class GroupControllerTest {
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "fakemail", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
+                "fakemail2", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
