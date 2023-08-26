@@ -34,14 +34,19 @@ public class AuthenticationService {
     private final AuthenticationManager authenticationManager;
     private final JwtCore jwtCore;
 
-    public AuthenticationResponse login(LoginRequest request){
-        Authentication authentication = authenticationManager
-                .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
-        if (authentication!=null){
+    public AuthenticationResponse login(LoginRequest request) {
+        Authentication authentication;
+        try {
+            authentication = authenticationManager
+                    .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
+        } catch (Exception e) {
+            throw new AuthorizationNotSuccessException("Авторизация не удалась");
+        }
+        if (authentication != null) {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             User user = userRepository.findByEmail(userDetails.getUsername())
                     .orElseThrow(() -> new UsernameNotFoundException("Пользователь не зарегистрирован"));
-            String jwt = jwtCore.issueToken(user.getEmail(),user.getRoles());
+            String jwt = jwtCore.issueToken(user.getEmail(), user.getRoles());
             return AuthenticationResponse.builder()
                     .email(user.getEmail())
                     .token(jwt)
@@ -49,9 +54,9 @@ public class AuthenticationService {
                     .lastName(user.getLastName())
                     .roles(user.getRoles())
                     .build();
-        }
-        else throw new AuthorizationNotSuccessException("Авторизация не удалась");
+        } else throw new AuthorizationNotSuccessException("Пользователь не может быть авторизован");
     }
+
 
     public AuthenticationResponse register(RegisterRequest request){
         if (!userRepository.existsByEmail(request.getEmail())){
@@ -68,7 +73,6 @@ public class AuthenticationService {
                         .authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword()));
                 CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
                 String jwt = jwtCore.issueToken(userDetails.getUsername(),user.getRoles());
-                log.info(jwt);
                 return AuthenticationResponse.builder()
                         .email(user.getEmail())
                         .token(jwt)
