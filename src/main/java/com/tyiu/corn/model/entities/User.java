@@ -2,9 +2,6 @@ package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.Role;
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.util.List;

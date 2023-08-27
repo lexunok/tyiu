@@ -40,13 +40,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/profile-action/get/invitation/**").permitAll()
-                        .requestMatchers("/api/v1/profile-action/change/password").permitAll()
-                        .requestMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
-                        .requestMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
-                        .requestMatchers("/ws").permitAll()
-                        .anyRequest().authenticated())
+                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/auth/**").permitAll()
+                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/get/invitation/**").permitAll()
+                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/change/password").permitAll()
+                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
+                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
+                        // После полного перехода на реактивный стэк .requestMatchers("/api/**").authenticated()
+                        .anyRequest().permitAll())
                 .authenticationProvider(authenticationProvider)
                 .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
                 return http.build();
