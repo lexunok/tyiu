@@ -33,7 +33,7 @@ public class GroupControllerTest {
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "fakemail2", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
+                "fakemail", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -44,6 +44,40 @@ public class GroupControllerTest {
         assertNotNull(response);
         jwt = response.getToken();
     }
+
+    @Test
+    void testGetGroupById() {
+        GroupDTO group = GroupDTO.builder().name("Test Group").build();
+        GroupDTO response = webTestClient
+                .post()
+                .uri("/api/v1/group/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(group), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+        Long id = response.getId();
+        GroupDTO response2 = webTestClient
+                .get()
+                .uri("/api/v1/group/{id}", id)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+        assertEquals(group.getName(), response2.getName());
+    }
+
+        @Test
+        void testGetAllGroups() {
+        GroupDTO[] response = webTestClient
+                .get()
+                .uri("/api/v1/group/all")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(GroupDTO[].class)
+                .returnResult().getResponseBody();
+        assertNotNull(response);
+        }
 
     @Test
     void testCreateGroup() {
@@ -82,5 +116,29 @@ public class GroupControllerTest {
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
     }
-
+    @Test
+    void testDeleteGroup() {
+        GroupDTO group = GroupDTO.builder().name("Test Group").build();
+        GroupDTO response = webTestClient
+                .post()
+                .uri("/api/v1/group/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(group), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+        Long id = response.getId();
+        webTestClient
+                .delete()
+                .uri("/api/v1/group/delete/{id}", id)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
+        webTestClient
+                .get()
+                .uri("/api/v1/group/{id}", id)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectStatus().isNotFound();
+    }
 }
