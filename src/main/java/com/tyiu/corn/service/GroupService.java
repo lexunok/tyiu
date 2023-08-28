@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -24,29 +26,29 @@ public class GroupService {
     private final GroupRepository groupRepository;
     private final ModelMapper mapper;
 
-    @Cacheable
-    public List<GroupDTO> getGroups() {
-        return groupRepository.findAll().stream().map(g -> mapper.map(g, GroupDTO.class)).toList();
+//    @Cacheable
+    public Flux<GroupDTO> getGroups() {
+        List<Group> groups = groupRepository.findAll();
+        return Flux.just(groups).map(g -> mapper.map(g, GroupDTO.class));
     }
-    @Cacheable
-    public GroupDTO getGroupById(Long id) {
+//    @Cacheable(key = "#id")
+    public Mono<GroupDTO> getGroupById(Long id) {
         Group group = groupRepository.findById(id).orElseThrow(() -> new NotFoundException("Not Found"));
-        return mapper.map(group, GroupDTO.class);
+        return Mono.just(mapper.map(group, GroupDTO.class));
     }
-    @CacheEvict
-    public GroupDTO createGroup(GroupDTO groupDTO) {
+    //@CacheEvict(allEntries = true)
+    public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
         Group group = mapper.map(groupDTO, Group.class);
         group = groupRepository.save(group);
-        return mapper.map(group, GroupDTO.class);
+        return Mono.just(mapper.map(group, GroupDTO.class));
     }
-    @CacheEvict
-    public GroupDTO updateGroup(Long id,GroupDTO groupDTO) {
+    //@CacheEvict(allEntries = true)
+    public void updateGroup(Long id,GroupDTO groupDTO) {
         Group group = groupRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
         group.setName(groupDTO.getName());
-        group = groupRepository.save(group);
-        return mapper.map(group, GroupDTO.class);
+        groupRepository.save(group);
     }
-    @CacheEvict
+    //@CacheEvict(allEntries = true)
     public void deleteGroup(Long id) {
         groupRepository.deleteById(id);
     }
