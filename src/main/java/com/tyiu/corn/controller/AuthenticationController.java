@@ -19,7 +19,7 @@ public class AuthenticationController {
     /*private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public Mono<Mono<AuthenticationResponse>> signIn(@RequestBody LoginRequest request) {
+    public Mono<AuthenticationResponse> signIn(@RequestBody LoginRequest request) {
         return Mono.fromCallable(() -> authenticationService.login(request));
     }
 

@@ -17,19 +17,17 @@ import reactor.core.publisher.Mono;
 @Service
 @RequiredArgsConstructor
 public class CompanyService {
+
     private final CompanyRepository companyRepository;
 
     public Flux<Company> getListCompany() {
         return companyRepository.findAll();
     }
 
-//    public Flux<UserDTO> getListStaff(Long id) {
-//        Mono<Company> company = companyRepository.findById(id);
-//        List<User> users = company.getStaff();
-//        List<UserDTO> userDTO = users.stream()
-//                .map(u -> UserDTO.builder().email(u.getEmail()).firstName(u.getFirstName()).lastName(u.getLastName()).roles(u.getRoles()).build()).toList();
-//        return userDTO;
-//    }
+    public Flux<UserDTO> getListStaff(Long id) {
+        Mono<Company> company = companyRepository.findById(id);
+        return company.flatMapMany(c -> Flux.fromIterable(c.getStaff())).cast(UserDTO.class);
+    }
     
     public Mono<Company> addCompany(Company company) {
         return companyRepository.save(company);
@@ -40,10 +38,12 @@ public class CompanyService {
         companyRepository.deleteById(id);
     }
 
-//    public void updateCompany(Long id, Company updatedCompany) {
-//        Mono<Company> company = companyRepository.findById(id);
-//        company.setName(updatedCompany.getName());
-//        company.setStaff(updatedCompany.getStaff());
-//        companyRepository.save(company);
-//    }
+    public void updateCompany(Long id, Company updatedCompany) {
+        Mono<Company> company = companyRepository.findById(id);
+        company.flatMap(c -> {
+            c.setName(updatedCompany.getName());
+            c.setStaff(updatedCompany.getStaff());
+            return companyRepository.save(c);
+        });
+    }
 }
