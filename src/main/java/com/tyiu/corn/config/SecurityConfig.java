@@ -6,6 +6,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
@@ -13,12 +14,15 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -27,28 +31,28 @@ import java.util.List;
 
 
 @Configuration
-@EnableWebSecurity
+@EnableWebFluxSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final TokenFilter tokenFilter;
-    private final AuthenticationProvider authenticationProvider;
+    //private final ReactiveAuthenticationManager authenticationManager;
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) throws Exception {
         http
                 .cors(Customizer.withDefaults())
-                .csrf(AbstractHttpConfigurer::disable)
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
+                .csrf(ServerHttpSecurity.CsrfSpec::disable)
+                //.sessionManagement(session -> session
+                //        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .authorizeExchange(authorize -> authorize
                         // После полного перехода на реактивный стэк .requestMatchers("/api/v1/auth/**").permitAll()
                         // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/get/invitation/**").permitAll()
                         // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/change/password").permitAll()
                         // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
                         // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
                         // После полного перехода на реактивный стэк .requestMatchers("/api/**").authenticated()
-                        .anyRequest().permitAll())
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+                        .anyExchange().permitAll());
+                //.authenticationManager(authenticationManager);
+                //.addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
                 return http.build();
     }
     @Bean

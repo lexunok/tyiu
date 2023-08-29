@@ -24,68 +24,67 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationService {
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final AuthenticationManager authenticationManager;
-    private final JwtCore jwtCore;
-
-    /*public Mono<AuthenticationResponse> login(LoginRequest request){
-        return Mono.fromCallable(() -> authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword())))
-            .flatMap(authentication -> {
-                if (authentication != null){
-                    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-                    return userRepository.findByEmail(userDetails.getUsername())
-                        .switchIfEmpty(Mono.error(new UsernameNotFoundException("Пользователь не зарегистрирован")))
-                        .flatMap(user -> {
-                            String jwt = jwtCore.issueToken(user.getEmail(),user.getRoles());
-                            return Mono.just(AuthenticationResponse.builder()
-                                .email(user.getEmail())
-                                .token(jwt)
-                                .firstName(user.getFirstName())
-                                .lastName(user.getLastName())
-                                .roles(user.getRoles())
-                                .build());
-                        });
-                } else {
-                    return Mono.error(new AuthorizationNotSuccessException("Авторизация не удалась"));
-                }
-            });
-    }
-
-    public Mono<AuthenticationResponse> register(RegisterRequest request){
-        return userRepository.existsByEmail(request.getEmail())
-            .flatMap(exists -> {
-                if (!exists){
-                    User user = User.builder()
-                        .roles(request.getRoles())
-                        .email(request.getEmail())
-                        .firstName(request.getFirstName())
-                        .lastName(request.getLastName())
-                        .password(passwordEncoder.encode(request.getPassword()))
-                        .build();
-                    return userRepository.save(user)
-                        .flatMap(savedUser -> {
-                            return Mono.fromCallable(() -> authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword())))
-                                .flatMap(authentication -> {
-                                    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
-                                    String jwt = jwtCore.issueToken(userDetails.getUsername(),savedUser.getRoles());
-                                    log.info(jwt);
-                                    return Mono.just(AuthenticationResponse.builder()
-                                        .email(savedUser.getEmail())
-                                        .token(jwt)
-                                        .firstName(savedUser.getFirstName())
-                                        .lastName(savedUser.getLastName())
-                                        .roles(savedUser.getRoles())
-                                        .build());
-                                });
-                        })
-                        .onErrorResume(e -> {
-                            userRepository.delete(user).subscribe();
-                            return Mono.error(new AuthorizationNotSuccessException("Авторизация не удалась"));
-                        });
-                } else {
-                    return Mono.error(new UserExistsException("Пользователь c такой почтой существует"));
-                }
-            });
-    }*/
+//    private final UserRepository userRepository;
+//    private final PasswordEncoder passwordEncoder;
+//    private final AuthenticationManager authenticationManager;
+//    private final JwtCore jwtCore;
+//
+//    public Mono<AuthenticationResponse> login(LoginRequest request){
+//        return Mono.fromCallable(() -> authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword())))
+//            .flatMap(authentication -> {
+//                if (authentication != null){
+//                    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+//                    return userRepository.findByEmail(userDetails.getUsername())
+//                        .switchIfEmpty(Mono.error(new UsernameNotFoundException("Пользователь не зарегистрирован")))
+//                        .flatMap(user -> {
+//                            String jwt = jwtCore.issueToken(user.getEmail(),user.getRoles());
+//                            return Mono.just(AuthenticationResponse.builder()
+//                                .email(user.getEmail())
+//                                .token(jwt)
+//                                .firstName(user.getFirstName())
+//                                .lastName(user.getLastName())
+//                                .roles(user.getRoles())
+//                                .build());
+//                        });
+//                } else {
+//                    return Mono.error(new AuthorizationNotSuccessException("Авторизация не удалась"));
+//                }
+//            });
+//    }
+//
+//    public Mono<AuthenticationResponse> register(RegisterRequest request){
+//        return userRepository.existsByEmail(request.getEmail())
+//            .flatMap(exists -> {
+//                if (!exists){
+//                    User user = User.builder()
+//                        .roles(request.getRoles())
+//                        .email(request.getEmail())
+//                        .firstName(request.getFirstName())
+//                        .lastName(request.getLastName())
+//                        .password(passwordEncoder.encode(request.getPassword()))
+//                        .build();
+//                    return userRepository.save(user)
+//                        .flatMap(savedUser -> {
+//                            return Mono.fromCallable(() -> authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getEmail(),request.getPassword())))
+//                                .flatMap(authentication -> {
+//                                    CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
+//                                    String jwt = jwtCore.issueToken(userDetails.getUsername(),savedUser.getRoles());
+//                                    return Mono.just(AuthenticationResponse.builder()
+//                                        .email(savedUser.getEmail())
+//                                        .token(jwt)
+//                                        .firstName(savedUser.getFirstName())
+//                                        .lastName(savedUser.getLastName())
+//                                        .roles(savedUser.getRoles())
+//                                        .build());
+//                                });
+//                        })
+//                        .onErrorResume(e -> {
+//                            userRepository.delete(user).subscribe();
+//                            return Mono.error(new AuthorizationNotSuccessException("Авторизация не удалась"));
+//                        });
+//                } else {
+//                    return Mono.error(new UserExistsException("Пользователь c такой почтой существует"));
+//                }
+//            });
+//    }
 }

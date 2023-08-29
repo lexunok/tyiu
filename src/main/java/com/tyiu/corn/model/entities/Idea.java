@@ -2,27 +2,26 @@ package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.Date;
 import java.util.List;
 
 
-@Entity
+
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table
 public class Idea {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
     private String initiator;
     private String name;
-
-    @Enumerated(EnumType.STRING)
     private ProjectType projectType;
     private String experts;
     private String problem;
@@ -35,8 +34,6 @@ public class Idea {
     private Long suitability;
     private Long budget;
     private Long preAssessment;
-
-    @Enumerated(EnumType.STRING)
     private StatusIdea status;
     private double rating;
     private double risk;
@@ -46,7 +43,5 @@ public class Idea {
     private String originality;
     private String technicalFeasibility;
     private String understanding;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
     private List<Comment> comments;
 }

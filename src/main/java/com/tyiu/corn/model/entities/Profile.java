@@ -1,32 +1,23 @@
 package com.tyiu.corn.model.entities;
 
-import com.tyiu.corn.model.entities.Comment;
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.util.List;
 
-@Entity
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table
 public class Profile {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
-
-    @ManyToMany
     private List<Scrum> scrums;
-
-    @ManyToMany
     private List<Idea> ideas;
-
-    @OneToMany
     private List<Task> tasks;
-
-    @OneToOne
     private Comment comment;
 
 }

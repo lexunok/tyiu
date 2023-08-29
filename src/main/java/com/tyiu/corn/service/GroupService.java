@@ -4,9 +4,6 @@ import java.util.List;
 
 import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.GroupDTO;
-import com.tyiu.corn.model.entities.User;
-import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -24,29 +21,29 @@ import reactor.core.publisher.Mono;
 public class GroupService {
 
     private final GroupRepository groupRepository;
-    private final ModelMapper mapper;
 
 //    @Cacheable
     public Flux<GroupDTO> getGroups() {
-        List<Group> groups = groupRepository.findAll();
-        return Flux.just(groups).map(g -> mapper.map(g, GroupDTO.class));
+        Flux<Group> groups = groupRepository.findAll();
+        return groups.cast(GroupDTO.class);
     }
 //    @Cacheable(key = "#id")
     public Mono<GroupDTO> getGroupById(Long id) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new NotFoundException("Not Found"));
-        return Mono.just(mapper.map(group, GroupDTO.class));
+        Mono<Group> group = groupRepository.findById(id);
+        return group.cast(GroupDTO.class);
     }
     //@CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
-        Group group = mapper.map(groupDTO, Group.class);
-        group = groupRepository.save(group);
-        return Mono.just(mapper.map(group, GroupDTO.class));
+        return Mono.just(groupDTO).cast(Group.class).flatMap(groupRepository::save).cast(GroupDTO.class);
     }
     //@CacheEvict(allEntries = true)
     public void updateGroup(Long id,GroupDTO groupDTO) {
-        Group group = groupRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
-        group.setName(groupDTO.getName());
-        groupRepository.save(group);
+        Mono<Group> group = groupRepository.findById(id);
+        group.flatMap(g -> {
+            g.setName(groupDTO.getName());
+            groupRepository.save(g);
+            return null;
+        });
     }
     //@CacheEvict(allEntries = true)
     public void deleteGroup(Long id) {

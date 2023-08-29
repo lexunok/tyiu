@@ -17,74 +17,74 @@ import com.tyiu.corn.service.AccountChangeService;
 import com.tyiu.corn.model.dto.InvitationDTO;
 
 @RestController
-@RequestMapping("/api/v1/profile-action")
+//@RequestMapping("/api/v1/profile-action")
 @RequiredArgsConstructor
 public class AccountChangeController {
     private final AccountChangeService accountChangeService;
-
-    @PostMapping("/send/email")
-    public Map<String, String> invitationSend(@RequestBody Temporary invitation){
-        accountChangeService.sendInvitation(invitation);
-        return Map.of("success", "Успешное приглашение");
-    }
-
-    @PostMapping("/send/emails")
-    public Map<String, String> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
-        accountChangeService.sendInvitations(invitationDTO);
-        return Map.of("success", "Успешное приглашение");
-    }
-
-    @PostMapping("/send/request-to-change-email")
-    public Map<String, String> requestToChangeEmail(@RequestBody Temporary changeEmail){
-        accountChangeService.sendEmailToChangeEmail(changeEmail);
-        return Map.of("success", "Ссылка на изменение почты находится на новой почте");
-    }
-
-    @PostMapping("/send/request-to-change-password")
-    public Map<String, String> requestToChangePassword(@RequestBody Temporary changePassword) {
-        return Map.of("key", accountChangeService.sendEmailToChangePassword(changePassword));
-    }
-
-    @PutMapping("/change/password")
-    public Map<String, String> changePasswordByUser(@RequestBody ChangeRequest request){
-        accountChangeService.changePasswordByUser(request);
-        return Map.of("success", "Успешное изменение пароля");
-    }
-
-    @PutMapping("/change/email")
-    public Map<String, String> changeEmailByUser(@RequestBody ChangeRequest request){
-        accountChangeService.changeEmailByUser(request);
-        return Map.of("success", "Успешное изменение почты");
-    }
-
-    @PutMapping("/change/user-info")
-    public Map<String, String> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
-        accountChangeService.changeUserInfo(request);
-        return Map.of("success", "Успешное изменение пользователя");
-    }
-
-    @GetMapping("/get/invitation/{url}")
-    public InvitationResponse registrateByInvitation(@PathVariable String url){
-        return accountChangeService.findByUrl(url);
-    }
-
-    @GetMapping("/change/email/{url}")
-    public ChangeResponse changeNewEmail(@PathVariable String url){
-        return accountChangeService.findByUrlAndSendCode(url);
-    }
-    
-    @GetMapping("/get/users-info")
-    public Map<String, List<UserInfoResponse>> getUsersInfo(){
-        return Map.of("users", accountChangeService.getUsersInfo());
-    }
-
-    @GetMapping("/get/users-email")
-    public Map<String, List<String>> getUsersEmail(){
-        return Map.of("emails", accountChangeService.getAllEmails());
-    }
-
-    @DeleteMapping("/delete/invitation/{url}")
-    public void DeleteByUrl(@PathVariable String url){
-        accountChangeService.deleteDataByUrl(url);
-    }  
+//
+//    @PostMapping("/send/email")
+//    public Map<String, String> invitationSend(@RequestBody Temporary invitation){
+//        accountChangeService.sendInvitation(invitation);
+//        return Map.of("success", "Успешное приглашение");
+//    }
+//
+//    @PostMapping("/send/emails")
+//    public Map<String, String> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
+//        accountChangeService.sendInvitations(invitationDTO);
+//        return Map.of("success", "Успешное приглашение");
+//    }
+//
+//    @PostMapping("/send/request-to-change-email")
+//    public Map<String, String> requestToChangeEmail(@RequestBody Temporary changeEmail){
+//        accountChangeService.sendEmailToChangeEmail(changeEmail);
+//        return Map.of("success", "Ссылка на изменение почты находится на новой почте");
+//    }
+//
+//    @PostMapping("/send/request-to-change-password")
+//    public Map<String, String> requestToChangePassword(@RequestBody Temporary changePassword) {
+//        return Map.of("key", accountChangeService.sendEmailToChangePassword(changePassword));
+//    }
+//
+//    @PutMapping("/change/password")
+//    public Map<String, String> changePasswordByUser(@RequestBody ChangeRequest request){
+//        accountChangeService.changePasswordByUser(request);
+//        return Map.of("success", "Успешное изменение пароля");
+//    }
+//
+//    @PutMapping("/change/email")
+//    public Map<String, String> changeEmailByUser(@RequestBody ChangeRequest request){
+//        accountChangeService.changeEmailByUser(request);
+//        return Map.of("success", "Успешное изменение почты");
+//    }
+//
+//    @PutMapping("/change/user-info")
+//    public Map<String, String> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
+//        accountChangeService.changeUserInfo(request);
+//        return Map.of("success", "Успешное изменение пользователя");
+//    }
+//
+//    @GetMapping("/get/invitation/{url}")
+//    public InvitationResponse registrateByInvitation(@PathVariable String url){
+//        return accountChangeService.findByUrl(url);
+//    }
+//
+//    @GetMapping("/change/email/{url}")
+//    public ChangeResponse changeNewEmail(@PathVariable String url){
+//        return accountChangeService.findByUrlAndSendCode(url);
+//    }
+//
+//    @GetMapping("/get/users-info")
+//    public Map<String, List<UserInfoResponse>> getUsersInfo(){
+//        return Map.of("users", accountChangeService.getUsersInfo());
+//    }
+//
+//    @GetMapping("/get/users-email")
+//    public Map<String, List<String>> getUsersEmail(){
+//        return Map.of("emails", accountChangeService.getAllEmails());
+//    }
+//
+//    @DeleteMapping("/delete/invitation/{url}")
+//    public void DeleteByUrl(@PathVariable String url){
+//        accountChangeService.deleteDataByUrl(url);
+//    }
 }

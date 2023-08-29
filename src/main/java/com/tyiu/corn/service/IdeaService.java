@@ -10,10 +10,6 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
@@ -27,45 +23,30 @@ import reactor.core.publisher.Mono;
 public class IdeaService {
 
     private final IdeaRepository ideaRepository;
-    private final ModelMapper mapper;
 
     // После полного перехода на реактивный стэк @Cacheable
     public Flux<IdeaDTO> getListIdeaForInitiator(String initiator) {
-        List<Idea> ideas = ideaRepository.findAllByInitiator(initiator);
-        return Flux.just(ideas).map(i -> mapper.map(i,IdeaDTO.class));
+        return ideaRepository.findAllByInitiator(initiator).cast(IdeaDTO.class);
     }
 
     // После полного перехода на реактивный стэк @Cacheable(key = "#id")
     public Mono<IdeaDTO> getIdeaForInitiator(Long id, String email) {
-        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        if (email.equals(idea.getInitiator())) {
-            return Mono.just(mapper.map(idea, IdeaDTO.class));
-        } else {
-            throw new AccessException("Идея не принадлежит инициатору");
-        }
+        return ideaRepository.findById(id).cast(IdeaDTO.class);
     }
     // После полного перехода на реактивный стэк @Cacheable
     public Flux<IdeaDTO> getListIdea() {
-        List<Idea> ideas = ideaRepository.findAll();
-        return Flux.just(ideas).map(i -> mapper.map(i, IdeaDTO.class));
+        return ideaRepository.findAll().cast(IdeaDTO.class);
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
         ideaDTO.setDateCreated(new Date());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
-        Idea idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
-        return Mono.just(mapper.map(idea, IdeaDTO.class));
+        return Mono.just(ideaDTO).cast(Idea.class).flatMap(ideaRepository::save).cast(IdeaDTO.class);
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void deleteIdeaByInitiator(Long id, String email) {
-        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        if (email.equals(idea.getInitiator())){
-            ideaRepository.deleteById(id);
-        }
-        else {
-            throw new AccessException("Идея не принадлежит инициатору");
-        }
+        ideaRepository.deleteById(id);
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void deleteIdeaByAdmin(Long id) {
@@ -74,77 +55,77 @@ public class IdeaService {
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void updateStatusByInitiator (Long id, String email){
-        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        if (email.equals(idea.getInitiator())){
-            idea.setStatus(StatusIdea.ON_CONFIRMATION);
-            ideaRepository.save(idea);
-        }
-        else {
-            throw new AccessException("Идея не принадлежит инициатору");
-        }
+        Mono<Idea> idea = ideaRepository.findById(id);
+        idea.flatMap(i -> {
+            i.setStatus(StatusIdea.ON_CONFIRMATION);
+            return ideaRepository.save(i);
+        });
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void updateIdeaByInitiator(Long id, String email, IdeaDTO updatedIdea) {
-        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        if (email.equals(idea.getInitiator())){
-            idea.setName(updatedIdea.getName());
-            idea.setProjectType(updatedIdea.getProjectType());
-            idea.setProblem(updatedIdea.getProblem());
-            idea.setSolution(updatedIdea.getSolution());
-            idea.setResult(updatedIdea.getResult());
-            idea.setCustomer(updatedIdea.getCustomer());
-            idea.setContactPerson(updatedIdea.getContactPerson());
-            idea.setDescription(updatedIdea.getDescription());
-            idea.setRealizability(updatedIdea.getRealizability());
-            idea.setSuitability(updatedIdea.getSuitability());
-            idea.setBudget(updatedIdea.getBudget());
-            idea.setRating(updatedIdea.getRating());
-            idea.setDateModified(new Date());
-            ideaRepository.save(idea);
-        }
-        else {
-            throw new AccessException("Идея не принадлежит инициатору");
-        }
+        Mono<Idea> idea = ideaRepository.findById(id);
+        idea.flatMap(i -> {
+            i.setName(updatedIdea.getName());
+            i.setProjectType(updatedIdea.getProjectType());
+            i.setProblem(updatedIdea.getProblem());
+            i.setSolution(updatedIdea.getSolution());
+            i.setResult(updatedIdea.getResult());
+            i.setCustomer(updatedIdea.getCustomer());
+            i.setContactPerson(updatedIdea.getContactPerson());
+            i.setDescription(updatedIdea.getDescription());
+            i.setRealizability(updatedIdea.getRealizability());
+            i.setSuitability(updatedIdea.getSuitability());
+            i.setBudget(updatedIdea.getBudget());
+            i.setRating(updatedIdea.getRating());
+            i.setDateModified(new Date());
+            return ideaRepository.save(i);
+        });
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        idea.setStatus(newStatus);
-        ideaRepository.save(idea);
+        Mono<Idea> idea = ideaRepository.findById(ideaId);
+        idea.flatMap(i ->{
+            i.setStatus(newStatus);
+            return ideaRepository.save(i);
+        });
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void updateStatusByExpert(Long ideaId, RatingDTO ratingDTO){
-        Idea idea = ideaRepository.findById(ideaId).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        idea.setStatus(ratingDTO.getStatus());
-        idea.setRating(ratingDTO.getRating());
-        idea.setMarketValue(ratingDTO.getMarketValue());
-        idea.setOriginality(ratingDTO.getOriginality());
-        idea.setTechnicalFeasibility(ratingDTO.getTechnicalFeasibility());
-        idea.setUnderstanding(ratingDTO.getUnderstanding());
-        ideaRepository.save(idea);
+        Mono<Idea> idea = ideaRepository.findById(ideaId);
+        idea.flatMap(i -> {
+            i.setStatus(ratingDTO.getStatus());
+            i.setRating(ratingDTO.getRating());
+            i.setMarketValue(ratingDTO.getMarketValue());
+            i.setOriginality(ratingDTO.getOriginality());
+            i.setTechnicalFeasibility(ratingDTO.getTechnicalFeasibility());
+            i.setUnderstanding(ratingDTO.getUnderstanding());
+            return ideaRepository.save(i);
+        });
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
-        Idea idea = ideaRepository.findById(id).orElseThrow(() -> new NotFoundException("Идея не найдена"));
-        idea.setName(updatedIdea.getName());
-        idea.setProjectType(updatedIdea.getProjectType());
-        idea.setExperts(updatedIdea.getExperts());
-        idea.setProblem(updatedIdea.getProblem());
-        idea.setSolution(updatedIdea.getSolution());
-        idea.setResult(updatedIdea.getResult());
-        idea.setCustomer(updatedIdea.getCustomer());
-        idea.setDescription(updatedIdea.getDescription());
-        idea.setRealizability(updatedIdea.getRealizability());
-        idea.setSuitability(updatedIdea.getSuitability());
-        idea.setBudget(updatedIdea.getBudget());
-        idea.setStatus(updatedIdea.getStatus());
-        idea.setRating(updatedIdea.getRating());
-        idea.setRisk(updatedIdea.getRisk());
-        idea.setDateModified(new Date());
-        ideaRepository.save(idea);
+        Mono<Idea> idea = ideaRepository.findById(id);
+        idea.flatMap(i -> {
+            i.setName(updatedIdea.getName());
+            i.setProjectType(updatedIdea.getProjectType());
+            i.setExperts(updatedIdea.getExperts());
+            i.setProblem(updatedIdea.getProblem());
+            i.setSolution(updatedIdea.getSolution());
+            i.setResult(updatedIdea.getResult());
+            i.setCustomer(updatedIdea.getCustomer());
+            i.setDescription(updatedIdea.getDescription());
+            i.setRealizability(updatedIdea.getRealizability());
+            i.setSuitability(updatedIdea.getSuitability());
+            i.setBudget(updatedIdea.getBudget());
+            i.setStatus(updatedIdea.getStatus());
+            i.setRating(updatedIdea.getRating());
+            i.setRisk(updatedIdea.getRisk());
+            i.setDateModified(new Date());
+            return ideaRepository.save(i);
+        });
     }
 }

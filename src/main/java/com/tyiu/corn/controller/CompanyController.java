@@ -6,6 +6,8 @@ import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Company;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -15,27 +17,27 @@ import java.util.List;
 public class CompanyController {
 
     private final CompanyService companyService;
-
-    @GetMapping()
-    public List<Company> getCompanyList(){
-        return companyService.getListCompany();
-    }
-
-    @GetMapping("/staff/{id}")
-    public List<UserDTO> getCompanyStaff(@PathVariable Long id){
-        return companyService.getListStaff(id);
-    }
-
-    @PostMapping("/add")
-    public Company addCompany(@RequestBody Company company){
-        return companyService.addCompany(company);
-    }
-    @DeleteMapping("/delete/{id}")
-    public void deleteCompany(@PathVariable Long id){
-        companyService.deleteCompany(id);
-    }
-    @PutMapping("/update/{id}")
-    public void updateCompany(@PathVariable Long id, @RequestBody Company company){
-        companyService.updateCompany(id, company);
-    }
+//
+//    @GetMapping()
+//    public Flux<Company> getCompanyList(){
+//        return companyService.getListCompany();
+//    }
+//
+//    @GetMapping("/staff/{id}")
+//    public Flux<UserDTO> getCompanyStaff(@PathVariable Long id){
+//        return companyService.getListStaff(id);
+//    }
+//
+//    @PostMapping("/add")
+//    public Mono<Company> addCompany(@RequestBody Company company){
+//        return companyService.addCompany(company);
+//    }
+//    @DeleteMapping("/delete/{id}")
+//    public void deleteCompany(@PathVariable Long id){
+//        companyService.deleteCompany(id);
+//    }
+//    @PutMapping("/update/{id}")
+//    public void updateCompany(@PathVariable Long id, @RequestBody Company company){
+//        companyService.updateCompany(id, company);
+//    }
 }

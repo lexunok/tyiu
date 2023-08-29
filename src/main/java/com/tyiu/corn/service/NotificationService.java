@@ -15,7 +15,7 @@ public class NotificationService {
         private final NotificationRepository notificationRepository;
 
         public Mono<Notification> createNotification(Notification notification) {
-            return Mono.just(notificationRepository.save(notification));
+            return notificationRepository.save(notification);
         }
         
 }

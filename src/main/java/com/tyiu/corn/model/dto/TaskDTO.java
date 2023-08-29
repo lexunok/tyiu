@@ -4,13 +4,10 @@ import com.tyiu.corn.model.entities.Profile;
 import com.tyiu.corn.model.entities.Scrum;
 import com.tyiu.corn.model.enums.Priority;
 import com.tyiu.corn.model.enums.Status;
-import jakarta.persistence.ManyToOne;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.CreationTimestamp;
-
 import java.util.Date;
 
 @Data

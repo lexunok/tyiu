@@ -1,20 +1,18 @@
 package com.tyiu.corn.model.entities;
 
 import java.util.Date;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Entity
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table
 public class Notification {
     @Id
-    @GeneratedValue
     private Long id;    
     private String message;
     private Date date;

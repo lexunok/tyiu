@@ -3,7 +3,6 @@ package com.tyiu.corn.model.dto;
 import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
-import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;

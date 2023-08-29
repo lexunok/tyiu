@@ -1,7 +1,8 @@
 package com.tyiu.corn.repository;
 
 import com.tyiu.corn.model.entities.Company;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
 
-public interface CompanyRepository extends JpaRepository<Company, Long> {
+public interface CompanyRepository extends ReactiveCrudRepository<Company, Long> {
 }
