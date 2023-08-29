@@ -10,22 +10,23 @@ import com.tyiu.corn.model.entities.Notification;
 import com.tyiu.corn.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
-
 import reactor.core.publisher.Mono;
 
 @RestController
 @RequestMapping("/api/v1/notification")
 @RequiredArgsConstructor
 public class NotificationController {
-    /* 
     private final NotificationService notificationService;
 
     @PostMapping("/notification")
-    public Mono<ResponseEntity<Notification>> createNotification(@RequestBody Notification notification) {
-        return notificationService.createNotification(notification)
-                .map(createdNotification -> ResponseEntity.ok(createdNotification));
-    }*/
+    public Mono<Notification> createNotification(@RequestBody Notification notification) {
+        return notificationService.createNotification(notification);
+    }
+
+
 }
+
+
 
 
 
