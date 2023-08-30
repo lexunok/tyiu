@@ -1,10 +1,7 @@
 package com.tyiu.corn.service;
 
 import java.util.Date;
-import java.util.List;
 
-import com.tyiu.corn.exception.AccessException;
-import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RatingDTO;

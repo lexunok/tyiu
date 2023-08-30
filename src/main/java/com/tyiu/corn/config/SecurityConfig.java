@@ -1,58 +1,49 @@
 package com.tyiu.corn.config;
 
-import com.tyiu.corn.util.security.TokenFilter;
+import com.tyiu.corn.util.security.AuthenticationManager;
+import com.tyiu.corn.util.security.SecurityContextRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.ReactiveAuthenticationManager;
-import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
-import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
-import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.cors.reactive.CorsConfigurationSource;
+import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
+
 
 import java.util.List;
 
 
 @Configuration
 @EnableWebFluxSecurity
+@EnableReactiveMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final TokenFilter tokenFilter;
-    //private final ReactiveAuthenticationManager authenticationManager;
+    private final AuthenticationManager authenticationManager;
+    private final SecurityContextRepository securityContextRepository;
     @Bean
-    public SecurityWebFilterChain securityFilterChain(ServerHttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
         http
-                .cors(Customizer.withDefaults())
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
-                //.sessionManagement(session -> session
-                //        .sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
+                .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
+                .cors(Customizer.withDefaults())
                 .authorizeExchange(authorize -> authorize
-                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/auth/**").permitAll()
-                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/get/invitation/**").permitAll()
-                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/change/password").permitAll()
-                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
-                        // После полного перехода на реактивный стэк .requestMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
-                        // После полного перехода на реактивный стэк .requestMatchers("/api/**").authenticated()
-                        .anyExchange().permitAll());
-                //.authenticationManager(authenticationManager);
-                //.addFilterBefore(tokenFilter, UsernamePasswordAuthenticationFilter.class);
+                        .pathMatchers("/api/v1/auth/**").permitAll()
+                        .pathMatchers("/api/v1/profile-action/get/invitation/**").permitAll()
+                        .pathMatchers("/api/v1/profile-action/change/password").permitAll()
+                        .pathMatchers("/api/v1/profile-action/delete/invitation/**").permitAll()
+                        .pathMatchers("/api/v1/profile-action/send/request-to-change-password").permitAll()
+                        .pathMatchers("/api/**").authenticated()
+                        .anyExchange().permitAll())
+                .authenticationManager(authenticationManager)
+                .securityContextRepository(securityContextRepository);
                 return http.build();
     }
     @Bean
@@ -65,6 +56,10 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**",configuration);
         return source;
+    }
+    @Bean
+    public PasswordEncoder passwordEncoder(){
+        return new BCryptPasswordEncoder();
     }
 
 

@@ -16,15 +16,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationController {
-    /*private final AuthenticationService authenticationService;
+
+    private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
     public Mono<AuthenticationResponse> signIn(@RequestBody LoginRequest request) {
-        return Mono.fromCallable(() -> authenticationService.login(request));
+        return authenticationService.login(request);
     }
 
     @PostMapping("/register")
-    public Mono<Mono<AuthenticationResponse>> signUp(@RequestBody RegisterRequest request) {
-        return Mono.fromCallable(() -> authenticationService.register(request));
-    }*/
+    public Mono<AuthenticationResponse> signUp(@RequestBody RegisterRequest request) {
+        return authenticationService.register(request);
+    }
 }

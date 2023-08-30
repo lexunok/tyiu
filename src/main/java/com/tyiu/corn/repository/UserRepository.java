@@ -12,7 +12,7 @@ import java.util.Optional;
 
 public interface UserRepository extends ReactiveCrudRepository<User,Long> {
     Mono<User> findByEmail(String email);
-    boolean existsByEmail(String email);
+    Mono<Boolean> existsByEmail(String email);
     @Modifying
     @Query("UPDATE User u SET u.email = ?1 WHERE u.id = ?2")
     void setEmail(String email, Long id);

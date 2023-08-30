@@ -23,7 +23,6 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
