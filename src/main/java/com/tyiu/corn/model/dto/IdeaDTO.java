@@ -16,7 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 public class IdeaDTO {
 
-    private Long id;
+    private String id;
     private String initiator;
     private String name;
     private ProjectType projectType;

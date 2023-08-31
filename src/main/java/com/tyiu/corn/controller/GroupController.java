@@ -26,7 +26,7 @@ public class GroupController {
     }
 
     @GetMapping("/{id}")
-    public Mono<GroupDTO> getGroupById(@PathVariable Long id) {
+    public Mono<GroupDTO> getGroupById(@PathVariable String id) {
         return groupService.getGroupById(id);
     }
 
@@ -35,13 +35,13 @@ public class GroupController {
         return groupService.createGroup(group);
     }
     @PutMapping("/update/{id}")
-    public Mono<Void> updateGroup(@PathVariable Long id,@RequestBody GroupDTO group) {
+    public Mono<Void> updateGroup(@PathVariable String id,@RequestBody GroupDTO group) {
         groupService.updateGroup(id, group);
         return Mono.empty();
 
     }
     @DeleteMapping("/delete/{id}")
-    public Mono<Void> deleteGroup(@PathVariable Long id) {
+    public Mono<Void> deleteGroup(@PathVariable String id) {
         groupService.deleteGroup(id);
         return Mono.empty();
     }

@@ -1,24 +1,9 @@
 package com.tyiu.corn.service;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-
-import com.tyiu.corn.exception.AccessException;
-import com.tyiu.corn.exception.NotFoundException;
-import com.tyiu.corn.model.entities.Comment;
-import com.tyiu.corn.model.entities.Idea;
-import com.tyiu.corn.model.dto.CommentDTO;
-import com.tyiu.corn.repository.CommentRepository;
-import com.tyiu.corn.repository.IdeaRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 

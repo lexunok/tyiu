@@ -3,7 +3,7 @@ package com.tyiu.corn.model.entities;
 import java.util.List;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 
 @Setter
@@ -11,7 +11,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table
+@Document
 public class Chat {
     @Id
     private Long id;

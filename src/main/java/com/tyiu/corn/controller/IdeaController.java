@@ -25,7 +25,7 @@ public class IdeaController {
     }
     
     @GetMapping("/initiator/{ideaId}")
-    public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable Long ideaId, Principal principal) {
+    public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, Principal principal) {
         return ideaService.getIdeaForInitiator(ideaId, principal.getName());
     }
 
@@ -40,43 +40,43 @@ public class IdeaController {
     }
 
     @DeleteMapping("/initiator/delete/{ideaId}")
-    public Mono<Void> deleteIdeaByInitiator(@PathVariable Long ideaId, Principal principal) {
+    public Mono<Void> deleteIdeaByInitiator(@PathVariable String ideaId, Principal principal) {
         ideaService.deleteIdeaByInitiator(ideaId, principal.getName());
         return Mono.empty();
     }
 
     @DeleteMapping("/admin/delete/{ideaId}")
-    public Mono<Void> deleteIdeaByAdmin(@PathVariable Long ideaId) {
+    public Mono<Void> deleteIdeaByAdmin(@PathVariable String ideaId) {
         ideaService.deleteIdeaByAdmin(ideaId);
         return Mono.empty();
     }
 
     @PutMapping("/initiator/update/{ideaId}")
-    public Mono<Void> updateIdeaByInitiator(@PathVariable Long ideaId, Principal principal, @RequestBody IdeaDTO updatedIdea) {
+    public Mono<Void> updateIdeaByInitiator(@PathVariable String ideaId, Principal principal, @RequestBody IdeaDTO updatedIdea) {
         ideaService.updateIdeaByInitiator(ideaId, principal.getName(), updatedIdea);
         return Mono.empty();
     }
 
     @PutMapping("/initiator/send/{ideaId}")
-    public Mono<Void> updateStatusByInitiator(@PathVariable Long ideaId, Principal principal) {
+    public Mono<Void> updateStatusByInitiator(@PathVariable String ideaId, Principal principal) {
         ideaService.updateStatusByInitiator(ideaId, principal.getName());
         return Mono.empty();
     }
 
     @PutMapping("/project-office/update/{ideaId}")
-    public Mono<Void> updateStatusIdeaByProjectOffice(@PathVariable Long ideaId, @RequestBody StatusIdea newStatus){
+    public Mono<Void> updateStatusIdeaByProjectOffice(@PathVariable String ideaId, @RequestBody StatusIdea newStatus){
         ideaService.updateStatusByProjectOffice(ideaId, newStatus);
         return Mono.empty();
     }
 
     @PutMapping("/expert/update/{ideaId}")
-    public Mono<Void> updateStatusByExpert(@PathVariable Long ideaId, @RequestBody RatingDTO ratingDTO){
+    public Mono<Void> updateStatusByExpert(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO){
         ideaService.updateStatusByExpert(ideaId, ratingDTO);
         return Mono.empty();
     }
 
     @PutMapping("/admin/update/{ideaId}")
-    public Mono<Void> updateIdeaByAdmin(@PathVariable Long ideaId, @RequestBody IdeaDTO updatedIdea) {
+    public Mono<Void> updateIdeaByAdmin(@PathVariable String ideaId, @RequestBody IdeaDTO updatedIdea) {
         ideaService.updateIdeaByAdmin(ideaId, updatedIdea);
         return Mono.empty();
     }

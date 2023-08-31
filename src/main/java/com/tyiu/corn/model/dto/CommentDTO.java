@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CommentDTO {
-    private Long id;
+    private String id;
     private String comment;
     private String sender;
     private List<String> checkedBy;

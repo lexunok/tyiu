@@ -24,7 +24,7 @@ public class CompanyController {
     }
 
     @GetMapping("/staff/{id}")
-    public Flux<UserDTO> getCompanyStaff(@PathVariable Long id){
+    public Flux<UserDTO> getCompanyStaff(@PathVariable String id){
         return companyService.getListStaff(id);
     }
 
@@ -33,11 +33,11 @@ public class CompanyController {
         return companyService.addCompany(company);
     }
     @DeleteMapping("/delete/{id}")
-    public void deleteCompany(@PathVariable Long id){
+    public void deleteCompany(@PathVariable String id){
         companyService.deleteCompany(id);
     }
     @PutMapping("/update/{id}")
-    public void updateCompany(@PathVariable Long id, @RequestBody Company company){
+    public void updateCompany(@PathVariable String id, @RequestBody Company company){
         companyService.updateCompany(id, company);
     }
 }

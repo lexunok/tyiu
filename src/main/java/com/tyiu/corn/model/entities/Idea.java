@@ -4,8 +4,7 @@ import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
-
+import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 import java.util.List;
 
@@ -16,10 +15,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table
+@Document
 public class Idea {
     @Id
-    private Long id;
+    private String id;
     private String initiator;
     private String name;
     private ProjectType projectType;
@@ -43,5 +42,5 @@ public class Idea {
     private String originality;
     private String technicalFeasibility;
     private String understanding;
-    private List<Comment> comments;
+    //private List<Comment> comments;
 }

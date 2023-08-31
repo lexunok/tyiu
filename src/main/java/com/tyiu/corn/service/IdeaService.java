@@ -1,10 +1,7 @@
 package com.tyiu.corn.service;
 
 import java.util.Date;
-import java.util.List;
 
-import com.tyiu.corn.exception.AccessException;
-import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RatingDTO;
@@ -30,7 +27,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @Cacheable(key = "#id")
-    public Mono<IdeaDTO> getIdeaForInitiator(Long id, String email) {
+    public Mono<IdeaDTO> getIdeaForInitiator(String id, String email) {
         return ideaRepository.findById(id).cast(IdeaDTO.class);
     }
     // После полного перехода на реактивный стэк @Cacheable
@@ -45,16 +42,16 @@ public class IdeaService {
         return Mono.just(ideaDTO).cast(Idea.class).flatMap(ideaRepository::save).cast(IdeaDTO.class);
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void deleteIdeaByInitiator(Long id, String email) {
+    public void deleteIdeaByInitiator(String id, String email) {
         ideaRepository.deleteById(id);
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void deleteIdeaByAdmin(Long id) {
+    public void deleteIdeaByAdmin(String id) {
         ideaRepository.deleteById(id);
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateStatusByInitiator (Long id, String email){
+    public void updateStatusByInitiator (String id, String email){
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
             i.setStatus(StatusIdea.ON_CONFIRMATION);
@@ -63,7 +60,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateIdeaByInitiator(Long id, String email, IdeaDTO updatedIdea) {
+    public void updateIdeaByInitiator(String id, String email, IdeaDTO updatedIdea) {
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
             i.setName(updatedIdea.getName());
@@ -84,7 +81,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateStatusByProjectOffice (Long ideaId, StatusIdea newStatus){
+    public void updateStatusByProjectOffice (String ideaId, StatusIdea newStatus){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i ->{
             i.setStatus(newStatus);
@@ -93,7 +90,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateStatusByExpert(Long ideaId, RatingDTO ratingDTO){
+    public void updateStatusByExpert(String ideaId, RatingDTO ratingDTO){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i -> {
             i.setStatus(ratingDTO.getStatus());
@@ -107,7 +104,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
+    public void updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
             i.setName(updatedIdea.getName());

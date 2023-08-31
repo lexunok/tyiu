@@ -8,6 +8,7 @@ import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -24,7 +25,8 @@ public class JwtCore {
     private String secret;
 
     public String issueToken(String subject, List<Role> scopes){
-        return issueToken(subject, Map.of("scopes",scopes));
+        List<String> roles = scopes.stream().map(Enum::name).toList();
+        return issueToken(subject, Map.of("scopes", roles));
     }
     public String issueToken(String subject, Map<String, Object> claims){
         return Jwts.builder()
