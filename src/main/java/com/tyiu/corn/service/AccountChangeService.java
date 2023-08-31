@@ -1,12 +1,7 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.exception.NotFoundException;
-import com.tyiu.corn.exception.ParseException;
-import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.dto.InvitationDTO;
-import com.tyiu.corn.exception.AuthorizationNotSuccessException;
-import com.tyiu.corn.exception.DateExpiredException;
-import com.tyiu.corn.exception.EmailSendException;
 import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
@@ -22,14 +17,12 @@ import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import reactor.core.publisher.Flux;
@@ -56,31 +49,38 @@ public class AccountChangeService {
         this.emailSender.send(simpleMailMessage);
     }
 
-    public void sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException, ParseException {
+    public void sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException {
         /*if (invitations.getRoles() == null){
 
         }*/
-        invitations.getEmails().stream().filter(email -> !userRepository.existsByEmail(email)).forEach((email) ->
-                {
-                    Date date = new Date();
-                    long milliseconds = date.getTime() + 259200000;
-                    date.setTime(milliseconds);
-                    Temporary invitation = new Temporary();
-                    invitation.setRoles(invitations.getRoles());
-                    invitation.setEmail(email);
-                    invitation.setDateExpired(date);
-                    invitation.setUrl(UUID.randomUUID().toString());
-                    sendEmail(
-                            invitation.getEmail(),
-                            "Приглашение",
-                            String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
-                    );
-                    accountChangeRepository.save(invitation);
-                }
-        );
+        Flux<String> inv = Flux.fromIterable(invitations.getEmails());
+        inv.flatMap(e -> {
+            userRepository.existsByEmail(e).flatMap(
+                    b -> {
+                        if(!b){
+                            Date date = new Date();
+                            long milliseconds = date.getTime() + 259200000;
+                            date.setTime(milliseconds);
+                            Temporary invitation = new Temporary();
+                            invitation.setRoles(invitations.getRoles());
+                            invitation.setEmail(e);
+                            invitation.setDateExpired(date);
+                            invitation.setUrl(UUID.randomUUID().toString());
+                            sendEmail(
+                                    invitation.getEmail(),
+                                    "Приглашение",
+                                    String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                            );
+                            accountChangeRepository.save(invitation);
+                            return Mono.empty();
+                        }
+                        return Mono.empty();
+                    });
+            return Flux.empty();
+        });
     }
 
-    public void sendInvitation(Temporary invitation) throws EmailSendException, NotFoundException, ParseException{
+    public void sendInvitation(Temporary invitation) throws  NotFoundException{
         /*if (userRepository.existsByEmail(invitation.getEmail())){
 
         }*/
@@ -178,7 +178,7 @@ public class AccountChangeService {
                 accountChangeRepository.deleteByUrl(c.getUrl());
             }
             if (request.getCode() == c.getCode()) {
-                Mono<User> user = userRepository.findByEmail(c.getEmail());
+                Mono<User> user = userRepository.findFirstByEmail(c.getEmail());
                 user.flatMap(u -> {
                     userRepository.setPassword(passwordEncoder.encode(request.getPassword()), u.getId());
                     return Mono.empty();
@@ -194,7 +194,7 @@ public class AccountChangeService {
         Mono<Temporary> emailChange = accountChangeRepository.findByUrl(request.getUrl());
         emailChange.flatMap(e -> {
             if (request.getCode() == e.getCode()){
-                Mono<User> user = userRepository.findByEmail(request.getOldEmail());
+                Mono<User> user = userRepository.findFirstByEmail(request.getOldEmail());
                 user.flatMap(u -> {
                     userRepository.setEmail(request.getNewEmail(), u.getId());
                     return Mono.empty();
@@ -225,7 +225,7 @@ public class AccountChangeService {
     }
 
     public void changeUserInfo(UserInfoRequest request){
-        Mono<User> user = userRepository.findByEmail(request.getEmail());
+        Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
         user.flatMap(u -> {
             userRepository.setUserInfo(
                     request.getNewEmail(),
