@@ -1,8 +1,6 @@
 package com.tyiu.corn.controller;
 
-import java.util.List;
-import java.util.Map;
-
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,7 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-//@RequestMapping("/api/v1/profile-action")
+@RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class AccountChangeController {
     private final AccountChangeService accountChangeService;
@@ -35,37 +33,38 @@ public class AccountChangeController {
         return accountChangeService.findByUrlAndSendCode(url);
     }
 
-    @GetMapping("/get/users-info")
-    public Flux<Map<String, List<UserInfoResponse>>> getUsersInfo(){
-        return Map.of("users", accountChangeService.getUsersInfo());
+    @GetMapping("/get/info")
+    public Flux<UserInfoResponse> getUsersInfo(){
+        return accountChangeService.getUsersInfo();
     }
 
-    @GetMapping("/get/users-email")
-    public Flux<Map<String, List<String>>> getUsersEmail(){
-        return Map.of("emails", accountChangeService.getAllEmails());
+    @GetMapping("/get/email")
+    public Flux<String> getUsersEmail(){
+        return accountChangeService.getAllEmails();
     }
 
     @PostMapping("/send/email")
-    public Mono<Map<String, String>> invitationSend(@RequestBody Temporary invitation){
+    public Mono<ResponseEntity<String>> invitationSend(@RequestBody Temporary invitation){
         accountChangeService.sendInvitation(invitation);
-        return new Mono<ResponseEntity>(Map.of("success","Успешное приглашение"), HttpStatus.OK);
+        return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
     }
 
-    @PostMapping("/send/emails")
-    public Mono<Map<String, String>> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
+    @PostMapping("/send/email/file")
+    public Mono<ResponseEntity<String>> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
         accountChangeService.sendInvitations(invitationDTO);
-        return new Mono<ResponseEntity>(Map.of("success", "Успешное приглашение"), HttpStatus.OK);
+        return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
     }
 
-    @PostMapping("/send/request-to-change-email")
-    public Mono<Map<String, String>> requestToChangeEmail(@RequestBody Temporary changeEmail){
+//  @PostMapping("/send/request-to-change-email")
+    @PostMapping("/send/change/email")
+    public Mono<ResponseEntity<String>> requestToChangeEmail(@RequestBody Temporary changeEmail){
         accountChangeService.sendEmailToChangeEmail(changeEmail);
-        return new Mono<ResponseEntity>(Map.of("success", "Ссылка на изменение почты находится на новой почте"), HttpStatus.OK);
+        return Mono.just(new ResponseEntity<>("Ссылка на изменение почты находится на новой почте", HttpStatus.OK));
     }
 
-    @PostMapping("/send/request-to-change-password")
-    public Mono<Map<String, String>> requestToChangePassword(@RequestBody Temporary changePassword) {
-        return Map.of("key", accountChangeService.sendEmailToChangePassword(changePassword));
+    @PostMapping("/send/change/password")
+    public Mono<String> requestToChangePassword(@RequestBody Temporary changePassword) {
+        return accountChangeService.sendEmailToChangePassword(changePassword);
     }
 
     @DeleteMapping("/delete/invitation/{url}")
@@ -75,21 +74,21 @@ public class AccountChangeController {
     }
 
     @PutMapping("/change/password")
-    public Mono<Map<String, String>> changePasswordByUser(@RequestBody ChangeRequest request){
+    public Mono<ResponseEntity<String>> changePasswordByUser(@RequestBody ChangeRequest request){
         accountChangeService.changePasswordByUser(request);
-        return new Mono<ResponseEntity>(Map.of("success", "Успешное изменение пароля"), HttpStatus.OK);
+        return Mono.just(new ResponseEntity<>("Успешное изменение пароля", HttpStatus.OK));
     }
 
     @PutMapping("/change/email")
-    public Mono<Map<String, String>> changeEmailByUser(@RequestBody ChangeRequest request){
+    public Mono<ResponseEntity<String>> changeEmailByUser(@RequestBody ChangeRequest request){
         accountChangeService.changeEmailByUser(request);
-        return new Mono<ResponseEntity>(Map.of("success", "Успешное изменение почты"), HttpStatus.OK);
+        return Mono.just(new ResponseEntity<>("Успешное изменение почты", HttpStatus.OK));
     }
 
-    @PutMapping("/change/user-info")
-    public Mono<Map<String, String>> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
+    @PutMapping("/change/info")
+    public Mono<ResponseEntity<String>> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
         accountChangeService.changeUserInfo(request);
-        return new Mono<ResponseEntity>(Map.of("success", "Успешное изменение пользователя"), HttpStatus.OK);
+        return Mono.just(new ResponseEntity<>("Успешное изменение пользователя", HttpStatus.OK));
     }
 
 
