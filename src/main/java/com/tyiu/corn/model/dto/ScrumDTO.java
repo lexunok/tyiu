@@ -11,7 +11,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ScrumDTO {
-        private Long id;
+        private String id;
         private String name;
         private String description;
         private Integer count;

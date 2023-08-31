@@ -2,7 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
 
@@ -11,10 +11,10 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table
+@Document
 public class Profile {
     @Id
-    private Long id;
+    private String id;
     private List<Scrum> scrums;
     private List<Idea> ideas;
     private List<Task> tasks;

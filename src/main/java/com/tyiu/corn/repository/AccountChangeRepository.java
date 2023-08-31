@@ -1,16 +1,15 @@
 package com.tyiu.corn.repository;
 
 import com.tyiu.corn.model.entities.Temporary;
-import org.springframework.data.r2dbc.repository.Modifying;
-import org.springframework.data.r2dbc.repository.Query;
+import org.springframework.data.mongodb.repository.Query;
 import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
 import java.util.Optional;
-
-public interface AccountChangeRepository extends ReactiveCrudRepository<Temporary, Long> {
-    @Modifying
+@Repository
+public interface AccountChangeRepository extends ReactiveCrudRepository<Temporary, String> {
     @Query("DELETE FROM Temporary i WHERE i.dateExpired < ?1")
     void deleteExpiredData(Date date);
     Mono<Temporary> findByUrl(String url);

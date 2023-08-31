@@ -26,11 +26,11 @@ public class ScrumService {
         return  Mono.just(scrumDTO).cast(Scrum.class).flatMap(scrumRepository::save).cast(ScrumDTO.class);
     }
 //    @CacheEvict(allEntries = true)
-    public void deleteScrum(Long id) {
+    public void deleteScrum(String id) {
         scrumRepository.deleteById(id);
     }
 //    @CacheEvict(allEntries = true)
-    public void updateScrum(Long id, ScrumDTO updatedScrum) {
+    public void updateScrum(String id, ScrumDTO updatedScrum) {
         Mono<Scrum> scrum = scrumRepository.findById(id);
         scrum.flatMap(s -> {
             s.setDescription(updatedScrum.getDescription());

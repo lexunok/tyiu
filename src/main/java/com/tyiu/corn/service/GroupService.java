@@ -28,7 +28,7 @@ public class GroupService {
         return groups.cast(GroupDTO.class);
     }
 //    @Cacheable(key = "#id")
-    public Mono<GroupDTO> getGroupById(Long id) {
+    public Mono<GroupDTO> getGroupById(String id) {
         Mono<Group> group = groupRepository.findById(id);
         return group.cast(GroupDTO.class);
     }
@@ -37,7 +37,7 @@ public class GroupService {
         return Mono.just(groupDTO).cast(Group.class).flatMap(groupRepository::save).cast(GroupDTO.class);
     }
     //@CacheEvict(allEntries = true)
-    public void updateGroup(Long id,GroupDTO groupDTO) {
+    public void updateGroup(String id,GroupDTO groupDTO) {
         Mono<Group> group = groupRepository.findById(id);
         group.flatMap(g -> {
             g.setName(groupDTO.getName());
@@ -46,7 +46,7 @@ public class GroupService {
         });
     }
     //@CacheEvict(allEntries = true)
-    public void deleteGroup(Long id) {
+    public void deleteGroup(String id) {
         groupRepository.deleteById(id);
     }
 }

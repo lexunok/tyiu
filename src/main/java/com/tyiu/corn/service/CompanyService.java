@@ -24,7 +24,7 @@ public class CompanyService {
         return companyRepository.findAll();
     }
 
-    public Flux<UserDTO> getListStaff(Long id) {
+    public Flux<UserDTO> getListStaff(String id) {
         Mono<Company> company = companyRepository.findById(id);
         return company.flatMapMany(c -> Flux.fromIterable(c.getStaff())).cast(UserDTO.class);
     }
@@ -34,11 +34,11 @@ public class CompanyService {
     }
 
     
-    public void deleteCompany(Long id) {
+    public void deleteCompany(String id) {
         companyRepository.deleteById(id);
     }
 
-    public void updateCompany(Long id, Company updatedCompany) {
+    public void updateCompany(String id, Company updatedCompany) {
         Mono<Company> company = companyRepository.findById(id);
         company.flatMap(c -> {
             c.setName(updatedCompany.getName());

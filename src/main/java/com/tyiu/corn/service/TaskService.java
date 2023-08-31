@@ -30,12 +30,12 @@ public class TaskService {
     }
 
     //@CacheEvict(allEntries = true)
-    public void deleteTask(Long taskId) {
+    public void deleteTask(String taskId) {
         taskRepository.deleteById(taskId);
     }
 
     //@CacheEvict(allEntries = true)
-    public void updateTask(Long taskId, TaskDTO updatedTask) {
+    public void updateTask(String taskId, TaskDTO updatedTask) {
         Mono<Task> task = taskRepository.findById(taskId);
         task.flatMap(t -> {
             t.setTitle(updatedTask.getTitle());

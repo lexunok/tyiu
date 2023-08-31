@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class GroupDTO {
-    private Long id;
+    private String id;
     private String name;
     //TODO: сделать вместо User - UserDTO
     private List<User> users;

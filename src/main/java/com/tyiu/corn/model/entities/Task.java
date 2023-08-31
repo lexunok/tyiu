@@ -6,7 +6,7 @@ import com.tyiu.corn.model.enums.Priority;
 import com.tyiu.corn.model.enums.Status;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
 
@@ -16,10 +16,10 @@ import java.util.Date;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Table
+@Document
 public class Task{
     @Id
-    private Long id;
+    private String id;
     private String title;
     private String description;
     private String assignedTo;

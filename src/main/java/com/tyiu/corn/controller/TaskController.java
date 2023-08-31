@@ -28,13 +28,13 @@ public class TaskController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public Mono<Void> deleteTask(@PathVariable Long id) {
+    public Mono<Void> deleteTask(@PathVariable String id) {
         taskService.deleteTask(id);
         return Mono.empty();
     }
 
     @PutMapping("/update/{id}")
-    public Mono<Void> updateTask(@PathVariable Long id, @RequestBody TaskDTO updatedTask) {
+    public Mono<Void> updateTask(@PathVariable String id, @RequestBody TaskDTO updatedTask) {
         taskService.updateTask(id, updatedTask);
         return Mono.empty();
     }

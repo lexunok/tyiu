@@ -2,17 +2,17 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.relational.core.mapping.Table;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table
+@Document
 public class Message {
     @Id
-    private Long id;
+    private String id;
     private String sender;
     private String text;
 }

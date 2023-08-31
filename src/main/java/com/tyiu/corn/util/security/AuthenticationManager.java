@@ -1,16 +1,23 @@
 package com.tyiu.corn.util.security;
 
+import com.tyiu.corn.model.enums.Role;
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwt;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.security.authentication.ReactiveAuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+
 @Component
 @Slf4j
 @RequiredArgsConstructor
@@ -30,12 +37,14 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
             log.info(e.toString());
         }
         if (email!=null && jwtCore.isTokenValid(token,email)){
-            Mono<UserDetails> userDetails = userService.findByUsername(email);
-            userDetails.flatMap(u -> {
-                UsernamePasswordAuthenticationToken authenticationToken =
-                        new UsernamePasswordAuthenticationToken(u, null, u.getAuthorities());
-                return Mono.just(authentication);
-            });
+            Claims claims = jwtCore.getClaims(token);
+            @SuppressWarnings("unchecked")
+            List<String> roles = claims.get("scopes", List.class);
+            List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
+            UsernamePasswordAuthenticationToken authenticationToken =
+                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+            log.info(authenticationToken.toString());
+            return Mono.just(authenticationToken);
         }
         return Mono.empty();
     }

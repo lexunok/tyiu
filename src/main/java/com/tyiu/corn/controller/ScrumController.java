@@ -28,14 +28,14 @@ public class ScrumController {
     }
 
     @DeleteMapping("/delete/{id}")
-    public Mono<Void> deleteScrum(@PathVariable Long id) {
+    public Mono<Void> deleteScrum(@PathVariable String id) {
         scrumService.deleteScrum(id);
         return Mono.empty();
     }
 
     @PutMapping("/update/{id}")
-    public Mono<Void> updateScrum(@PathVariable Long scrumId, @RequestBody ScrumDTO updatedScrum) {
-        scrumService.updateScrum(scrumId, updatedScrum);
+    public Mono<Void> updateScrum(@PathVariable String id, @RequestBody ScrumDTO updatedScrum) {
+        scrumService.updateScrum(id, updatedScrum);
         return Mono.empty();
     }
 }

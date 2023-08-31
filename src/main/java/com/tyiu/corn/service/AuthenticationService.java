@@ -1,13 +1,16 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.repository.UserRepository;
+import com.tyiu.corn.util.security.CustomUserDetails;
 import com.tyiu.corn.util.security.JwtCore;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UserDetails;
 import reactor.core.publisher.Mono;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -22,7 +25,7 @@ public class AuthenticationService {
     private final JwtCore jwtCore;
 
     public Mono<AuthenticationResponse> login(LoginRequest request) {
-        Mono<User> user = userRepository.findByEmail(request.getEmail());
+        Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
         return user.flatMap(u -> {
             if (passwordEncoder.matches(request.getPassword(), u.getPassword())){
                 String jwt = jwtCore.issueToken(u.getEmail(), u.getRoles());
