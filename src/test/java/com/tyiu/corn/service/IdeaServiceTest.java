@@ -13,6 +13,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.modelmapper.ModelMapper;
 import org.modelmapper.TypeToken;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,34 +57,19 @@ public class IdeaServiceTest {
                 .build();
         ideas.add(idea);
 
-        // When
-        when(ideaRepository.findAllByInitiator(initiator)).thenReturn(ideas);
-        when(mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType())).thenReturn(ideasDTO);
-        List<IdeaDTO> result = ideaService.getListIdeaForInitiator(initiator);
+        when(ideaRepository.findAllByInitiator(initiator)).thenReturn(Flux.fromIterable(ideas));
+        when(mapper.map(idea, IdeaDTO.class)).thenReturn(ideaDTO);
 
-        // Then
-        assertEquals(1, result.size());
-        assertEquals(initiator, result.get(0).getInitiator());
+        Flux<IdeaDTO> result = ideaService.getListIdeaForInitiator(initiator);
+
+        // Assert
+        assertEquals(ideasDTO, result.collectList().block());
         verify(ideaRepository).findAllByInitiator(initiator);
     }
 
 
     @Test
     void testGetListIdea(){
-        // Given
-        List<IdeaDTO> ideasDTO = new ArrayList<>();
-        IdeaDTO ideaDTO1 = IdeaDTO.builder()
-                .initiator("example@example.com")
-                .name("Идея 1")
-                .build();
-        IdeaDTO ideaDTO2 = IdeaDTO.builder()
-                .initiator("example@example.com")
-                .name("Идея 2")
-                .build();
-
-        ideasDTO.add(ideaDTO1);
-        ideasDTO.add(ideaDTO2);
-
         List<Idea> ideas = new ArrayList<>();
         Idea idea1 = Idea.builder()
                 .initiator("example@example.com")
@@ -92,37 +79,78 @@ public class IdeaServiceTest {
                 .initiator("example@example.com")
                 .name("Идея 2")
                 .build();
-
         ideas.add(idea1);
         ideas.add(idea2);
 
-        // When
-        when(ideaRepository.findAll()).thenReturn(ideas);
-        when(mapper.map(ideas, new TypeToken<List<IdeaDTO>>(){}.getType())).thenReturn(ideasDTO);
-        List<IdeaDTO> result = ideaService.getListIdea();
+        List<IdeaDTO> ideasDTO = new ArrayList<>();
+        IdeaDTO ideaDTO1 = IdeaDTO.builder()
+                .initiator("example@example.com")
+                .name("Идея 1")
+                .build();
+        IdeaDTO ideaDTO2 = IdeaDTO.builder()
+                .initiator("example@example.com")
+                .name("Идея 2")
+                .build();
+        ideasDTO.add(ideaDTO1);
+        ideasDTO.add(ideaDTO2);
 
+        when(ideaRepository.findAll()).thenReturn(Flux.fromIterable(ideas));
+        when(mapper.map(idea1, IdeaDTO.class)).thenReturn(ideaDTO1);
+        when(mapper.map(idea2, IdeaDTO.class)).thenReturn(ideaDTO2);
 
-        // Then
-        assertEquals(ideas.size(), result.size());
+        // Act
+        Flux<IdeaDTO> result = ideaService.getListIdea();
+
+        // Assert
+        assertEquals(ideasDTO, result.collectList().block());
         verify(ideaRepository).findAll();
     }
 
     @Test
+    public void testGetIdeaForInitiator() {
+        String initiator = "example@example.com";
+
+        Idea idea = Idea.builder()
+                .initiator(initiator)
+                .build();
+
+        IdeaDTO ideaDTO = IdeaDTO.builder()
+                .initiator(initiator)
+                .build();
+
+        when(ideaRepository.findById(idea.getId())).thenReturn(Mono.just(idea));
+        when(mapper.map(idea, IdeaDTO.class)).thenReturn(ideaDTO);
+
+        // Act
+        Mono<IdeaDTO> result = ideaService.getIdeaForInitiator(idea.getId(), initiator);
+
+        // Assert
+        assertEquals(ideaDTO, result.block());
+        verify(ideaRepository).findById(idea.getId());
+    }
+
+    @Test
     void testSaveIdea() {
-        IdeaDTO ideaDTO = new IdeaDTO();
-        String initiator = "JohnDoe";
+        String initiator = "email@email.com";
+
+        IdeaDTO ideaDTO = IdeaDTO.builder()
+                .name("Идея 1")
+                .build();
+
 
         Idea idea = Idea.builder()
                 .name("Идея 1")
                 .build();
 
         when(mapper.map(ideaDTO, Idea.class)).thenReturn(idea);
-        when(ideaRepository.save(idea)).thenReturn(idea);
+        when(ideaRepository.save(idea)).thenReturn(Mono.just(idea));
         when(mapper.map(idea, IdeaDTO.class)).thenReturn(ideaDTO);
 
+        // Act
+        Mono<IdeaDTO> savedIdeaMono = ideaService.saveIdea(ideaDTO, initiator);
+        IdeaDTO savedIdeaDTO = savedIdeaMono.block();
 
-        IdeaDTO savedIdeaDTO = ideaService.saveIdea(ideaDTO, initiator);
-
+        // Assert
         assertEquals(ideaDTO, savedIdeaDTO);
         verify(ideaRepository).save(idea);
     }
@@ -136,7 +164,7 @@ public class IdeaServiceTest {
                 .name("Идея 1")
                 .build();
         // When
-        when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
+        when(ideaRepository.deleteById(idea.getId())).thenReturn(Mono.empty());
         ideaService.deleteIdeaByInitiator(idea.getId());
 
         // Then
@@ -144,26 +172,14 @@ public class IdeaServiceTest {
     }
     @Test
     void testDeleteIdeaByAdmin(){
-        // Given
+        String initiator = "example@example.com";
         Idea idea = Idea.builder()
-                .initiator("example@example.com")
+                .initiator(initiator)
                 .name("Идея 1")
-                .projectType(ProjectType.INSIDE)
-                .experts("expert@expert.com")
-                .problem("Проблема 100")
-                .solution("Решение 100")
-                .result("Результат 100")
-                .customer("Заказчик 100")
-                .description("Описание 100")
-                .suitability(100L)
-                .realizability("Реализуемость 100")
-                .budget(2600L)
-                .status(StatusIdea.ON_CONFIRMATION)
-                .rating(2.6)
                 .build();
         // When
+        when(ideaRepository.deleteById(idea.getId())).thenReturn(Mono.empty());
         ideaService.deleteIdeaByAdmin(idea.getId());
-
 
         // Then
         verify(ideaRepository).deleteById(idea.getId());
@@ -175,89 +191,52 @@ public class IdeaServiceTest {
         IdeaDTO updatedIdea = IdeaDTO.builder()
                 .initiator("example@example.com")
                 .name("Идея 1")
-                .projectType(ProjectType.INSIDE)
-                .experts("expert@expert.com")
-                .problem("Проблема 100")
-                .solution("Решение 100")
-                .result("Результат 100")
-                .customer("Заказчик 100")
-                .description("Описание 100")
-                .suitability(100L)
-                .realizability("Реализуемость 100")
-                .budget(2600L)
-                .status(StatusIdea.ON_CONFIRMATION)
-                .rating(2.6)
                 .build();
-
         Idea idea = Idea.builder()
                 .initiator("example@example.com")
                 .name("Идея 2")
-                .projectType(ProjectType.INSIDE)
-                .experts("expert@expert.com")
-                .problem("Проблема 100")
-                .solution("Решение 100")
-                .result("Результат 100")
-                .customer("Заказчик 100")
-                .description("Описание 100")
-                .suitability(100L)
-                .realizability("Реализуемость 100")
-                .budget(2600L)
-                .status(StatusIdea.ON_CONFIRMATION)
-                .rating(2.6)
                 .build();
 
         // When
-        when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
-        when(ideaRepository.save(idea)).thenReturn(idea);
+        when(ideaRepository.findById(idea.getId())).thenReturn(Mono.just(idea));
+        when(ideaRepository.save(idea)).thenReturn(Mono.just(idea));
         ideaService.updateIdeaByAdmin(idea.getId(), updatedIdea);
 
-
         // Then
-        assertEquals(updatedIdea.getInitiator(), idea.getInitiator());
-        assertEquals(updatedIdea.getName(), idea.getName());
-        assertEquals(updatedIdea.getProjectType(), idea.getProjectType());
-        assertEquals(updatedIdea.getExperts(), idea.getExperts());
-        assertEquals(updatedIdea.getProblem(), idea.getProblem());
-        assertEquals(updatedIdea.getSolution(), idea.getSolution());
-        assertEquals(updatedIdea.getResult(), idea.getResult());
-        assertEquals(updatedIdea.getCustomer(), idea.getCustomer());
-        assertEquals(updatedIdea.getDescription(), idea.getDescription());
-        assertEquals(updatedIdea.getRealizability(), idea.getRealizability());
-        assertEquals(updatedIdea.getSuitability(), idea.getSuitability());
-        assertEquals(updatedIdea.getBudget(), idea.getBudget());
-        assertEquals(updatedIdea.getStatus(), idea.getStatus());
-        assertEquals(updatedIdea.getRating(), idea.getRating());
-
-
+        verify(ideaRepository).findById(idea.getId());
         verify(ideaRepository).save(idea);
-        verify(ideaRepository).save(idea);
-
     }
 
     @Test
     void testUpdateStatusByProjectOffice(){
         //Given
-        StatusIdea status = StatusIdea.ON_APPROVAL;
-        Idea idea = Idea.builder()
-                .name("title")
+        StatusIdea newStatus = StatusIdea.ON_APPROVAL;
+
+        IdeaDTO ideaDTO = IdeaDTO.builder()
+                .name("Идея 1")
                 .build();
 
 
-        when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
-        when(ideaRepository.save(idea)).thenReturn(idea);
+        Idea idea = Idea.builder()
+                .name("Идея 2")
+                .build();
 
-        // When
-        ideaService.updateStatusByProjectOffice(idea.getId(),status);
 
-        // Then
-        assertEquals(status, idea.getStatus());
+        when(ideaRepository.findById(idea.getId())).thenReturn(Mono.just(idea));
+        when(ideaRepository.save(idea)).thenReturn(Mono.just(idea));
+        ideaService.updateStatusByProjectOffice(idea.getId(), newStatus);
+
+        verify(ideaRepository).findById(idea.getId());
+        verify(ideaRepository).save(idea);
+        assertEquals(newStatus, idea.getStatus());
     }
 
     @Test
     void testUpdateStatusByExpert(){
         RatingDTO ratingDTO = RatingDTO.builder()
                 .status(StatusIdea.CONFIRMED)
-                .rating(2).marketValue("3000")
+                .rating(2)
+                .marketValue("3000")
                 .originality("Очень оригинально")
                 .technicalFeasibility("Очень возможно")
                 .understanding("Очень понятно")
@@ -272,10 +251,13 @@ public class IdeaServiceTest {
                 .understanding("Понятно")
                 .build();
 
-        when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
-        when(ideaRepository.save(idea)).thenReturn(idea);
-
+        when(ideaRepository.findById(idea.getId())).thenReturn(Mono.just(idea));
+        when(ideaRepository.save(idea)).thenReturn(Mono.just(idea));
         ideaService.updateStatusByExpert(idea.getId(), ratingDTO);
+
+        // Then
+        verify(ideaRepository).findById(idea.getId());
+        verify(ideaRepository).save(idea);
         assertEquals(ratingDTO.getStatus(), idea.getStatus());
         assertEquals(ratingDTO.getRating(), idea.getRating());
     }

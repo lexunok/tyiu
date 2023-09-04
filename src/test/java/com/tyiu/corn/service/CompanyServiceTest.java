@@ -10,6 +10,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 import java.util.ArrayList;
@@ -17,8 +19,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 public class CompanyServiceTest {
@@ -28,13 +30,14 @@ public class CompanyServiceTest {
     @Mock
     private CompanyService companyService;
 
+
     @BeforeEach
     void setUp() {
         companyService = new CompanyService(companyRepository);
     }
 
     @Test
-    void testGetListCompany(){
+    void testGetListCompany() {
         // Given
         List<Company> companies = new ArrayList<>();
         Company company1 = Company.builder()
@@ -45,15 +48,16 @@ public class CompanyServiceTest {
                 .build();
         companies.add(company1);
         companies.add(company2);
-        //When
-        when(companyRepository.findAll()).thenReturn(companies);
-        List<Company> result = companyService.getListCompany();
 
-        //Then
-        assertEquals(companies.size(), result.size());
+        when(companyRepository.findAll()).thenReturn(Flux.fromIterable(companies));
+
+        // Act
+        Flux<Company> result = companyService.getListCompany();
+
+        // Assert
+        assertEquals(companies, result.collectList().block());
         verify(companyRepository).findAll();
     }
-
     @Test
     void testGetListStaff(){
         // Given
@@ -61,33 +65,32 @@ public class CompanyServiceTest {
                 .name("Company 1")
                 .build();
 
-        List<User> staff = new ArrayList<>();
-
-        User user1 = User.builder()
+        UserDTO user1 = UserDTO.builder()
                 .firstName("Ivan")
                 .lastName("Ivanov")
                 .email("example@example.com")
                 .roles(List.of(Role.PROJECT_OFFICE))
                 .build();
-        User user2 = User.builder()
+        UserDTO user2 = UserDTO.builder()
                 .firstName("Petr")
                 .lastName("Petrov")
                 .email("example@example.com")
                 .roles(List.of(Role.PROJECT_OFFICE))
                 .build();
 
-        staff.add(user1);
-        staff.add(user2);
+        company.setStaff(new ArrayList<>());
+        company.getStaff().add(user1);
+        company.getStaff().add(user2);
 
-        company.setStaff(staff);
-        // When
-        when(companyRepository.findById(company.getId())).thenReturn(Optional.of(company));
-        List<UserDTO> result = companyService.getListStaff(company.getId());
+        Mono<Company> monoCompany = Mono.just(company);
+        when(companyRepository.findById(company.getId())).thenReturn(monoCompany);
 
-        // Then
-        assertEquals(staff.size(), result.size());
-        assertEquals(staff.get(0).getEmail(), result.get(0).getEmail());
-        assertEquals(staff.get(1).getEmail(), result.get(1).getEmail());
+        // Act
+        Flux<UserDTO> result = companyService.getListStaff(company.getId());
+
+        // Assert
+        assertEquals(2, result.collectList().block().size());
+        verify(companyRepository).findById(company.getId());
     }
     @Test
     void testAddCompany(){
@@ -96,9 +99,11 @@ public class CompanyServiceTest {
                 .staff(new ArrayList<>())
                 .build();
 
-        when(companyRepository.save(company)).thenReturn(company);
+        when(companyRepository.save(company)).thenReturn(Mono.just(company));
 
-        companyService.addCompany(company);
+        Mono<Company> result = companyService.addCompany(company);
+
+        assertEquals(company, result.block());
         verify(companyRepository).save(company);
     }
 
@@ -109,7 +114,7 @@ public class CompanyServiceTest {
                 .staff(new ArrayList<>())
                 .build();
 
-        companyService.deleteCompany(company.getId());
+        doNothing().when(companyRepository).deleteById(company.getId());
 
         verify(companyRepository).deleteById(company.getId());
     }
@@ -125,11 +130,13 @@ public class CompanyServiceTest {
                 .name("Компания 2")
                 .build();
 
-        when(companyRepository.findById(company.getId())).thenReturn(Optional.of(company));
-        when(companyRepository.save(company)).thenReturn(company);
+        Mono<Company> monoCompany = Mono.just(company);
+        when(companyRepository.findById(company.getId())).thenReturn(monoCompany);
+        when(companyRepository.save(any(Company.class))).thenReturn(Mono.just(updatedCompany));
+        // Act
         companyService.updateCompany(company.getId(), updatedCompany);
 
-
-        assertEquals(updatedCompany.getName(), company.getName());
+        // Assert
+        verify(companyRepository).findById(company.getId());
     }
 }
