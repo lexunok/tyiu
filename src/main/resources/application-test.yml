@@ -1,5 +1,7 @@
 spring:
   data:
+    mongodb:
+      uri: mongodb://admin:admin@localhost:27017/admin
     redis:
       repositories:
         enabled: false
@@ -18,18 +20,6 @@ spring:
     host: localhost
     port: 6379
     password: admin
-  datasource:
-    username: admin
-    password: admin
-    url: jdbc:postgresql://localhost:5432/tyiu
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-    properties:
-      hibernate:
-        dialect: org.hibernate.dialect.PostgreSQLDialect
-        format_sql: true
-    show-sql: false
 server:
   port: 3000
 jwt:

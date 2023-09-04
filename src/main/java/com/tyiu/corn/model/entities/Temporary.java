@@ -8,6 +8,7 @@ import java.util.List;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 @Getter
@@ -19,6 +20,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Temporary {
     @Id
     private String id;
+    @Indexed
     private String url;
     private Date dateExpired;
     private String email;

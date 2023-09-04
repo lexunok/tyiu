@@ -11,40 +11,24 @@ services:
     volumes:
       - redis:/data/redis
     restart: unless-stopped
-  postgres:
-    container_name: postgres
-    image: postgres
-    environment:
-      POSTGRES_DB: tyiu
-      POSTGRES_USER: ${SERVICE_USERNAME}
-      POSTGRES_PASSWORD: ${SERVICE_PASSWORD}
-      PGDATA: /data/postgres
-    volumes:
-      - postgres:/data/postgres
-    ports:
-      - "5432:5432"
-    networks:
-      - postgres
-    restart: unless-stopped
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3.10.7-management
-    hostname: rabbitmq
+  mongodb:
+    container_name: mongodb
+    image: mongo
     restart: always
     environment:
-      - RABBITMQ_DEFAULT_USER= ${SERVICE_USERNAME}
-      - RABBITMQ_DEFAULT_PASS= ${SERVICE_PASSWORD}
-    volumes:
-      - rabbitmq:/var/lib/rabbitmq
+      MONGO_INITDB_ROOT_USERNAME: ${SERVICE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${SERVICE_PASSWORD}
     ports:
-      - 15672:15672
-      - 5672:5672
+      - 27017:27017
+    volumes:
+      - mongodb:/data/mongodb
+    networks:
+      - mongodb
 networks:
-  postgres:
+  mongodb:
     driver: bridge
   redis:
     driver: bridge
 volumes:
-  postgres:
+  mongodb:
   redis:
-  rabbitmq:
