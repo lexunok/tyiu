@@ -28,5 +28,5 @@ public class Task{
     private Status status;
     private Date createdAt;
     private Scrum scrum;
-    private Profile profile;
+    private User profile;
 }

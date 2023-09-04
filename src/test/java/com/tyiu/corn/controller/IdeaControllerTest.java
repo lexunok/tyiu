@@ -113,7 +113,7 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        Long id = response.getId();
+        String id = response.getId();
         webTestClient
                 .delete()
                 .uri("/api/v1/idea/initiator/delete/{id}", id)
@@ -133,7 +133,7 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        Long id = response.getId();
+        String id = response.getId();
         webTestClient
                 .delete()
                 .uri("/api/v1/idea/admin/delete/{id}", id)
@@ -153,7 +153,7 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        Long id = response0.getId();
+        String id = response0.getId();
         webTestClient
                 .put()
                 .uri("/api/v1/idea/initiator/send/{id}", id)
@@ -182,7 +182,7 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        Long id = response0.getId();
+        String id = response0.getId();
         RatingDTO ratingDTO = RatingDTO.builder().status(StatusIdea.CONFIRMED).rating(4.4).marketValue("price")
                                     .originality("orig").technicalFeasibility("tech").understanding("under").build();
         RatingDTO response = webTestClient
@@ -207,7 +207,7 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectBody(Idea.class)
                 .returnResult().getResponseBody();
-        Long id = response0.getId();
+        String id = response0.getId();
         idea = Idea.builder().name("title2").build();
         Idea response = webTestClient
                 .put()

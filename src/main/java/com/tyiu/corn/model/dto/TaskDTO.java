@@ -1,7 +1,7 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.entities.Profile;
 import com.tyiu.corn.model.entities.Scrum;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Priority;
 import com.tyiu.corn.model.enums.Status;
 import lombok.AllArgsConstructor;
@@ -27,5 +27,5 @@ public class TaskDTO {
 
     private Scrum scrum;
 
-    private Profile profile;
+    private UserDTO profile;
 }

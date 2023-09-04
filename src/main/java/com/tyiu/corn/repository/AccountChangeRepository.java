@@ -7,14 +7,13 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.Optional;
 @Repository
 public interface AccountChangeRepository extends ReactiveCrudRepository<Temporary, String> {
     @Query("DELETE FROM Temporary i WHERE i.dateExpired < ?1")
     void deleteExpiredData(Date date);
     Mono<Temporary> findByUrl(String url);
-    boolean existsByEmail(String email);
-    boolean existsByOldEmail(String oldEmail);
+    Mono<Boolean> existsByEmail(String email);
+    Mono<Boolean> existsByOldEmail(String oldEmail);
     void deleteByEmail(String email);
     void deleteByOldEmail(String email);
     void deleteByUrl(String url);

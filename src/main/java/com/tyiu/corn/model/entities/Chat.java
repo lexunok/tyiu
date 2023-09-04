@@ -14,7 +14,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 public class Chat {
     @Id
-    private Long id;
-    private List<Message> messages;
-    private List<User> members;
+    private String id;
+    private List<String> messagesId;
+    private List<String> membersId;
 }

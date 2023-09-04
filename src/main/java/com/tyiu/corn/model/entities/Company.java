@@ -1,6 +1,8 @@
 package com.tyiu.corn.model.entities;
 
 import java.util.List;
+
+import com.tyiu.corn.model.dto.UserDTO;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -15,5 +17,5 @@ public class Company {
     @Id
     private String id;
     private String name;
-    private List<User> staff;
+    private List<UserDTO> staff;
 }

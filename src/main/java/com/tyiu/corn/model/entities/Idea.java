@@ -29,7 +29,7 @@ public class Idea {
     private String customer;
     private String contactPerson;
     private String description;
-    private String realizability;
+    private Long realizability;
     private Long suitability;
     private Long budget;
     private Long preAssessment;

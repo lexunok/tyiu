@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import java.util.List;
 
+import com.tyiu.corn.model.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,6 +22,6 @@ public class Group {
     @Id
     private String id;
     private String name;
-    private List<User> users;
+    private List<UserDTO> users;
     
 }

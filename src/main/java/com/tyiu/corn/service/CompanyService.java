@@ -2,6 +2,8 @@ package com.tyiu.corn.service;
 
 import java.util.List;
 
+import com.tyiu.corn.model.dto.IdeaDTO;
+import com.tyiu.corn.model.entities.Idea;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
@@ -28,14 +30,14 @@ public class CompanyService {
         Mono<Company> company = companyRepository.findById(id);
         return company.flatMapMany(c -> Flux.fromIterable(c.getStaff())).cast(UserDTO.class);
     }
-    
+
     public Mono<Company> addCompany(Company company) {
         return companyRepository.save(company);
     }
 
-    
+
     public void deleteCompany(String id) {
-        companyRepository.deleteById(id);
+        companyRepository.deleteById(id).subscribe();
     }
 
     public void updateCompany(String id, Company updatedCompany) {
@@ -44,6 +46,6 @@ public class CompanyService {
             c.setName(updatedCompany.getName());
             c.setStaff(updatedCompany.getStaff());
             return companyRepository.save(c);
-        });
+        }).subscribe();
     }
 }

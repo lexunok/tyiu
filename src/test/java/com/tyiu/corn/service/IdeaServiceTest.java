@@ -137,7 +137,7 @@ public class IdeaServiceTest {
                 .build();
         // When
         when(ideaRepository.findById(idea.getId())).thenReturn(Optional.of(idea));
-        ideaService.deleteIdeaByInitiator(idea.getId(), initiator);
+        ideaService.deleteIdeaByInitiator(idea.getId());
 
         // Then
         verify(ideaRepository).deleteById(idea.getId());

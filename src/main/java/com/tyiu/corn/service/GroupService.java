@@ -4,6 +4,9 @@ import java.util.List;
 
 import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.GroupDTO;
+import com.tyiu.corn.model.dto.IdeaDTO;
+import com.tyiu.corn.model.entities.Idea;
+import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -22,32 +25,34 @@ public class GroupService {
 
     private final GroupRepository groupRepository;
 
+    private final ModelMapper mapper;
+
 //    @Cacheable
     public Flux<GroupDTO> getGroups() {
         Flux<Group> groups = groupRepository.findAll();
-        return groups.cast(GroupDTO.class);
+        return groups.flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)));
     }
 //    @Cacheable(key = "#id")
     public Mono<GroupDTO> getGroupById(String id) {
         Mono<Group> group = groupRepository.findById(id);
-        return group.cast(GroupDTO.class);
+        return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
     }
     //@CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
-        return Mono.just(groupDTO).cast(Group.class).flatMap(groupRepository::save).cast(GroupDTO.class);
+        Mono<Group> group = groupRepository.save(mapper.map(groupDTO, Group.class));
+        return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
     }
     //@CacheEvict(allEntries = true)
     public void updateGroup(String id,GroupDTO groupDTO) {
         Mono<Group> group = groupRepository.findById(id);
         group.flatMap(g -> {
             g.setName(groupDTO.getName());
-            groupRepository.save(g);
-            return null;
-        });
+            return groupRepository.save(g);
+        }).subscribe();
     }
     //@CacheEvict(allEntries = true)
     public void deleteGroup(String id) {
-        groupRepository.deleteById(id);
+        groupRepository.deleteById(id).subscribe();
     }
 }
 

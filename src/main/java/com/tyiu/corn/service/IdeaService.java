@@ -7,6 +7,8 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
+
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
@@ -21,33 +23,39 @@ public class IdeaService {
 
     private final IdeaRepository ideaRepository;
 
+    private final ModelMapper mapper;
+
     // После полного перехода на реактивный стэк @Cacheable
     public Flux<IdeaDTO> getListIdeaForInitiator(String initiator) {
-        return ideaRepository.findAllByInitiator(initiator).cast(IdeaDTO.class);
+        Flux<Idea> ideas = ideaRepository.findAllByInitiator(initiator);
+        return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
     // После полного перехода на реактивный стэк @Cacheable(key = "#id")
     public Mono<IdeaDTO> getIdeaForInitiator(String id, String email) {
-        return ideaRepository.findById(id).cast(IdeaDTO.class);
+        Mono<Idea> idea = ideaRepository.findById(id);
+        return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
     // После полного перехода на реактивный стэк @Cacheable
     public Flux<IdeaDTO> getListIdea() {
-        return ideaRepository.findAll().cast(IdeaDTO.class);
+        Flux<Idea> ideas = ideaRepository.findAll();
+        return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
         ideaDTO.setDateCreated(new Date());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
-        return Mono.just(ideaDTO).cast(Idea.class).flatMap(ideaRepository::save).cast(IdeaDTO.class);
+        Mono<Idea> idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
+        return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void deleteIdeaByInitiator(String id, String email) {
-        ideaRepository.deleteById(id);
+    public void deleteIdeaByInitiator(String id) {
+        ideaRepository.deleteById(id).subscribe();
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public void deleteIdeaByAdmin(String id) {
-        ideaRepository.deleteById(id);
+        ideaRepository.deleteById(id).subscribe();
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
@@ -56,7 +64,7 @@ public class IdeaService {
         idea.flatMap(i -> {
             i.setStatus(StatusIdea.ON_CONFIRMATION);
             return ideaRepository.save(i);
-        });
+        }).subscribe();
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
@@ -77,7 +85,7 @@ public class IdeaService {
             i.setRating(updatedIdea.getRating());
             i.setDateModified(new Date());
             return ideaRepository.save(i);
-        });
+        }).subscribe();
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
@@ -86,7 +94,7 @@ public class IdeaService {
         idea.flatMap(i ->{
             i.setStatus(newStatus);
             return ideaRepository.save(i);
-        });
+        }).subscribe();
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
@@ -100,7 +108,7 @@ public class IdeaService {
             i.setTechnicalFeasibility(ratingDTO.getTechnicalFeasibility());
             i.setUnderstanding(ratingDTO.getUnderstanding());
             return ideaRepository.save(i);
-        });
+        }).subscribe();
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
@@ -123,6 +131,6 @@ public class IdeaService {
             i.setRisk(updatedIdea.getRisk());
             i.setDateModified(new Date());
             return ideaRepository.save(i);
-        });
+        }).subscribe();
     }
 }

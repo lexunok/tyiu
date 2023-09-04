@@ -40,8 +40,8 @@ public class IdeaController {
     }
 
     @DeleteMapping("/initiator/delete/{ideaId}")
-    public Mono<Void> deleteIdeaByInitiator(@PathVariable String ideaId, Principal principal) {
-        ideaService.deleteIdeaByInitiator(ideaId, principal.getName());
+    public Mono<Void> deleteIdeaByInitiator(@PathVariable String ideaId) {
+        ideaService.deleteIdeaByInitiator(ideaId);
         return Mono.empty();
     }
 

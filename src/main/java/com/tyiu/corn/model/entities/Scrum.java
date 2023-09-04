@@ -18,6 +18,6 @@ public class Scrum {
     private String name;
     private String description;
     private Integer count;
-    private List<Profile> profiles;
-    private List<Task> tasks;
+    private List<String> profilesId;
+    private List<String> tasksId;
 }

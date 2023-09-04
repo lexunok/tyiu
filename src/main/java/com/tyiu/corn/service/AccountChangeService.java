@@ -71,35 +71,42 @@ public class AccountChangeService {
                                     "Приглашение",
                                     String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
                             );
-                            accountChangeRepository.save(invitation);
+                            accountChangeRepository.save(invitation).subscribe();
                             return Mono.empty();
                         }
                         return Mono.empty();
-                    });
+                    }).subscribe();
             return Flux.empty();
-        });
+        }).subscribe();
     }
 
     public void sendInvitation(Temporary invitation) throws  NotFoundException{
         /*if (userRepository.existsByEmail(invitation.getEmail())){
 
         }*/
-        UUID url = UUID.randomUUID();
-        Date date = new Date();
-        long milliseconds = date.getTime() + 259200000;
-        date.setTime(milliseconds);
-        invitation.setRoles(List.of(Role.INITIATOR));
-        invitation.setDateExpired(date);
-        invitation.setUrl(url.toString());
-        sendEmail(
-                invitation.getEmail(),
-                "Приглашение",
-                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
-        );
-        if (accountChangeRepository.existsByEmail(invitation.getEmail())){
-            accountChangeRepository.deleteByEmail(invitation.getEmail());
-        }
-        accountChangeRepository.save(invitation);
+        Mono<String> inv = Mono.just(invitation.getEmail());
+        inv.flatMap(e -> {
+            accountChangeRepository.existsByEmail(e).flatMap(b -> {
+                    UUID url = UUID.randomUUID();
+                    Date date = new Date();
+                    long milliseconds = date.getTime() + 259200000;
+                    date.setTime(milliseconds);
+                    invitation.setRoles(List.of(Role.INITIATOR));
+                    invitation.setDateExpired(date);
+                    invitation.setUrl(url.toString());
+                    sendEmail(
+                            invitation.getEmail(),
+                            "Приглашение",
+                            String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                    );
+                    if (b){
+                        accountChangeRepository.deleteByEmail(e);
+                    }
+                    accountChangeRepository.save(invitation).subscribe();
+                    return Mono.empty();
+            }).subscribe();
+            return Mono.empty();
+        }).subscribe();
     }
 
     public Mono<InvitationResponse> findByUrl(String url) {
@@ -138,20 +145,27 @@ public class AccountChangeService {
         /*if (userRepository.existsByEmail(emailChange.getNewEmail())){
 
         }*/
-        if (accountChangeRepository.existsByOldEmail(emailChange.getOldEmail())){
-            accountChangeRepository.deleteByOldEmail(emailChange.getOldEmail());
-        }
-        Date date = new Date();
-        date.setTime(date.getTime()+43200000);
-        emailChange.setUrl(UUID.randomUUID().toString());
-        emailChange.setDateExpired(date);
-        emailChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
-        sendEmail(
-                emailChange.getNewEmail(),
-                "Изменение почты",
-                String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
-        );
-        accountChangeRepository.save(emailChange);
+        Mono<String> ema = Mono.just(emailChange.getOldEmail());
+        ema.flatMap(e -> {
+            accountChangeRepository.existsByOldEmail(e).flatMap(b -> {
+                if (b){
+                    accountChangeRepository.deleteByOldEmail(e);
+                }
+                Date date = new Date();
+                date.setTime(date.getTime()+43200000);
+                emailChange.setUrl(UUID.randomUUID().toString());
+                emailChange.setDateExpired(date);
+                emailChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
+                sendEmail(
+                        emailChange.getNewEmail(),
+                        "Изменение почты",
+                        String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
+                );
+                accountChangeRepository.save(emailChange).subscribe();
+                return Mono.empty();
+            }).subscribe();
+            return Mono.empty();
+        }).subscribe();
     }
 
     public Mono<String> sendEmailToChangePassword(Temporary passwordChange) {
@@ -167,7 +181,7 @@ public class AccountChangeService {
                 passwordChange.getEmail(),
                 "Восстановление пароля",
                 String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()));
-        accountChangeRepository.save(passwordChange);
+        accountChangeRepository.save(passwordChange).subscribe();
         return Mono.just(passwordChange.getUrl());
     }
 
@@ -182,11 +196,11 @@ public class AccountChangeService {
                 user.flatMap(u -> {
                     userRepository.setPassword(passwordEncoder.encode(request.getPassword()), u.getId());
                     return Mono.empty();
-                });
-                accountChangeRepository.delete(c);
+                }).subscribe();
+                accountChangeRepository.delete(c).subscribe();
             }
             return Mono.empty();
-        });
+        }).subscribe();
     }
 
 
@@ -198,11 +212,11 @@ public class AccountChangeService {
                 user.flatMap(u -> {
                     userRepository.setEmail(request.getNewEmail(), u.getId());
                     return Mono.empty();
-                });
-                accountChangeRepository.delete(e);
+                }).subscribe();
+                accountChangeRepository.delete(e).subscribe();
             }
             return Mono.empty();
-        });
+        }).subscribe();
     }
 
     public Flux<UserInfoResponse> getUsersInfo(){
@@ -234,7 +248,7 @@ public class AccountChangeService {
                     request.getNewRoles(),
                     u.getId());
             return Mono.empty();
-        });
+        }).subscribe();
     }
 
     public void deleteDataByUrl(String url){

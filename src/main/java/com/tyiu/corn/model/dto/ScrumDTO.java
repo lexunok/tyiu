@@ -1,7 +1,8 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.entities.Profile;
 import com.tyiu.corn.model.entities.Task;
+import com.tyiu.corn.model.entities.User;
+
 import lombok.*;
 
 import java.util.List;
@@ -15,6 +16,6 @@ public class ScrumDTO {
         private String name;
         private String description;
         private Integer count;
-        private List<Profile> profiles;
+        private List<UserDTO> profiles;
         private List<Task> tasks;
     }
