@@ -12,6 +12,7 @@ import java.util.List;
 public interface UserRepository extends ReactiveCrudRepository<User,String> {
     Mono<User> findFirstByEmail(String email);
     Mono<Boolean> existsByEmail(String email);
+    //TODO: Обновить методы
     @Query("UPDATE User u SET u.email = ?1 WHERE u.id = ?2")
     void setEmail(String email, String id);
     @Query("UPDATE User u SET u.password = ?1 WHERE u.id = ?2")
