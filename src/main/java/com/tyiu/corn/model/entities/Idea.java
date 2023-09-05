@@ -5,6 +5,8 @@ import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
+
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -36,8 +38,8 @@ public class Idea {
     private StatusIdea status;
     private double rating;
     private double risk;
-    private Date dateCreated;
-    private Date dateModified;
+    private Instant createdAt;
+    private Instant modifiedAt;
     private String marketValue;
     private String originality;
     private String technicalFeasibility;

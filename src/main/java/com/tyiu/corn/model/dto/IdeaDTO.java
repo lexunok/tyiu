@@ -8,6 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 @Data
@@ -34,8 +35,8 @@ public class IdeaDTO {
     private StatusIdea status;
     private double rating;
     private double risk;
-    private Date dateCreated;
-    private Date dateModified;
+    private Instant createdAt;
+    private Instant modifiedAt;
     private String marketValue;
     private String originality;
     private String technicalFeasibility;

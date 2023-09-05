@@ -1,6 +1,7 @@
 package com.tyiu.corn.model.entities;
 import lombok.*;
 
+import java.time.Instant;
 import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -21,6 +22,6 @@ public class Comment {
     private String comment;
     private String sender;
     private List<String> checkedBy;
-    private Date dateCreated;
-    private Idea idea;
+    private Instant createdAt;
+    private String ideaId;
 }

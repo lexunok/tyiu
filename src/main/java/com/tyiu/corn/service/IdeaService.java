@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import java.time.Instant;
 import java.util.Date;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
@@ -22,7 +23,6 @@ import reactor.core.publisher.Mono;
 public class IdeaService {
 
     private final IdeaRepository ideaRepository;
-
     private final ModelMapper mapper;
 
     // После полного перехода на реактивный стэк @Cacheable
@@ -32,7 +32,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @Cacheable(key = "#id")
-    public Mono<IdeaDTO> getIdeaForInitiator(String id, String email) {
+    public Mono<IdeaDTO> getIdeaForInitiator(String id) {
         Mono<Idea> idea = ideaRepository.findById(id);
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
@@ -43,7 +43,7 @@ public class IdeaService {
     }
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
-        ideaDTO.setDateCreated(new Date());
+        ideaDTO.setCreatedAt(Instant.now());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
         Mono<Idea> idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
@@ -59,7 +59,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateStatusByInitiator (String id, String email){
+    public void updateStatusByInitiator (String id){
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
             i.setStatus(StatusIdea.ON_CONFIRMATION);
@@ -68,7 +68,7 @@ public class IdeaService {
     }
 
     // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
-    public void updateIdeaByInitiator(String id, String email, IdeaDTO updatedIdea) {
+    public void updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
             i.setName(updatedIdea.getName());
@@ -83,7 +83,7 @@ public class IdeaService {
             i.setSuitability(updatedIdea.getSuitability());
             i.setBudget(updatedIdea.getBudget());
             i.setRating(updatedIdea.getRating());
-            i.setDateModified(new Date());
+            i.setModifiedAt(Instant.now());
             return ideaRepository.save(i);
         }).subscribe();
     }
@@ -129,7 +129,7 @@ public class IdeaService {
             i.setStatus(updatedIdea.getStatus());
             i.setRating(updatedIdea.getRating());
             i.setRisk(updatedIdea.getRisk());
-            i.setDateModified(new Date());
+            i.setModifiedAt(Instant.now());
             return ideaRepository.save(i);
         }).subscribe();
     }
