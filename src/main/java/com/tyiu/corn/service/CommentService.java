@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.tyiu.corn.exception.AccessException;
 import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Comment;
@@ -35,13 +34,13 @@ public class CommentService {
 
 
 //    @Cacheable
-    public Flux<CommentDTO> getAllIdeaComments(Long ideaId) {
+    public Flux<CommentDTO> getAllIdeaComments(String ideaId) {
         Flux<Comment> ideaComments = commentRepository.findAllByIdea_Id(ideaId);
         return ideaComments.cast(CommentDTO.class);
     }
 
 //    @CacheEvict(allEntries = true)
-    public Mono<CommentDTO> createComment(Long ideaId, CommentDTO commentDTO, String email) {
+    public Mono<CommentDTO> createComment(String ideaId, CommentDTO commentDTO, String email) {
         commentDTO.setIdeaId(ideaId);
         commentDTO.setDateCreated(new Date());
         commentDTO.setSender(email);
@@ -51,12 +50,12 @@ public class CommentService {
 
 //    @CacheEvict(allEntries = true)
 //    @Transactional
-    public void deleteComment(Long commentId, String email) {
+    public void deleteComment(String commentId, String email) {
         commentRepository.deleteById(commentId);
     }
 
 //    @CacheEvict(allEntries = true)
-    public void checkCommentByUser(Long commentId, String email) {
+    public void checkCommentByUser(String commentId, String email) {
         Mono<Comment> currentComment = commentRepository.findById(commentId);
         currentComment.flatMap(c -> {
             c.getCheckedBy().add(email);
