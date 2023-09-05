@@ -21,7 +21,7 @@ public class CommentController {
     private final CommentService commentService;
 
     @GetMapping("/get-idea-comments/{ideaId}")
-    public Map<String, Flux<CommentDTO>> getAllIdeaComments(@PathVariable Long ideaId){
+    public Map<String, Flux<CommentDTO>> getAllIdeaComments(@PathVariable String ideaId){
         return Map.of("comments", commentService.getAllIdeaComments(ideaId));
     }
 //
@@ -40,16 +40,16 @@ public class CommentController {
 //    }
 
     @PostMapping("/add/{ideaId}")
-    public Mono<CommentDTO> saveCommentOutdated(@RequestBody CommentDTO commentDTO, @PathVariable Long ideaId, Principal principal) {
+    public Mono<CommentDTO> saveCommentOutdated(@RequestBody CommentDTO commentDTO, @PathVariable String ideaId, Principal principal) {
         return commentService.createComment(ideaId, commentDTO, principal.getName());
     }
     @DeleteMapping("/delete/{commentId}")
-    public Mono<Void> deleteCommentOutdated(@PathVariable Long commentId, Principal principal) {
+    public Mono<Void> deleteCommentOutdated(@PathVariable String commentId, Principal principal) {
         commentService.deleteComment(commentId, principal.getName());
         return Mono.empty();
     }
     @PutMapping("/check/{commentId}")
-    public Mono<Void> checkComment(@PathVariable Long commentId, Principal principal){
+    public Mono<Void> checkComment(@PathVariable String commentId, Principal principal){
         commentService.checkCommentByUser(commentId, principal.getName());
         return Mono.empty();
     }

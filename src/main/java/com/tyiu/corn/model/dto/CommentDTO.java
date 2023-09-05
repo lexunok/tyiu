@@ -18,5 +18,5 @@ public class CommentDTO {
     private String sender;
     private List<String> checkedBy;
     private Date dateCreated;
-    private Long ideaId;
+    private String ideaId;
 }

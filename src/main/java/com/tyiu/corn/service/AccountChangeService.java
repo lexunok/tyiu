@@ -49,13 +49,13 @@ public class AccountChangeService {
         this.emailSender.send(simpleMailMessage);
     }
 
-    public void sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException {
+    public Flux<Void> sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException {
         /*if (invitations.getRoles() == null){
 
         }*/
         Flux<String> inv = Flux.fromIterable(invitations.getEmails());
-        inv.flatMap(e -> {
-            userRepository.existsByEmail(e).flatMap(
+        return inv.flatMap(e -> {
+            Mono<Boolean> isExists = userRepository.existsByEmail(e).flatMap(
                     b -> {
                         if(!b){
                             Date date = new Date();
@@ -71,13 +71,12 @@ public class AccountChangeService {
                                     "Приглашение",
                                     String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
                             );
-                            accountChangeRepository.save(invitation).subscribe();
-                            return Mono.empty();
+                            accountChangeRepository.save(invitation);
                         }
                         return Mono.empty();
-                    }).subscribe();
+                    });
             return Flux.empty();
-        }).subscribe();
+        });
     }
 
     public void sendInvitation(Temporary invitation) throws  NotFoundException{
