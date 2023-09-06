@@ -12,7 +12,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -27,6 +26,8 @@ public class CompanyControllerTest {
     @Autowired
     private WebTestClient webTestClient;
     private String jwt;
+
+
     @BeforeAll
     public void setUp(){
         RegisterRequest request = new RegisterRequest(
@@ -43,8 +44,9 @@ public class CompanyControllerTest {
     }
 
     @Test
-    void testGetCompanyList(){
+    void testGetCompanyList() {
         Company company = Company.builder().name("company").build();
+
         Company response = webTestClient
                 .post()
                 .uri("/api/v1/company/add")
@@ -52,23 +54,34 @@ public class CompanyControllerTest {
                 .body(Mono.just(company), Company.class)
                 .exchange()
                 .expectBody(Company.class)
-                .returnResult().getResponseBody();
-        List<Company> response3 = webTestClient
+                .returnResult()
+                .getResponseBody();
+
+        assertNotNull(response);
+
+        List<Company> response2 = webTestClient
                 .get()
                 .uri("/api/v1/company")
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBodyList(Company.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response3);
-        List<Company> actualCompanys = response3.stream().filter(u -> company.getName().equals(response.getName())).toList();
+                .returnResult()
+                .getResponseBody();
+
+        assertNotNull(response2);
+
+        List<Company> actualCompanys = response2.stream()
+                .filter(u -> company.getName().equals(response.getName()))
+                .toList();
+
         assertTrue(actualCompanys.size() >= 1);
     }
 
     @Test
-    void testGetCompanyStaff(){
-        List<User> users = List.of(User.builder().email("fakeeeeeeee").build());
+    void testGetCompanyStaff() {
+        List<User> users = List.of(User.builder().email("fake").build());
         Company company = Company.builder().name("company").staff(null).build();
+
         Company response = webTestClient
                 .post()
                 .uri("/api/v1/company/add")
@@ -76,24 +89,31 @@ public class CompanyControllerTest {
                 .body(Mono.just(company), Company.class)
                 .exchange()
                 .expectBody(Company.class)
-                .returnResult().getResponseBody();
-        Long id = response.getId();
+                .returnResult()
+                .getResponseBody();
+
+        String id = response.getId();
+
         List<UserDTO> response2 = webTestClient
                 .get()
                 .uri("/api/v1/company/staff/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBodyList(UserDTO.class)
-                .returnResult().getResponseBody();
+                .returnResult()
+                .getResponseBody();
+
         assertNotNull(response2);
+
         // List<UserDTO> actualStaff = response2.stream().filter(u -> company.getStaff().equals(response.getStaff())).toList();
         // assertTrue(actualStaff.size() >= 1);
     }
-    
+
 
     @Test
-    void testAddCompany(){
+    void testAddCompany() {
         Company company = Company.builder().name("company").build();
+
         Company response = webTestClient
                 .post()
                 .uri("/api/v1/company/add")
@@ -101,9 +121,11 @@ public class CompanyControllerTest {
                 .body(Mono.just(company), Company.class)
                 .exchange()
                 .expectBody(Company.class)
-                .returnResult().getResponseBody();
+                .returnResult()
+                .getResponseBody();
+
         assertNotNull(response);
-        assertEquals(company.getName(),response.getName());
+        assertEquals(company.getName(), response.getName());
     }
 
     @Test
@@ -117,7 +139,7 @@ public class CompanyControllerTest {
                 .exchange()
                 .expectBody(Company.class)
                 .returnResult().getResponseBody();
-        Long id = response.getId();
+        String id = response.getId();
         webTestClient
                 .delete()
                 .uri("/api/v1/company/delete/{id}", id)
@@ -137,7 +159,7 @@ public class CompanyControllerTest {
                 .exchange()
                 .expectBody(Company.class)
                 .returnResult().getResponseBody();
-        Long id = response.getId();
+        String id = response.getId();
         company = Company.builder().name("title2").build();
         Company response2 = webTestClient
                 .put()
