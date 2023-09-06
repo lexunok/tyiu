@@ -1,8 +1,6 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.GroupDTO;
-import com.tyiu.corn.model.entities.Group;
-import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -71,7 +69,7 @@ public class GroupControllerTest {
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
         assertEquals(group5.getName(), response4.getName());
-        Long id = response4.getId();
+        String id = response4.getId();
         group5 = GroupDTO.builder().name("title 2").build();
         GroupDTO response5 = webTestClient
                 .put()
@@ -84,3 +82,4 @@ public class GroupControllerTest {
     }
 
 }
+

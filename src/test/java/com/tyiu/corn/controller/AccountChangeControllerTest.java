@@ -294,232 +294,237 @@ public class AccountChangeControllerTest {
         assertEquals(errorResponse.getError(), "Пользователь с такой почтой существует");
     }
     @Test
-    void changePassword(){
-        //Before
+    void changePassword() {
+        // Before
         RegisterRequest request = new RegisterRequest(
-                "123456@gmaergrfefifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
-        AuthenticationResponse response = webTestClient
-                .post()
+                "123456@gmaergrfefifl.com", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
+        AuthenticationResponse response = webTestClient.post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response);
+
         Date date = new Date();
         date.setTime(date.getTime() + 300000);
+
         Temporary emailChange = Temporary.builder()
-        .email("123456@gmaergrfefifl.com")
-        .code(123456)
-        .url("12345678")
-        .dateExpired(date)
-        .build();
+                .email("123456@gmaergrfefifl.com")
+                .code(123456)
+                .url("12345678")
+                .dateExpired(date)
+                .build();
         accountChangeRepository.save(emailChange);
 
-        //Test
+        // Test
         ChangeRequest requestChange = new ChangeRequest(
-            null,
-            null, 
-            null, 
-            123456, 
-            "123456@gmaergrfefifl.com", 
-            "fakepass2",
-            "12345678");
+                null, null, null, 123456, "123456@gmaergrfefifl.com", "fakepass2", "12345678");
 
-        Map<String, String> responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/password")
-            .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
-            .returnResult().getResponseBody();
+        Map<String, String> responseChange = webTestClient.put()
+                .uri("/api/v1/profile-action/change/password")
+                .body(Mono.just(requestChange), ChangeRequest.class)
+                .exchange()
+                .expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
+                .returnResult().getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals("Успешное изменение пароля", responseChange.get("success"));
     }
     @Test
-    void changeEmail(){
-        //Before
-         RegisterRequest request = new RegisterRequest(
-                "123456@gmdaifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
-        AuthenticationResponse response = webTestClient
-                .post()
+    void changeEmail() {
+        RegisterRequest request = new RegisterRequest(
+                "123456@gmdaifl.com", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
+        AuthenticationResponse response = webTestClient.post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response);
+
         Date date = new Date();
         date.setTime(date.getTime() + 300000);
+
         Temporary emailChange = Temporary.builder()
-        .oldEmail("123456@gmdaifl.com")
-        .newEmail("1234567@gmdaifl.com")
-        .code(123456)
-        .url("12345")
-        .dateExpired(date)
-        .build();
+                .oldEmail("123456@gmdaifl.com")
+                .newEmail("1234567@gmdaifl.com")
+                .code(123456)
+                .url("12345")
+                .dateExpired(date)
+                .build();
+
         accountChangeRepository.save(emailChange);
 
-        //Test
         ChangeRequest requestChange = new ChangeRequest(
-            "1234567@gmdaifl.com",
-            "123456@gmdaifl.com", 
-            "12345", 
-            123456, 
-            null, 
-            null,
-            null);
+                "1234567@gmdaifl.com",
+                "123456@gmdaifl.com",
+                "12345",
+                123456,
+                null,
+                null,
+                null);
 
-        Map<String, String> responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/email")
-            .header("Authorization","Bearer " + response.getToken())
-            .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
-            .returnResult().getResponseBody();
+        Map<String, String> responseChange = webTestClient.put()
+                .uri("/api/v1/profile-action/change/email")
+                .header("Authorization", "Bearer " + response.getToken())
+                .body(Mono.just(requestChange), ChangeRequest.class)
+                .exchange()
+                .expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
+                .returnResult().getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals("Успешное изменение почты", responseChange.get("success"));
     }
     @Test
-    void changePasswordInvalidCode(){
-        //Before
+    void changePasswordInvalidCode() {
+        // Before
         RegisterRequest request = new RegisterRequest(
-                "123456@gmaefefifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
+                "123456@gmaefefifl.com", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
-                .returnResult().getResponseBody();
+                .returnResult()
+                .getResponseBody();
         assertNotNull(response);
+
         Date date = new Date();
         date.setTime(date.getTime() + 300000);
         Temporary emailChange = Temporary.builder()
-        .email("123456@gmaefefifl.com")
-        .code(123456)
-        .url("1234567")
-        .dateExpired(date)
-        .build();
+                .email("123456@gmaefefifl.com")
+                .code(123456)
+                .url("1234567")
+                .dateExpired(date)
+                .build();
         accountChangeRepository.save(emailChange);
 
-        //Test
-        ChangeRequest requestChange = new ChangeRequest(
-            null,
-             null, 
-             null, 
-             1234567, 
-             "123456@gmaefefifl.com", 
-             "fakepass2",
-             "1234567");
-
+        // Test
+        ChangeRequest requestChange = new ChangeRequest(null, null, null, 1234567,
+                "123456@gmaefefifl.com", "fakepass2", "1234567");
         ErrorResponse responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/password")
-            .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(ErrorResponse.class)
-            .returnResult().getResponseBody();
-
+                .put()
+                .uri("/api/v1/profile-action/change/password")
+                .body(Mono.just(requestChange), ChangeRequest.class)
+                .exchange()
+                .expectBody(ErrorResponse.class)
+                .returnResult()
+                .getResponseBody();
         assertNotNull(responseChange);
         assertEquals("Неправильный код", responseChange.getError());
     }
     @Test
-    void changePasswordWhenExpired(){
-        //Before
-        RegisterRequest request = new RegisterRequest(
-                "1234567@gmaefefifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
+    void changePasswordWhenExpired() {
+
+        // Before
+        RegisterRequest request = new RegisterRequest("1234567@gmaefefifl.com", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
-                .returnResult().getResponseBody();
+                .returnResult()
+                .getResponseBody();
+
         assertNotNull(response);
+
         Date date = new Date();
         date.setTime(date.getTime() - 300001);
+
         Temporary emailChange = Temporary.builder()
-        .email("1234567@gmaefefifl.com")
-        .code(123456)
-        .url("123456")
-        .dateExpired(date)
-        .build();
+                .email("1234567@gmaefefifl.com")
+                .code(123456)
+                .url("123456")
+                .dateExpired(date)
+                .build();
+
         accountChangeRepository.save(emailChange);
 
-        //Test
+        // Test
         ChangeRequest requestChange = new ChangeRequest(
-            null,
-             null, 
-             null, 
-             123456, 
-             "1234567@gmaefefifl.com", 
-             "fakepass2",
-             "123456");
+                null,
+                null,
+                null,
+                123456,
+                "1234567@gmaefefifl.com",
+                "fakepass2",
+                "123456");
 
         ErrorResponse responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/password")
-            .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(ErrorResponse.class)
-            .returnResult().getResponseBody();
+                .put()
+                .uri("/api/v1/profile-action/change/password")
+                .body(Mono.just(requestChange), ChangeRequest.class)
+                .exchange()
+                .expectBody(ErrorResponse.class)
+                .returnResult()
+                .getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals("Время действия кода истекло", responseChange.getError());
         assertThrows(NoSuchElementException.class, () -> {
-            accountChangeRepository.findByUrl(requestChange.getUrl()).get();
+            accountChangeRepository.findByUrl(requestChange.getUrl());
         });
     }
     @Test
-    void changeEmailInvalidCode(){
-        //Before
-         RegisterRequest request = new RegisterRequest(
-                "123456@gmdaewegwegifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
+    void changeEmailInvalidCode() {
+        // Before
+        RegisterRequest request = new RegisterRequest("123456@gmdaewegwegifl.com", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
-                .returnResult().getResponseBody();
+                .returnResult()
+                .getResponseBody();
+
         assertNotNull(response);
+
         Date date = new Date();
         date.setTime(date.getTime() + 300000);
+
         Temporary emailChange = Temporary.builder()
-        .oldEmail("123456@gmdaewegwegifl.com")
-        .newEmail("1234567@gmdaifl.com")
-        .code(123456)
-        .url("12345d")
-        .dateExpired(date)
-        .build();
+                .oldEmail("123456@gmdaewegwegifl.com")
+                .newEmail("1234567@gmdaifl.com")
+                .code(123456)
+                .url("12345d")
+                .dateExpired(date)
+                .build();
+
         accountChangeRepository.save(emailChange);
 
-        //Test
+        // Test
         ChangeRequest requestChange = new ChangeRequest(
-            "123456@gmdaewegwegifl.com",
-            "123456@gmdaifl.com", 
-            "12345d", 
-            12345, 
-            null, 
-            null,
-            null);
+                "123456@gmdaewegwegifl.com",
+                "123456@gmdaifl.com",
+                "12345d",
+                12345,
+                null,
+                null,
+                null);
 
         ErrorResponse responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/email")
-            .header("Authorization","Bearer " + response.getToken())
-            .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(ErrorResponse.class)
-            .returnResult().getResponseBody();
+                .put()
+                .uri("/api/v1/profile-action/change/email")
+                .header("Authorization", "Bearer " + response.getToken())
+                .body(Mono.just(requestChange), ChangeRequest.class)
+                .exchange()
+                .expectBody(ErrorResponse.class)
+                .returnResult()
+                .getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals(responseChange.getError(), "Неправильный код");
     }
+
     @Test
-    void changeEmailWhenExpired(){
-        //Before
-         RegisterRequest request = new RegisterRequest(
-                "123456@gmdaifl.com","fakename","fakename","fakepass", List.of(Role.ADMIN));
+    void changeEmailWhenExpired() {
+        // Before
+        RegisterRequest request = new RegisterRequest(
+                "123456@gmdaifl.com", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -528,43 +533,43 @@ public class AccountChangeControllerTest {
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response);
+
         Date date = new Date();
         date.setTime(date.getTime() + 44200000);
         Temporary emailChange = Temporary.builder()
-        .oldEmail("123456@gmdaifl.com")
-        .newEmail("1234567@gmdaifl.com")
-        .code(123456)
-        .url("12345s")
-        .dateExpired(date)
-        .build();
+                .oldEmail("123456@gmdaifl.com")
+                .newEmail("1234567@gmdaifl.com")
+                .code(123456)
+                .url("12345s")
+                .dateExpired(date)
+                .build();
         accountChangeRepository.save(emailChange);
         accountChangeService.deleteExpiredData();
-        //Test
+
+        // Test
         ChangeRequest requestChange = new ChangeRequest(
-            "1234567@gmdaifl.com",
-            "123456@gmdaifl.com", 
-            "12345s", 
-            12345, 
-            null, 
-            null,
-            null);
-
+                "1234567@gmdaifl.com",
+                "123456@gmdaifl.com",
+                "12345s",
+                12345,
+                null,
+                null,
+                null);
         ErrorResponse responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/email")
-            .header("Authorization","Bearer " + response.getToken())
-            .body(Mono.just(requestChange), ChangeRequest.class)
-            .exchange().expectBody(ErrorResponse.class)
-            .returnResult().getResponseBody();
-
+                .put()
+                .uri("/api/v1/profile-action/change/email")
+                .header("Authorization", "Bearer " + response.getToken())
+                .body(Mono.just(requestChange), ChangeRequest.class)
+                .exchange()
+                .expectBody(ErrorResponse.class)
+                .returnResult().getResponseBody();
         assertNotNull(responseChange);
         assertEquals(responseChange.getError(), "Неправильный код");
     }
     @Test
-    void changeFullUserInfo(){
-        //Before
-        RegisterRequest request = new RegisterRequest(
-                "old123456saka@gmdaifl.com","oldfakename","oldfakename","fakepass", List.of(Role.ADMIN));
+    void changeFullUserInfo() {
+        // Before
+        RegisterRequest request = new RegisterRequest("old123456saka@gmdaifl.com", "oldfakename", "oldfakename", "fakepass", List.of(Role.ADMIN));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -573,58 +578,60 @@ public class AccountChangeControllerTest {
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response);
+
         //Test
         UserInfoRequest changeRequest = UserInfoRequest.builder()
-        .email("old123456saka@gmdaifl.com")
-        .newEmail("new123456saka@gmdaifl.com")
-        .newFirstName("newfakename")
-        .newLastName("newfakename")
-        .newRoles(List.of(Role.ADMIN, Role.EXPERT))
-        .build();
-
-        Map<String,String> responseChange = webTestClient
-            .put()
-            .uri("/api/v1/profile-action/change/user-info")
-            .header("Authorization","Bearer " + jwt)
-            .body(Mono.just(changeRequest), UserInfoRequest.class)
-            .exchange().expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
-            .returnResult().getResponseBody();
-
+                .email("old123456saka@gmdaifl.com")
+                .newEmail("new123456saka@gmdaifl.com")
+                .newFirstName("newfakename")
+                .newLastName("newfakename")
+                .newRoles(List.of(Role.ADMIN, Role.EXPERT))
+                .build();
+        Map<String, String> responseChange = webTestClient
+                .put()
+                .uri("/api/v1/profile-action/change/user-info")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(changeRequest), UserInfoRequest.class)
+                .exchange()
+                .expectBody(new ParameterizedTypeReference<Map<String, String>>() {})
+                .returnResult().getResponseBody();
         assertNotNull(responseChange);
         assertEquals(responseChange.get("success"), "Успешное изменение пользователя");
     }
     @Test
-    void getEmailChangeData(){
-        //Before
+    void getEmailChangeData() {
+        // Before
         Temporary emailChange = Temporary.builder()
-        .oldEmail("dontfakeedemail@gmfefail.com")
-        .newEmail("123456@yandxdf.com")
-        .url("1234567890")
-        .code(123478)
-        .build();
-        accountChangeRepository.save(emailChange);
-        //Test
+                .oldEmail("dontfakeedemail@gmfefail.com")
+                .newEmail("123456@yandxdf.com")
+                .url("1234567890")
+                .code(123478)
+                .build();
+        accountChangeRepository.save(emailChange).block(); // Добавляем блокировку, чтобы дождаться сохранения данных
+
+        // Test
         String urlParam = emailChange.getUrl();
-        ChangeResponse responseChange = webTestClient
-            .get()
-            .uri("/api/v1/profile-action/change/email/{urlParam}", urlParam)
-            .header("Authorization","Bearer " + jwt)
-            .exchange().expectBody(ChangeResponse.class)
-            .returnResult().getResponseBody();
+        ChangeResponse responseChange = webTestClient.get()
+                .uri("/api/v1/profile-action/change/email/{urlParam}", urlParam)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(ChangeResponse.class)
+                .returnResult()
+                .getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals(responseChange.getNewEmail(), "123456@yandxdf.com");
         assertEquals(responseChange.getOldEmail(), "dontfakeedemail@gmfefail.com");
     }
     @Test
-    void getEmailChangeDataThatNotExist(){
-        //Test
-        ErrorResponse responseChange = webTestClient
-            .get()
-            .uri("/api/v1/profile-action/change/email/eer1234urlparamf")
-            .header("Authorization","Bearer " + jwt)
-            .exchange().expectBody(ErrorResponse.class)
-            .returnResult().getResponseBody();
+    void getEmailChangeDataThatNotExist() {
+        ErrorResponse responseChange = webTestClient.get()
+                .uri("/api/v1/profile-action/change/email/eer1234urlparamf")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(ErrorResponse.class)
+                .returnResult()
+                .getResponseBody();
 
         assertNotNull(responseChange);
         assertEquals(responseChange.getError(), "Доступ зарпрещен");
