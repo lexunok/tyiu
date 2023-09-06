@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS company (
-    id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    staff TEXT[] NOT NULL
-);

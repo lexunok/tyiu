@@ -43,7 +43,6 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
             List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
             UsernamePasswordAuthenticationToken authenticationToken =
                     new UsernamePasswordAuthenticationToken(email, null, authorities);
-            log.info(authenticationToken.toString());
             return Mono.just(authenticationToken);
         }
         return Mono.empty();

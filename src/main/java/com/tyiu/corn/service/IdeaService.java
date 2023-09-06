@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 
 import lombok.Value;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Service;
 
@@ -21,29 +24,29 @@ import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
-// После полного перехода на реактивный стэк @CacheConfig(cacheNames = {"ideas"})
+@CacheConfig(cacheNames = {"ideas"})
 public class IdeaService {
 
     private final IdeaRepository ideaRepository;
     private final ModelMapper mapper;
 
-    // После полного перехода на реактивный стэк @Cacheable
+    @Cacheable
     public Flux<IdeaDTO> getListIdeaForInitiator(String initiator) {
         Flux<Idea> ideas = ideaRepository.findAllByInitiator(initiator);
         return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
-    // После полного перехода на реактивный стэк @Cacheable(key = "#id")
+    @Cacheable(key = "#id")
     public Mono<IdeaDTO> getIdeaForInitiator(String id) {
         Mono<Idea> idea = ideaRepository.findById(id);
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
-    // После полного перехода на реактивный стэк @Cacheable
+    @Cacheable
     public Flux<IdeaDTO> getListIdea() {
         Flux<Idea> ideas = ideaRepository.findAll();
         return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
         ideaDTO.setCreatedAt(Instant.now());
         ideaDTO.setInitiator(initiator);
@@ -51,16 +54,16 @@ public class IdeaService {
         Mono<Idea> idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void deleteIdeaByInitiator(String id) {
         ideaRepository.deleteById(id).subscribe();
     }
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void deleteIdeaByAdmin(String id) {
         ideaRepository.deleteById(id).subscribe();
     }
 
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateStatusByInitiator (String id){
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
@@ -69,7 +72,7 @@ public class IdeaService {
         }).subscribe();
     }
 
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
@@ -90,7 +93,7 @@ public class IdeaService {
         }).subscribe();
     }
 
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateStatusByProjectOffice (String ideaId, StatusIdea newStatus){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i ->{
@@ -99,7 +102,7 @@ public class IdeaService {
         }).subscribe();
     }
 
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateStatusByExpert(String ideaId, RatingDTO ratingDTO){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i -> {
@@ -118,7 +121,7 @@ public class IdeaService {
         }).subscribe();
     }
 
-    // После полного перехода на реактивный стэк @CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {

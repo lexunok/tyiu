@@ -27,22 +27,22 @@ public class GroupService {
 
     private final ModelMapper mapper;
 
-//    @Cacheable
+    @Cacheable
     public Flux<GroupDTO> getGroups() {
         Flux<Group> groups = groupRepository.findAll();
         return groups.flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)));
     }
-//    @Cacheable(key = "#id")
+    @Cacheable(key = "#id")
     public Mono<GroupDTO> getGroupById(String id) {
         Mono<Group> group = groupRepository.findById(id);
         return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
     }
-    //@CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
         Mono<Group> group = groupRepository.save(mapper.map(groupDTO, Group.class));
         return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
     }
-    //@CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void updateGroup(String id,GroupDTO groupDTO) {
         Mono<Group> group = groupRepository.findById(id);
         group.flatMap(g -> {
@@ -50,7 +50,7 @@ public class GroupService {
             return groupRepository.save(g);
         }).subscribe();
     }
-    //@CacheEvict(allEntries = true)
+    @CacheEvict(allEntries = true)
     public void deleteGroup(String id) {
         groupRepository.deleteById(id).subscribe();
     }

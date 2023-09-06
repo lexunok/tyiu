@@ -1,5 +1,0 @@
-CREATE TABLE IF NOT EXISTS groups (
-    id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    users TEXT[] NOT NULL
-);

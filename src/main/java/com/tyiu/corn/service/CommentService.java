@@ -31,8 +31,6 @@ import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
-@CacheConfig(cacheNames = {"comments"})
-@Slf4j
 public class CommentService {
 
     private final CommentRepository commentRepository;
@@ -40,13 +38,12 @@ public class CommentService {
             .websocket(URI.create("http://localhost:3000/rs"));
     private final ModelMapper mapper;
 
-//    @Cacheable
     public Flux<CommentDTO> getAllIdeaComments(String ideaId) {
         Flux<Comment> ideaComments = commentRepository.findByIdeaId(ideaId);
         return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
-//    @CacheEvict(allEntries = true)
+
     public Mono<Void> createComment(String ideaId,String text, String email) {
         Comment comment = Comment.builder()
                 .ideaId(ideaId)
@@ -63,7 +60,7 @@ public class CommentService {
         return Mono.empty();
     }
 
-//    @CacheEvict(allEntries = true)
+
     public Mono<Void> deleteComment(String commentId, String ideaId) {
         commentRepository.deleteById(commentId).doOnSuccess(
                 c -> {
@@ -74,7 +71,6 @@ public class CommentService {
         return Mono.empty();
     }
 
-//    @CacheEvict(allEntries = true)
     public void checkCommentByUser(String commentId, String email) {
         Mono<Comment> currentComment = commentRepository.findById(commentId);
         currentComment.flatMap(c -> {

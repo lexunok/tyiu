@@ -34,11 +34,8 @@ import reactor.core.publisher.Mono;
 public class AccountChangeService {
     @Autowired
     private final JavaMailSender emailSender;
-
     private final AccountChangeRepository accountChangeRepository;
-
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     private void sendEmail(String toAdresses, String subject, String message){
