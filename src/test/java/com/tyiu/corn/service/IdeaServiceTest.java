@@ -2,8 +2,11 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.RatingDTO;
+import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.ProjectType;
+import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.repository.IdeaRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -122,7 +125,7 @@ public class IdeaServiceTest {
         when(mapper.map(idea, IdeaDTO.class)).thenReturn(ideaDTO);
 
         // Act
-        Mono<IdeaDTO> result = ideaService.getIdeaForInitiator(idea.getId(), initiator);
+        Mono<IdeaDTO> result = ideaService.getIdeaForInitiator(idea.getId());
 
         // Assert
         assertEquals(ideaDTO, result.block());
@@ -241,13 +244,16 @@ public class IdeaServiceTest {
                 .technicalFeasibility("Очень возможно")
                 .understanding("Очень понятно")
                 .build();
-
+        Group group = new Group();
+        group.setUsers(List.of(UserDTO.builder().build()));
         Idea idea = Idea.builder()
+                .experts(group)
+                .confirmedBy(List.of(""))
                 .status(StatusIdea.ON_APPROVAL)
                 .rating(2)
                 .marketValue("2000")
                 .originality("Оригинально")
-                .technicalFeasibility("Возможно")
+                .technicalRealizability(1L)
                 .understanding("Понятно")
                 .build();
 

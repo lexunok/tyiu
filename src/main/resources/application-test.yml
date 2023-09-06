@@ -1,4 +1,9 @@
 spring:
+  rsocket:
+    server:
+      port: 7000
+      transport: websocket
+      mapping-path: /rs
   data:
     mongodb:
       uri: mongodb://admin:admin@localhost:27017/admin

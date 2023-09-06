@@ -6,8 +6,6 @@ services:
       REDIS_PASSWORD: ${SERVICE_PASSWORD}
     ports:
       - "6379:6379"
-    networks:
-      - redis
     volumes:
       - redis:/data/redis
     restart: unless-stopped
@@ -22,13 +20,6 @@ services:
       - 27017:27017
     volumes:
       - mongodb:/data/mongodb
-    networks:
-      - mongodb
-networks:
-  mongodb:
-    driver: bridge
-  redis:
-    driver: bridge
 volumes:
   mongodb:
   redis:

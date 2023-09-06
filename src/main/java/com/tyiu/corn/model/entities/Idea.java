@@ -45,5 +45,4 @@ public class Idea {
     private String marketValue;
     private String originality;
     private String understanding;
-    //private List<Comment> comments;
 }
