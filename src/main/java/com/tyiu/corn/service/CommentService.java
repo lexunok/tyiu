@@ -1,5 +1,7 @@
 package com.tyiu.corn.service;
 
+import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -13,12 +15,15 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.CommentDTO;
 import com.tyiu.corn.repository.CommentRepository;
 import com.tyiu.corn.repository.IdeaRepository;
+import io.rsocket.core.RSocketClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,29 +34,44 @@ import reactor.core.publisher.Mono;
 @CacheConfig(cacheNames = {"comments"})
 @Slf4j
 public class CommentService {
-    private final CommentRepository commentRepository;
-    private final IdeaRepository ideaRepository;
 
+    private final CommentRepository commentRepository;
+    private final RSocketRequester requester = RSocketRequester.builder()
+            .websocket(URI.create("http://localhost:3000/rs"));
+    private final ModelMapper mapper;
 
 //    @Cacheable
     public Flux<CommentDTO> getAllIdeaComments(String ideaId) {
-        Flux<Comment> ideaComments = commentRepository.findAllByIdea_Id(ideaId);
-        return ideaComments.cast(CommentDTO.class);
+        Flux<Comment> ideaComments = commentRepository.findByIdeaId(ideaId);
+        return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
 //    @CacheEvict(allEntries = true)
-    public Mono<CommentDTO> createComment(String ideaId, CommentDTO commentDTO, String email) {
-        commentDTO.setIdeaId(ideaId);
-        commentDTO.setDateCreated(new Date());
-        commentDTO.setSender(email);
-        commentDTO.setCheckedBy(List.of(email));
-        return Mono.just(commentDTO).cast(Comment.class).flatMap(commentRepository::save).cast(CommentDTO.class);
+    public Mono<Void> createComment(String ideaId,String text, String email) {
+        Comment comment = Comment.builder()
+                .ideaId(ideaId)
+                .comment(text)
+                .createdAt(Instant.now())
+                .sender(email)
+                .build();
+        commentRepository.save(comment).doOnSuccess(
+                c -> {
+                    requester.route("all." + c.getIdeaId())
+                            .send();
+                }
+        ).subscribe();
+        return Mono.empty();
     }
 
 //    @CacheEvict(allEntries = true)
-//    @Transactional
-    public void deleteComment(String commentId, String email) {
-        commentRepository.deleteById(commentId);
+    public Mono<Void> deleteComment(String commentId, String ideaId) {
+        commentRepository.deleteById(commentId).doOnSuccess(
+                c -> {
+                    requester.route("all." + ideaId)
+                            .send();
+                }
+        ).subscribe();
+        return Mono.empty();
     }
 
 //    @CacheEvict(allEntries = true)

@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.dto;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -17,6 +18,6 @@ public class CommentDTO {
     private String comment;
     private String sender;
     private List<String> checkedBy;
-    private Date dateCreated;
+    private Instant createdAt;
     private String ideaId;
 }

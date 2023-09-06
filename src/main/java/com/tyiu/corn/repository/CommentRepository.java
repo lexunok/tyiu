@@ -8,5 +8,5 @@ import reactor.core.publisher.Flux;
 
 @Repository
 public interface CommentRepository extends ReactiveCrudRepository<Comment, String> {
-    Flux<Comment> findAllByIdea_Id(String ideaId);
+    Flux<Comment> findByIdeaId(String ideaId);
 }

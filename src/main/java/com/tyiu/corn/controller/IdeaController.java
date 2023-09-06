@@ -25,8 +25,8 @@ public class IdeaController {
     }
     
     @GetMapping("/initiator/{ideaId}")
-    public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, Principal principal) {
-        return ideaService.getIdeaForInitiator(ideaId, principal.getName());
+    public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId) {
+        return ideaService.getIdeaForInitiator(ideaId);
     }
 
     @GetMapping("/all")
@@ -52,14 +52,14 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/update/{ideaId}")
-    public Mono<Void> updateIdeaByInitiator(@PathVariable String ideaId, Principal principal, @RequestBody IdeaDTO updatedIdea) {
-        ideaService.updateIdeaByInitiator(ideaId, principal.getName(), updatedIdea);
+    public Mono<Void> updateIdeaByInitiator(@PathVariable String ideaId, @RequestBody IdeaDTO updatedIdea) {
+        ideaService.updateIdeaByInitiator(ideaId, updatedIdea);
         return Mono.empty();
     }
 
     @PutMapping("/initiator/send/{ideaId}")
-    public Mono<Void> updateStatusByInitiator(@PathVariable String ideaId, Principal principal) {
-        ideaService.updateStatusByInitiator(ideaId, principal.getName());
+    public Mono<Void> updateStatusByInitiator(@PathVariable String ideaId) {
+        ideaService.updateStatusByInitiator(ideaId);
         return Mono.empty();
     }
 

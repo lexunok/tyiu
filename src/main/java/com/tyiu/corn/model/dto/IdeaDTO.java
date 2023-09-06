@@ -1,6 +1,7 @@
 package com.tyiu.corn.model.dto;
 
 import com.tyiu.corn.model.entities.Comment;
+import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.AllArgsConstructor;
@@ -8,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 @Data
@@ -19,8 +21,10 @@ public class IdeaDTO {
     private String id;
     private String initiator;
     private String name;
+    private Group experts;
+    private Group projectOffice;
+    private List<String> confirmedBy;
     private ProjectType projectType;
-    private String experts;
     private String problem;
     private String solution;
     private String result;
@@ -34,8 +38,8 @@ public class IdeaDTO {
     private StatusIdea status;
     private double rating;
     private double risk;
-    private Date dateCreated;
-    private Date dateModified;
+    private Instant createdAt;
+    private Instant modifiedAt;
     private String marketValue;
     private String originality;
     private String technicalFeasibility;
