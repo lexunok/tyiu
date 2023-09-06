@@ -2,6 +2,7 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Company;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.repository.CompanyRepository;
@@ -114,8 +115,12 @@ public class CompanyServiceTest {
                 .staff(new ArrayList<>())
                 .build();
 
-        doNothing().when(companyRepository).deleteById(company.getId());
 
+        // When
+        when(companyRepository.deleteById(company.getId())).thenReturn(Mono.empty());
+        companyService.deleteCompany(company.getId());
+
+        // Then
         verify(companyRepository).deleteById(company.getId());
     }
 
