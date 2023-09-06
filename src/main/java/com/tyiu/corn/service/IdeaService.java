@@ -84,7 +84,7 @@ public class IdeaService {
             i.setCustomer(updatedIdea.getCustomer());
             i.setContactPerson(updatedIdea.getContactPerson());
             i.setDescription(updatedIdea.getDescription());
-            i.setTechnicalRealizability(updatedIdea.getRealizability());
+            i.setTechnicalRealizability(updatedIdea.getTechnicalRealizability());
             i.setSuitability(updatedIdea.getSuitability());
             i.setBudget(updatedIdea.getBudget());
             i.setRating(updatedIdea.getRating());
@@ -106,6 +106,11 @@ public class IdeaService {
     public void updateStatusByExpert(String ideaId, RatingDTO ratingDTO){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i -> {
+            if (ratingDTO.getStatus() == StatusIdea.ON_EDITING)
+            {
+                i.setStatus(ratingDTO.getStatus());
+                return ideaRepository.save(i);
+            }
             if (i.getExperts().getUsers().size() == i.getConfirmedBy().size())
             {
                 i.setStatus(ratingDTO.getStatus());
@@ -116,7 +121,9 @@ public class IdeaService {
             i.setRating(ratingDTO.getRating());
             i.setMarketValue(ratingDTO.getMarketValue());
             i.setOriginality(ratingDTO.getOriginality());
-            i.setUnderstanding(ratingDTO.getUnderstanding());
+            i.setTechnicalRealizability(ratingDTO.getTechnicalRealizability());
+            i.setSuitability(ratingDTO.getSuitability());
+            i.setBudget(ratingDTO.getBudget());
             return ideaRepository.save(i);
         }).subscribe();
     }

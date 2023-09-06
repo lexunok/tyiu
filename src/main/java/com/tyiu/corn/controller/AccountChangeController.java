@@ -44,22 +44,22 @@ public class AccountChangeController {
     }
 
     @PostMapping("/send/email")
-    public Mono<ResponseEntity<String>> invitationSend(@RequestBody Temporary invitation){
-        accountChangeService.sendInvitation(invitation);
-        return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
+    public Mono<Void> invitationSend(@RequestBody Temporary invitation){
+        return accountChangeService.sendInvitation(invitation);
+        //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
     }
 
     @PostMapping("/send/email/file")
-    public Mono<ResponseEntity<String>> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
-        accountChangeService.sendInvitations(invitationDTO);
-        return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
+    public Flux<Void> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
+        return accountChangeService.sendInvitations(invitationDTO);
+        //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
     }
 
 //  @PostMapping("/send/request-to-change-email")
     @PostMapping("/send/change/email")
-    public Mono<ResponseEntity<String>> requestToChangeEmail(@RequestBody Temporary changeEmail){
-        accountChangeService.sendEmailToChangeEmail(changeEmail);
-        return Mono.just(new ResponseEntity<>("Ссылка на изменение почты находится на новой почте", HttpStatus.OK));
+    public Mono<Void> requestToChangeEmail(@RequestBody Temporary changeEmail){
+        return accountChangeService.sendEmailToChangeEmail(changeEmail);
+        //return Mono.just(new ResponseEntity<>("Ссылка на изменение почты находится на новой почте", HttpStatus.OK));
     }
 
     @PostMapping("/send/change/password")
@@ -74,15 +74,15 @@ public class AccountChangeController {
     }
 
     @PutMapping("/change/password")
-    public Mono<ResponseEntity<String>> changePasswordByUser(@RequestBody ChangeRequest request){
-        accountChangeService.changePasswordByUser(request);
-        return Mono.just(new ResponseEntity<>("Успешное изменение пароля", HttpStatus.OK));
+    public Mono<Void> changePasswordByUser(@RequestBody ChangeRequest request){
+        return accountChangeService.changePasswordByUser(request);
+        //return Mono.just(new ResponseEntity<>("Успешное изменение пароля", HttpStatus.OK));
     }
 
     @PutMapping("/change/email")
-    public Mono<ResponseEntity<String>> changeEmailByUser(@RequestBody ChangeRequest request){
-        accountChangeService.changeEmailByUser(request);
-        return Mono.just(new ResponseEntity<>("Успешное изменение почты", HttpStatus.OK));
+    public Mono<Void> changeEmailByUser(@RequestBody ChangeRequest request){
+        return accountChangeService.changeEmailByUser(request);
+        //return Mono.just(new ResponseEntity<>("Успешное изменение почты", HttpStatus.OK));
     }
 
     @PutMapping("/change/info")

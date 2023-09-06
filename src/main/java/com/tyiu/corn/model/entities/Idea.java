@@ -26,6 +26,10 @@ public class Idea {
     private Group experts;
     private Group projectOffice;
     private List<String> confirmedBy;
+    private StatusIdea status;
+    private Instant createdAt;
+    private Instant modifiedAt;
+
     private ProjectType projectType;
     private String problem;
     private String solution;
@@ -33,16 +37,12 @@ public class Idea {
     private String customer;
     private String contactPerson;
     private String description;
-    private Long technicalRealizability;
     private Long suitability;
     private Long budget;
+    private Long marketValue;
+    private Long originality;
+    private Long technicalRealizability;
     private Long preAssessment;
-    private StatusIdea status;
     private double rating;
     private double risk;
-    private Instant createdAt;
-    private Instant modifiedAt;
-    private String marketValue;
-    private String originality;
-    private String understanding;
 }
