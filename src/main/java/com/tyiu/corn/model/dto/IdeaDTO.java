@@ -1,6 +1,7 @@
 package com.tyiu.corn.model.dto;
 
 import com.tyiu.corn.model.entities.Comment;
+import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.AllArgsConstructor;
@@ -20,8 +21,10 @@ public class IdeaDTO {
     private String id;
     private String initiator;
     private String name;
+    private Group experts;
+    private Group projectOffice;
+    private List<String> confirmedBy;
     private ProjectType projectType;
-    private String experts;
     private String problem;
     private String solution;
     private String result;

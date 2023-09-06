@@ -9,7 +9,9 @@ import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
 
+import lombok.Value;
 import org.modelmapper.ModelMapper;
+import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
@@ -79,7 +81,7 @@ public class IdeaService {
             i.setCustomer(updatedIdea.getCustomer());
             i.setContactPerson(updatedIdea.getContactPerson());
             i.setDescription(updatedIdea.getDescription());
-            i.setRealizability(updatedIdea.getRealizability());
+            i.setTechnicalRealizability(updatedIdea.getRealizability());
             i.setSuitability(updatedIdea.getSuitability());
             i.setBudget(updatedIdea.getBudget());
             i.setRating(updatedIdea.getRating());
@@ -101,11 +103,16 @@ public class IdeaService {
     public void updateStatusByExpert(String ideaId, RatingDTO ratingDTO){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i -> {
-            i.setStatus(ratingDTO.getStatus());
+            if (i.getExperts().getUsers().size() == i.getConfirmedBy().size())
+            {
+                i.setStatus(ratingDTO.getStatus());
+            }
+            else {
+                i.setStatus(StatusIdea.ON_APPROVAL);
+            }
             i.setRating(ratingDTO.getRating());
             i.setMarketValue(ratingDTO.getMarketValue());
             i.setOriginality(ratingDTO.getOriginality());
-            i.setTechnicalFeasibility(ratingDTO.getTechnicalFeasibility());
             i.setUnderstanding(ratingDTO.getUnderstanding());
             return ideaRepository.save(i);
         }).subscribe();
@@ -123,7 +130,6 @@ public class IdeaService {
             i.setResult(updatedIdea.getResult());
             i.setCustomer(updatedIdea.getCustomer());
             i.setDescription(updatedIdea.getDescription());
-            i.setRealizability(updatedIdea.getRealizability());
             i.setSuitability(updatedIdea.getSuitability());
             i.setBudget(updatedIdea.getBudget());
             i.setStatus(updatedIdea.getStatus());

@@ -23,15 +23,17 @@ public class Idea {
     private String id;
     private String initiator;
     private String name;
+    private Group experts;
+    private Group projectOffice;
+    private List<String> confirmedBy;
     private ProjectType projectType;
-    private String experts;
     private String problem;
     private String solution;
     private String result;
     private String customer;
     private String contactPerson;
     private String description;
-    private Long realizability;
+    private Long technicalRealizability;
     private Long suitability;
     private Long budget;
     private Long preAssessment;
@@ -42,7 +44,6 @@ public class Idea {
     private Instant modifiedAt;
     private String marketValue;
     private String originality;
-    private String technicalFeasibility;
     private String understanding;
     //private List<Comment> comments;
 }
