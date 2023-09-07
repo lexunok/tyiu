@@ -165,8 +165,7 @@ public class AccountChangeService {
                 passwordChange.getEmail(),
                 "Восстановление пароля",
                 String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()));
-        accountChangeRepository.save(passwordChange).subscribe();
-        return Mono.just(passwordChange.getUrl());
+        return accountChangeRepository.save(passwordChange).flatMap(p -> Mono.just(p.getUrl()));
     }
 
     public Mono<Void> changePasswordByUser(ChangeRequest request){

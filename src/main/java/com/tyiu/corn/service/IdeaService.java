@@ -2,6 +2,7 @@ package com.tyiu.corn.service;
 
 import java.time.Instant;
 import java.util.Date;
+import java.util.List;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
@@ -103,7 +104,7 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public void updateStatusByExpert(String ideaId, RatingDTO ratingDTO){
+    public void updateStatusByExpert(String ideaId, RatingDTO ratingDTO, String email){
         Mono<Idea> idea = ideaRepository.findById(ideaId);
         idea.flatMap(i -> {
             if (ratingDTO.getStatus() == StatusIdea.ON_EDITING)
@@ -117,6 +118,7 @@ public class IdeaService {
             }
             else {
                 i.setStatus(StatusIdea.ON_APPROVAL);
+                i.getConfirmedBy().add(email);
             }
             i.setRating(ratingDTO.getRating());
             i.setMarketValue(ratingDTO.getMarketValue());

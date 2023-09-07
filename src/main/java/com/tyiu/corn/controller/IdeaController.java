@@ -70,8 +70,8 @@ public class IdeaController {
     }
 
     @PutMapping("/expert/update/{ideaId}")
-    public Mono<Void> updateStatusByExpert(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO){
-        ideaService.updateStatusByExpert(ideaId, ratingDTO);
+    public Mono<Void> updateStatusByExpert(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO, Principal principal){
+        ideaService.updateStatusByExpert(ideaId, ratingDTO, principal.getName());
         return Mono.empty();
     }
 
