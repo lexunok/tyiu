@@ -13,9 +13,9 @@ public interface UserRepository extends ReactiveCrudRepository<User,String> {
     Mono<User> findFirstByEmail(String email);
     Mono<Boolean> existsByEmail(String email);
     @Query("UPDATE User u SET u.email = ?1 WHERE u.id = ?2")
-    void setEmail(String email, String id);
+    Mono<Void> setEmail(String email, String id);
     @Query("UPDATE User u SET u.password = ?1 WHERE u.id = ?2")
-    void setPassword(String password, String id);
+    Mono<Void> setPassword(String password, String id);
     @Query("UPDATE User u SET u.email = ?1, u.firstName = ?2, u.lastName = ?3, u.roles = ?4 WHERE u.id = ?5")
-    void setUserInfo(String email, String firstName, String lastName, List<Role> roles, String id);
+    Mono<Void> setUserInfo(String email, String firstName, String lastName, List<Role> roles, String id);
 }

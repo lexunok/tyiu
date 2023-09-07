@@ -55,7 +55,6 @@ public class AccountChangeController {
         //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
     }
 
-//  @PostMapping("/send/request-to-change-email")
     @PostMapping("/send/change/email")
     public Mono<Void> requestToChangeEmail(@RequestBody Temporary changeEmail){
         return accountChangeService.sendEmailToChangeEmail(changeEmail);
@@ -86,9 +85,9 @@ public class AccountChangeController {
     }
 
     @PutMapping("/change/info")
-    public Mono<ResponseEntity<String>> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
-        accountChangeService.changeUserInfo(request);
-        return Mono.just(new ResponseEntity<>("Успешное изменение пользователя", HttpStatus.OK));
+    public Mono<Void> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
+        return accountChangeService.changeUserInfo(request);
+        //return Mono.just(new ResponseEntity<>("Успешное изменение пользователя", HttpStatus.OK));
     }
 
 
