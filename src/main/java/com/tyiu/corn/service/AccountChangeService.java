@@ -66,10 +66,10 @@ public class AccountChangeService {
                                 "Приглашение",
                                 String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
                         );
-                        return accountChangeRepository.save(invitation);
+                        accountChangeRepository.save(invitation).subscribe();
                     }
                     return Mono.empty();
-                })).cast(Void.class);
+                }));
     }
 
     public Mono<Void> sendInvitation(Temporary invitation) throws  NotFoundException{
@@ -93,8 +93,9 @@ public class AccountChangeService {
                 if (b){
                     accountChangeRepository.deleteByEmail(e);
                 }
-                return accountChangeRepository.save(invitation);
-        })).cast(Void.class);
+                accountChangeRepository.save(invitation).subscribe();
+                return Mono.empty();
+        }));
     }
 
     public Mono<InvitationResponse> findByUrl(String url) {
@@ -106,7 +107,7 @@ public class AccountChangeService {
                                 .roles(i.getRoles())
                                 .build()
                 )
-        ).cast(InvitationResponse.class);
+        );
     }
 
     public Mono<ChangeResponse> findByUrlAndSendCode(String url) {
@@ -148,8 +149,9 @@ public class AccountChangeService {
                     "Изменение почты",
                     String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
             );
-            return accountChangeRepository.save(emailChange);
-        })).cast(Void.class);
+            accountChangeRepository.save(emailChange).subscribe();
+            return Mono.empty();
+        }));
     }
 
     public Mono<String> sendEmailToChangePassword(Temporary passwordChange) {
@@ -177,7 +179,7 @@ public class AccountChangeService {
             if (request.getCode() == c.getCode()) {
                 Mono<User> user = userRepository.findFirstByEmail(c.getEmail());
                 return user.flatMap(u -> {
-                    userRepository.setPassword(passwordEncoder.encode(request.getPassword()), u.getId());
+                    userRepository.setPassword(passwordEncoder.encode(request.getPassword()), u.getId()).subscribe();
                     return accountChangeRepository.delete(c);
                 });
             }
@@ -192,7 +194,7 @@ public class AccountChangeService {
             if (request.getCode() == e.getCode()){
                 Mono<User> user = userRepository.findFirstByEmail(request.getOldEmail());
                 return user.flatMap(u -> {
-                    userRepository.setEmail(request.getNewEmail(), u.getId());
+                    userRepository.setEmail(request.getNewEmail(), u.getId()).subscribe();
                     return accountChangeRepository.delete(e);
                 });
             }
@@ -209,27 +211,24 @@ public class AccountChangeService {
                         .firstName(u.getFirstName())
                         .lastName(u.getLastName())
                         .build())
-        ).cast(UserInfoResponse.class);
+        );
     }
 
     public Flux<String> getAllEmails(){
         Flux<User> users = userRepository.findAll();
         return users.flatMap(
                 u -> Mono.just(u.getEmail())
-        ).cast(String.class);
+        );
     }
 
-    public void changeUserInfo(UserInfoRequest request){
+    public Mono<Void> changeUserInfo(UserInfoRequest request){
         Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
-        user.flatMap(u -> {
-            userRepository.setUserInfo(
-                    request.getNewEmail(),
-                    request.getNewFirstName(),
-                    request.getNewLastName(),
-                    request.getNewRoles(),
-                    u.getId());
-            return Mono.empty();
-        }).subscribe();
+        return user.flatMap(u -> userRepository.setUserInfo(
+                request.getNewEmail(),
+                request.getNewFirstName(),
+                request.getNewLastName(),
+                request.getNewRoles(),
+                u.getId()));
     }
 
     public void deleteDataByUrl(String url){
