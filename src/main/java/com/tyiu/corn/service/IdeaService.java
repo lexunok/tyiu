@@ -42,7 +42,7 @@ public class IdeaService {
         Mono<Idea> idea = ideaRepository.findById(id);
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
-    @Cacheable
+    //@Cacheable
     public Flux<IdeaDTO> getListIdea() {
         Flux<Idea> ideas = ideaRepository.findAll();
         return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
