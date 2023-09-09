@@ -178,10 +178,11 @@ public class AccountChangeService {
             }
             if (request.getCode() == c.getCode()) {
                 Mono<User> user = userRepository.findFirstByEmail(c.getEmail());
-                return user.flatMap(u -> {
-                    userRepository.setPassword(passwordEncoder.encode(request.getPassword()), u.getId()).subscribe();
-                    return accountChangeRepository.delete(c);
-                });
+                user.flatMap(u -> {
+                    u.setPassword(request.getPassword());
+                    return userRepository.save(u);
+                }).subscribe();
+                return accountChangeRepository.delete(c);
             }
             return Mono.empty();
         });
@@ -193,10 +194,11 @@ public class AccountChangeService {
         return emailChange.flatMap(e -> {
             if (request.getCode() == e.getCode()){
                 Mono<User> user = userRepository.findFirstByEmail(request.getOldEmail());
-                return user.flatMap(u -> {
-                    userRepository.setEmail(request.getNewEmail(), u.getId()).subscribe();
-                    return accountChangeRepository.delete(e);
-                });
+                user.flatMap(u -> {
+                    u.setEmail(request.getNewEmail());
+                    return userRepository.save(u);
+                }).subscribe();
+                return accountChangeRepository.delete(e);
             }
             return Mono.empty();
         });
@@ -223,12 +225,14 @@ public class AccountChangeService {
 
     public Mono<Void> changeUserInfo(UserInfoRequest request){
         Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
-        return user.flatMap(u -> userRepository.setUserInfo(
-                request.getNewEmail(),
-                request.getNewFirstName(),
-                request.getNewLastName(),
-                request.getNewRoles(),
-                u.getId()));
+        user.flatMap(u -> {
+            u.setEmail(request.getNewEmail());
+            u.setFirstName(request.getNewFirstName());
+            u.setLastName(request.getNewLastName());
+            u.setRoles(request.getNewRoles());
+            return userRepository.save(u);
+        }).subscribe();
+        return Mono.empty();
     }
 
     public void deleteDataByUrl(String url){

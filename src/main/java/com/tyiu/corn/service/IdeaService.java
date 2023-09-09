@@ -64,7 +64,7 @@ public class IdeaService {
         ideaRepository.deleteById(id).subscribe();
     }
 
-    @CacheEvict(allEntries = true)
+    //@CacheEvict(allEntries = true)
     public void updateStatusByInitiator (String id){
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
