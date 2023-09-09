@@ -27,7 +27,7 @@ public class GroupService {
 
     private final ModelMapper mapper;
 
-    @Cacheable
+    //@Cacheable
     public Flux<GroupDTO> getGroups() {
         Flux<Group> groups = groupRepository.findAll();
         return groups.flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)));
