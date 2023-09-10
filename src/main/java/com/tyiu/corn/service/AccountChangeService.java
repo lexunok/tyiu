@@ -3,6 +3,7 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.model.entities.Temporary;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.ChangeRequest;
@@ -17,6 +18,7 @@ import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,6 +38,7 @@ public class AccountChangeService {
     private final AccountChangeRepository accountChangeRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ModelMapper mapper;
 
     private void sendEmail(String toAdresses, String subject, String message){
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();

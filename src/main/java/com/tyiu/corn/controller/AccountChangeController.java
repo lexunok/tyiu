@@ -33,12 +33,12 @@ public class AccountChangeController {
         return accountChangeService.findByUrlAndSendCode(url);
     }
 
-    @GetMapping("/get/info")
+    @GetMapping("/get/users")
     public Flux<UserInfoResponse> getUsersInfo(){
         return accountChangeService.getUsersInfo();
     }
 
-    @GetMapping("/get/email")
+    @GetMapping("/get/emails")
     public Flux<String> getUsersEmail(){
         return accountChangeService.getAllEmails();
     }
@@ -49,7 +49,7 @@ public class AccountChangeController {
         //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
     }
 
-    @PostMapping("/send/email/file")
+    @PostMapping("/send/emails")
     public Flux<Void> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
         return accountChangeService.sendInvitations(invitationDTO);
         //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));

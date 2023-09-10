@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/profile/change/password").permitAll()
                         .pathMatchers("/api/v1/profile/delete/invitation/**").permitAll()
                         .pathMatchers("/api/v1/profile/send/change/password").permitAll()
-                        .pathMatchers("/api/**").authenticated()
+                        .pathMatchers("/api/**").permitAll()
                         .anyExchange().permitAll())
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository);

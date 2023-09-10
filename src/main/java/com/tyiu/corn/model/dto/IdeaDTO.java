@@ -40,7 +40,7 @@ public class IdeaDTO {
     private Long marketValue;
     private Long originality;
     private Long technicalRealizability;
-    private Long preAssessment;
+    private double preAssessment;
     private double rating;
     private double risk;
 }

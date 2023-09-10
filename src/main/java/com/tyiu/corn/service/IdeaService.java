@@ -37,7 +37,7 @@ public class IdeaService {
         return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
-    @Cacheable(key = "#id")
+    // @Cacheable(key = "#id")
     public Mono<IdeaDTO> getIdeaForInitiator(String id) {
         Mono<Idea> idea = ideaRepository.findById(id);
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
@@ -50,6 +50,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
         ideaDTO.setCreatedAt(Instant.now());
+        ideaDTO.setModifiedAt(Instant.now());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
         Mono<Idea> idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
@@ -68,7 +69,7 @@ public class IdeaService {
     public void updateStatusByInitiator (String id){
         Mono<Idea> idea = ideaRepository.findById(id);
         idea.flatMap(i -> {
-            i.setStatus(StatusIdea.ON_CONFIRMATION);
+            i.setStatus(StatusIdea.ON_APPROVAL);
             return ideaRepository.save(i);
         }).subscribe();
     }
@@ -88,7 +89,7 @@ public class IdeaService {
             i.setTechnicalRealizability(updatedIdea.getTechnicalRealizability());
             i.setSuitability(updatedIdea.getSuitability());
             i.setBudget(updatedIdea.getBudget());
-            i.setRating(updatedIdea.getRating());
+            i.setPreAssessment(updatedIdea.getPreAssessment());
             i.setModifiedAt(Instant.now());
             return ideaRepository.save(i);
         }).subscribe();

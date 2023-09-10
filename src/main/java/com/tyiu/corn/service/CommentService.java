@@ -44,10 +44,10 @@ public class CommentService {
     }
 
 
-    public Mono<Void> createComment(String ideaId,String text, String email) {
+    public Mono<Void> createComment(String ideaId, CommentDTO commentDTO, String email) {
         Comment comment = Comment.builder()
                 .ideaId(ideaId)
-                .comment(text)
+                .comment(commentDTO.getComment())
                 .createdAt(Instant.now())
                 .sender(email)
                 .build();
