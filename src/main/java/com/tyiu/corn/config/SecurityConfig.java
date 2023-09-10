@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
