@@ -64,8 +64,8 @@ public class IdeaController {
     }
 
     @PutMapping("/project-office/update/{ideaId}")
-    public Mono<Void> updateStatusIdeaByProjectOffice(@PathVariable String ideaId, @RequestBody StatusIdea newStatus){
-        ideaService.updateStatusByProjectOffice(ideaId, newStatus);
+    public Mono<Void> updateStatusIdeaByProjectOffice(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO){
+        ideaService.updateStatusByProjectOffice(ideaId, ratingDTO.getStatus());
         return Mono.empty();
     }
 

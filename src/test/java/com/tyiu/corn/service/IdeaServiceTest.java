@@ -213,7 +213,7 @@ public class IdeaServiceTest {
     @Test
     void testUpdateStatusByProjectOffice(){
         //Given
-        StatusIdea newStatus = StatusIdea.ON_APPROVAL;
+        RatingDTO ratingDTO = RatingDTO.builder().status(StatusIdea.ON_APPROVAL).build();
 
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("Идея 1")
@@ -227,11 +227,11 @@ public class IdeaServiceTest {
 
         when(ideaRepository.findById(idea.getId())).thenReturn(Mono.just(idea));
         when(ideaRepository.save(idea)).thenReturn(Mono.just(idea));
-        ideaService.updateStatusByProjectOffice(idea.getId(), newStatus);
+        ideaService.updateStatusByProjectOffice(idea.getId(), ratingDTO.getStatus());
 
         verify(ideaRepository).findById(idea.getId());
         verify(ideaRepository).save(idea);
-        assertEquals(newStatus, idea.getStatus());
+        assertEquals(ratingDTO.getStatus(), idea.getStatus());
     }
 
 //    @Test
