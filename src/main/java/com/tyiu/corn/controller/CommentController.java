@@ -32,7 +32,7 @@ public class CommentController {
 
     @PostMapping("/send/{ideaId}")
     public  Mono<Void> createComment(
-            @PathVariable String ideaId, @RequestBody String comment, Principal principal){
+            @PathVariable String ideaId, @RequestBody CommentDTO comment, Principal principal){
         return commentService.createComment(ideaId,comment, principal.getName());
     }
     @DeleteMapping("/delete/{ideaId}/{commentId}")
