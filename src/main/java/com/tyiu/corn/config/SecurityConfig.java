@@ -28,7 +28,7 @@ public class SecurityConfig {
     private final AuthenticationManager authenticationManager;
     private final SecurityContextRepository securityContextRepository;
     @Bean
-    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) throws Exception {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
                 .csrf(ServerHttpSecurity.CsrfSpec::disable)
                 .httpBasic(ServerHttpSecurity.HttpBasicSpec::disable)
@@ -40,7 +40,7 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/profile/change/password").permitAll()
                         .pathMatchers("/api/v1/profile/delete/invitation/**").permitAll()
                         .pathMatchers("/api/v1/profile/send/change/password").permitAll()
-                        .pathMatchers("/api/**").authenticated()
+                        .pathMatchers("/api/**").permitAll()
                         .anyExchange().permitAll())
                 .authenticationManager(authenticationManager)
                 .securityContextRepository(securityContextRepository);
