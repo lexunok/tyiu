@@ -17,6 +17,8 @@ import com.tyiu.corn.model.dto.InvitationDTO;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
@@ -39,7 +41,7 @@ public class AccountChangeController {
     }
 
     @GetMapping("/get/emails")
-    public Flux<String> getUsersEmail(){
+    public Mono<String[]> getUsersEmail(){
         return accountChangeService.getAllEmails();
     }
 

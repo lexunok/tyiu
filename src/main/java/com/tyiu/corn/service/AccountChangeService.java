@@ -3,7 +3,6 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.exception.NotFoundException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.model.entities.Temporary;
-import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.ChangeRequest;
@@ -182,7 +181,7 @@ public class AccountChangeService {
             if (request.getCode() == c.getCode()) {
                 Mono<User> user = userRepository.findFirstByEmail(c.getEmail());
                 user.flatMap(u -> {
-                    u.setPassword(request.getPassword());
+                    u.setPassword(passwordEncoder.encode(request.getPassword()));
                     return userRepository.save(u);
                 }).subscribe();
                 return accountChangeRepository.delete(c);
@@ -219,11 +218,12 @@ public class AccountChangeService {
         );
     }
 
-    public Flux<String> getAllEmails(){
+    public Mono<String[]> getAllEmails(){
         Flux<User> users = userRepository.findAll();
-        return users.flatMap(
-                u -> Mono.just(u.getEmail())
-        );
+        return users
+                .flatMap(u -> Flux.just(u.getEmail()))
+                .collectList()
+                .map(emailList -> emailList.toArray(new String[0]));
     }
 
     public Mono<Void> changeUserInfo(UserInfoRequest request){
