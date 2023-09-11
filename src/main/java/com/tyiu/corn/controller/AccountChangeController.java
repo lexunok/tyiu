@@ -26,7 +26,7 @@ public class AccountChangeController {
     private final AccountChangeService accountChangeService;
 
     @GetMapping("/get/invitation/{url}")
-    public Mono<InvitationResponse> registrateByInvitation(@PathVariable String url){
+    public Mono<InvitationResponse> registerByInvitation(@PathVariable String url){
         return accountChangeService.findByUrl(url);
     }
 
@@ -41,7 +41,7 @@ public class AccountChangeController {
     }
 
     @GetMapping("/get/emails")
-    public Mono<String[]> getUsersEmail(){
+    public Mono<List<String>> getUsersEmail(){
         return accountChangeService.getAllEmails();
     }
 
@@ -69,7 +69,7 @@ public class AccountChangeController {
     }
 
     @DeleteMapping("/delete/invitation/{url}")
-    public Mono<Void> DeleteByUrl(@PathVariable String url){
+    public Mono<Void> deleteByUrl(@PathVariable String url){
         accountChangeService.deleteDataByUrl(url);
         return Mono.empty();
     }

@@ -17,7 +17,6 @@ import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -37,7 +36,6 @@ public class AccountChangeService {
     private final AccountChangeRepository accountChangeRepository;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final ModelMapper mapper;
 
     private void sendEmail(String toAdresses, String subject, String message){
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
@@ -218,12 +216,8 @@ public class AccountChangeService {
         );
     }
 
-    public Mono<String[]> getAllEmails(){
-        Flux<User> users = userRepository.findAll();
-        return users
-                .flatMap(u -> Flux.just(u.getEmail()))
-                .collectList()
-                .map(emailList -> emailList.toArray(new String[0]));
+    public Mono<List<String>> getAllEmails(){
+        return userRepository.findAll().flatMap(u -> Mono.just(u.getEmail())).collectList();
     }
 
     public Mono<Void> changeUserInfo(UserInfoRequest request){
