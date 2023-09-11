@@ -53,7 +53,7 @@ public class CommentService {
                 .build();
         commentRepository.save(comment).doOnSuccess(
                 c -> {
-                    requester.route("all." + c.getIdeaId())
+                    requester.route("comment.{id}.update", c.getIdeaId())
                             .send();
                 }
         ).subscribe();
@@ -64,7 +64,7 @@ public class CommentService {
     public Mono<Void> deleteComment(String commentId, String ideaId) {
         commentRepository.deleteById(commentId).doOnSuccess(
                 c -> {
-                    requester.route("all." + ideaId)
+                    requester.route("comment.{id}.update", ideaId)
                             .send();
                 }
         ).subscribe();
