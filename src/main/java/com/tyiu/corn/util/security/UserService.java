@@ -18,7 +18,6 @@ public class UserService implements ReactiveUserDetailsService {
     private final UserRepository userRepository;
 
     @Override
-    @Cacheable(cacheNames = "users")
     public Mono<UserDetails> findByUsername(String email) {
         return userRepository.findFirstByEmail(email).map(CustomUserDetails::new);
     }

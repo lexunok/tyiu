@@ -32,6 +32,7 @@ public class CommentController {
     }
     @MessageMapping("comment.{id}.receive")
     public  Flux<CommentDTO> receiveComments(@DestinationVariable String id, @Payload CommentDTO commentDTO){
+        System.out.println(commentDTO.getComment());
         return commentService.sendCommentToClients(id);
     }
 

@@ -23,7 +23,10 @@ import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.codec.cbor.Jackson2CborDecoder;
+import org.springframework.http.codec.cbor.Jackson2CborEncoder;
 import org.springframework.messaging.rsocket.RSocketRequester;
+import org.springframework.messaging.rsocket.RSocketStrategies;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,7 +37,12 @@ import reactor.core.publisher.Mono;
 public class CommentService {
 
     private final CommentRepository commentRepository;
+    private final RSocketStrategies strategies = RSocketStrategies.builder()
+            .encoders(encoders -> encoders.add(new Jackson2CborEncoder()))
+            .decoders(decoders -> decoders.add(new Jackson2CborDecoder()))
+            .build();
     private final RSocketRequester requester = RSocketRequester.builder()
+            .rsocketStrategies(strategies)
             .websocket(URI.create("http://localhost:3000/rs"));
     private final ModelMapper mapper;
 
@@ -55,11 +63,14 @@ public class CommentService {
                 .createdAt(Instant.now())
                 .sender(email)
                 .build();
+        System.out.println("1");
         commentRepository.save(comment).doOnSuccess(
                 c -> {
+                    System.out.println("2");
                     requester.route("comment.{id}.receive", c.getIdeaId())
                             .data(mapper.map(c, CommentDTO.class))
-                            .send();
+                            .retrieveFlux(CommentDTO.class).subscribe();
+                    System.out.println("3");
                 }
         ).subscribe();
         return Mono.empty();
