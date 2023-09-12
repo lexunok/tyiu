@@ -25,8 +25,8 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @MessageMapping("comment.{id}")
-    public  Flux<CommentDTO> getAllIdeaComments(@DestinationVariable String id){
+    @GetMapping("/all/{id}")
+    public  Flux<CommentDTO> getAllIdeaComments(@PathVariable String id){
         return commentService.getAllIdeaComments(id);
     }
 
