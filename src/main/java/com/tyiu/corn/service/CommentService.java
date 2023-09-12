@@ -43,6 +43,10 @@ public class CommentService {
         return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
+    public Flux<CommentDTO> sendCommentToClients(String id) {
+        Flux<Comment> ideaComments = commentRepository.findByIdeaId(id);
+        return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
+    }
 
     public Mono<Void> createComment(String ideaId,CommentDTO commentDTO, String email) {
         Comment comment = Comment.builder()

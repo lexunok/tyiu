@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -28,6 +29,10 @@ public class CommentController {
     @GetMapping("/all/{id}")
     public  Flux<CommentDTO> getAllIdeaComments(@PathVariable String id){
         return commentService.getAllIdeaComments(id);
+    }
+    @MessageMapping("comment.{id}.receive")
+    public  Flux<CommentDTO> receiveComments(@DestinationVariable String id, @Payload CommentDTO commentDTO){
+        return commentService.sendCommentToClients(id);
     }
 
     @PostMapping("/send/{ideaId}")
