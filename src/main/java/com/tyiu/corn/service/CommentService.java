@@ -37,22 +37,10 @@ import reactor.core.publisher.Mono;
 public class CommentService {
 
     private final CommentRepository commentRepository;
-    private final RSocketStrategies strategies = RSocketStrategies.builder()
-            .encoders(encoders -> encoders.add(new Jackson2CborEncoder()))
-            .decoders(decoders -> decoders.add(new Jackson2CborDecoder()))
-            .build();
-    private final RSocketRequester requester = RSocketRequester.builder()
-            .rsocketStrategies(strategies)
-            .websocket(URI.create("http://localhost:3000/rs"));
     private final ModelMapper mapper;
 
-    public Flux<CommentDTO> getAllIdeaComments(String ideaId) {
-        Flux<Comment> ideaComments = commentRepository.findByIdeaId(ideaId);
-        return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
-    }
-
-    public Flux<CommentDTO> sendCommentToClients(String id) {
-        Flux<Comment> ideaComments = commentRepository.findByIdeaId(id);
+    public Flux<CommentDTO> getAllComments(String ideaId) {
+        Flux<Comment> ideaComments = commentRepository.findWithTailableCursorByIdeaId(ideaId);
         return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
@@ -63,28 +51,13 @@ public class CommentService {
                 .createdAt(Instant.now())
                 .sender(email)
                 .build();
-        System.out.println("1");
-        commentRepository.save(comment).doOnSuccess(
-                c -> {
-                    System.out.println("2");
-                    requester.route("comment.{id}.receive", c.getIdeaId())
-                            .data(mapper.map(c, CommentDTO.class))
-                            .retrieveFlux(CommentDTO.class).subscribe();
-                    System.out.println("3");
-                }
-        ).subscribe();
+        commentRepository.save(comment).subscribe();
         return Mono.empty();
     }
 
 
     public Mono<Void> deleteComment(String commentId, String ideaId) {
-        commentRepository.deleteById(commentId).doOnSuccess(
-                c -> {
-                    requester.route("comment.{id}.receive", ideaId)
-                            .data(mapper.map(c, CommentDTO.class))
-                            .send();
-                }
-        ).subscribe();
+        commentRepository.deleteById(commentId).subscribe();
         return Mono.empty();
     }
 

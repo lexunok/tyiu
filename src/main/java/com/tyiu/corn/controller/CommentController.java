@@ -26,14 +26,10 @@ public class CommentController {
 
     private final CommentService commentService;
 
-    @GetMapping("/all/{id}")
-    public  Flux<CommentDTO> getAllIdeaComments(@PathVariable String id){
-        return commentService.getAllIdeaComments(id);
-    }
+
     @MessageMapping("comment.{id}.receive")
-    public  Flux<CommentDTO> receiveComments(@DestinationVariable String id, @Payload CommentDTO commentDTO){
-        System.out.println(commentDTO.getComment());
-        return commentService.sendCommentToClients(id);
+    public  Flux<CommentDTO> receiveComments(@DestinationVariable String id){
+        return commentService.getAllComments(id);
     }
 
     @PostMapping("/send/{ideaId}")
@@ -41,6 +37,7 @@ public class CommentController {
             @PathVariable String ideaId, @RequestBody CommentDTO comment, Principal principal){
         return commentService.createComment(ideaId,comment, principal.getName());
     }
+
     @DeleteMapping("/delete/{ideaId}/{commentId}")
     public  Mono<Void> deleteComment(
             @PathVariable String ideaId, @PathVariable String commentId){
