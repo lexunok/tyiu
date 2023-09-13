@@ -12,6 +12,7 @@ import org.springframework.http.codec.cbor.Jackson2CborDecoder;
 import org.springframework.http.codec.cbor.Jackson2CborEncoder;
 import org.springframework.messaging.rsocket.RSocketRequester;
 import org.springframework.messaging.rsocket.RSocketStrategies;
+import reactor.core.publisher.Mono;
 
 import java.net.URI;
 
@@ -32,8 +33,13 @@ public class CornApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		template.executeCommand("{\"convertToCapped\": \"comment\", size: 100000}")
-				.log()
-				.subscribe();
+		template.collectionExists("comment").flatMap(b -> {
+			if (b){
+				template.executeCommand("{\"convertToCapped\": \"comment\", size: 100000}")
+						.log()
+						.subscribe();
+			}
+			return Mono.empty();
+		});
 	}
 }
