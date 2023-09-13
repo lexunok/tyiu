@@ -1,6 +1,7 @@
 package com.tyiu.corn.service;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -53,6 +54,7 @@ public class IdeaService {
         ideaDTO.setModifiedAt(Instant.now());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
+        ideaDTO.setConfirmedBy(new ArrayList<>());
         Mono<Idea> idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
