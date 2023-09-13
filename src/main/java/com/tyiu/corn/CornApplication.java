@@ -33,6 +33,7 @@ public class CornApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		template.executeCommand("{\"convertToCapped\": \"comment\", size: 100000}")
+				.log()
 				.subscribe();
 	}
 }
