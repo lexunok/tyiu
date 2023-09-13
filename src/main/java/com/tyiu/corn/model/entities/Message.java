@@ -1,18 +1,18 @@
 package com.tyiu.corn.model.entities;
 
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document
 public class Message {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
     private String sender;
     private String text;
 }

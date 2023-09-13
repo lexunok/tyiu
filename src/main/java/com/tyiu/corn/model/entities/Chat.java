@@ -1,22 +1,20 @@
 package com.tyiu.corn.model.entities;
 
 import java.util.List;
-
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
+
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document
 public class Chat {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
-    @OneToMany(cascade = CascadeType.ALL)
-    private List<Message> messages;
-    @ManyToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<User> members;
+    private String id;
+    private List<String> messagesId;
+    private List<String> membersId;
 }

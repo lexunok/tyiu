@@ -1,11 +1,14 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.model.dto.TaskDTO;
 import com.tyiu.corn.model.entities.Task;
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import com.tyiu.corn.repository.TaskRepository;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 
 import java.util.Date;
@@ -17,30 +20,34 @@ public class TaskService {
 
     private final TaskRepository taskRepository;
 
-    public List<Task> getListTask() {
-        return taskRepository.findAll();
+    @Cacheable
+    public Flux<TaskDTO> getListTask() {
+        return taskRepository.findAll().cast(TaskDTO.class);
     }
 
-
-    public void saveTask(Task task) {
-        task.setCreatedAt(new Date());
-        taskRepository.save(task);
+    @CacheEvict(allEntries = true)
+    public Mono<TaskDTO> saveTask(TaskDTO taskDTO) {
+        taskDTO.setCreatedAt(new Date());
+        return Mono.just(taskDTO).cast(Task.class).flatMap(taskRepository::save).cast(TaskDTO.class);
     }
 
-    public void deleteTask(Long id) {
-        taskRepository.deleteById(id);
+    @CacheEvict(allEntries = true)
+    public void deleteTask(String taskId) {
+        taskRepository.deleteById(taskId);
     }
 
-
-    public void updateTask(Long id, Task updatedTask) {
-        Task task = taskRepository.findById(id).orElseThrow();
-        task.setTitle(updatedTask.getTitle());
-        task.setDescription(updatedTask.getDescription());
-        task.setAssignedTo(updatedTask.getAssignedTo());
-        task.setPriority(updatedTask.getPriority());
-        task.setDeadline(updatedTask.getDeadline());
-        task.setStatus(updatedTask.getStatus());
-        taskRepository.save(task);
+    @CacheEvict(allEntries = true)
+    public void updateTask(String taskId, TaskDTO updatedTask) {
+        Mono<Task> task = taskRepository.findById(taskId);
+        task.flatMap(t -> {
+            t.setTitle(updatedTask.getTitle());
+            t.setDescription(updatedTask.getDescription());
+            t.setAssignedTo(updatedTask.getAssignedTo());
+            t.setPriority(updatedTask.getPriority());
+            t.setDeadline(updatedTask.getDeadline());
+            t.setStatus(updatedTask.getStatus());
+            return taskRepository.save(t);
+        });
     }
 
 

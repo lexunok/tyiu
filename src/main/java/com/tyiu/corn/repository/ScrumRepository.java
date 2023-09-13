@@ -1,7 +1,9 @@
 package com.tyiu.corn.repository;
 
 import com.tyiu.corn.model.entities.Scrum;
-import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
 
-public interface ScrumRepository extends JpaRepository<Scrum, Long>{
+@Repository
+public interface ScrumRepository extends ReactiveCrudRepository<Scrum, String> {
 }

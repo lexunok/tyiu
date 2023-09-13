@@ -1,0 +1,25 @@
+services:
+  redis:
+    container_name: redis
+    image: redis:7.2.0-alpine
+    environment:
+      REDIS_PASSWORD: ${SERVICE_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis:/data/redis
+    restart: unless-stopped
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${SERVICE_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${SERVICE_PASSWORD}
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb:/data/mongodb
+volumes:
+  mongodb:
+  redis:

@@ -1,8 +1,7 @@
 package com.tyiu.corn.controller;
 
-import java.util.List;
-import java.util.Map;
-
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -15,76 +14,83 @@ import com.tyiu.corn.model.responses.InvitationResponse;
 import com.tyiu.corn.model.responses.UserInfoResponse;
 import com.tyiu.corn.service.AccountChangeService;
 import com.tyiu.corn.model.dto.InvitationDTO;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/profile-action")
+@RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class AccountChangeController {
     private final AccountChangeService accountChangeService;
 
-    @PostMapping("/send/email")
-    public Map<String, String> invitationSend(@RequestBody Temporary invitation){
-        accountChangeService.sendInvitation(invitation);
-        return Map.of("success", "Успешное приглашение");
-    }
-
-    @PostMapping("/send/emails")
-    public Map<String, String> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
-        accountChangeService.sendInvitations(invitationDTO);
-        return Map.of("success", "Успешное приглашение");
-    }
-
-    @PostMapping("/send/request-to-change-email")
-    public Map<String, String> requestToChangeEmail(@RequestBody Temporary changeEmail){
-        accountChangeService.sendEmailToChangeEmail(changeEmail);
-        return Map.of("success", "Ссылка на изменение почты находится на новой почте");
-    }
-
-    @PostMapping("/send/request-to-change-password")
-    public Map<String, String> requestToChangePassword(@RequestBody Temporary changePassword) {
-        return Map.of("key", accountChangeService.sendEmailToChangePassword(changePassword));
-    }
-
-    @PutMapping("/change/password")
-    public Map<String, String> changePasswordByUser(@RequestBody ChangeRequest request){
-        accountChangeService.changePasswordByUser(request);
-        return Map.of("success", "Успешное изменение пароля");
-    }
-
-    @PutMapping("/change/email")
-    public Map<String, String> changeEmailByUser(@RequestBody ChangeRequest request){
-        accountChangeService.changeEmailByUser(request);
-        return Map.of("success", "Успешное изменение почты");
-    }
-
-    @PutMapping("/change/user-info")
-    public Map<String, String> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
-        accountChangeService.changeUserInfo(request);
-        return Map.of("success", "Успешное изменение пользователя");
-    }
-
     @GetMapping("/get/invitation/{url}")
-    public InvitationResponse registrateByInvitation(@PathVariable String url){
+    public Mono<InvitationResponse> registerByInvitation(@PathVariable String url){
         return accountChangeService.findByUrl(url);
     }
 
     @GetMapping("/change/email/{url}")
-    public ChangeResponse changeNewEmail(@PathVariable String url){
+    public Mono<ChangeResponse> changeNewEmail(@PathVariable String url){
         return accountChangeService.findByUrlAndSendCode(url);
     }
-    
-    @GetMapping("/get/users-info")
-    public Map<String, List<UserInfoResponse>> getUsersInfo(){
-        return Map.of("users", accountChangeService.getUsersInfo());
+
+    @GetMapping("/get/users")
+    public Flux<UserInfoResponse> getUsersInfo(){
+        return accountChangeService.getUsersInfo();
     }
 
-    @GetMapping("/get/users-email")
-    public Map<String, List<String>> getUsersEmail(){
-        return Map.of("emails", accountChangeService.getAllEmails());
+    @GetMapping("/get/emails")
+    public Mono<List<String>> getUsersEmail(){
+        return accountChangeService.getAllEmails();
+    }
+
+    @PostMapping("/send/email")
+    public Mono<Void> invitationSend(@RequestBody Temporary invitation){
+        return accountChangeService.sendInvitation(invitation);
+        //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
+    }
+
+    @PostMapping("/send/emails")
+    public Flux<Void> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
+        return accountChangeService.sendInvitations(invitationDTO);
+        //return Mono.just(new ResponseEntity<>("Успешное приглашение", HttpStatus.OK));
+    }
+
+    @PostMapping("/send/change/email")
+    public Mono<Void> requestToChangeEmail(@RequestBody Temporary changeEmail){
+        return accountChangeService.sendEmailToChangeEmail(changeEmail);
+        //return Mono.just(new ResponseEntity<>("Ссылка на изменение почты находится на новой почте", HttpStatus.OK));
+    }
+
+    @PostMapping("/send/change/password")
+    public Mono<String> requestToChangePassword(@RequestBody Temporary changePassword) {
+        return accountChangeService.sendEmailToChangePassword(changePassword);
     }
 
     @DeleteMapping("/delete/invitation/{url}")
-    public void DeleteByUrl(@PathVariable String url){
+    public Mono<Void> deleteByUrl(@PathVariable String url){
         accountChangeService.deleteDataByUrl(url);
-    }  
+        return Mono.empty();
+    }
+
+    @PutMapping("/change/password")
+    public Mono<Void> changePasswordByUser(@RequestBody ChangeRequest request){
+        return accountChangeService.changePasswordByUser(request);
+        //return Mono.just(new ResponseEntity<>("Успешное изменение пароля", HttpStatus.OK));
+    }
+
+    @PutMapping("/change/email")
+    public Mono<Void> changeEmailByUser(@RequestBody ChangeRequest request){
+        return accountChangeService.changeEmailByUser(request);
+        //return Mono.just(new ResponseEntity<>("Успешное изменение почты", HttpStatus.OK));
+    }
+
+    @PutMapping("/change/info")
+    public Mono<Void> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
+        return accountChangeService.changeUserInfo(request);
+        //return Mono.just(new ResponseEntity<>("Успешное изменение пользователя", HttpStatus.OK));
+    }
+
+
 }

@@ -1,17 +1,17 @@
 package com.tyiu.corn.controller;
 
-import java.util.List;
 
 import com.tyiu.corn.model.dto.GroupDTO;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+
 import org.springframework.web.bind.annotation.*;
 
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.service.GroupService;
 
 import lombok.RequiredArgsConstructor;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
@@ -21,26 +21,29 @@ public class GroupController {
     private final GroupService groupService;
 
     @GetMapping("/all")
-    public List<GroupDTO> getGroupById() {
+    public Flux<GroupDTO> getGroups() {
         return groupService.getGroups();
     }
 
     @GetMapping("/{id}")
-    public GroupDTO getGroupById(@PathVariable Long id) {
+    public Mono<GroupDTO> getGroupById(@PathVariable String id) {
         return groupService.getGroupById(id);
     }
 
     @PostMapping("/add")
-    public GroupDTO createGroup(@RequestBody GroupDTO group) {
+    public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
         return groupService.createGroup(group);
     }
     @PutMapping("/update/{id}")
-    public GroupDTO createGroup(@PathVariable Long id,@RequestBody GroupDTO group) {
-        return groupService.updateGroup(id, group);
+    public Mono<Void> updateGroup(@PathVariable String id,@RequestBody GroupDTO group) {
+        groupService.updateGroup(id, group);
+        return Mono.empty();
+
     }
     @DeleteMapping("/delete/{id}")
-    public void createGroup(@PathVariable Long id) {
+    public Mono<Void> deleteGroup(@PathVariable String id) {
         groupService.deleteGroup(id);
+        return Mono.empty();
     }
     
 }

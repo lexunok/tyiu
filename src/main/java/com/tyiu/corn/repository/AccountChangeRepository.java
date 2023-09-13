@@ -1,29 +1,20 @@
 package com.tyiu.corn.repository;
 
 import com.tyiu.corn.model.entities.Temporary;
-
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Mono;
 
 import java.util.Date;
-import java.util.Optional;
-
-public interface AccountChangeRepository extends JpaRepository<Temporary, Long>{
-    @Modifying
+@Repository
+public interface AccountChangeRepository extends ReactiveCrudRepository<Temporary, String> {
     @Query("DELETE FROM Temporary i WHERE i.dateExpired < ?1")
     void deleteExpiredData(Date date);
-    Optional<Temporary> findByUrl(String url);
-    Optional<Temporary> findByEmail(String email);
-    boolean existsByEmail(String email);
-    boolean existsByOldEmail(String oldEmail);
-    @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM Temporary i WHERE i.email = ?1")
+    Mono<Temporary> findByUrl(String url);
+    Mono<Boolean> existsByEmail(String email);
+    Mono<Boolean> existsByOldEmail(String oldEmail);
     void deleteByEmail(String email);
-    @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM Temporary i WHERE i.oldEmail = ?1")
     void deleteByOldEmail(String email);
-    @Modifying(clearAutomatically = true)
-    @Query("DELETE FROM Temporary i WHERE i.url = ?1")
     void deleteByUrl(String url);
 }

@@ -2,51 +2,47 @@ package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
-import jakarta.persistence.*;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
 
-@Entity
+
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document
 public class Idea {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
     private String initiator;
     private String name;
+    private Group experts;
+    private Group projectOffice;
+    private List<String> confirmedBy;
+    private StatusIdea status;
+    private Instant createdAt;
+    private Instant modifiedAt;
 
-    @Enumerated(EnumType.STRING)
     private ProjectType projectType;
-    private String experts;
     private String problem;
     private String solution;
     private String result;
     private String customer;
     private String contactPerson;
     private String description;
-    private String realizability;
     private Long suitability;
     private Long budget;
-    private Long preAssessment;
-
-    @Enumerated(EnumType.STRING)
-    private StatusIdea status;
+    private Long marketValue;
+    private Long originality;
+    private Long technicalRealizability;
+    private double preAssessment;
     private double rating;
     private double risk;
-    private Date dateCreated;
-    private Date dateModified;
-    private String marketValue;
-    private String originality;
-    private String technicalFeasibility;
-    private String understanding;
-
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.ALL)
-    private List<Comment> comments;
 }

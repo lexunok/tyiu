@@ -1,8 +1,12 @@
 ДЛЯ ФРОНТЕНДЕРОВ
 ---------------------------------------
-Вам нужен только файл docker-compose-start.yml который я могу скинуть
+Вам нужен только файл docker-compose-prod.yml который я могу скинуть
 и прописать команду
-docker-compose -f docker-compose-start.yml up -d
+docker-compose -f docker-compose-prod.yml up -d
+
+После первого запуска:    
+docker-compose -f docker-compose-prod.yml up --build hits
+
 ---------------------------------------
 
 В первую очередь запуск контейнеров Docker в cmd

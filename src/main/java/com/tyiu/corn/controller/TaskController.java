@@ -1,9 +1,12 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.model.dto.TaskDTO;
 import com.tyiu.corn.model.entities.Task;
 import com.tyiu.corn.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -14,23 +17,25 @@ public class TaskController {
 
     private final TaskService taskService;
 
-    @GetMapping
-    public List<Task> showListTask() {
+    @GetMapping("/all")
+    public Flux<TaskDTO> showListTask() {
         return taskService.getListTask();
     }
 
     @PostMapping("/add")
-    public void addTask(@RequestBody Task task) {
-        taskService.saveTask(task);
+    public Mono<TaskDTO> addTask(@RequestBody TaskDTO task) {
+        return taskService.saveTask(task);
     }
 
     @DeleteMapping("/delete/{id}")
-    public void deleteTask(@PathVariable Long id) {
+    public Mono<Void> deleteTask(@PathVariable String id) {
         taskService.deleteTask(id);
+        return Mono.empty();
     }
 
     @PutMapping("/update/{id}")
-    public void updateTask(@PathVariable Long id, @RequestBody Task updatedTask) {
+    public Mono<Void> updateTask(@PathVariable String id, @RequestBody TaskDTO updatedTask) {
         taskService.updateTask(id, updatedTask);
+        return Mono.empty();
     }
 }

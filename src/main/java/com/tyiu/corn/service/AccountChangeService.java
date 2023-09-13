@@ -1,12 +1,7 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.exception.NotFoundException;
-import com.tyiu.corn.exception.ParseException;
-import com.tyiu.corn.exception.UserExistsException;
 import com.tyiu.corn.model.dto.InvitationDTO;
-import com.tyiu.corn.exception.AuthorizationNotSuccessException;
-import com.tyiu.corn.exception.DateExpiredException;
-import com.tyiu.corn.exception.EmailSendException;
 import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
@@ -18,12 +13,7 @@ import com.tyiu.corn.model.responses.UserInfoResponse;
 import com.tyiu.corn.repository.AccountChangeRepository;
 import com.tyiu.corn.repository.UserRepository;
 
-import jakarta.transaction.Transactional;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Random;
-import java.util.UUID;
+import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -32,22 +22,19 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.MailParseException;
 import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
 public class AccountChangeService {
-    @Autowired
+
     private final JavaMailSender emailSender;
-    
     private final AccountChangeRepository accountChangeRepository;
-
     private final UserRepository userRepository;
-
     private final PasswordEncoder passwordEncoder;
 
     private void sendEmail(String toAdresses, String subject, String message){
@@ -58,131 +45,119 @@ public class AccountChangeService {
         this.emailSender.send(simpleMailMessage);
     }
 
-    // private boolean containsRole(final List<Role> list, final Role string){
-    //     return list.stream().filter(listEmail -> listEmail == string).findFirst().isPresent();
-    // }
+    public Flux<Void> sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException {
+        /*if (invitations.getRoles() == null){
 
-    public void sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException, ParseException {
-        if (invitations.getRoles() == null){
-            throw new NotFoundException("Добавьте роли");
-        }
-        try {
-            invitations.getEmails().stream().filter(email -> !userRepository.existsByEmail(email)).forEach((email) ->
-                {   
-                    Date date = new Date();
-                    long milliseconds = date.getTime() + 259200000;
-                    date.setTime(milliseconds);
-                    Temporary invitation = new Temporary();
-                    invitation.setRoles(invitations.getRoles());
-                    invitation.setEmail(email);
-                    invitation.setDateExpired(date);
-                    invitation.setUrl(UUID.randomUUID().toString());
-                    sendEmail(
-                        invitation.getEmail(), 
-                        "Приглашение", 
+        }*/
+        Flux<String> inv = Flux.fromIterable(invitations.getEmails());
+        return inv.flatMap(e -> userRepository.existsByEmail(e).flatMap(
+                b -> {
+                    if(!b){
+                        Date date = new Date();
+                        long milliseconds = date.getTime() + 259200000;
+                        date.setTime(milliseconds);
+                        Temporary invitation = new Temporary();
+                        invitation.setRoles(invitations.getRoles());
+                        invitation.setEmail(e);
+                        invitation.setDateExpired(date);
+                        invitation.setUrl(UUID.randomUUID().toString());
+                        sendEmail(
+                                invitation.getEmail(),
+                                "Приглашение",
+                                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                        );
+                        accountChangeRepository.save(invitation).subscribe();
+                    }
+                    return Mono.empty();
+                }));
+    }
+
+    public Mono<Void> sendInvitation(Temporary invitation) throws  NotFoundException{
+        /*if (userRepository.existsByEmail(invitation.getEmail())){
+
+        }*/
+        Mono<String> inv = Mono.just(invitation.getEmail());
+        return inv.flatMap(e -> accountChangeRepository.existsByEmail(e).flatMap(b -> {
+                UUID url = UUID.randomUUID();
+                Date date = new Date();
+                long milliseconds = date.getTime() + 259200000;
+                date.setTime(milliseconds);
+                invitation.setRoles(List.of(Role.INITIATOR));
+                invitation.setDateExpired(date);
+                invitation.setUrl(url.toString());
+                sendEmail(
+                        invitation.getEmail(),
+                        "Приглашение",
                         String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
-                    );
-                    accountChangeRepository.save(invitation);
+                );
+                if (b){
+                    accountChangeRepository.deleteByEmail(e);
                 }
-            );
-        } catch ( MailSendException e){
-            throw new EmailSendException("В списке есть почта без домена");
-        } catch (MailParseException e){
-            throw new ParseException("В списке есть почта без имени пользователя");
-        } catch ( NullPointerException e){
-            throw new NotFoundException("Добавьте фаил с почтами");
-        }
+                accountChangeRepository.save(invitation).subscribe();
+                return Mono.empty();
+        }));
     }
 
-    public void sendInvitation(Temporary invitation) throws EmailSendException, NotFoundException, ParseException{
-        if (userRepository.existsByEmail(invitation.getEmail())){
-            throw new UserExistsException("Пользователь с такой почтой существует");
-        }
-        UUID url = UUID.randomUUID();
-        try {
-            Date date = new Date();
-            long milliseconds = date.getTime() + 259200000;
-            date.setTime(milliseconds);
-            invitation.setRoles(List.of(Role.INITIATOR));
-            invitation.setDateExpired(date);
-            invitation.setUrl(url.toString());
-            sendEmail(
-                invitation.getEmail(), 
-                "Приглашение", 
-                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
-            );
-            if (accountChangeRepository.existsByEmail(invitation.getEmail())){
-            accountChangeRepository.deleteByEmail(invitation.getEmail());
-            }
-        } catch (MailSendException e) {
-            throw new EmailSendException("Добавьте домен почты");
-        } catch (NullPointerException e) {
-            throw new NotFoundException("Добавьте почту");
-        } catch (MailParseException e){
-            throw new ParseException("Добавьте имя пользователя почты");
-        }
-        accountChangeRepository.save(invitation);
-    }
-
-    public InvitationResponse findByUrl(String url) {
-        Temporary invitation = accountChangeRepository.findByUrl(url).orElseThrow(
-            () -> new NotFoundException("Приглашения " + url + " не существует"));
-        return InvitationResponse.builder()
-                .email(invitation.getEmail())
-                .roles(invitation.getRoles())
-                .build();
-    }
-
-    public ChangeResponse findByUrlAndSendCode(String url) {
-        Temporary emailChange = accountChangeRepository.findByUrl(url).orElseThrow(
-            () -> new NotFoundException("Доступ зарпрещен"));
-        if (userRepository.existsByEmail(emailChange.getNewEmail())){
-            throw new UserExistsException("Пользователь с такой почтой существует");
-        }
-        sendEmail(
-            emailChange.getOldEmail(),
-            "Код для изменения почты",
-            String.format("Введите этот код для изменения почты %d", emailChange.getCode())
+    public Mono<InvitationResponse> findByUrl(String url) {
+        Mono<Temporary> invitation = accountChangeRepository.findByUrl(url);
+        return invitation.flatMap(
+                i -> Mono.just(
+                        InvitationResponse.builder()
+                                .email(i.getEmail())
+                                .roles(i.getRoles())
+                                .build()
+                )
         );
-        return ChangeResponse.builder()
-            .newEmail(emailChange.getNewEmail())
-            .oldEmail(emailChange.getOldEmail())
-            .build();
     }
 
-    public void sendEmailToChangeEmail(Temporary emailChange){
-        if (userRepository.existsByEmail(emailChange.getNewEmail())){
-            throw new UserExistsException("Пользователь с такой почтой существует");
-        }
-        if (accountChangeRepository.existsByOldEmail(emailChange.getOldEmail())){
-            accountChangeRepository.deleteByOldEmail(emailChange.getOldEmail());
-        }
-        try{
+    public Mono<ChangeResponse> findByUrlAndSendCode(String url) {
+        Mono<Temporary> emailChange = accountChangeRepository.findByUrl(url);
+        /*if (userRepository.existsByEmail(emailChange.getNewEmail())){
+
+        }*/
+        return emailChange.flatMap(e -> {
+            sendEmail(
+                    e.getOldEmail(),
+                    "Код для изменения почты",
+                    String.format("Введите этот код для изменения почты %d", e.getCode())
+            );
+            return Mono.just(
+                    ChangeResponse.builder()
+                            .newEmail(e.getNewEmail())
+                            .oldEmail(e.getOldEmail())
+                            .build()
+            );
+        });
+    }
+
+    public Mono<Void> sendEmailToChangeEmail(Temporary emailChange){
+        /*if (userRepository.existsByEmail(emailChange.getNewEmail())){
+
+        }*/
+        Mono<String> ema = Mono.just(emailChange.getOldEmail());
+        return ema.flatMap(e -> accountChangeRepository.existsByOldEmail(e).flatMap(b -> {
+            if (b){
+                accountChangeRepository.deleteByOldEmail(e);
+            }
             Date date = new Date();
             date.setTime(date.getTime()+43200000);
             emailChange.setUrl(UUID.randomUUID().toString());
             emailChange.setDateExpired(date);
             emailChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
             sendEmail(
-                emailChange.getNewEmail(),
-                "Изменение почты",
-                String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
+                    emailChange.getNewEmail(),
+                    "Изменение почты",
+                    String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
             );
-            accountChangeRepository.save(emailChange);
-        }catch (MailSendException e) {
-            throw new EmailSendException("Добавьте домен почты");
-        } catch (NullPointerException e) {
-            throw new NotFoundException("Добавьте почту");
-        } catch (MailParseException e){
-            throw new ParseException("Добавьте имя пользователя почты");
-        }
+            accountChangeRepository.save(emailChange).subscribe();
+            return Mono.empty();
+        }));
     }
 
-    public String sendEmailToChangePassword(Temporary passwordChange) {
-        if (!userRepository.existsByEmail(passwordChange.getEmail())) {
-            throw new NotFoundException(
-                    String.format("Пользователя с почтой %s не существует", passwordChange.getEmail()));
-        }
+    public Mono<String> sendEmailToChangePassword(Temporary passwordChange) {
+        /*if (!userRepository.existsByEmail(passwordChange.getEmail())) {
+
+        }*/
         Date date = new Date();
         date.setTime(date.getTime() + 300000);
         passwordChange.setDateExpired(date);
@@ -192,90 +167,75 @@ public class AccountChangeService {
                 passwordChange.getEmail(),
                 "Восстановление пароля",
                 String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()));
-        accountChangeRepository.save(passwordChange);
-        return passwordChange.getUrl();
+        return accountChangeRepository.save(passwordChange).flatMap(p -> Mono.just(p.getUrl()));
     }
 
-    @Transactional
-    public void changePasswordByUser(ChangeRequest request){
-        Temporary changePassword = accountChangeRepository.findByUrl(request.getKey()).orElseThrow(
-            () -> new NotFoundException("Доступ зарпрещен")
-        );
-        if (new Date().getTime()>changePassword.getDateExpired().getTime()){
-            accountChangeRepository.deleteByUrl(changePassword.getUrl());
-            throw new DateExpiredException("Время действия кода истекло");
-
-        }
-        if (request.getCode() == changePassword.getCode()) {
-            User user = userRepository.findByEmail(changePassword.getEmail()).get();
-            userRepository.setPassword(passwordEncoder.encode(request.getPassword()), user.getId());
-            accountChangeRepository.delete(changePassword);
-        } else {
-            throw new AuthorizationNotSuccessException("Неправильный код");
-        }
-
-    }
-
-    @Transactional
-    public void changeEmailByUser(ChangeRequest request){
-        Temporary emailChange = accountChangeRepository.findByUrl(request.getUrl()).orElseThrow(
-            () -> new NotFoundException("Доступ зарпрещен")
-        );
-        if (emailChange.getCode() == request.getCode()){
-            User user = userRepository.findByEmail(request.getOldEmail()).get();
-            userRepository.setEmail(request.getNewEmail(), user.getId());
-            accountChangeRepository.delete(emailChange);
-        } else {
-            throw new AuthorizationNotSuccessException("Неправильный код");
-        }
-        
-    }
-
-    public List<UserInfoResponse> getUsersInfo(){
-        List<UserInfoResponse> usersInfo = new ArrayList<UserInfoResponse>();
-        userRepository.findAll().stream().forEach(
-            user -> {
-                usersInfo.add(UserInfoResponse.builder()
-                                .email(user.getEmail())
-                                .roles(user.getRoles())
-                                .firstName(user.getFirstName())
-                                .lastName(user.getLastName())
-                                .build());
+    public Mono<Void> changePasswordByUser(ChangeRequest request){
+        Mono<Temporary> changePassword = accountChangeRepository.findByUrl(request.getKey());
+        return changePassword.flatMap(c -> {
+            if (new Date().getTime() > c.getDateExpired().getTime()){
+                accountChangeRepository.deleteByUrl(c.getUrl());
             }
-        );
-        return usersInfo;
-    }
-
-    public List<String> getAllEmails(){
-        List<String> usersEmails = new ArrayList<String>();
-        userRepository.findAll().stream().forEach(
-            user -> {
-                usersEmails.add(user.getEmail());
+            if (request.getCode() == c.getCode()) {
+                Mono<User> user = userRepository.findFirstByEmail(c.getEmail());
+                user.flatMap(u -> {
+                    u.setPassword(passwordEncoder.encode(request.getPassword()));
+                    return userRepository.save(u);
+                }).subscribe();
+                return accountChangeRepository.delete(c);
             }
-        );
-        return usersEmails;
+            return Mono.empty();
+        });
     }
 
-    @Transactional
-    public void changeUserInfo(UserInfoRequest request){
-        User user = userRepository.findByEmail(request.getEmail()).orElseThrow(
-            () -> new NotFoundException("Пользователя с такой почтой не существует")
-        );
-        userRepository.setUserInfo(
-            request.getNewEmail(),
-            request.getNewFirstName(), 
-            request.getNewLastName(),
-            request.getNewRoles(),
-            user.getId()
+
+    public Mono<Void> changeEmailByUser(ChangeRequest request){
+        Mono<Temporary> emailChange = accountChangeRepository.findByUrl(request.getUrl());
+        return emailChange.flatMap(e -> {
+            if (request.getCode() == e.getCode()){
+                Mono<User> user = userRepository.findFirstByEmail(request.getOldEmail());
+                user.flatMap(u -> {
+                    u.setEmail(request.getNewEmail());
+                    return userRepository.save(u);
+                }).subscribe();
+                return accountChangeRepository.delete(e);
+            }
+            return Mono.empty();
+        });
+    }
+
+    public Flux<UserInfoResponse> getUsersInfo(){
+        Flux<User> users = userRepository.findAll();
+        return users.flatMap(
+                u -> Mono.just(UserInfoResponse.builder()
+                        .email(u.getEmail())
+                        .roles(u.getRoles())
+                        .firstName(u.getFirstName())
+                        .lastName(u.getLastName())
+                        .build())
         );
     }
 
-    @Transactional
+    public Mono<List<String>> getAllEmails(){
+        return userRepository.findAll().flatMap(u -> Mono.just(u.getEmail())).collectList();
+    }
+
+    public Mono<Void> changeUserInfo(UserInfoRequest request){
+        Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
+        user.flatMap(u -> {
+            u.setEmail(request.getNewEmail());
+            u.setFirstName(request.getNewFirstName());
+            u.setLastName(request.getNewLastName());
+            u.setRoles(request.getNewRoles());
+            return userRepository.save(u);
+        }).subscribe();
+        return Mono.empty();
+    }
+
     public void deleteDataByUrl(String url){
         accountChangeRepository.deleteByUrl(url);
     }
 
-    @Transactional
     @Scheduled(fixedRate = 43200000)
     public void deleteExpiredData(){
         Date date = new Date();

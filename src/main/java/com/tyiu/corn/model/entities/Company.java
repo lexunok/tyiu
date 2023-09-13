@@ -2,22 +2,20 @@ package com.tyiu.corn.model.entities;
 
 import java.util.List;
 
-
-import jakarta.persistence.*;
+import com.tyiu.corn.model.dto.UserDTO;
 import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document
 public class Company {
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private Long id;
+    private String id;
     private String name;
-      
-    @OneToMany(fetch = FetchType.LAZY)
-    private List<User> staff;
+    private List<UserDTO> staff;
 }

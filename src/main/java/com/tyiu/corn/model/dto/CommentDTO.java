@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.dto;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 
@@ -13,10 +14,10 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class CommentDTO {
-    private Long id;
+    private String id;
     private String comment;
     private String sender;
     private List<String> checkedBy;
-    private Date dateCreated;
-    private Long ideaId;
+    private Instant createdAt;
+    private String ideaId;
 }

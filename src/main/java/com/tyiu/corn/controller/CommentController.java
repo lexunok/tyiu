@@ -4,10 +4,10 @@ import com.tyiu.corn.model.dto.CommentDTO;
 import com.tyiu.corn.service.CommentService;
 import lombok.RequiredArgsConstructor;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
-import org.springframework.messaging.handler.annotation.SendTo;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
@@ -15,42 +15,38 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1/comment")
 @RequiredArgsConstructor
+@RequestMapping("/api/v1/comment")
+@Slf4j
 public class CommentController {
+
     private final CommentService commentService;
 
-    @GetMapping("/get-idea-comments/{ideaId}")
-    public Map<String, List<CommentDTO>> getAllIdeaComments(@PathVariable Long ideaId){
-        return Map.of("comments", commentService.getAllIdeaComments(ideaId));
+
+    @MessageMapping("comment.{id}.receive")
+    public  Flux<CommentDTO> receiveComments(@DestinationVariable String id){
+        return commentService.getAllComments(id);
     }
 
-    @MessageMapping("/comments/create-comment/{ideaId}")
-    @SendTo("/topic/comments/{ideaId}")
-    public CommentDTO createComment(@DestinationVariable Long ideaId, @Payload CommentDTO commentDTO, Principal principal) {
-        return commentService.createComment(ideaId, commentDTO, principal.getName());
+    @PostMapping("/send/{ideaId}")
+    public  Mono<Void> createComment(
+            @PathVariable String ideaId, @RequestBody CommentDTO comment, Principal principal){
+        return commentService.createComment(ideaId,comment, principal.getName());
     }
 
-    @MessageMapping("/comments/delete-comment/{commentId}")
-    @SendTo("/topic/comments/{ideaId}")
-    public Map<String, Long> deleteComment(@DestinationVariable Long commentId, Principal principal) {
-        commentService.deleteComment(commentId, principal.getName());
-        return Map.of("commentId", commentId);
+    @DeleteMapping("/delete/{ideaId}/{commentId}")
+    public  Mono<Void> deleteComment(
+            @PathVariable String ideaId, @PathVariable String commentId){
+        return commentService.deleteComment(commentId, ideaId);
     }
 
-    @PostMapping("/add/{ideaId}")
-    public CommentDTO saveCommentOutdated(@RequestBody CommentDTO commentDTO, @PathVariable Long ideaId, Principal principal) {
-        return commentService.createComment(ideaId, commentDTO, principal.getName());
-    }
-    @DeleteMapping("/delete/{commentId}")
-    public Map<String, String> deleteCommentOutdated(@PathVariable Long commentId, Principal principal) {
-        commentService.deleteComment(commentId, principal.getName());
-        return Map.of("success", "Успешное удаление комментария");
-    }
     @PutMapping("/check/{commentId}")
-    public void checkComment(@PathVariable Long commentId, Principal principal){
+    public Mono<Void> checkComment(@PathVariable String commentId, Principal principal){
         commentService.checkCommentByUser(commentId, principal.getName());
+        return Mono.empty();
     }
 }

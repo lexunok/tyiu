@@ -1,6 +1,6 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -13,8 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class GroupDTO {
-    private Long id;
+    private String id;
     private String name;
-    //TODO: сделать вместо User - UserDTO
-    private List<User> users;
+    private List<UserDTO> users;
 }

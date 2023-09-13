@@ -1,85 +1,72 @@
 package com.tyiu.corn.service;
 
+import java.net.URI;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
-import com.tyiu.corn.exception.AccessException;
 import com.tyiu.corn.exception.NotFoundException;
+import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.CommentDTO;
 import com.tyiu.corn.repository.CommentRepository;
 import com.tyiu.corn.repository.IdeaRepository;
-
-import jakarta.transaction.Transactional;
+import io.rsocket.core.RSocketClient;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.CachePut;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.codec.cbor.Jackson2CborDecoder;
+import org.springframework.http.codec.cbor.Jackson2CborEncoder;
+import org.springframework.messaging.rsocket.RSocketRequester;
+import org.springframework.messaging.rsocket.RSocketStrategies;
 import org.springframework.stereotype.Service;
-import org.modelmapper.ModelMapper;
-import org.modelmapper.TypeToken;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
 
 @Service
 @RequiredArgsConstructor
-@CacheConfig(cacheNames = {"comments"})
-@Slf4j
 public class CommentService {
-    private final CommentRepository commentRepository;
-    private final IdeaRepository ideaRepository;
 
+    private final CommentRepository commentRepository;
     private final ModelMapper mapper;
 
-    private boolean containsEmail(List<String> list, String email){
-        return list.stream().filter(listEmail -> listEmail == email).findFirst().isPresent();
+    public Flux<CommentDTO> getAllComments(String ideaId) {
+        Flux<Comment> ideaComments = commentRepository.findWithTailableCursorByIdeaId(ideaId);
+        return ideaComments.flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
-    @Cacheable
-    public List<CommentDTO> getAllIdeaComments(Long ideaId){
-        if (ideaRepository.existsById(ideaId)){
-            List<Comment> ideaComments = commentRepository.findAllByIdea_Id(ideaId);
-            return mapper.map(ideaComments, new TypeToken<List<CommentDTO>>(){}.getType());
-        }
-        throw new NotFoundException(String.format("Идеи с id %d не существует", ideaId)); 
+    public Mono<Void> createComment(String ideaId,CommentDTO commentDTO, String email) {
+        Comment comment = Comment.builder()
+                .ideaId(ideaId)
+                .comment(commentDTO.getComment())
+                .createdAt(Instant.now())
+                .sender(email)
+                .build();
+        commentRepository.save(comment).subscribe();
+        return Mono.empty();
     }
 
-    @CacheEvict(allEntries = true)
-    public CommentDTO createComment(Long ideaId, CommentDTO commentDTO, String email) {
-        commentDTO.setIdeaId(ideaId);
-        commentDTO.setDateCreated(new Date());
-        commentDTO.setSender(email);
-        commentDTO.setCheckedBy(List.of(email));
-        Comment comment = mapper.map(commentDTO, Comment.class);
-        comment.setIdea(ideaRepository.findById(ideaId).orElseThrow(
-            () -> new NotFoundException(String.format("Идеи с id %d не существует", ideaId)))
-        );
-        comment = commentRepository.save(comment);
-        return mapper.map(comment, CommentDTO.class);
+
+    public Mono<Void> deleteComment(String commentId, String ideaId) {
+        commentRepository.deleteById(commentId).subscribe();
+        return Mono.empty();
     }
 
-    @CacheEvict(allEntries = true)
-    @Transactional
-    public void deleteComment(Long commentId, String email) {
-        if (commentRepository.findById(commentId).get().getSender().equals(email)){
-            commentRepository.deleteById(commentId);
-        }
-        else {
-            throw new AccessException("Доступ запрещен");
-        }
+    public void checkCommentByUser(String commentId, String email) {
+        Mono<Comment> currentComment = commentRepository.findById(commentId);
+        currentComment.flatMap(c -> {
+            c.getCheckedBy().add(email);
+            return commentRepository.save(c);
+        });
     }
 
-    @CacheEvict(allEntries = true)
-    public void checkCommentByUser(Long commentId, String email) {
-        Comment currentComment = commentRepository.findById(commentId).orElseThrow(            
-            () -> new NotFoundException("Комментария не существует")
-        );
-        currentComment.getCheckedBy().add(email);
-        commentRepository.save(currentComment);
-    }
 }

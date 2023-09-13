@@ -1,17 +1,15 @@
 package com.tyiu.corn.repository;
 
 import com.tyiu.corn.model.entities.Comment;
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-
-import java.util.List;
-
+import org.springframework.data.mongodb.repository.Tailable;
+import org.springframework.data.repository.reactive.ReactiveCrudRepository;
+import org.springframework.stereotype.Repository;
+import reactor.core.publisher.Flux;
 
 
-public interface CommentRepository extends JpaRepository<Comment, Long> {
-    List<Comment> findAllByIdea_Id(Long ideaId);
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM Comment c WHERE c.id = ?1")
-    void deleteById(Long id);
+@Repository
+public interface CommentRepository extends ReactiveCrudRepository<Comment, String> {
+    @Tailable
+    Flux<Comment> findWithTailableCursorByIdeaId(String ideaId);
 }
+

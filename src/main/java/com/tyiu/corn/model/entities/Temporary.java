@@ -6,25 +6,21 @@ import com.tyiu.corn.model.enums.Role;
 import java.util.Date;
 import java.util.List;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Document
 public class Temporary {
     @Id
-    @GeneratedValue
-    private Long id;
-    @Column(unique = true)
+    private String id;
+    @Indexed
     private String url;
     private Date dateExpired;
     private String email;

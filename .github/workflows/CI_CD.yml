@@ -58,7 +58,7 @@ jobs:
 
       - name: Build containers
         run: |
-          docker-compose -f docker-compose-prod.yml up -d
+          docker-compose -f docker-compose-test.yml up -d
 
       - name: Build JAR file
         run: ./gradlew -PspringProfile=prod build -x test
