@@ -49,6 +49,7 @@ public class CommentService {
                 .ideaId(ideaId)
                 .comment(commentDTO.getComment())
                 .createdAt(Instant.now())
+                .checkedBy(List.of(email))
                 .sender(email)
                 .build();
         commentRepository.save(comment).subscribe();
