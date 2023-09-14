@@ -1,8 +1,7 @@
 package com.tyiu.corn.service;
 
 import java.time.Instant;
-import java.util.Date;
-import java.util.List;
+import java.util.ArrayList;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
@@ -10,12 +9,10 @@ import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
 
-import lombok.Value;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.mongodb.core.aggregation.ArrayOperators;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
@@ -53,9 +50,11 @@ public class IdeaService {
         ideaDTO.setModifiedAt(Instant.now());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
+        ideaDTO.setConfirmedBy(new ArrayList<>());
         Mono<Idea> idea = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
         return idea.flatMap(i -> Mono.just(mapper.map(i, IdeaDTO.class)));
     }
+
     @CacheEvict(allEntries = true)
     public void deleteIdeaByInitiator(String id) {
         ideaRepository.deleteById(id).subscribe();
