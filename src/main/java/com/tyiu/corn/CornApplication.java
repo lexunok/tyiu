@@ -1,5 +1,6 @@
 package com.tyiu.corn;
 
+import com.mongodb.client.model.CreateCollectionOptions;
 import com.tyiu.corn.model.dto.CommentDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -20,7 +21,6 @@ import java.net.URI;
 @SpringBootApplication
 public class CornApplication implements CommandLineRunner {
 
-	@Autowired
 	private final ReactiveMongoTemplate template;
 
 	public CornApplication(ReactiveMongoTemplate template) {
@@ -34,12 +34,11 @@ public class CornApplication implements CommandLineRunner {
 	@Override
 	public void run(String... args) throws Exception {
 		template.collectionExists("comment").flatMap(b -> {
-			if (b){
-				template.executeCommand("{\"convertToCapped\": \"comment\", size: 100000}")
-						.log()
-						.subscribe();
+			if (!b){
+				template.createCollection("comment",
+						CollectionOptions.empty().capped().size(500000).maxDocuments(5000)).subscribe();
 			}
 			return Mono.empty();
-		});
+		}).subscribe();
 	}
 }
