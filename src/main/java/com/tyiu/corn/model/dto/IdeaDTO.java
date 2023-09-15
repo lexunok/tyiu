@@ -1,6 +1,6 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.entities.Comment;
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
@@ -23,10 +23,9 @@ public class IdeaDTO {
     private String name;
     private Group experts;
     private Group projectOffice;
-    private List<String> confirmedBy;
     private StatusIdea status;
-    private Instant createdAt;
-    private Instant modifiedAt;
+    private Date createdAt;
+    private Date modifiedAt;
 
     private ProjectType projectType;
     private String problem;
@@ -36,8 +35,6 @@ public class IdeaDTO {
     private String contactPerson;
     private String description;
     private Long suitability;
-    private Long budget;
-    private Long marketValue;
     private Long originality;
     private Long technicalRealizability;
     private double preAssessment;

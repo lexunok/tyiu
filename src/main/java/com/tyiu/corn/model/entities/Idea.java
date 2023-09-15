@@ -6,9 +6,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 
 
 
@@ -25,10 +23,9 @@ public class Idea {
     private String name;
     private Group experts;
     private Group projectOffice;
-    private List<String> confirmedBy;
     private StatusIdea status;
-    private Instant createdAt;
-    private Instant modifiedAt;
+    private Date createdAt;
+    private Date modifiedAt;
 
     private ProjectType projectType;
     private String problem;
@@ -38,8 +35,6 @@ public class Idea {
     private String contactPerson;
     private String description;
     private Long suitability;
-    private Long budget;
-    private Long marketValue;
     private Long originality;
     private Long technicalRealizability;
     private double preAssessment;
