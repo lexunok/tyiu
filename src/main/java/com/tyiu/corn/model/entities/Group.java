@@ -10,7 +10,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
-
+import com.tyiu.corn.model.enums.Role;
 
 @Setter
 @Getter
@@ -23,6 +23,6 @@ public class Group {
     private String id;
     private String name;
     private List<UserDTO> users;
-    private boolean isExperts;
-    private boolean isProjectOffice;
+    private Role role;
+
 }

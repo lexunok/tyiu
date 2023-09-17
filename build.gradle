@@ -26,7 +26,6 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-rsocket'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive'
-	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-data-redis-reactive'
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation 'io.lettuce:lettuce-core:6.2.6.RELEASE'
@@ -42,6 +41,9 @@ dependencies {
 
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation "org.testcontainers:testcontainers:1.19.0"
+	testImplementation "org.testcontainers:junit-jupiter:1.19.0"
+	testImplementation "org.testcontainers:mongodb:1.19.0"
 }
 
 tasks.named('test') {

@@ -5,7 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-
+import com.tyiu.corn.model.enums.Role;
 import java.util.List;
 
 @Data
@@ -16,4 +16,5 @@ public class GroupDTO {
     private String id;
     private String name;
     private List<UserDTO> users;
+    private Role role;
 }
