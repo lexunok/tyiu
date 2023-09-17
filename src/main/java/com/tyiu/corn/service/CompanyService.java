@@ -1,15 +1,8 @@
 package com.tyiu.corn.service;
-
-import java.util.List;
-
-import com.tyiu.corn.model.dto.IdeaDTO;
-import com.tyiu.corn.model.entities.Idea;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Company;
-import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.repository.CompanyRepository;
 
 import lombok.RequiredArgsConstructor;
