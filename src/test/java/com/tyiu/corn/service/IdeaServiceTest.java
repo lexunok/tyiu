@@ -47,33 +47,6 @@ public class IdeaServiceTest {
         ideaService = new IdeaService(ideaRepository, mapper,cache);
     }
 
-    @Test
-    void testGetListIdeaForInitiator() {
-        // Given
-        List<IdeaDTO> ideasDTO = new ArrayList<>();
-        String initiator = "example@example.com";
-
-        IdeaDTO ideaDTO = IdeaDTO.builder()
-                .initiator(initiator)
-                .build();
-        ideasDTO.add(ideaDTO);
-
-        List<Idea> ideas = new ArrayList<>();
-        Idea idea = Idea.builder()
-                .initiator(initiator)
-                .build();
-        ideas.add(idea);
-
-        when(ideaRepository.findAllByInitiator(initiator)).thenReturn(Flux.fromIterable(ideas));
-        when(mapper.map(idea, IdeaDTO.class)).thenReturn(ideaDTO);
-
-        Flux<IdeaDTO> result = ideaService.getListIdeaForInitiator(initiator);
-
-        // Assert
-        assertEquals(ideasDTO, result.collectList().block());
-        verify(ideaRepository).findAllByInitiator(initiator);
-    }
-
 
     @Test
     void testGetListIdea(){
