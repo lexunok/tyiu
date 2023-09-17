@@ -1,10 +1,6 @@
 package com.tyiu.corn.service;
 
-import java.time.Duration;
-import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.concurrent.TimeUnit;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
@@ -15,7 +11,6 @@ import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
@@ -30,27 +25,37 @@ public class IdeaService {
 
     private final IdeaRepository ideaRepository;
     private final ModelMapper mapper;
-    private final ReactiveRedisTemplate<String, Object> reactiveRedisTemplate;
     private final RedisCacheTemplate cache;
+    private final String ideaKey = "IDEA";
+    private final String ideasKey = "IDEAS";
 
-    public Flux<IdeaDTO> getListIdeaForInitiator(String initiator) {
-        Flux<Idea> ideas = ideaRepository.findAllByInitiator(initiator);
-        return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
+    private Mono<Void> updateIDEAS(){
+        cache.delete(ideasKey);
+        ideaRepository.findAll().flatMap(ideasFromRepo -> {
+            Flux.just(mapper.map(ideasFromRepo, IdeaDTO.class)).collectList().subscribe(list -> cache.setList(ideasKey, list));
+            return Flux.empty();
+        }).subscribe();
+        return Mono.empty();
     }
 
     public Mono<IdeaDTO> getIdeaForInitiator(String id) {
-        return cache.get("IDEA", id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, IdeaDTO.class)))
+        return cache.get(ideaKey, id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, IdeaDTO.class)))
                 .switchIfEmpty(Mono.defer(() -> ideaRepository.findById(id)
                         .flatMap(ideaFromRepo -> {
                             IdeaDTO ideaDTO = mapper.map(ideaFromRepo, IdeaDTO.class);
-                            cache.set("IDEA_" + id, ideaDTO);
+                            cache.set(ideaKey, id, ideaDTO);
                             return Mono.just(ideaDTO);
                         })));
     }
 
     public Flux<IdeaDTO> getListIdea() {
-        Flux<Idea> ideas = ideaRepository.findAll();
-        return ideas.flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
+        return cache.getList(ideasKey).flatMap(ideasFromRedis -> Flux.just(mapper.map(ideasFromRedis, IdeaDTO.class)))
+                .switchIfEmpty(Flux.defer(() -> ideaRepository.findAll()
+                        .flatMap(ideasFromRepo -> {
+                            Flux<IdeaDTO> ideas = Flux.just(mapper.map(ideasFromRepo, IdeaDTO.class));
+                            ideas.collectList().subscribe(list -> cache.setList(ideasKey, list));
+                            return ideas;
+                        })));
     }
 
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
@@ -58,42 +63,42 @@ public class IdeaService {
         ideaDTO.setModifiedAt(new Date());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
-
-        Mono<Idea> ideaMono = ideaRepository.save(mapper.map(ideaDTO, Idea.class));
-
-        return ideaMono.flatMap(savedIdea -> {
+        return ideaRepository.save(mapper.map(ideaDTO, Idea.class)).flatMap(savedIdea -> {
             IdeaDTO savedIdeaDTO = mapper.map(savedIdea, IdeaDTO.class);
-
-            cache.set("IDEA_" + savedIdeaDTO.getId(), savedIdeaDTO);
+            ideaRepository.save(savedIdea).subscribe();
+            cache.set(ideaKey, savedIdea.getId(), savedIdeaDTO);
+            updateIDEAS().subscribe();
             return Mono.just(savedIdeaDTO);
         });
     }
 
-    public void deleteIdeaByInitiator(String id) {
-        ideaRepository.deleteById(id).doOnNext(ide -> reactiveRedisTemplate.opsForValue().delete("IDEA_" + id).subscribe()).subscribe();
+    public Mono<Void> deleteIdeaByInitiator(String id) {
+        cache.delete(ideaKey + "_" + id);
+        ideaRepository.deleteById(id).subscribe();
+        return updateIDEAS();
     }
 
-    public void deleteIdeaByAdmin(String id) {
-        ideaRepository.deleteById(id).doOnNext(ide -> reactiveRedisTemplate.opsForValue().delete("IDEA_" + id).subscribe()).subscribe();
+    public Mono<Void> deleteIdeaByAdmin(String id) {
+        cache.delete(ideaKey + "_" + id);
+        ideaRepository.deleteById(id).subscribe();
+        return updateIDEAS();
     }
 
     public void updateStatusByInitiator (String id){
-        Mono<Idea> idea = reactiveRedisTemplate.opsForValue().get("IDEA_" + id)
-                .flatMap(i -> Mono.justOrEmpty(i)
-                        .switchIfEmpty(ideaRepository.findById(id))
-                ).cast(Idea.class);
-        idea.flatMap(i -> {
+        cache.get(ideaKey, id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, Idea.class)))
+                .switchIfEmpty(Mono.defer(() -> ideaRepository.findById(id)))
+        .flatMap(i -> {
             i.setStatus(StatusIdea.ON_APPROVAL);
-            return ideaRepository.save(i).doOnNext(ide -> reactiveRedisTemplate.opsForValue().set("IDEA_" + id, ide, 600).subscribe());
+            ideaRepository.save(i).subscribe();
+            cache.set(ideaKey, i.getId(), mapper.map(i, IdeaDTO.class));
+            return updateIDEAS();
         }).subscribe();
     }
 
     public void updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
-        Mono<Idea> idea = reactiveRedisTemplate.opsForValue().get("IDEA_" + id)
-                .flatMap(i -> Mono.justOrEmpty(i)
-                        .switchIfEmpty(ideaRepository.findById(id))
-                ).cast(Idea.class);
-        idea.flatMap(i -> {
+        cache.get(ideaKey, id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, Idea.class)))
+                .switchIfEmpty(Mono.defer(() -> ideaRepository.findById(id)))
+        .flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
             i.setProblem(updatedIdea.getProblem());
@@ -106,47 +111,48 @@ public class IdeaService {
             i.setSuitability(updatedIdea.getSuitability());
             i.setPreAssessment(updatedIdea.getPreAssessment());
             i.setModifiedAt(new Date());
-            return ideaRepository.save(i).doOnNext(ide -> reactiveRedisTemplate.opsForValue().set("IDEA_" + id, ide, 600).subscribe());
+            ideaRepository.save(i).subscribe();
+            cache.set(ideaKey, i.getId(), mapper.map(i, IdeaDTO.class));
+            return updateIDEAS();
         }).subscribe();
     }
 
     public void updateStatusByProjectOffice (String id, StatusIdea newStatus){
-        Mono<Idea> idea = reactiveRedisTemplate.opsForValue().get("IDEA_" + id)
-                .flatMap(i -> Mono.justOrEmpty(i)
-                        .switchIfEmpty(ideaRepository.findById(id))
-                ).cast(Idea.class);
-        idea.flatMap(i ->{
+        cache.get(ideaKey, id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, Idea.class)))
+                .switchIfEmpty(Mono.defer(() -> ideaRepository.findById(id)))
+        .flatMap(i ->{
             i.setStatus(newStatus);
-            return ideaRepository.save(i).doOnNext(ide -> reactiveRedisTemplate.opsForValue().set("IDEA_" + id, ide, 600).subscribe());
+            ideaRepository.save(i).subscribe();
+            cache.set(ideaKey, i.getId(), mapper.map(i, IdeaDTO.class));
+            return updateIDEAS();
         }).subscribe();
     }
 
-    public void updateStatusByExpert(String id, RatingDTO ratingDTO, String email){
-        Mono<Idea> idea = reactiveRedisTemplate.opsForValue().get("IDEA_" + id)
-                .flatMap(i -> Mono.justOrEmpty(i)
-                        .switchIfEmpty(ideaRepository.findById(id))
-                ).cast(Idea.class);
-        idea.flatMap(i -> {
-            if (ratingDTO.getStatus() == StatusIdea.ON_EDITING)
-            {
+    public void updateStatusByExpert(String id, RatingDTO ratingDTO){
+        cache.get(ideaKey, id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, Idea.class)))
+                .switchIfEmpty(Mono.defer(() -> ideaRepository.findById(id)))
+        .flatMap(i -> {
+            if (ratingDTO.getStatus() == StatusIdea.ON_EDITING) {
                 i.setStatus(ratingDTO.getStatus());
-                return ideaRepository.save(i).doOnNext(ide -> reactiveRedisTemplate.opsForValue().set("IDEA_" + id, ide, 600).subscribe());
+                ideaRepository.save(i).subscribe();
+                cache.set(ideaKey, i.getId(), mapper.map(i, IdeaDTO.class));
+                return updateIDEAS();
             }
             i.setStatus(ratingDTO.getStatus());
             i.setRating(ratingDTO.getRating());
             i.setOriginality(ratingDTO.getOriginality());
             i.setTechnicalRealizability(ratingDTO.getTechnicalRealizability());
             i.setSuitability(ratingDTO.getSuitability());
-            return ideaRepository.save(i).doOnNext(ide -> reactiveRedisTemplate.opsForValue().set("IDEA_" + id, ide, 600).subscribe());
+            ideaRepository.save(i).subscribe();
+            cache.set(ideaKey, i.getId(), mapper.map(i, IdeaDTO.class));
+            return updateIDEAS();
         }).subscribe();
     }
 
     public void updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
-        Mono<Idea> idea = reactiveRedisTemplate.opsForValue().get("IDEA_" + id)
-                .flatMap(i -> Mono.justOrEmpty(i)
-                        .switchIfEmpty(ideaRepository.findById(id))
-                ).cast(Idea.class);
-        idea.flatMap(i -> {
+        cache.get(ideaKey, id).flatMap(ideaFromRedis -> Mono.just(mapper.map(ideaFromRedis, Idea.class)))
+                .switchIfEmpty(Mono.defer(() -> ideaRepository.findById(id)))
+        .flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
             i.setExperts(updatedIdea.getExperts());
@@ -160,7 +166,9 @@ public class IdeaService {
             i.setRating(updatedIdea.getRating());
             i.setRisk(updatedIdea.getRisk());
             i.setModifiedAt(new Date());
-            return ideaRepository.save(i).doOnNext(ide -> reactiveRedisTemplate.opsForValue().set("IDEA_" + id, ide, 600).subscribe());
+            ideaRepository.save(i).subscribe();
+            cache.set(ideaKey, i.getId(), mapper.map(i, IdeaDTO.class));
+            return updateIDEAS();
         }).subscribe();
     }
 }

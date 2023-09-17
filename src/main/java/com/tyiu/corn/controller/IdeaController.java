@@ -2,7 +2,6 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.RatingDTO;
-import com.tyiu.corn.model.enums.StatusIdea;
 
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
@@ -18,11 +17,6 @@ import java.security.Principal;
 public class IdeaController {
     
     private final IdeaService ideaService;
-
-    @GetMapping("/initiator")
-    public Flux<IdeaDTO> showListIdeaForInitiator(Principal principal){
-        return ideaService.getListIdeaForInitiator(principal.getName());
-    }
     
     @GetMapping("/initiator/{ideaId}")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId) {
@@ -41,14 +35,12 @@ public class IdeaController {
 
     @DeleteMapping("/initiator/delete/{ideaId}")
     public Mono<Void> deleteIdeaByInitiator(@PathVariable String ideaId) {
-        ideaService.deleteIdeaByInitiator(ideaId);
-        return Mono.empty();
+        return ideaService.deleteIdeaByInitiator(ideaId);
     }
 
     @DeleteMapping("/admin/delete/{ideaId}")
     public Mono<Void> deleteIdeaByAdmin(@PathVariable String ideaId) {
-        ideaService.deleteIdeaByAdmin(ideaId);
-        return Mono.empty();
+        return ideaService.deleteIdeaByAdmin(ideaId);
     }
 
     @PutMapping("/initiator/update/{ideaId}")
@@ -70,8 +62,8 @@ public class IdeaController {
     }
 
     @PutMapping("/expert/update/{ideaId}")
-    public Mono<Void> updateStatusByExpert(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO, Principal principal){
-        ideaService.updateStatusByExpert(ideaId, ratingDTO, principal.getName());
+    public Mono<Void> updateStatusByExpert(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO){
+        ideaService.updateStatusByExpert(ideaId, ratingDTO);
         return Mono.empty();
     }
 

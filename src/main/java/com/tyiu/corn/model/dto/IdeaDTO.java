@@ -1,6 +1,5 @@
 package com.tyiu.corn.model.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
@@ -9,9 +8,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
 import java.util.Date;
-import java.util.List;
 @Data
 @Builder
 @AllArgsConstructor

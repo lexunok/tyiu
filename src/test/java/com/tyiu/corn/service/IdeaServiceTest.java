@@ -9,6 +9,7 @@ import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.repository.IdeaRepository;
+import com.tyiu.corn.util.redis.RedisCacheTemplate;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,9 +39,12 @@ public class IdeaServiceTest {
     @Mock
     private ModelMapper mapper;
 
+    @Mock
+    private RedisCacheTemplate cache;
+
     @BeforeEach
     void setUp() {
-        ideaService = new IdeaService(ideaRepository, mapper);
+        ideaService = new IdeaService(ideaRepository, mapper,cache);
     }
 
     @Test

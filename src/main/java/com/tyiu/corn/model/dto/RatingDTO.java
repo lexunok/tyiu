@@ -10,9 +10,7 @@ import lombok.Data;
 public class RatingDTO {
     private StatusIdea status;
     private double rating;
-    private Long marketValue;
+    private Long suitability;
     private Long originality;
     private Long technicalRealizability;
-    private Long suitability;
-    private Long budget;
 }
