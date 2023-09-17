@@ -23,6 +23,6 @@ public class Group {
     private String id;
     private String name;
     private List<UserDTO> users;
-    private List<Role> roles;
+    private Role role;
 
 }
