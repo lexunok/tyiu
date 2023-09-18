@@ -18,9 +18,9 @@ public class IdeaController {
     
     private final IdeaService ideaService;
     
-    @GetMapping("/initiator/{ideaId}")
+    @GetMapping("/{ideaId}")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId) {
-        return ideaService.getIdeaForInitiator(ideaId);
+        return ideaService.getIdea(ideaId);
     }
 
     @GetMapping("/all")
@@ -28,7 +28,7 @@ public class IdeaController {
         return ideaService.getListIdea();
     }
 
-    @PostMapping("/initiator/add")
+    @PostMapping("/add")
     public Mono<IdeaDTO> addIdea(@RequestBody IdeaDTO idea, Principal principal) {
         return ideaService.saveIdea(idea, principal.getName());
     }
