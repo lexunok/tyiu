@@ -11,8 +11,6 @@ import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import com.tyiu.corn.repository.IdeaRepository;
@@ -38,7 +36,6 @@ public class IdeaService {
                         ideaRepository
                             .findById(id)
                             .flatMap(i -> {
-                                log.info("in DB");
                                 IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
                                 cache.set(IDEA,id,ideaDTO).subscribe();
                                 return Mono.just(ideaDTO);

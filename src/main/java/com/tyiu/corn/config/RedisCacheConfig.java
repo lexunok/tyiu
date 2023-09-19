@@ -10,7 +10,6 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.ReactiveRedisTemplate;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.RedisSerializationContext;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -18,11 +17,11 @@ import org.springframework.data.redis.serializer.StringRedisSerializer;
 @EnableCaching
 public class RedisCacheConfig {
 
-    @Value("${spring.redis.host}")
+    @Value("${spring.data.redis.host}")
     String host;
-    @Value("${spring.redis.port}")
+    @Value("${spring.data.redis.port}")
     int port;
-    @Value("${spring.redis.password}")
+    @Value("${spring.data.redis.password}")
     String password;
 
     @Bean

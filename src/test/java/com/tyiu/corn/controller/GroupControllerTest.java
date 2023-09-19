@@ -19,8 +19,11 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(webEnvironment = RANDOM_PORT)
-public class GroupControllerTest {
+@SpringBootTest(
+        webEnvironment = RANDOM_PORT,
+        properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
+)
+class GroupControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;

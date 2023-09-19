@@ -21,7 +21,6 @@ public class RedisCacheTemplate {
         String key = name + "_" + id;
         return isExists(key).flatMap(hasKey -> {
             if (hasKey) {
-                log.info("in redis");
                 return reactiveRedisTemplate.opsForValue().get(key);
             }
             else return Mono.empty();
