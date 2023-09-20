@@ -29,7 +29,7 @@ public class AuthenticationControllerTest {
 
     @Order(1)
     @Test
-    void canRegister(){
+    public void canRegister(){
         RegisterRequest request = new RegisterRequest(
                 "edqmail","lastnasme","firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
         AuthenticationResponse response =webTestClient
