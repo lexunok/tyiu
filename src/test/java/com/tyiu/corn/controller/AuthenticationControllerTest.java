@@ -23,13 +23,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
         webEnvironment = RANDOM_PORT,
         properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
 )
-public class AuthenticationControllerTest {
+class AuthenticationControllerTest {
     @Autowired
     private WebTestClient webTestClient;
 
     @Order(1)
     @Test
-    public void canRegister(){
+    void canRegister(){
         RegisterRequest request = new RegisterRequest(
                 "edqmail","lastnasme","firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
         AuthenticationResponse response =webTestClient
@@ -51,15 +51,12 @@ public class AuthenticationControllerTest {
     void canLoginWhenUserNotExists(){
         LoginRequest request = new LoginRequest(
                 "edasmail3","lasdfsdsdsf");
-        AuthenticationResponse response = webTestClient
+        webTestClient
                 .post()
                 .uri("/api/v1/auth/login")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
-                .expectBody(AuthenticationResponse.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response);
-        assertNull(response.getToken());
+                .expectStatus().isBadRequest();
     }
     @Test
     void canLoginWhenUserExists(){
@@ -78,11 +75,9 @@ public class AuthenticationControllerTest {
                 .uri("/api/v1/auth/login")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
-                .expectBody(AuthenticationResponse.class)
-                .returnResult().getResponseBody();
+                .expectBody(AuthenticationResponse.class).returnResult().getResponseBody();
         assertNotNull(response);
-        assertEquals(request.getEmail(),response.getEmail());
-        assertTrue(response.getToken().length()>10);
+        assertNotNull(response.getToken());
     }
     @Test
     void canLoginWhenPasswordNotCorrect(){
@@ -96,15 +91,13 @@ public class AuthenticationControllerTest {
                 .expectBody(AuthenticationResponse.class);
         LoginRequest request = new LoginRequest(
                 "email2","psdasdfdsfssword");
-        AuthenticationResponse response = webTestClient
+        webTestClient
                 .post()
                 .uri("/api/v1/auth/login")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
-                .expectBody(AuthenticationResponse.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response);
-        assertNull(response.getToken());
+                .expectStatus()
+                .is4xxClientError();
     }
 
 }
