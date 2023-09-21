@@ -1,14 +1,18 @@
 package com.tyiu.corn.model.dto;
 
 import com.tyiu.corn.model.entities.Group;
+import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.Date;
+import java.util.List;
+
 @Data
 @Builder
 @AllArgsConstructor
@@ -24,6 +28,7 @@ public class IdeaDTO {
     private Date createdAt;
     private Date modifiedAt;
 
+    private List<Skill> stack;
     private ProjectType projectType;
     private String problem;
     private String solution;
