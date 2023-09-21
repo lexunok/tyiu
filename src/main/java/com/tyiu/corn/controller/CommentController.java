@@ -15,13 +15,14 @@ import reactor.core.publisher.Mono;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/comment")
+@Slf4j
 public class CommentController {
 
     private final CommentService commentService;
 
     @MessageMapping("comment.{id}.receive")
     public Flux<CommentDTO> receiveNewComments(@DestinationVariable String id){
-        return commentService.getNewComments(id);
+        return commentService.getNewComments(id).log();
     }
 
     @GetMapping("/all/{id}")
@@ -32,7 +33,7 @@ public class CommentController {
     @PostMapping("/send/{ideaId}")
     public Mono<Void> createComment(
             @PathVariable String ideaId, @RequestBody CommentDTO comment, Principal principal){
-        return commentService.createComment(ideaId,comment, principal.getName());
+        return commentService.createComment(ideaId,comment, principal.getName()).log();
     }
 
     @DeleteMapping("/delete/{commentId}")

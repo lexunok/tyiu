@@ -30,6 +30,7 @@ public class CommentService {
         return sink.asFlux()
                 .flatMap(c -> {
                     if (c.getIdeaId().equals(ideaId)) {
+                        System.out.println(c);
                         return Flux.just(mapper.map(c, CommentDTO.class));
                     } else return Flux.empty();
                 });
@@ -43,7 +44,7 @@ public class CommentService {
                 .checkedBy(List.of(email))
                 .sender(email)
                 .build();
-        commentRepository.save(comment).subscribe(sink::tryEmitNext);
+        commentRepository.save(comment).log().subscribe(sink::tryEmitNext);
         return Mono.empty();
     }
 
