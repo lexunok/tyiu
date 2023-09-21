@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.exception.ErrorException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
@@ -32,7 +33,7 @@ public class AuthenticationService {
                         .roles(u.getRoles())
                         .build());
             } else return Mono.empty();
-        }).cast(AuthenticationResponse.class).switchIfEmpty(Mono.error(new RuntimeException("User not registered")));
+        }).cast(AuthenticationResponse.class).switchIfEmpty(Mono.error(new ErrorException("User not registered")));
     }
 
 
@@ -40,7 +41,7 @@ public class AuthenticationService {
         Mono<Boolean> isExists = userRepository.existsByEmail(request.getEmail());
         return isExists.flatMap(
                 b -> {
-                    if (!b) {
+                    if (Boolean.FALSE.equals(b)) {
                         User user = User.builder()
                                 .roles(request.getRoles())
                                 .email(request.getEmail())
@@ -70,6 +71,6 @@ public class AuthenticationService {
                 }
         )
                 .cast(AuthenticationResponse.class)
-                .switchIfEmpty(Mono.error(new RuntimeException("Authorization not success")));
+                .switchIfEmpty(Mono.error(new ErrorException("Authorization not success")));
     }
 }

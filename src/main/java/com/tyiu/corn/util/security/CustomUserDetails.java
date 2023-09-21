@@ -5,10 +5,7 @@ import com.tyiu.corn.model.entities.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
 import java.util.Collection;
-import java.util.List;
 
 public class CustomUserDetails implements UserDetails {
 
@@ -20,9 +17,8 @@ public class CustomUserDetails implements UserDetails {
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        List<SimpleGrantedAuthority> authorities = user.getRoles()
-                .stream().map(r -> new SimpleGrantedAuthority(r.name())).toList();;
-        return authorities;
+        return user.getRoles()
+                .stream().map(r -> new SimpleGrantedAuthority(r.name())).toList();
     }
 
     @Override
