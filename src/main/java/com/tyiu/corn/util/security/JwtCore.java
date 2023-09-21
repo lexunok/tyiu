@@ -1,14 +1,11 @@
 package com.tyiu.corn.util.security;
 
 import com.tyiu.corn.model.enums.Role;
-import com.tyiu.corn.util.security.CustomUserDetails;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
 import java.security.Key;
@@ -17,7 +14,6 @@ import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Component
 public class JwtCore {

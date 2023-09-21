@@ -33,14 +33,9 @@ public class IdeaController {
         return ideaService.saveIdea(idea, principal.getName());
     }
 
-    @DeleteMapping("/initiator/delete/{ideaId}")
-    public Mono<Void> deleteIdeaByInitiator(@PathVariable String ideaId) {
-        return ideaService.deleteIdeaByInitiator(ideaId);
-    }
-
-    @DeleteMapping("/admin/delete/{ideaId}")
-    public Mono<Void> deleteIdeaByAdmin(@PathVariable String ideaId) {
-        return ideaService.deleteIdeaByAdmin(ideaId);
+    @DeleteMapping("/delete/{ideaId}")
+    public Mono<Void> deleteIdea(@PathVariable String ideaId) {
+        return ideaService.deleteIdea(ideaId);
     }
 
     @PutMapping("/initiator/update/{ideaId}")
@@ -50,8 +45,8 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/send/{ideaId}")
-    public Mono<Void> updateStatusByInitiator(@PathVariable String ideaId) {
-        ideaService.updateStatusByInitiator(ideaId);
+    public Mono<Void> updateStatusByInitiator(@PathVariable String ideaId, Principal principal) {
+        ideaService.updateStatusByInitiator(ideaId, principal.getName());
         return Mono.empty();
     }
 

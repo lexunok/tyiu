@@ -10,16 +10,5 @@ services:
       - 27017:27017
     volumes:
       - mongodb:/data/mongodb
-  redis:
-    container_name: redis
-    image: redis:7.2.0-alpine
-    environment:
-      REDIS_PASSWORD: admin
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis:/data/redis
-    restart: unless-stopped
 volumes:
-  redis:
   mongodb:

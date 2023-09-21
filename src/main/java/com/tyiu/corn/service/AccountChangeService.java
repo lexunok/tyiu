@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.exception.NotFoundException;
+import com.tyiu.corn.exception.ErrorException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
@@ -45,14 +45,14 @@ public class AccountChangeService {
         this.emailSender.send(simpleMailMessage);
     }
 
-    public Flux<Void> sendInvitations(InvitationDTO invitations) throws MailSendException, NotFoundException {
+    public Flux<Void> sendInvitations(InvitationDTO invitations) throws MailSendException, ErrorException {
         /*if (invitations.getRoles() == null){
 
         }*/
         Flux<String> inv = Flux.fromIterable(invitations.getEmails());
         return inv.flatMap(e -> userRepository.existsByEmail(e).flatMap(
                 b -> {
-                    if(!b){
+                    if(Boolean.FALSE.equals(b)){
                         Date date = new Date();
                         long milliseconds = date.getTime() + 259200000;
                         date.setTime(milliseconds);
@@ -72,7 +72,7 @@ public class AccountChangeService {
                 }));
     }
 
-    public Mono<Void> sendInvitation(Temporary invitation) throws  NotFoundException{
+    public Mono<Void> sendInvitation(Temporary invitation) throws ErrorException {
         /*if (userRepository.existsByEmail(invitation.getEmail())){
 
         }*/
@@ -90,7 +90,7 @@ public class AccountChangeService {
                         "Приглашение",
                         String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
                 );
-                if (b){
+                if (Boolean.TRUE.equals(b)){
                     accountChangeRepository.deleteByEmail(e);
                 }
                 accountChangeRepository.save(invitation).subscribe();
@@ -136,7 +136,7 @@ public class AccountChangeService {
         }*/
         Mono<String> ema = Mono.just(emailChange.getOldEmail());
         return ema.flatMap(e -> accountChangeRepository.existsByOldEmail(e).flatMap(b -> {
-            if (b){
+            if (Boolean.TRUE.equals(b)){
                 accountChangeRepository.deleteByOldEmail(e);
             }
             Date date = new Date();
