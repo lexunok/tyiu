@@ -5,7 +5,10 @@ import java.util.Date;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.dto.RatingDTO;
+import com.tyiu.corn.model.entities.IdeaStack;
+import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.repository.IdeaStackRepository;
 import com.tyiu.corn.util.redis.RedisCacheTemplate;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +27,7 @@ import reactor.core.publisher.Mono;
 public class IdeaService {
 
     private final IdeaRepository ideaRepository;
+    private final IdeaStackRepository ideaStackRepository;
     private final ModelMapper mapper;
     private final RedisCacheTemplate cache;
     private static final String IDEA = "IDEA";
@@ -60,8 +64,17 @@ public class IdeaService {
         ideaDTO.setModifiedAt(new Date());
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
+
         return ideaRepository.save(mapper.map(ideaDTO, Idea.class)).flatMap(savedIdea -> {
             IdeaDTO savedIdeaDTO = mapper.map(savedIdea, IdeaDTO.class);
+
+            ideaDTO.getStack().forEach(skill -> {
+                IdeaStack ideaStack = IdeaStack.builder()
+                        .ideaId(savedIdea.getId())
+                        .skillId(skill.getId())
+                        .build();
+                ideaStackRepository.save(ideaStack).subscribe();
+            });
             //cache.set(IDEA, savedIdea.getId(), savedIdeaDTO);
             return Mono.just(savedIdeaDTO);
         });
