@@ -27,13 +27,12 @@ public class CommentService {
     }
 
     public Flux<CommentDTO> getNewComments(String ideaId) {
-        return sink.asFlux()
-                .flatMap(c -> {
-                    if (c.getIdeaId().equals(ideaId)) {
-                        System.out.println(c);
-                        return Flux.just(mapper.map(c, CommentDTO.class));
-                    } else return Flux.empty();
-                });
+        return sink.asFlux().flatMap(c -> {
+            if (c.getIdeaId().equals(ideaId)){
+                return Flux.just(mapper.map(c, CommentDTO.class));
+            }
+            return Flux.empty();
+        });
     }
 
     public Mono<Void> createComment(String ideaId,CommentDTO commentDTO, String email) {
@@ -44,7 +43,7 @@ public class CommentService {
                 .checkedBy(List.of(email))
                 .sender(email)
                 .build();
-        commentRepository.save(comment).log().subscribe(sink::tryEmitNext);
+        commentRepository.save(comment).subscribe(sink::tryEmitNext);
         return Mono.empty();
     }
 

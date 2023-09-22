@@ -31,6 +31,16 @@ public class GroupService {
         Mono<Group> group = groupRepository.findById(id);
         return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
     }
+    @Cacheable
+    public Mono<GroupDTO> getAllGroupsByUser(String id) {
+        Mono<Group> group = groupRepository.findById(id);
+        return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
+    }
+    @Cacheable
+    public Mono<GroupDTO> getAllUsersByGroup(String id) {
+        Mono<Group> group = groupRepository.findById(id);
+        return group.flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)));
+    }
     @CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
         Mono<Group> group = groupRepository.save(mapper.map(groupDTO, Group.class));

@@ -1,6 +1,6 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.dto.UserDTO;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +16,5 @@ public class GroupDTO {
     private String id;
     private String name;
     private List<UserDTO> users;
-    private Role role;
+    private List<Role> role;
 }
