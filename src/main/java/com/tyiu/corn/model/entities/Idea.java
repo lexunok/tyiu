@@ -7,9 +7,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-
-
-
 @Setter
 @Getter
 @NoArgsConstructor
@@ -35,9 +32,8 @@ public class Idea {
     private String contactPerson;
     private String description;
     private Long suitability;
-    private Long originality;
+    private Long budget;
     private Long technicalRealizability;
     private double preAssessment;
     private double rating;
-    private double risk;
 }

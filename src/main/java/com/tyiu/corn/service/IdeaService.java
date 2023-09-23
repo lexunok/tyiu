@@ -4,8 +4,10 @@ import java.util.Date;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
-import com.tyiu.corn.model.dto.RatingDTO;
+import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.model.requests.StatusIdeaRequest;
+import com.tyiu.corn.repository.RatingRepository;
 import lombok.RequiredArgsConstructor;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +29,7 @@ import reactor.core.publisher.Mono;
 public class IdeaService {
 
     private final IdeaRepository ideaRepository;
+    private final RatingRepository ratingRepository;
     private final ModelMapper mapper;
     @Cacheable
     public Mono<IdeaDTO> getIdea(String id) {
@@ -43,7 +46,16 @@ public class IdeaService {
         ideaDTO.setInitiator(initiator);
         ideaDTO.setStatus(StatusIdea.NEW);
         return ideaRepository.save(mapper.map(ideaDTO, Idea.class)).flatMap(savedIdea ->
-                Mono.just(mapper.map(savedIdea, IdeaDTO.class)));
+                {
+                    savedIdea.getExperts().getUsers()
+                            .forEach(r -> ratingRepository.save(Rating.builder()
+                                    .expert(r.getEmail())
+                                    .ideaId(savedIdea.getId())
+                                    .confirmed(false)
+                                    .build())
+                                    .subscribe());
+                    return Mono.just(mapper.map(savedIdea, IdeaDTO.class));
+                });
     }
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteIdea(String id) {
@@ -52,17 +64,18 @@ public class IdeaService {
     }
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByInitiator (String id, String initiator){
-        ideaRepository.findById(id).subscribe(i -> {
+        return ideaRepository.findById(id).flatMap(i -> {
             if (initiator.equals(i.getInitiator())) {
                 i.setStatus(StatusIdea.ON_APPROVAL);
                 ideaRepository.save(i).subscribe();
+                return Mono.empty();
             }
+            return Mono.empty();
         });
-        return Mono.empty();
     }
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
-        ideaRepository.findById(id).subscribe(i -> {
+        return ideaRepository.findById(id).flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
             i.setProblem(updatedIdea.getProblem());
@@ -76,38 +89,21 @@ public class IdeaService {
             i.setPreAssessment(updatedIdea.getPreAssessment());
             i.setModifiedAt(new Date());
             ideaRepository.save(i).subscribe();
+            return Mono.empty();
         });
-        return Mono.empty();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByProjectOffice (String id, StatusIdea newStatus){
-        ideaRepository.findById(id).subscribe(i -> {
-            i.setStatus(newStatus);
+    public Mono<Void> updateStatusByProjectOffice(String id, StatusIdeaRequest newStatus){
+        return ideaRepository.findById(id).flatMap(i -> {
+            i.setStatus(newStatus.getStatus());
             ideaRepository.save(i).subscribe();
+            return Mono.empty();
         });
-        return Mono.empty();
     }
+
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByExpert(String id, RatingDTO ratingDTO){
-        ideaRepository.findById(id).subscribe(i -> {
-            if (ratingDTO.getStatus() == StatusIdea.ON_EDITING) {
-                i.setStatus(ratingDTO.getStatus());
-                ideaRepository.save(i).subscribe();
-            }
-            else {
-                i.setStatus(ratingDTO.getStatus());
-                i.setRating(ratingDTO.getRating());
-                i.setOriginality(ratingDTO.getOriginality());
-                i.setTechnicalRealizability(ratingDTO.getTechnicalRealizability());
-                i.setSuitability(ratingDTO.getSuitability());
-                ideaRepository.save(i).subscribe();
-            }
-        });
-        return Mono.empty();
-    }
-    @CacheEvict(allEntries = true)
-    public Mono<Void>  updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
-        ideaRepository.findById(id).subscribe(i -> {
+    public Mono<Void> updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
+        return ideaRepository.findById(id).flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
             i.setExperts(updatedIdea.getExperts());
@@ -117,12 +113,13 @@ public class IdeaService {
             i.setCustomer(updatedIdea.getCustomer());
             i.setDescription(updatedIdea.getDescription());
             i.setSuitability(updatedIdea.getSuitability());
+            i.setBudget(updatedIdea.getBudget());
+            i.setTechnicalRealizability(updatedIdea.getTechnicalRealizability());
             i.setStatus(updatedIdea.getStatus());
             i.setRating(updatedIdea.getRating());
-            i.setRisk(updatedIdea.getRisk());
             i.setModifiedAt(new Date());
             ideaRepository.save(i).subscribe();
+            return Mono.empty();
         });
-        return Mono.empty();
     }
 }

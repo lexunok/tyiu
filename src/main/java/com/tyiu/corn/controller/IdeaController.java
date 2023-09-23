@@ -1,8 +1,8 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
-import com.tyiu.corn.model.dto.RatingDTO;
 
+import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
@@ -51,14 +51,8 @@ public class IdeaController {
     }
 
     @PutMapping("/project-office/update/{ideaId}")
-    public Mono<Void> updateStatusIdeaByProjectOffice(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO){
-        ideaService.updateStatusByProjectOffice(ideaId, ratingDTO.getStatus());
-        return Mono.empty();
-    }
-
-    @PutMapping("/expert/update/{ideaId}")
-    public Mono<Void> updateStatusByExpert(@PathVariable String ideaId, @RequestBody RatingDTO ratingDTO){
-        ideaService.updateStatusByExpert(ideaId, ratingDTO);
+    public Mono<Void> updateStatusIdeaByProjectOffice(@PathVariable String ideaId, @RequestBody StatusIdeaRequest status){
+        ideaService.updateStatusByProjectOffice(ideaId, status);
         return Mono.empty();
     }
 
