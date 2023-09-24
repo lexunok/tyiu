@@ -63,19 +63,19 @@ public class IdeaService {
         return Mono.empty();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByInitiator (String id, String initiator){
-        return ideaRepository.findById(id).flatMap(i -> {
+    public void updateStatusByInitiator (String id, String initiator){
+        ideaRepository.findById(id).flatMap(i -> {
             if (initiator.equals(i.getInitiator())) {
                 i.setStatus(StatusIdea.ON_APPROVAL);
                 ideaRepository.save(i).subscribe();
                 return Mono.empty();
             }
             return Mono.empty();
-        });
+        }).subscribe();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
-        return ideaRepository.findById(id).flatMap(i -> {
+    public void updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
+        ideaRepository.findById(id).flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
             i.setProblem(updatedIdea.getProblem());
@@ -90,20 +90,20 @@ public class IdeaService {
             i.setModifiedAt(new Date());
             ideaRepository.save(i).subscribe();
             return Mono.empty();
-        });
+        }).subscribe();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByProjectOffice(String id, StatusIdeaRequest newStatus){
-        return ideaRepository.findById(id).flatMap(i -> {
+    public void updateStatusByProjectOffice(String id, StatusIdeaRequest newStatus){
+        ideaRepository.findById(id).flatMap(i -> {
             i.setStatus(newStatus.getStatus());
             ideaRepository.save(i).subscribe();
             return Mono.empty();
-        });
+        }).subscribe();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
-        return ideaRepository.findById(id).flatMap(i -> {
+    public void updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
+        ideaRepository.findById(id).flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
             i.setExperts(updatedIdea.getExperts());
@@ -120,6 +120,6 @@ public class IdeaService {
             i.setModifiedAt(new Date());
             ideaRepository.save(i).subscribe();
             return Mono.empty();
-        });
+        }).subscribe();
     }
 }
