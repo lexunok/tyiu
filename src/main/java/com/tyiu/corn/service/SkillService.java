@@ -9,6 +9,7 @@ import com.tyiu.corn.repository.SkillRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
@@ -21,40 +22,60 @@ import java.time.Instant;
 @Slf4j
 public class SkillService {
     private final SkillRepository skillRepository;
+    private final ModelMapper mapper;
 
-    public Flux<Skill> getAllSkills() {
-        return skillRepository.findAll();
+    public Flux<SkillDTO> getAllSkills() {
+        return skillRepository.findAll().flatMap(skill ->
+                Flux.just(mapper.map(skill, SkillDTO.class))
+        );
     }
 
-    public Flux<Skill> getSkillsByType(SkillType skillType) {
-        return skillRepository.findByType(skillType);
+    public Flux<SkillDTO> getSkillsByType(SkillType skillType) {
+        return skillRepository.findByType(skillType).flatMap(skill ->
+                Mono.just(mapper.map(skill, SkillDTO.class))
+        );
     }
 
-    public Mono<Skill> addSkill(SkillDTO skillDTO) {
+    public Mono<SkillDTO> addSkill(SkillDTO skillDTO) {
         Skill skill = Skill.builder()
                 .name(skillDTO.getName())
                 .type(skillDTO.getType())
                 .confirmed(true)
                 .createdAt(Instant.now())
                 .build();
-        return skillRepository.save(skill);
+        return skillRepository.save(skill).flatMap(savedSkill ->
+                Mono.just(mapper.map(savedSkill, SkillDTO.class))
+        );
     }
 
-    public Mono<Skill> addNoConfirmedSkill(SkillDTO skillDTO) {
+    public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO) {
         Skill skill = Skill.builder()
                 .name(skillDTO.getName())
                 .type(skillDTO.getType())
                 .confirmed(false)
                 .createdAt(Instant.now())
                 .build();
-        return skillRepository.save(skill);
+        return skillRepository.save(skill).flatMap(savedSkill ->
+                Mono.just(mapper.map(savedSkill, SkillDTO.class))
+        );
     }
 
-    public Mono<Skill> confirmSkill(String skillId) {
-        Mono<Skill> skill = skillRepository.findById(skillId);
-        return skill.flatMap(s -> {
-            s.setConfirmed(true);
-            return skillRepository.save(s);
+    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, String skillId) {
+        return skillRepository.findById(skillId).flatMap(skill -> {
+            skill.setName(skillDTO.getName());
+            skill.setType(skillDTO.getType());
+            return skillRepository.save(skill).flatMap(updatedSkill ->
+                Mono.just(mapper.map(updatedSkill, SkillDTO.class))
+            );
+        });
+    }
+
+    public Mono<SkillDTO> confirmSkill(String skillId) {
+        return skillRepository.findById(skillId).flatMap(skill -> {
+            skill.setConfirmed(true);
+            return skillRepository.save(skill).flatMap(savedSkill ->
+                    Mono.just(mapper.map(savedSkill, SkillDTO.class))
+            );
         });
     }
 
