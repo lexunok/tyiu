@@ -1,7 +1,6 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.SkillService;
@@ -20,27 +19,32 @@ public class SkillController {
     private final SkillService skillService;
 
     @GetMapping("/all")
-    public Flux<Skill> getAllSkills() {
+    public Flux<SkillDTO> getAllSkills() {
         return skillService.getAllSkills();
     }
 
     @GetMapping("/{skillType}")
-    public Flux<Skill> getSkillsByType(@PathVariable SkillType skillType) {
+    public Flux<SkillDTO> getSkillsByType(@PathVariable SkillType skillType) {
         return skillService.getSkillsByType(skillType);
     }
 
     @PostMapping("/add")
-    public Mono<Skill> addSkill(@RequestBody SkillDTO skill) {
+    public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill) {
         return skillService.addSkill(skill);
     }
 
     @PostMapping("/add/no-confirmed")
-    public Mono<Skill> addNoConfirmedSkill(@RequestBody SkillDTO skill) {
+    public Mono<SkillDTO> addNoConfirmedSkill(@RequestBody SkillDTO skill) {
         return skillService.addNoConfirmedSkill(skill);
     }
 
+    @PutMapping("/update/{skillId}")
+    public Mono<SkillDTO> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable String skillId) {
+        return skillService.updateSkill(skillDTO, skillId);
+    }
+
     @PutMapping("/confirm/{skillId}")
-    public Mono<Skill> confirmSkill(@PathVariable String skillId) {
+    public Mono<SkillDTO> confirmSkill(@PathVariable String skillId) {
         return skillService.confirmSkill(skillId);
     }
 

@@ -1,15 +1,17 @@
-package com.tyiu.corn.model.dto;
+package com.tyiu.corn.model.entities;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
-@Data
-@Builder
-@AllArgsConstructor
+@Setter
+@Getter
 @NoArgsConstructor
-public class RatingDTO {
+@AllArgsConstructor
+@Builder
+@Document
+public class Rating {
+    @Id
     private String id;
     private String ideaId;
     private String expert;
