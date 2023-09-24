@@ -86,6 +86,7 @@ public class IdeaService {
             i.setDescription(updatedIdea.getDescription());
             i.setTechnicalRealizability(updatedIdea.getTechnicalRealizability());
             i.setSuitability(updatedIdea.getSuitability());
+            i.setBudget(updatedIdea.getBudget());
             i.setPreAssessment(updatedIdea.getPreAssessment());
             i.setModifiedAt(new Date());
             ideaRepository.save(i).subscribe();

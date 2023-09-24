@@ -1,7 +1,10 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.GroupDTO;
+import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.entities.User;
 import org.modelmapper.ModelMapper;
+import org.modelmapper.TypeToken;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -12,6 +15,9 @@ import com.tyiu.corn.repository.GroupRepository;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +57,8 @@ public class GroupService {
         Mono<Group> group = groupRepository.findById(id);
         group.flatMap(g -> {
             g.setName(groupDTO.getName());
+            g.setUsers(mapper.map(groupDTO.getUsers(), new  TypeToken<List<UserDTO>>() {}.getType()));
+            g.setRoles(groupDTO.getRoles());
             return groupRepository.save(g);
         }).subscribe();
     }
