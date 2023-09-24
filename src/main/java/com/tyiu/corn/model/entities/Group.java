@@ -2,7 +2,6 @@ package com.tyiu.corn.model.entities;
 
 import java.util.List;
 
-import com.tyiu.corn.model.dto.UserDTO;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;

@@ -26,6 +26,7 @@ public class AuthenticationService {
             if (passwordEncoder.matches(request.getPassword(), u.getPassword())){
                 String jwt = jwtCore.issueToken(u.getEmail(), u.getRoles());
                 return Mono.just(AuthenticationResponse.builder()
+                        .id(u.getId())
                         .email(u.getEmail())
                         .token(jwt)
                         .firstName(u.getFirstName())
@@ -54,6 +55,7 @@ public class AuthenticationService {
                             return userFromDB.flatMap(u -> {
                                 String jwt = jwtCore.issueToken(u.getEmail(),u.getRoles());
                                 return Mono.just(AuthenticationResponse.builder()
+                                        .id(u.getId())
                                         .email(u.getEmail())
                                         .token(jwt)
                                         .firstName(u.getFirstName())

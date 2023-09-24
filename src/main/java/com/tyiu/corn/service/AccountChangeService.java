@@ -208,6 +208,7 @@ public class AccountChangeService {
         Flux<User> users = userRepository.findAll();
         return users.flatMap(
                 u -> Mono.just(UserInfoResponse.builder()
+                        .id(u.getId())
                         .email(u.getEmail())
                         .roles(u.getRoles())
                         .firstName(u.getFirstName())
