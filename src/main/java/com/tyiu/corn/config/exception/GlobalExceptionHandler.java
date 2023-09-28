@@ -1,5 +1,6 @@
-package com.tyiu.corn.exception;
+package com.tyiu.corn.config.exception;
 
+import com.tyiu.corn.model.responses.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,8 +13,10 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GlobalExceptionHandler {
     @ExceptionHandler
-    public Mono<ResponseEntity<String>> globalException(ErrorException ex) {
+    public Mono<ResponseEntity<ErrorResponse>> globalException(ErrorException ex) {
         log.error(ex.getMessage(), ex);
-        return Mono.just(ResponseEntity.status(HttpStatus.BAD_REQUEST.value()).body(ex.getMessage()));
+        return Mono.just(ResponseEntity
+                .status(HttpStatus.BAD_REQUEST.value())
+                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(),ex.getMessage())));
     }
 }

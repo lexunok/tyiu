@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 
 import com.tyiu.corn.model.dto.GroupDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.web.bind.annotation.*;
@@ -29,20 +30,12 @@ public class GroupController {
     public Mono<GroupDTO> getGroupById(@PathVariable String id) {
         return groupService.getGroupById(id);
     }
-/////////////////////////////////////////////////
-    @GetMapping("/all/{userId}")
-    public Mono<GroupDTO> getAllGroupsByUser(@PathVariable String userId) {
-        return groupService.getAllGroupsByUser(userId);
-    }
-    @GetMapping("/users/{groupId}")
-    public Mono<GroupDTO> getAllUsersByGroup(@PathVariable String groupId) {
-        return groupService.getAllUsersByGroup(groupId);
-    }
-/////////////////////////////////////////////////
+
     @PostMapping("/add")
     public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
         return groupService.createGroup(group);
     }
+
     @PutMapping("/update/{id}")
     public Mono<Void> updateGroup(@PathVariable String id,@RequestBody GroupDTO group) {
         groupService.updateGroup(id, group);

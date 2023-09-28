@@ -1,7 +1,7 @@
 package com.tyiu.corn.config;
 
-import com.tyiu.corn.util.security.AuthenticationManager;
-import com.tyiu.corn.util.security.SecurityContextRepository;
+import com.tyiu.corn.util.AuthenticationManager;
+import com.tyiu.corn.util.SecurityContextRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

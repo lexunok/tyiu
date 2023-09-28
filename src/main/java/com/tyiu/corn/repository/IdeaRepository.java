@@ -8,6 +8,4 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 @Repository
 public interface IdeaRepository extends ReactiveCrudRepository<Idea, String> {
-    Flux<Idea> findAllByStatus (StatusIdea status);
-    Flux<Idea> findAllByInitiator (String initiator);
 }

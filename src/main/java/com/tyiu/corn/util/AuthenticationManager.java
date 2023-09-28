@@ -1,4 +1,4 @@
-package com.tyiu.corn.util.security;
+package com.tyiu.corn.util;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;

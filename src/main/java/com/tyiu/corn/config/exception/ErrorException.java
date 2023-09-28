@@ -1,4 +1,4 @@
-package com.tyiu.corn.exception;
+package com.tyiu.corn.config.exception;
 
 public class ErrorException extends RuntimeException{
     public ErrorException(String message){

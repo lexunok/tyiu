@@ -3,10 +3,13 @@ package com.tyiu.corn.model.entities;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
+import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-import java.util.Date;
+import java.time.Instant;
+
 @Setter
 @Getter
 @NoArgsConstructor
@@ -18,12 +21,13 @@ public class Idea {
     private String id;
     private String initiator;
     private String name;
-    private Group experts;
-    private Group projectOffice;
+    private String experts;
+    private String projectOffice;
     private StatusIdea status;
-    private Date createdAt;
-    private Date modifiedAt;
-
+    @CreatedDate
+    private Instant createdAt;
+    @LastModifiedDate
+    private Instant modifiedAt;
     private ProjectType projectType;
     private String problem;
     private String solution;
@@ -34,6 +38,6 @@ public class Idea {
     private Long suitability;
     private Long budget;
     private Long technicalRealizability;
-    private double preAssessment;
-    private double rating;
+    private Double preAssessment;
+    private Double rating;
 }

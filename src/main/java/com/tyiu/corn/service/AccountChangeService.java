@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.exception.ErrorException;
+import com.tyiu.corn.config.exception.ErrorException;
 import com.tyiu.corn.model.dto.InvitationDTO;
 import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
