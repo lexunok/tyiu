@@ -29,7 +29,7 @@ public class GroupController {
     public Mono<GroupDTO> getGroupById(@PathVariable String id) {
         return groupService.getGroupById(id);
     }
-/////////////////////////////////////////////////
+
     @GetMapping("/all/{userId}")
     public Mono<GroupDTO> getAllGroupsByUser(@PathVariable String userId) {
         return groupService.getAllGroupsByUser(userId);
@@ -38,7 +38,7 @@ public class GroupController {
     public Mono<GroupDTO> getAllUsersByGroup(@PathVariable String groupId) {
         return groupService.getAllUsersByGroup(groupId);
     }
-/////////////////////////////////////////////////
+
     @PostMapping("/add")
     public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
         return groupService.createGroup(group);
