@@ -1,4 +1,4 @@
-package com.tyiu.corn.util.security;
+package com.tyiu.corn.util;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;

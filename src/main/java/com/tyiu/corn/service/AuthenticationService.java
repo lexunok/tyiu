@@ -1,12 +1,12 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.exception.ErrorException;
+import com.tyiu.corn.config.exception.ErrorException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.repository.UserRepository;
-import com.tyiu.corn.util.security.JwtCore;
+import com.tyiu.corn.util.JwtCore;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Mono;
 

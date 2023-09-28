@@ -8,22 +8,21 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Date;
-@Data
+import java.time.Instant;
+
 @Builder
+@Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class IdeaDTO {
-
     private String id;
     private String initiator;
     private String name;
     private Group experts;
     private Group projectOffice;
     private StatusIdea status;
-    private Date createdAt;
-    private Date modifiedAt;
-
+    private Instant createdAt;
+    private Instant modifiedAt;
     private ProjectType projectType;
     private String problem;
     private String solution;
@@ -34,6 +33,6 @@ public class IdeaDTO {
     private Long suitability;
     private Long budget;
     private Long technicalRealizability;
-    private double preAssessment;
-    private double rating;
+    private Double preAssessment;
+    private Double rating;
 }
