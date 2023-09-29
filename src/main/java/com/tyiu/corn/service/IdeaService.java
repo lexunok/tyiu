@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -33,12 +34,10 @@ public class IdeaService {
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(String id) {
-        return template.findById(id, Idea.class).flatMap(i -> {
-            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-            template.findById(i.getExperts(), Group.class);
-            template.findById(i.getProjectOffice(), Group.class);
-            return Mono.just(ideaDTO);
-        }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+        return template.findById(id, Idea.class).flatMap(i -> template.findById(i.getExperts(), Group.class)
+                .then(template.findById(i.getProjectOffice(), Group.class))
+                .then(Mono.just(mapper.map(i, IdeaDTO.class))))
+                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
     @Cacheable
     public Flux<IdeaDTO> getListIdea() {
@@ -49,13 +48,12 @@ public class IdeaService {
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiator(initiator);
-        idea.setStatus(ideaDTO.getStatus());
+        idea.setStatus(StatusIdea.NEW);
+        idea.setCreatedAt(Instant.now());
         return template.save(idea).flatMap(savedIdea ->
                 {
                     IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                    Mono<Group> experts = template.findById(savedIdea.getExperts(), Group.class);
-                    Mono<Group> projectOffice = template.findById(savedIdea.getProjectOffice(), Group.class);
-                    experts.flatMap(g -> {
+                    return template.findById(savedIdea.getExperts(), Group.class).flatMap(g -> {
                         g.getUsers()
                                 .forEach(r ->
                                         template.save(Rating.builder()
@@ -63,16 +61,14 @@ public class IdeaService {
                                                 .ideaId(savedIdea.getId())
                                                 .confirmed(false)
                                                 .build()
-                                        )
+                                        ).subscribe()
                                 );
                         savedDTO.setExperts(g);
                         return Mono.empty();
-                    });
-                    projectOffice.flatMap(p -> {
-                        savedDTO.setProjectOffice(p);
-                        return Mono.empty();
-                    });
-                    return Mono.just(savedDTO);
+                    }).then(template.findById(savedIdea.getProjectOffice(), Group.class).flatMap(p -> {
+                                savedDTO.setProjectOffice(p);
+                                return Mono.empty();
+                            })).then(Mono.just(savedDTO));
                 }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
     @CacheEvict(allEntries = true)
@@ -105,6 +101,7 @@ public class IdeaService {
             i.setSuitability(updatedIdea.getSuitability());
             i.setBudget(updatedIdea.getBudget());
             i.setPreAssessment(updatedIdea.getPreAssessment());
+            i.setModifiedAt(Instant.now());
             return template.save(i).then();
         }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
