@@ -10,11 +10,10 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
+import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -40,6 +39,8 @@ public class IdeaControllerTest {
     private String jwt;
     private String ideaId;
 
+    private UserDTO userDTO;
+
     @BeforeAll
     public void setUp(){
         RegisterRequest request = new RegisterRequest("user@mail.com","firstname","lastname","password", List.of(Role.ADMIN, Role.INITIATOR, Role.EXPERT));
@@ -53,7 +54,7 @@ public class IdeaControllerTest {
         assertNotNull(response);
         jwt = response.getToken();
 
-        UserDTO userDTO = UserDTO.builder()
+        userDTO = UserDTO.builder()
                 .id(response.getId())
                 .email(response.getEmail())
                 .lastName(response.getLastName())
@@ -94,7 +95,7 @@ public class IdeaControllerTest {
         ideaId = postResponse.getId();
 
     }
-
+    @Order(2)
     @Test
     void testGetIdeaForInitiator(){
         IdeaDTO getResponse = webTestClient
@@ -105,8 +106,12 @@ public class IdeaControllerTest {
                 .expectBody(IdeaDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(getResponse);
+        assertEquals(getResponse.getId(), ideaId);
+        assertEquals(getResponse.getName(), "Идея");
 
     }
+
+    @Order(1)
     @Test
     void testShowListIdeaForAdmin(){
         List<IdeaDTO> responseForAdmin = webTestClient
@@ -119,7 +124,63 @@ public class IdeaControllerTest {
         assertNotNull(responseForAdmin);
     }
 
+    @Order(2)
+    @Test
+    void testUpdateIdeaByInitiator(){
+        IdeaDTO updatedGroup = IdeaDTO.builder()
+                .name("Идея 2")
+                .build();
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/initiator/send/{ideaId}", ideaId)
+                .header("Authorization","Bearer " + jwt)
+                .body(Mono.just(updatedGroup), GroupDTO.class)
+                .exchange()
+                .expectStatus().isOk();
+    }
 
+    @Order(3)
+    @Test
+    void testUpdateStatusByInitiator(){
+        StatusIdeaRequest newStatus = new StatusIdeaRequest();
+        newStatus.setStatus(StatusIdea.ON_EDITING);
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/project-office/update/{ideaId}", ideaId)
+                .header("Authorization","Bearer " + jwt)
+                .body(Mono.just(newStatus), StatusIdeaRequest.class)
+                .exchange()
+                .expectStatus().isOk();
+    }
+    @Order(4)
+    @Test
+    void testUpdateStatusIdeaByProjectOffice(){
+        StatusIdeaRequest newStatus = new StatusIdeaRequest();
+        newStatus.setStatus(StatusIdea.ON_EDITING);
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/project-office/update/{ideaId}", ideaId)
+                .header("Authorization","Bearer " + jwt)
+                .body(Mono.just(newStatus), StatusIdeaRequest.class)
+                .exchange()
+                .expectStatus().isOk();
+    }
+    @Order(5)
+    @Test
+    void testUpdateIdeaByAdmin(){
+        IdeaDTO updatedGroup = IdeaDTO.builder()
+                .name("Идея 2")
+                .build();
+        webTestClient
+                .put()
+                .uri("/api/v1/idea/admin/update/{ideaId}", ideaId)
+                .header("Authorization","Bearer " + jwt)
+                .body(Mono.just(updatedGroup), GroupDTO.class)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    @Order(6)
     @Test
     void testDeleteIdea(){
         webTestClient
@@ -129,102 +190,4 @@ public class IdeaControllerTest {
                 .exchange()
                 .expectStatus().isOk();
     }
-    @Test
-    void testUpdateIdeaByInitiator(){
-
-    }
-
-    @Test
-    void testUpdateStatusByInitiator(){
-
-    }
-
-    @Test
-    void testUpdateStatusIdeaByProjectOffice(){
-
-    }
-
-    @Test
-    void testUpdateIdeaByAdmin(){
-
-    }
-
-
-//    @Test
-//    void b(){
-//        Idea idea8 = Idea.builder().name("title1").build();
-//        Idea response0 = webTestClient
-//                .post()
-//                .uri("/api/v1/idea/initiator/add")
-//                .header("Authorization","Bearer " + jwt)
-//                .body(Mono.just(idea8), Idea.class)
-//                .exchange()
-//                .expectBody(Idea.class)
-//                .returnResult().getResponseBody();
-//        String id = response0.getId();
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/idea/initiator/send/{id}", id)
-//                .header("Authorization","Bearer " + jwt)
-//                .exchange()
-//                .expectStatus().isOk();
-//        StatusIdea response = webTestClient
-//                .put()
-//                .uri("/api/v1/idea/project-office/update/{id}", id)
-//                .header("Authorization","Bearer " + jwt)
-//                .body(Mono.just(StatusIdea.ON_CONFIRMATION), StatusIdea.class)
-//                .exchange()
-//                .expectBody(StatusIdea.class)
-//                .returnResult().getResponseBody();
-//        assertNull(response);
-//    }
-//
-//    @Test
-//    void testUpdateStatusByExpert(){
-//        Idea idea9 = Idea.builder().name("title1").build();
-//        Idea response0 = webTestClient
-//                .post()
-//                .uri("/api/v1/idea/initiator/add")
-//                .header("Authorization","Bearer " + jwt)
-//                .body(Mono.just(idea9), Idea.class)
-//                .exchange()
-//                .expectBody(Idea.class)
-//                .returnResult().getResponseBody();
-//        String id = response0.getId();
-//        RatingDTO ratingDTO = RatingDTO.builder().status(StatusIdea.CONFIRMED).rating(4.4)
-//                                    .build();
-//        RatingDTO response = webTestClient
-//                .put()
-//                .uri("/api/v1/idea/expert/update/{id}", id)
-//                .header("Authorization","Bearer " + jwt)
-//                .body(Mono.just(ratingDTO), RatingDTO.class)
-//                .exchange()
-//                .expectBody(RatingDTO.class)
-//                .returnResult().getResponseBody();
-//        assertNull(response);
-//    }
-//
-//    @Test
-//    void testUpdateIdeaByAdmin(){
-//        Idea idea = Idea.builder().name("title").build();
-//        Idea response0 = webTestClient
-//                .post()
-//                .uri("/api/v1/idea/initiator/add")
-//                .header("Authorization","Bearer " + jwt)
-//                .body(Mono.just(idea), Idea.class)
-//                .exchange()
-//                .expectBody(Idea.class)
-//                .returnResult().getResponseBody();
-//        String id = response0.getId();
-//        idea = Idea.builder().name("title2").build();
-//        Idea response = webTestClient
-//                .put()
-//                .uri("/api/v1/idea//admin/update/{id}", id)
-//                .header("Authorization","Bearer " + jwt)
-//                .body(Mono.just(idea), Idea.class)
-//                .exchange()
-//                .expectBody(Idea.class)
-//                .returnResult().getResponseBody();
-//        assertNull(response);
-//    }
 }
