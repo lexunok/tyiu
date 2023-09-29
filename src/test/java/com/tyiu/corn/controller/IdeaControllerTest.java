@@ -32,7 +32,7 @@ import java.util.List;
         properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
 )
 
-public class IdeaControllerTest {
+class IdeaControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -64,7 +64,6 @@ public class IdeaControllerTest {
                 .build();
 
         GroupDTO expertGroup = GroupDTO.builder()
-                .name("experts")
                 .users(List.of(userDTO))
                 .build();
 
@@ -83,16 +82,13 @@ public class IdeaControllerTest {
                 .status(StatusIdea.NEW)
                 .build();
 
-        IdeaDTO postResponse = webTestClient
+        webTestClient
                 .post()
                 .uri("/api/v1/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
-                .expectBody(IdeaDTO.class)
-                .returnResult().getResponseBody();
-
-        ideaId = postResponse.getId();
+                .expectStatus().isOk();
 
     }
     @Order(2)
