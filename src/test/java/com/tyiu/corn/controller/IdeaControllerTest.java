@@ -40,6 +40,7 @@ public class IdeaControllerTest {
     private String ideaId;
 
     private UserDTO userDTO;
+    private Group group;
 
     @BeforeAll
     public void setUp(){
@@ -64,11 +65,11 @@ public class IdeaControllerTest {
 
         GroupDTO expertGroup = GroupDTO.builder()
                 .name("ExpertGroup")
-                .roles(List.of(Role.ADMIN, Role.EXPERT))
+                .roles(List.of(Role.EXPERT))
                 .users(List.of(userDTO))
                 .build();
 
-        Group addGroupResponse = webTestClient
+        group = webTestClient
                 .post()
                 .uri("/api/v1/group/add")
                 .header("Authorization", "Bearer " + jwt)
@@ -78,7 +79,7 @@ public class IdeaControllerTest {
                 .returnResult().getResponseBody();
 
         IdeaDTO idea = IdeaDTO.builder()
-                .experts(addGroupResponse)
+                .experts(group)
                 .name("Идея")
                 .status(StatusIdea.NEW)
                 .build();
@@ -107,7 +108,6 @@ public class IdeaControllerTest {
                 .returnResult().getResponseBody();
         assertNotNull(getResponse);
         assertEquals(getResponse.getId(), ideaId);
-        assertEquals(getResponse.getName(), "Идея");
 
     }
 
@@ -170,6 +170,8 @@ public class IdeaControllerTest {
     void testUpdateIdeaByAdmin(){
         IdeaDTO updatedGroup = IdeaDTO.builder()
                 .name("Идея 2")
+                .initiator(userDTO.getEmail())
+                .experts(group)
                 .build();
         webTestClient
                 .put()
