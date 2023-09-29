@@ -22,4 +22,7 @@ public class Skill {
     private String name;
     private SkillType type;
     private Boolean confirmed;
+    private String creatorId;
+    private String updaterId;
+    private String deleterId;
 }

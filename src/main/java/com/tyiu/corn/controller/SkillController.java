@@ -7,6 +7,10 @@ import com.tyiu.corn.service.SkillService;
 
 import lombok.RequiredArgsConstructor;
 
+import java.security.Principal;
+import java.util.Collection;
+import java.util.Map;
+
 import org.springframework.web.bind.annotation.*;
 
 import reactor.core.publisher.Flux;
@@ -23,33 +27,38 @@ public class SkillController {
         return skillService.getAllSkills();
     }
 
+    @GetMapping("/all-confirmed-or-creator/{creatorId}")
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(@PathVariable String creatorId) {
+        return skillService.getAllConfirmedOrCreatorSkills(creatorId);
+    }
+
     @GetMapping("/{skillType}")
     public Flux<SkillDTO> getSkillsByType(@PathVariable SkillType skillType) {
         return skillService.getSkillsByType(skillType);
     }
 
     @PostMapping("/add")
-    public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill) {
-        return skillService.addSkill(skill);
+    public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill, Principal principal) {
+        return skillService.addSkill(skill, principal.getName());
     }
 
     @PostMapping("/add/no-confirmed")
-    public Mono<SkillDTO> addNoConfirmedSkill(@RequestBody SkillDTO skill) {
-        return skillService.addNoConfirmedSkill(skill);
+    public Mono<SkillDTO> addNoConfirmedSkill(@RequestBody SkillDTO skill, Principal principal) {
+        return skillService.addNoConfirmedSkill(skill, principal.getName());
     }
 
     @PutMapping("/update/{skillId}")
-    public Mono<SkillDTO> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable String skillId) {
-        return skillService.updateSkill(skillDTO, skillId);
+    public Mono<SkillDTO> updateSkill(@RequestParam SkillDTO skillDTO, @PathVariable String skillId, Principal principal) {
+        return skillService.updateSkill(skillDTO, skillId, principal.getName());
     }
 
     @PutMapping("/confirm/{skillId}")
-    public Mono<SkillDTO> confirmSkill(@PathVariable String skillId) {
-        return skillService.confirmSkill(skillId);
+    public Mono<SkillDTO> confirmSkill(@PathVariable String skillId, Principal principal) {
+        return skillService.confirmSkill(skillId, principal.getName());
     }
-
+    
     @DeleteMapping("/delete/{skillId}")
-    public Mono<InfoResponse> deleteSkill(@PathVariable String skillId) {
-        return skillService.deleteSkill(skillId);
+    public Mono<InfoResponse> deleteSkill(@PathVariable String skillId, Principal principal) {
+        return skillService.deleteSkill(skillId, principal.getName());
     }
 }
