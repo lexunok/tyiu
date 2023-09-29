@@ -34,6 +34,7 @@ class GroupControllerTest {
     private WebTestClient webTestClient;
 
     private String jwt;
+    private UserDTO userDTO;
 
 
     @BeforeAll
@@ -49,25 +50,39 @@ class GroupControllerTest {
                 .returnResult().getResponseBody();
         assertNotNull(response);
         jwt = response.getToken();
+
+        userDTO = UserDTO.builder()
+                .id(response.getId())
+                .email(response.getEmail())
+                .lastName(response.getLastName())
+                .firstName(response.getFirstName())
+                .roles(response.getRoles())
+                .build();
     }
 
     @Test
     void testCreateGroup() {
-        GroupDTO group3 = GroupDTO.builder().name("title").build();
+        GroupDTO group = GroupDTO.builder()
+                .name("title")
+                .users(List.of(userDTO))
+                .build();
         GroupDTO response3 = webTestClient
                 .post()
                 .uri("/api/v1/group/add")
                 .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(group3), GroupDTO.class)
+                .body(Mono.just(group), GroupDTO.class)
                 .exchange()
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
-        assertEquals(group3.getName(), response3.getName());
+        assertEquals(group.getName(), response3.getName());
     }
 
     @Test
     void testUpdateGroup(){
-        GroupDTO group5 = GroupDTO.builder().name("title").build();
+        GroupDTO group5 = GroupDTO.builder()
+                .name("title")
+                .users(List.of(userDTO))
+                .build();
         GroupDTO response4 = webTestClient
                 .post()
                 .uri("/api/v1/group/add")
@@ -93,6 +108,7 @@ class GroupControllerTest {
     void testDeleteGroup(){
         GroupDTO group6 = GroupDTO.builder()
                 .name("title")
+                .users(List.of(userDTO))
                 .build();
         GroupDTO response6 = webTestClient
                 .post()
@@ -116,6 +132,7 @@ class GroupControllerTest {
     void testGetGroupById(){
         GroupDTO group = GroupDTO.builder()
                 .name("title")
+                .users(List.of(userDTO))
                 .build();
         GroupDTO addGroupResponse = webTestClient
                 .post()
@@ -142,6 +159,7 @@ class GroupControllerTest {
     void testGetAllGroups() {
         GroupDTO group1 = GroupDTO.builder()
                 .name("title")
+                .users(List.of(userDTO))
                 .build();
         GroupDTO addGroupResponse1 = webTestClient
                 .post()
