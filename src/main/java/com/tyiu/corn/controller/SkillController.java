@@ -27,9 +27,9 @@ public class SkillController {
         return skillService.getAllSkills();
     }
 
-    @GetMapping("/all-confirmed-or-creator/{creatorId}")
-    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(@PathVariable String creatorId) {
-        return skillService.getAllConfirmedOrCreatorSkills(creatorId);
+    @GetMapping("/all-confirmed-or-creator")
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(Principal principal) {
+        return skillService.getAllConfirmedOrCreatorSkills(principal.getName());
     }
 
     @GetMapping("/{skillType}")
