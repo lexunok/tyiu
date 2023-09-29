@@ -64,8 +64,7 @@ public class IdeaControllerTest {
                 .build();
 
         GroupDTO expertGroup = GroupDTO.builder()
-                .name("ExpertGroup")
-                .roles(List.of(Role.EXPERT))
+                .name("experts")
                 .users(List.of(userDTO))
                 .build();
 
