@@ -32,10 +32,12 @@ public class SkillService {
         );
     }
 
-    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedOrCreatorSkills(String creatorId) {
-        return skillRepository.findByConfirmedOrCreatorId(true, creatorId)
-            .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
-            .collectMultimap( SkillDTO::getType );
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedOrCreatorSkills(String email) {
+        return userRepository.findFirstByEmail(email).flatMap(user -> {
+            return skillRepository.findByConfirmedOrCreatorId(true, user.getId())
+                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
+                .collectMultimap( SkillDTO::getType );
+        });
     }
 
     public Flux<SkillDTO> getSkillsByType(SkillType skillType) {
