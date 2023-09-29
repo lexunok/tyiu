@@ -93,15 +93,17 @@ class GroupControllerTest {
                 .returnResult().getResponseBody();
         assertEquals(group5.getName(), response4.getName());
         String id = response4.getId();
-        group5 = GroupDTO.builder().name("title 2").build();
-        GroupDTO response5 = webTestClient
+        group5 = GroupDTO.builder()
+                .name("title 2")
+                .users(List.of(userDTO))
+                .build();
+        webTestClient
                 .put()
                 .uri("/api/v1/group/update/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(group5), GroupDTO.class)
                 .exchange()
-                .expectBody(GroupDTO.class)
-                .returnResult().getResponseBody();
+                .expectStatus().isOk();
     }
 
     @Test
@@ -172,6 +174,7 @@ class GroupControllerTest {
 
         GroupDTO group = GroupDTO.builder()
                 .name("title 2")
+                .users(List.of(userDTO))
                 .build();
         GroupDTO addGroupResponse = webTestClient
                 .post()
@@ -189,7 +192,7 @@ class GroupControllerTest {
                 .exchange()
                 .expectBodyList(GroupDTO.class)
                 .returnResult().getResponseBody();
-        assertEquals(allGroup.size(), 5);
+        assertEquals(5, allGroup.size());
     }
 
     @Test

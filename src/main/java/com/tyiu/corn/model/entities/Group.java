@@ -10,7 +10,6 @@ import lombok.Setter;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 import com.tyiu.corn.model.enums.Role;
-import org.springframework.data.mongodb.core.mapping.DocumentReference;
 
 @Setter
 @Getter
@@ -22,8 +21,7 @@ public class Group {
     @Id
     private String id;
     private String name;
-    //@DocumentReference
-    private List<User> users;
+    private List<String> usersId;
     private List<Role> roles;
 
 }

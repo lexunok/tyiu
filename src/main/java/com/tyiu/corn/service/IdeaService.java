@@ -54,10 +54,10 @@ public class IdeaService {
                 {
                     IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
                     return template.findById(savedIdea.getExperts(), Group.class).flatMap(g -> {
-                        g.getUsers()
+                        g.getUsersId()
                                 .forEach(r ->
                                         template.save(Rating.builder()
-                                                .expert(r.getEmail())
+                                                .expert(r)
                                                 .ideaId(savedIdea.getId())
                                                 .confirmed(false)
                                                 .build()
