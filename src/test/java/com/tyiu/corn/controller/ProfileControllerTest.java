@@ -91,6 +91,6 @@ public class ProfileControllerTest {
                 .exchange()
                 .expectBody(ProfileDTO.class)
                 .returnResult().getResponseBody();
-        assertEquals(userProfileId, response.getId());
+         assertEquals(userProfileId, response.getId());
     }
 }
