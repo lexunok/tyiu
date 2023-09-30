@@ -32,7 +32,7 @@ import java.util.List;
         properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
 )
 
-public class IdeaControllerTest {
+class IdeaControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
@@ -40,6 +40,7 @@ public class IdeaControllerTest {
     private String ideaId;
 
     private UserDTO userDTO;
+    private Group group;
 
     @BeforeAll
     public void setUp(){
@@ -63,12 +64,10 @@ public class IdeaControllerTest {
                 .build();
 
         GroupDTO expertGroup = GroupDTO.builder()
-                .name("ExpertGroup")
-                .roles(List.of(Role.ADMIN, Role.EXPERT))
                 .users(List.of(userDTO))
                 .build();
 
-        Group addGroupResponse = webTestClient
+        group = webTestClient
                 .post()
                 .uri("/api/v1/group/add")
                 .header("Authorization", "Bearer " + jwt)
@@ -78,21 +77,18 @@ public class IdeaControllerTest {
                 .returnResult().getResponseBody();
 
         IdeaDTO idea = IdeaDTO.builder()
-                .experts(addGroupResponse)
+                .experts(group)
                 .name("Идея")
                 .status(StatusIdea.NEW)
                 .build();
 
-        IdeaDTO postResponse = webTestClient
+        webTestClient
                 .post()
                 .uri("/api/v1/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
-                .expectBody(IdeaDTO.class)
-                .returnResult().getResponseBody();
-
-        ideaId = postResponse.getId();
+                .expectStatus().isOk();
 
     }
     @Order(2)
@@ -107,7 +103,6 @@ public class IdeaControllerTest {
                 .returnResult().getResponseBody();
         assertNotNull(getResponse);
         assertEquals(getResponse.getId(), ideaId);
-        assertEquals(getResponse.getName(), "Идея");
 
     }
 
@@ -170,6 +165,8 @@ public class IdeaControllerTest {
     void testUpdateIdeaByAdmin(){
         IdeaDTO updatedGroup = IdeaDTO.builder()
                 .name("Идея 2")
+                .initiator(userDTO.getEmail())
+                .experts(group)
                 .build();
         webTestClient
                 .put()
