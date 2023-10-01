@@ -34,10 +34,16 @@ public class IdeaService {
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(String id) {
-        return template.findById(id, Idea.class).flatMap(i -> template.findById(i.getExperts(), Group.class)
-                .then(template.findById(i.getProjectOffice(), Group.class))
-                .then(Mono.just(mapper.map(i, IdeaDTO.class))))
-                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+        return template.findById(id, Idea.class).flatMap(i -> {
+            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
+            return template.findById(i.getExperts(), Group.class).flatMap(g -> {
+                ideaDTO.setExperts(g);
+                return Mono.empty();
+            }).then(template.findById(i.getProjectOffice(), Group.class).flatMap(g -> {
+                ideaDTO.setProjectOffice(g);
+                return Mono.empty();
+            })).then(Mono.just(ideaDTO));
+        }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
     @Cacheable
     public Flux<IdeaDTO> getListIdea() {
@@ -50,6 +56,8 @@ public class IdeaService {
         idea.setInitiator(initiator);
         idea.setStatus(StatusIdea.NEW);
         idea.setCreatedAt(Instant.now());
+        idea.setExperts(ideaDTO.getExperts().getId());
+        idea.setProjectOffice(ideaDTO.getProjectOffice().getId());
         return template.save(idea).flatMap(savedIdea ->
                 {
                     IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
