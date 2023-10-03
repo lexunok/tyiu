@@ -2,7 +2,6 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
-import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.entities.Idea;
@@ -13,9 +12,11 @@ import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 
+import com.tyiu.corn.service.IdeaService;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.http.MediaType;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -23,6 +24,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 
 import reactor.core.publisher.Mono;
+
 
 import java.util.List;
 
@@ -36,6 +38,8 @@ class IdeaControllerTest {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    private IdeaService ideaService;
     private String jwt;
     private String ideaId;
 
@@ -79,16 +83,17 @@ class IdeaControllerTest {
         IdeaDTO idea = IdeaDTO.builder()
                 .experts(group)
                 .name("Идея")
-                .status(StatusIdea.NEW)
                 .build();
+
 
         webTestClient
                 .post()
                 .uri("/api/v1/idea/add")
+                .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
-                .expectStatus().isOk();
+                .expectBody(Idea.class);
 
     }
     @Order(2)
