@@ -26,6 +26,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 import reactor.core.publisher.Mono;
 
 
+import java.time.Instant;
 import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -44,7 +45,8 @@ class IdeaControllerTest {
     private String ideaId;
 
     private UserDTO userDTO;
-    private Group group;
+    private Group expertGroup;
+    private Group projectGroup;
 
     @BeforeAll
     public void setUp(){
@@ -67,33 +69,51 @@ class IdeaControllerTest {
                 .roles(response.getRoles())
                 .build();
 
-        GroupDTO expertGroup = GroupDTO.builder()
+        GroupDTO expertGroupDTO = GroupDTO.builder()
                 .users(List.of(userDTO))
                 .build();
 
-        group = webTestClient
+        expertGroup = webTestClient
                 .post()
                 .uri("/api/v1/group/add")
                 .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(expertGroup), GroupDTO.class)
+                .body(Mono.just(expertGroupDTO), GroupDTO.class)
                 .exchange()
                 .expectBody(Group.class)
                 .returnResult().getResponseBody();
 
+        GroupDTO projectGroupDTO = GroupDTO.builder()
+                .users(List.of(userDTO))
+                .build();
+
+        projectGroup = webTestClient
+                .post()
+                .uri("/api/v1/group/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(projectGroupDTO), GroupDTO.class)
+                .exchange()
+                .expectBody(Group.class)
+                .returnResult().getResponseBody();
+
+
         IdeaDTO idea = IdeaDTO.builder()
-                .experts(group)
+                .initiator(userDTO.getEmail())
+                .createdAt(Instant.now())
+                .status(StatusIdea.NEW)
+                .experts(expertGroup)
+                .projectOffice(projectGroup)
                 .name("Идея")
                 .build();
 
-
-        webTestClient
+        IdeaDTO ideaResponse = webTestClient
                 .post()
                 .uri("/api/v1/idea/add")
-                .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
-                .expectBody(Idea.class);
+                .expectBody(IdeaDTO.class)
+                .returnResult().getResponseBody();
+        ideaId = ideaResponse.getId();
 
     }
     @Order(2)
@@ -171,7 +191,8 @@ class IdeaControllerTest {
         IdeaDTO updatedGroup = IdeaDTO.builder()
                 .name("Идея 2")
                 .initiator(userDTO.getEmail())
-                .experts(group)
+                .experts(expertGroup)
+                .projectOffice(projectGroup)
                 .build();
         webTestClient
                 .put()
