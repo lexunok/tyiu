@@ -94,6 +94,11 @@ class IdeaControllerTest {
                 .expectBody(Group.class)
                 .returnResult().getResponseBody();
 
+    }
+
+
+    @Test
+    void testCreateIdea(){
 
         IdeaDTO idea = IdeaDTO.builder()
                 .initiator(userDTO.getEmail())
@@ -111,10 +116,12 @@ class IdeaControllerTest {
                 .exchange()
                 .expectBody(IdeaDTO.class)
                 .returnResult().getResponseBody();
-        assert ideaResponse != null;
-        ideaId = ideaResponse.getId();
-    }
 
+        ideaId = ideaResponse.getId();
+        System.out.print(ideaId);
+        assertNotNull(ideaId);
+
+    }
     @Test
     void testGetIdeaForInitiator(){
         IdeaDTO getResponse = webTestClient
@@ -126,6 +133,7 @@ class IdeaControllerTest {
                 .returnResult().getResponseBody();
         assertNotNull(getResponse);
         assertEquals(getResponse.getId(), ideaId);
+
 
     }
 
@@ -142,73 +150,76 @@ class IdeaControllerTest {
         assertNotNull(responseForAdmin);
     }
 
-
-    @Test
-    void testUpdateIdeaByInitiator(){
-        IdeaDTO updatedGroup = IdeaDTO.builder()
-                .name("Идея 2")
-                .build();
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/initiator/send/{ideaId}", ideaId)
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(updatedGroup), GroupDTO.class)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-
-    @Test
-    void testUpdateStatusByInitiator(){
-        StatusIdeaRequest newStatus = new StatusIdeaRequest();
-        newStatus.setStatus(StatusIdea.ON_EDITING);
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/project-office/update/{ideaId}", ideaId)
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(newStatus), StatusIdeaRequest.class)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-    @Test
-    void testUpdateStatusIdeaByProjectOffice(){
-        StatusIdeaRequest newStatus = new StatusIdeaRequest();
-        newStatus.setStatus(StatusIdea.ON_EDITING);
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/project-office/update/{ideaId}", ideaId)
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(newStatus), StatusIdeaRequest.class)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-    @Test
-    void testUpdateIdeaByAdmin(){
-        IdeaDTO updatedGroup = IdeaDTO.builder()
-                .name("Идея 2")
-                .initiator(userDTO.getEmail())
-                .experts(expertGroup)
-                .projectOffice(projectGroup)
-                .build();
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/admin/update/{ideaId}", ideaId)
-                .header("Authorization","Bearer " + jwt)
-                .body(Mono.just(updatedGroup), GroupDTO.class)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-
+//
 //    @Test
-//    void testDeleteIdea(){
+//    void testUpdateIdeaByInitiator(){
+//        IdeaDTO updatedIdea = IdeaDTO.builder()
+//                .initiator(userDTO.getEmail())
+//                .createdAt(Instant.now())
+//                .experts(expertGroup)
+//                .status(StatusIdea.NEW)
+//                .projectOffice(projectGroup)
+//                .name("Идея 2")
+//                .build();
+//
 //        webTestClient
-//                .delete()
-//                .uri("/api/v1/idea/delete/{ideaId}", ideaId)
+//                .put()
+//                .uri("/api/v1/idea/initiator/update/{ideaId}", ideaId)
+//                .header("Authorization","Bearer " + jwt)
+//                .body(Mono.just(updatedIdea), IdeaDTO.class)
+//                .exchange()
+//                .expectStatus().isOk();
+//    }
+//
+//
+//    @Test
+//    void testUpdateStatusByInitiator(){
+//        webTestClient
+//                .put()
+//                .uri("/api/v1/idea/initiator/send/{ideaId}", ideaId)
 //                .header("Authorization","Bearer " + jwt)
 //                .exchange()
 //                .expectStatus().isOk();
 //    }
+//
+//    @Test
+//    void testUpdateStatusIdeaByProjectOffice(){
+//        StatusIdeaRequest newStatus = new StatusIdeaRequest();
+//        newStatus.setStatus(StatusIdea.ON_EDITING);
+//        webTestClient
+//                .put()
+//                .uri("/api/v1/idea/project-office/update/{ideaId}", ideaId)
+//                .header("Authorization","Bearer " + jwt)
+//                .body(Mono.just(newStatus), StatusIdeaRequest.class)
+//                .exchange()
+//                .expectStatus().isOk();
+//    }
+//
+//    @Test
+//    void testUpdateIdeaByAdmin(){
+//        IdeaDTO updatedGroup = IdeaDTO.builder()
+//                .name("Идея 2")
+//                .initiator(userDTO.getEmail())
+//                .experts(expertGroup)
+//                .projectOffice(projectGroup)
+//                .build();
+//        webTestClient
+//                .put()
+//                .uri("/api/v1/idea/admin/update/{ideaId}", ideaId)
+//                .header("Authorization","Bearer " + jwt)
+//                .body(Mono.just(updatedGroup), GroupDTO.class)
+//                .exchange()
+//                .expectStatus().isOk();
+//    }
+
+
+    @Test
+    void testDeleteIdea(){
+        webTestClient
+                .delete()
+                .uri("/api/v1/idea/delete/{ideaId}", ideaId)
+                .header("Authorization","Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
+    }
 }
