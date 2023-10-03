@@ -113,7 +113,7 @@ class IdeaControllerTest {
                 .exchange()
                 .expectBody(IdeaDTO.class)
                 .returnResult().getResponseBody();
-        assert IDEAF != null;
+        assertNotNull(IDEAF);
         ideaId = IDEAF.getId();
     }
     @Order(2)
@@ -121,7 +121,7 @@ class IdeaControllerTest {
     void testGetIdeaForInitiator(){
         IdeaDTO getResponse = webTestClient
                 .get()
-                .uri("/api/v1/idea/{id}", ideaId)
+                .uri("/api/v1/idea/{ideaId}", ideaId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBody(IdeaDTO.class)
