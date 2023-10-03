@@ -44,7 +44,11 @@ class IdeaControllerTest {
     private String ideaId;
 
     private UserDTO userDTO;
-    private Group group;
+    private Group expgroup;
+
+    private Group progroup;
+
+    private IdeaDTO IDEAF;
 
     @BeforeAll
     public void setUp(){
@@ -71,7 +75,7 @@ class IdeaControllerTest {
                 .users(List.of(userDTO))
                 .build();
 
-        group = webTestClient
+        expgroup = webTestClient
                 .post()
                 .uri("/api/v1/group/add")
                 .header("Authorization", "Bearer " + jwt)
@@ -80,21 +84,37 @@ class IdeaControllerTest {
                 .expectBody(Group.class)
                 .returnResult().getResponseBody();
 
+        GroupDTO projectGroup = GroupDTO.builder()
+                .users(List.of(userDTO))
+                .build();
+
+        progroup = webTestClient
+                .post()
+                .uri("/api/v1/group/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(projectGroup), GroupDTO.class)
+                .exchange()
+                .expectBody(Group.class)
+                .returnResult().getResponseBody();
+
         IdeaDTO idea = IdeaDTO.builder()
-                .experts(group)
+                .experts(expgroup)
+                .projectOffice(progroup)
                 .name("Идея")
                 .build();
 
 
-        webTestClient
+        IDEAF = webTestClient
                 .post()
                 .uri("/api/v1/idea/add")
                 .contentType(MediaType.APPLICATION_JSON)
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
-                .expectBody(Idea.class);
-
+                .expectBody(IdeaDTO.class)
+                .returnResult().getResponseBody();
+        assert IDEAF != null;
+        ideaId = IDEAF.getId();
     }
     @Order(2)
     @Test
@@ -171,7 +191,8 @@ class IdeaControllerTest {
         IdeaDTO updatedGroup = IdeaDTO.builder()
                 .name("Идея 2")
                 .initiator(userDTO.getEmail())
-                .experts(group)
+                .experts(expgroup)
+                .projectOffice(progroup)
                 .build();
         webTestClient
                 .put()
