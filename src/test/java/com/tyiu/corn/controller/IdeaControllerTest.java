@@ -17,6 +17,7 @@ import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +35,6 @@ import java.util.List;
         properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
 )
 
-@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 class IdeaControllerTest {
 
     @Autowired
@@ -48,8 +48,6 @@ class IdeaControllerTest {
     private Group expgroup;
 
     private Group progroup;
-
-    private IdeaDTO IDEAF;
 
     @BeforeAll
     public void setUp(){
@@ -105,7 +103,7 @@ class IdeaControllerTest {
                 .build();
 
 
-        IDEAF = webTestClient
+        IdeaDTO IDEA = webTestClient
                 .post()
                 .uri("/api/v1/idea/add")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -114,11 +112,11 @@ class IdeaControllerTest {
                 .exchange()
                 .expectBody(IdeaDTO.class)
                 .returnResult().getResponseBody();
+        ideaId = IDEA.getId();
     }
     @Order(2)
     @Test
     void testGetIdeaForInitiator(){
-        ideaId = IDEAF.getId();
         IdeaDTO getResponse = webTestClient
                 .get()
                 .uri("/api/v1/idea/{ideaId}", ideaId)
@@ -147,7 +145,6 @@ class IdeaControllerTest {
     @Order(2)
     @Test
     void testUpdateIdeaByInitiator(){
-        ideaId = IDEAF.getId();
         IdeaDTO updatedGroup = IdeaDTO.builder()
                 .name("Идея 2")
                 .build();
@@ -163,7 +160,6 @@ class IdeaControllerTest {
     @Order(3)
     @Test
     void testUpdateStatusByInitiator(){
-        ideaId = IDEAF.getId();
         StatusIdeaRequest newStatus = new StatusIdeaRequest();
         newStatus.setStatus(StatusIdea.ON_EDITING);
         webTestClient
@@ -177,7 +173,6 @@ class IdeaControllerTest {
     @Order(4)
     @Test
     void testUpdateStatusIdeaByProjectOffice(){
-        ideaId = IDEAF.getId();
         StatusIdeaRequest newStatus = new StatusIdeaRequest();
         newStatus.setStatus(StatusIdea.ON_EDITING);
         webTestClient
@@ -191,7 +186,6 @@ class IdeaControllerTest {
     @Order(5)
     @Test
     void testUpdateIdeaByAdmin(){
-        ideaId = IDEAF.getId();
         IdeaDTO updatedGroup = IdeaDTO.builder()
                 .name("Идея 2")
                 .initiator(userDTO.getEmail())
@@ -210,7 +204,6 @@ class IdeaControllerTest {
     @Order(6)
     @Test
     void testDeleteIdea(){
-        ideaId = IDEAF.getId();
         webTestClient
                 .delete()
                 .uri("/api/v1/idea/delete/{ideaId}", ideaId)
