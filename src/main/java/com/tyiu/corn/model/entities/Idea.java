@@ -3,9 +3,7 @@ package com.tyiu.corn.model.entities;
 import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -24,9 +22,7 @@ public class Idea {
     private String experts;
     private String projectOffice;
     private StatusIdea status;
-    @CreatedDate
     private Instant createdAt;
-    @LastModifiedDate
     private Instant modifiedAt;
     private ProjectType projectType;
     private String problem;

@@ -16,6 +16,8 @@ import com.tyiu.corn.model.entities.Group;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -35,13 +37,11 @@ public class GroupService {
 
     @Cacheable
     public Mono<GroupDTO> getGroupById(String id) {
-        Mono<Group> group = template.findById(id, Group.class);
-        return group.flatMap(g -> {
+        return template.findById(id, Group.class).flatMap(g -> {
             GroupDTO groupDTO = mapper.map(g, GroupDTO.class);
-            Flux<User> users = template
-                    .find(Query.query(Criteria.where("_id")
-                    .in(g.getUsersId())), User.class);
-            return users.flatMap(u -> Flux.just(mapper.map(u, UserDTO.class))).collectList()
+            return template.find(Query.query(Criteria.where("id")
+                    .in(g.getUsersId())), User.class)
+                    .flatMap(u -> Flux.just(mapper.map(u, UserDTO.class))).collectList()
                     .flatMap(list -> {
                         groupDTO.setUsers(list);
                         return Mono.just(groupDTO);
@@ -52,8 +52,10 @@ public class GroupService {
     @CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
         Group group = mapper.map(groupDTO, Group.class);
-        List<String> usersId = groupDTO.getUsers().stream().map(UserDTO::getId).toList();
-        group.setUsersId(usersId);
+        //group.setUsersId(groupDTO.getUsers().stream().map(UserDTO::getId).toList());
+        List<String> users = new ArrayList<>();
+        groupDTO.getUsers().forEach(u -> users.add(u.getId()));
+        group.setUsersId(users);
         return template.save(group).flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)))
                 .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
