@@ -16,6 +16,7 @@ import com.tyiu.corn.model.responses.AuthenticationResponse;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -31,7 +32,7 @@ import java.util.List;
         webEnvironment = RANDOM_PORT,
         properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
 )
-
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class IdeaControllerTest {
 
     @Autowired

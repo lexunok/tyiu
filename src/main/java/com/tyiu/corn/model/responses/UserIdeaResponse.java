@@ -1,10 +1,12 @@
 package com.tyiu.corn.model.responses;
 
+import lombok.Builder;
 import lombok.Data;
 
 @Data
+@Builder
 public class UserIdeaResponse {
-    private String id;
+    private String ideaId;
     private String name;
     private String description;
 }

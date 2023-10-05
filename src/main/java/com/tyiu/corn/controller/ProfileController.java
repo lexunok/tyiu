@@ -1,9 +1,8 @@
 package com.tyiu.corn.controller;
 
 import com.mongodb.client.gridfs.model.GridFSFile;
-import com.tyiu.corn.model.dto.ProfileDTO;
-import com.tyiu.corn.model.requests.ProfileUpdateRequest;
 import com.tyiu.corn.model.requests.UserSkillRequest;
+import com.tyiu.corn.model.responses.UserIdeaResponse;
 import com.tyiu.corn.model.responses.UserSkillResponse;
 import com.tyiu.corn.service.ProfileService;
 
@@ -14,17 +13,22 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.Principal;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/profile")
 @RequiredArgsConstructor
 public class ProfileController {
+
     private final ProfileService profileService;
 
-    @GetMapping("/")
-    public Mono<ProfileDTO> getProfile(Principal principal) {
-        return profileService.getProfile(principal.getName());
+    @GetMapping("/get/ideas")
+    public Flux<UserIdeaResponse> getUserIdeas(Principal principal) {
+        return profileService.getUserIdeas(principal.getName());
+    }
+
+    @GetMapping("/get/avatar")
+    public Mono<GridFSFile> getAvatar(Principal principal) {
+        return profileService.getAvatar(principal.getName());
     }
 
     @PostMapping("/upload/avatar")
