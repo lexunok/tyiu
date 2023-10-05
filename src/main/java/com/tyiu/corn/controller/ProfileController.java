@@ -7,6 +7,8 @@ import com.tyiu.corn.model.responses.UserSkillResponse;
 import com.tyiu.corn.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -27,12 +29,12 @@ public class ProfileController {
     }
 
     @GetMapping("/get/avatar")
-    public Mono<GridFSFile> getAvatar(Principal principal) {
+    public Flux<DataBuffer> getAvatar(Principal principal) {
         return profileService.getAvatar(principal.getName());
     }
 
     @PostMapping("/upload/avatar")
-    public Mono<GridFSFile> uploadAvatar(Principal principal,
+    public Flux<DataBuffer> uploadAvatar(Principal principal,
                                          @RequestPart("file") FilePart filePart) {
         return profileService.uploadAvatar(principal.getName(), filePart);
     }

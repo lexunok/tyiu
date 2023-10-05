@@ -7,9 +7,13 @@ import com.tyiu.corn.model.responses.UserIdeaResponse;
 import com.tyiu.corn.model.responses.UserSkillResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.core.io.buffer.DataBuffer;
+import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.gridfs.GridFsResource;
+import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
@@ -38,22 +42,24 @@ public class ProfileService {
         );
     }
 
-    public Mono<GridFSFile> getAvatar(String userEmail) {
+    public Flux<DataBuffer> getAvatar(String userEmail) {
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery, Profile.class).flatMap(p ->
             gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(p.getAvatarId())))
-        );
+                    .flatMap(gridFsTemplate::getResource)
+        ).flatMapMany(ReactiveGridFsResource::getDownloadStream);
     }
 
-    public Mono<GridFSFile> uploadAvatar(String userEmail,FilePart file){
+    public Flux<DataBuffer> uploadAvatar(String userEmail,FilePart file){
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery, Profile.class).flatMap(p ->
             gridFsTemplate.store(file.content(), file.filename())
                     .doOnSuccess(image -> p.setAvatarId(image.toString()))
                     .flatMap(image ->
                         gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(image)))
+                                .flatMap(gridFsTemplate::getResource)
                     )
-        );
+        ).flatMapMany(ReactiveGridFsResource::getDownloadStream);
     }
 
     public Flux<UserSkillResponse> getSkills(String userEmail){
@@ -78,5 +84,4 @@ public class ProfileService {
                     )
         );
     }
-
 }
