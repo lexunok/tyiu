@@ -1,6 +1,7 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.model.entities.Profile;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
@@ -8,6 +9,10 @@ import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.repository.UserRepository;
 import com.tyiu.corn.util.JwtCore;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.security.core.parameters.P;
 import reactor.core.publisher.Mono;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -17,6 +22,7 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class AuthenticationService {
     private final UserRepository userRepository;
+    private final ReactiveMongoTemplate template;
     private final PasswordEncoder passwordEncoder;
     private final JwtCore jwtCore;
 
@@ -34,7 +40,7 @@ public class AuthenticationService {
                         .roles(u.getRoles())
                         .build());
             } else return Mono.empty();
-        }).cast(AuthenticationResponse.class).switchIfEmpty(Mono.error(new ErrorException("User not registered")));
+        }).switchIfEmpty(Mono.error(new ErrorException("User not registered")));
     }
 
 
@@ -50,8 +56,10 @@ public class AuthenticationService {
                                 .lastName(request.getLastName())
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .build();
+                        Profile profile = new Profile(user.getEmail());
                         try {
                             Mono<User> userFromDB = userRepository.save(user);
+                            template.save(profile).subscribe();
                             return userFromDB.flatMap(u -> {
                                 String jwt = jwtCore.issueToken(u.getEmail(),u.getRoles());
                                 return Mono.just(AuthenticationResponse.builder()
@@ -71,8 +79,6 @@ public class AuthenticationService {
 
                     } else return Mono.empty();
                 }
-        )
-                .cast(AuthenticationResponse.class)
-                .switchIfEmpty(Mono.error(new ErrorException("Authorization not success")));
+        ).switchIfEmpty(Mono.error(new ErrorException("Authorization not success")));
     }
 }

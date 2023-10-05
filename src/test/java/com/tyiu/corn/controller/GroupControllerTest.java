@@ -13,6 +13,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
@@ -28,6 +29,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
         webEnvironment = RANDOM_PORT,
         properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
 )
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 class GroupControllerTest {
 
     @Autowired
