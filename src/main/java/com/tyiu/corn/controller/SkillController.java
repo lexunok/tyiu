@@ -3,6 +3,7 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.InfoResponse;
+import com.tyiu.corn.model.responses.TeamMemberResponse;
 import com.tyiu.corn.service.SkillService;
 
 import lombok.RequiredArgsConstructor;
@@ -21,6 +22,11 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 public class SkillController {
     private final SkillService skillService;
+
+    @GetMapping("/users-skill/all")
+    public Flux<TeamMemberResponse> getAllUsersWithSkills(){
+        return skillService.getAllUsersWithSkills();
+    }
 
     @GetMapping("/all")
     public Flux<SkillDTO> getAllSkills() {

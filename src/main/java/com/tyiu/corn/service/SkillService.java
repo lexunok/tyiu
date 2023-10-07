@@ -2,14 +2,20 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Skill;
+import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.entities.UserSkill;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.InfoResponse;
+import com.tyiu.corn.model.responses.TeamMemberResponse;
 import com.tyiu.corn.repository.SkillRepository;
 import com.tyiu.corn.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
+import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
@@ -24,7 +30,19 @@ import java.util.Map;
 public class SkillService {
     private final SkillRepository skillRepository;
     private final UserRepository userRepository;
+    private final ReactiveMongoTemplate mongoTemplate;
     private final ModelMapper mapper;
+
+    public Flux<TeamMemberResponse> getAllUsersWithSkills(){
+        return mongoTemplate.findAll(User.class).flatMap(u ->
+                mongoTemplate.find(Query.query(Criteria.where("userEmail").is(u.getEmail())), UserSkill.class)
+                .collectList().flatMap(s -> Mono.just(TeamMemberResponse.builder()
+                        .email(u.getEmail())
+                        .firstName(u.getFirstName())
+                        .lastName(u.getLastName())
+                        .skills(s)
+                        .build())));
+    }
 
     public Flux<SkillDTO> getAllSkills() {
         return skillRepository.findAll().flatMap(skill ->
