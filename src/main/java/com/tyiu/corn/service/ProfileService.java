@@ -71,7 +71,7 @@ public class ProfileService {
 
     public Flux<UserSkillResponse> saveSkills(String userEmail, Flux<UserSkillRequest> skills){
         return skills.flatMap(s ->
-            template.findOne(Query.query(Criteria.where("_id").is(s.getSkillId())), Skill.class)
+            template.findOne(Query.query(Criteria.where("id").is(s.getSkillId())), Skill.class)
                     .flatMapMany(skill ->
                         template.save(
                                 UserSkill.builder()
