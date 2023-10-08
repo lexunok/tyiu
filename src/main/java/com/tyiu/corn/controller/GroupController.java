@@ -34,9 +34,8 @@ public class GroupController {
         return groupService.createGroup(group);
     }
     @PutMapping("/update/{id}")
-    public Mono<ResponseEntity<String>> updateGroup(@PathVariable String id, @RequestBody GroupDTO group) {
-        groupService.updateGroup(id, group).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+    public Mono<GroupDTO> updateGroup(@PathVariable String id, @RequestBody GroupDTO group) {
+        return groupService.updateGroup(id, group);
 
     }
     @DeleteMapping("/delete/{id}")

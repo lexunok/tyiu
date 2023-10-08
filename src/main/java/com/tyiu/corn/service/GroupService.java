@@ -56,19 +56,24 @@ public class GroupService {
         List<String> users = new ArrayList<>();
         groupDTO.getUsers().forEach(u -> users.add(u.getId()));
         group.setUsersId(users);
-        return template.save(group).flatMap(g -> Mono.just(mapper.map(g, GroupDTO.class)))
-                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+        return template.save(group).flatMap(g -> {
+                    groupDTO.setId(g.getId());
+                    return Mono.just(groupDTO);
+        }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateGroup(String id,GroupDTO groupDTO) {
+    public Mono<GroupDTO> updateGroup(String id,GroupDTO groupDTO) {
         return template.findById(id, Group.class)
                 .flatMap(g -> {
                     g.setName(groupDTO.getName());
                     g.setUsersId(groupDTO.getUsers().stream().map(UserDTO::getId).toList());
                     g.setRoles(groupDTO.getRoles());
-                    return template.save(g);
-                }).then().onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+                    return template.save(g).flatMap(group -> {
+                        groupDTO.setId(g.getId());
+                        return Mono.just(groupDTO);
+                    });
+                }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteGroup(String id) {
