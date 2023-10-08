@@ -82,6 +82,16 @@ public class ProjectController {
         return projectService.deleteProject(projectId);
     }
 
+    @DeleteMapping("/delete/invite/{inviteId}")
+    public Mono<Void> deleteInvite(@PathVariable String inviteId){
+        return projectService.deleteInvite(inviteId);
+    }
+
+    @DeleteMapping("/delete/application/{applicationId}")
+    public Mono<Void> deleteApplication(@PathVariable String applicationId){
+        return projectService.deleteApplication(applicationId);
+    }
+
     ////////////////////////
     //   ___   __  __ ______
     //  / _ \ / / / //_  __/

@@ -47,6 +47,11 @@ public class TeamController {
         return teamService.deleteTeam(teamId);
     }
 
+    @DeleteMapping("/delete/invite/{inviteId}")
+    public Mono<Void> deleteInvite(@PathVariable String inviteId) {
+        return teamService.deleteInvite(inviteId);
+    }
+
     @PutMapping("/kick/{teamId}")
     public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
         return teamService.kickFromTeam(teamId, invitation.getId());

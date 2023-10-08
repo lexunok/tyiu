@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.List;
@@ -19,6 +20,7 @@ public class Project {
     private String name;
     private String description;
 
+    @Indexed
     private String teamId;
     private Integer membersCount;
 

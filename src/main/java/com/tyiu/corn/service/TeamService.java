@@ -135,6 +135,12 @@ public class TeamService {
         return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)),Team.class).then()
                 .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
+
+    public Mono<Void> deleteInvite(String id) {
+        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)),TeamInvitation.class).then()
+                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+    }
+
     public Mono<Void> kickFromTeam(String teamId, String receiverId) {
         return mongoTemplate.findById(teamId, Team.class)
                 .flatMap(t -> mongoTemplate.findById(receiverId, User.class)
@@ -152,7 +158,10 @@ public class TeamService {
                         .flatMap(u -> {
                             t.getMembers().add(u.getEmail());
                             t.setMembersCount(t.getMembers().size());
-                            return mongoTemplate.save(t).then();
+                            return mongoTemplate.save(t)
+                                    .then(mongoTemplate.remove(Query.query(Criteria.where("teamId").is(teamId)
+                                            .and("receiverId").is(receiverId)),TeamInvitation.class))
+                                    .then();
                         }))
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to invite")));
     }

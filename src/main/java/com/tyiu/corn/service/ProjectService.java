@@ -175,6 +175,18 @@ public class ProjectService {
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the project")));
     }
 
+    @CacheEvict(allEntries = true)
+    public Mono<Void> deleteInvite(String id){
+        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), ProjectInvitation.class).then()
+                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the invite")));
+    }
+
+    @CacheEvict(allEntries = true)
+    public Mono<Void> deleteApplication(String id){
+        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), ProjectApplication.class).then()
+                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the application")));
+    }
+
     ////////////////////////
     //   ___   __  __ ______
     //  / _ \ / / / //_  __/
@@ -212,12 +224,18 @@ public class ProjectService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> addInProject(String id, String email){
-        return mongoTemplate.findById(id, Project.class).flatMap(p ->
+    public Mono<Void> addInProject(String projectId, String email){
+        return mongoTemplate.findById(projectId, Project.class).flatMap(p ->
                 mongoTemplate.findById(p.getTeamId(), Team.class).flatMap(t -> {
                     t.getMembers().add(email);
                     t.setMembersCount(t.getMembers().size());
-                    return mongoTemplate.save(t).then(mongoTemplate.save(p));
+                    return mongoTemplate.save(t)
+                            .then(mongoTemplate.save(p))
+                            .then(mongoTemplate.findOne(Query.query(Criteria.where("email").is(email)), User.class)
+                                    .flatMap(u -> mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
+                                            .and("receiverId").is(u.getId())),ProjectInvitation.class)
+                                            .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
+                                                    .and("sender.getEmail").is(u.getId())),ProjectApplication.class))));
                 }))
                 .then().onErrorResume(ex -> Mono.error(new ErrorException("Failed to add user to project")));
     }
