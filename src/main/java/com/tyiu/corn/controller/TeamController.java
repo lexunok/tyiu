@@ -27,9 +27,9 @@ public class TeamController {
         return teamService.getTeams();
     }
 
-    @GetMapping("/invites/{receiverId}")
-    public Flux<TeamInvitation> getInvitation(@PathVariable String receiverId) {
-        return teamService.getInvitation(receiverId);
+    @PostMapping("/invites")
+    public Flux<TeamInvitation> getInvitation(@RequestBody AuthenticationResponse invitation) {
+        return teamService.getInvitation(invitation.getEmail());
     }
 
     @PostMapping("/add")
@@ -39,7 +39,7 @@ public class TeamController {
 
     @PostMapping("/send-invite/{teamId}")
     public Mono<TeamInvitation> sendInvite(@RequestBody AuthenticationResponse invitation, @PathVariable String teamId){
-        return teamService.sendInviteToUser(invitation.getId(), teamId);
+        return teamService.sendInviteToUser(invitation.getEmail(), teamId);
     }
 
     @DeleteMapping("/delete/{teamId}")
@@ -54,12 +54,12 @@ public class TeamController {
 
     @PutMapping("/kick/{teamId}")
     public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-        return teamService.kickFromTeam(teamId, invitation.getId());
+        return teamService.kickFromTeam(teamId, invitation.getEmail());
     }
 
     @PutMapping("/invite/{teamId}")
     public Mono<Void> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-        return teamService.inviteInTeam(teamId, invitation.getId());
+        return teamService.inviteInTeam(teamId, invitation.getEmail());
     }
 
     @PutMapping("/update/{teamId}")

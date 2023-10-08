@@ -88,8 +88,8 @@ public class TeamService {
                 .onErrorResume(ex -> Mono.error(new ErrorException("Couldn't get a list of ideas")));
     }
 
-    public Flux<TeamInvitation> getInvitation(String id) {
-        return mongoTemplate.find(Query.query(Criteria.where("receiverId").is(id)), TeamInvitation.class)
+    public Flux<TeamInvitation> getInvitation(String email) {
+        return mongoTemplate.find(Query.query(Criteria.where("receiverEmail").is(email)), TeamInvitation.class)
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
     }
 
@@ -121,10 +121,10 @@ public class TeamService {
         }).onErrorResume(ex -> Mono.error(new ErrorException("Failed to add team")));
     }
 
-    public Mono<TeamInvitation> sendInviteToUser(String id, String teamId) {
+    public Mono<TeamInvitation> sendInviteToUser(String email, String teamId) {
         return mongoTemplate.findById(teamId, Team.class).flatMap(t ->
                 mongoTemplate.save(TeamInvitation.builder()
-                    .receiverId(id)
+                    .receiverEmail(email)
                     .teamId(teamId)
                     .teamName(t.getName())
                     .createdAt(Instant.now())
@@ -141,28 +141,26 @@ public class TeamService {
                 .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
 
-    public Mono<Void> kickFromTeam(String teamId, String receiverId) {
+    public Mono<Void> kickFromTeam(String teamId, String email) {
         return mongoTemplate.findById(teamId, Team.class)
-                .flatMap(t -> mongoTemplate.findById(receiverId, User.class)
-                        .flatMap(u -> {
-                            t.getMembers().remove(u.getEmail());
-                            t.setMembersCount(t.getMembers().size());
-                            return mongoTemplate.save(t).then();
-                        }))
+                .flatMap(t -> {
+                    t.getMembers().remove(email);
+                    t.setMembersCount(t.getMembers().size());
+                    return mongoTemplate.save(t).then();
+                })
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to kick")));
     }
 
-    public Mono<Void> inviteInTeam(String teamId, String receiverId) {
+    public Mono<Void> inviteInTeam(String teamId, String email) {
         return mongoTemplate.findById(teamId, Team.class)
-                .flatMap(t -> mongoTemplate.findById(receiverId, User.class)
-                        .flatMap(u -> {
-                            t.getMembers().add(u.getEmail());
-                            t.setMembersCount(t.getMembers().size());
-                            return mongoTemplate.save(t)
-                                    .then(mongoTemplate.remove(Query.query(Criteria.where("teamId").is(teamId)
-                                            .and("receiverId").is(receiverId)),TeamInvitation.class))
-                                    .then();
-                        }))
+                .flatMap(t -> {
+                    t.getMembers().add(email);
+                    t.setMembersCount(t.getMembers().size());
+                    return mongoTemplate.save(t)
+                        .then(mongoTemplate.remove(Query.query(Criteria.where("teamId").is(teamId)
+                                .and("receiverEmail").is(email)),TeamInvitation.class))
+                        .then();
+                })
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to invite")));
     }
     public Mono<Void> updateTeam(String id, TeamDTO teamDTO) {

@@ -19,6 +19,6 @@ public class TeamInvitation {
     private String teamName;
     @Indexed
     private String teamId;
-    private String receiverId;
+    private String receiverEmail;
     private Instant createdAt;
 }
