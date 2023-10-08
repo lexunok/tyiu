@@ -2,7 +2,6 @@ package com.tyiu.corn.controller;
 
 
 import com.tyiu.corn.model.dto.ProjectDTO;
-import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.ProjectApplication;
 import com.tyiu.corn.model.entities.ProjectInvitation;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -38,9 +37,9 @@ public class ProjectController {
         return projectService.getProject(projectId);
     }
 
-    @GetMapping("/invites/{inviteId}")
-    public Flux<ProjectInvitation> getProjectInvitations(@PathVariable String inviteId){
-        return projectService.getProjectInvitations(inviteId);
+    @GetMapping("/invites")
+    public Flux<ProjectInvitation> getProjectInvitations(Principal principal){
+        return projectService.getProjectInvitations(principal.getName());
     }
 
     @GetMapping("/applications/{projectId}")
@@ -62,7 +61,7 @@ public class ProjectController {
 
     @PostMapping("/send/invite/{projectId}")
     public Mono<ProjectInvitation> sendInvitation(@RequestBody AuthenticationResponse invitation, @PathVariable String projectId){
-        return projectService.sendInvitation(invitation.getId(), projectId);
+        return projectService.sendInvitation(invitation.getEmail(), projectId);
     }
 
     @PostMapping("/send/application/{projectId}")
@@ -105,13 +104,13 @@ public class ProjectController {
     }
 
     @PutMapping("/invite/{projectId}")
-    public Mono<Void> inviteInProject(@RequestBody UserDTO user, @PathVariable String projectId){
-        return projectService.addInProject(projectId, user.getEmail());
+    public Mono<Void> inviteInProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
+        return projectService.addInProject(projectId, invitation.getEmail());
     }
 
     @PutMapping("/kick/{projectId}")
-    public Mono<Void> kickFromProject(@RequestBody UserDTO user, @PathVariable String projectId){
-        return projectService.kickFromProject(projectId, user.getEmail());
+    public Mono<Void> kickFromProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
+        return projectService.kickFromProject(projectId, invitation.getEmail());
     }
 
 }

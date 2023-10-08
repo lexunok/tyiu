@@ -18,6 +18,6 @@ public class ProjectInvitation {
 
     private String projectName;
     private String projectId;
-    private String receiverId;
+    private String receiverEmail;
     private Instant createdAt;
 }

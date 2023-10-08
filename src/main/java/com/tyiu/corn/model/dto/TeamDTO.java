@@ -2,6 +2,7 @@ package com.tyiu.corn.model.dto;
 
 import lombok.*;
 
+import java.time.Instant;
 import java.util.List;
 
 @Data
@@ -10,10 +11,13 @@ import java.util.List;
 @NoArgsConstructor
 public class TeamDTO {
     private String id;
+
     private String name;
     private String description;
+
     private Boolean closed;
     private Integer membersCount;
+    private Instant createdAt;
 
     private TeamMemberDTO owner;
     private TeamMemberDTO leader;

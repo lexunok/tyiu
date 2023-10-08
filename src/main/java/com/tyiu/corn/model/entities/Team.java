@@ -4,6 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.time.Instant;
 import java.util.List;
 
 @Setter
@@ -18,15 +19,14 @@ public class Team {
 
     private String name;
     private String description;
+
     private Boolean closed;
     private Integer membersCount;
+    private Instant createdAt;
 
     private String ownerEmail;
     private String leaderEmail;
 
     private List<String> members;
     private List<String> skills;
-
-
-
 }

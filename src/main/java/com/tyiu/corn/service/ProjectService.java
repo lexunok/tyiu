@@ -90,8 +90,8 @@ public class ProjectService {
     }
 
     @Cacheable
-    public Flux<ProjectInvitation> getProjectInvitations(String id){
-        return mongoTemplate.find(Query.query(Criteria.where("receiverId").is(id)), ProjectInvitation.class)
+    public Flux<ProjectInvitation> getProjectInvitations(String email){
+        return mongoTemplate.find(Query.query(Criteria.where("receiverEmail").is(email)), ProjectInvitation.class)
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
     }
 
@@ -134,10 +134,10 @@ public class ProjectService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<ProjectInvitation> sendInvitation(String id, String projectId){
+    public Mono<ProjectInvitation> sendInvitation(String email, String projectId){
         return mongoTemplate.findById(projectId, Project.class).flatMap(t ->
                 mongoTemplate.save(ProjectInvitation.builder()
-                        .receiverId(id)
+                        .receiverEmail(email)
                         .projectId(projectId)
                         .projectName(t.getName())
                         .createdAt(Instant.now())
@@ -231,18 +231,17 @@ public class ProjectService {
                     t.setMembersCount(t.getMembers().size());
                     return mongoTemplate.save(t)
                             .then(mongoTemplate.save(p))
-                            .then(mongoTemplate.findOne(Query.query(Criteria.where("email").is(email)), User.class)
-                                    .flatMap(u -> mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
-                                            .and("receiverId").is(u.getId())),ProjectInvitation.class)
-                                            .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
-                                                    .and("sender.getEmail").is(u.getId())),ProjectApplication.class))));
+                            .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
+                                    .and("receiverEmail").is(email)),ProjectInvitation.class))
+                            .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
+                                    .and("sender.getEmail").is(email)),ProjectApplication.class));
                 }))
                 .then().onErrorResume(ex -> Mono.error(new ErrorException("Failed to add user to project")));
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> kickFromProject(String id, String email){
-        return mongoTemplate.findById(id, Project.class).flatMap(p ->
+    public Mono<Void> kickFromProject(String projectId, String email){
+        return mongoTemplate.findById(projectId, Project.class).flatMap(p ->
                 mongoTemplate.findById(p.getTeamId(), Team.class).flatMap(t -> {
                     t.getMembers().remove(email);
                     t.setMembersCount(t.getMembers().size());

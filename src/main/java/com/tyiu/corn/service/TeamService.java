@@ -33,6 +33,7 @@ public class TeamService {
                     .description(team.getDescription())
                     .closed(team.getClosed())
                     .membersCount(team.getMembersCount())
+                    .createdAt(team.getCreatedAt())
                     .build();
 
             return mongoTemplate.find(Query.query(Criteria.where("id").in(team.getSkills())), Skill.class)
@@ -84,6 +85,7 @@ public class TeamService {
                         .description(t.getDescription())
                         .closed(t.getClosed())
                         .membersCount(t.getMembers().size())
+                        .createdAt(t.getCreatedAt())
                         .build()))
                 .onErrorResume(ex -> Mono.error(new ErrorException("Couldn't get a list of ideas")));
     }
@@ -101,6 +103,7 @@ public class TeamService {
                 .membersCount(teamDTO.getMembers().size())
                 .ownerEmail(teamDTO.getOwner().getEmail())
                 .leaderEmail(teamDTO.getLeader().getEmail())
+                .createdAt(Instant.now())
                 .build();
         if (teamDTO.getMembers() != null)
         {
