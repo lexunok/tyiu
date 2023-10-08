@@ -221,16 +221,15 @@ public class AccountChangeService {
         return userRepository.findAll().flatMap(u -> Mono.just(u.getEmail())).collectList();
     }
 
-    public Mono<Void> changeUserInfo(UserInfoRequest request){
+    public Mono<User> changeUserInfo(UserInfoRequest request){
         Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
-        user.flatMap(u -> {
+        return user.flatMap(u -> {
             u.setEmail(request.getNewEmail());
             u.setFirstName(request.getNewFirstName());
             u.setLastName(request.getNewLastName());
             u.setRoles(request.getNewRoles());
             return userRepository.save(u);
-        }).subscribe();
-        return Mono.empty();
+        });
     }
 
     public void deleteDataByUrl(String url){

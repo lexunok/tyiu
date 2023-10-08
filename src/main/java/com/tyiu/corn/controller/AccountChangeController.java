@@ -1,7 +1,6 @@
 package com.tyiu.corn.controller;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
+import com.tyiu.corn.model.entities.User;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -87,7 +86,7 @@ public class AccountChangeController {
     }
 
     @PutMapping("/change/info")
-    public Mono<Void> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
+    public Mono<User> changeUserInfoByAdmin(@RequestBody UserInfoRequest request){
         return accountChangeService.changeUserInfo(request);
         //return Mono.just(new ResponseEntity<>("Успешное изменение пользователя", HttpStatus.OK));
     }
