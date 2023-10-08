@@ -11,10 +11,10 @@ import com.tyiu.corn.model.responses.ChangeResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
 import com.tyiu.corn.model.responses.UserInfoResponse;
 import com.tyiu.corn.repository.AccountChangeRepository;
-import com.tyiu.corn.repository.UserRepository;
 
 import java.util.*;
 
+import com.tyiu.corn.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.scheduling.annotation.EnableScheduling;

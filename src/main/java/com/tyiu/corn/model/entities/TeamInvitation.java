@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
@@ -16,6 +17,7 @@ public class TeamInvitation {
     @Id
     private String id;
     private String teamName;
+    @Indexed
     private String teamId;
     private String receiverId;
     private Instant createdAt;

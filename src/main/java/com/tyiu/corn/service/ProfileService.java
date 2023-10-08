@@ -1,24 +1,23 @@
 package com.tyiu.corn.service;
 
-import com.mongodb.client.gridfs.model.GridFSFile;
 import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.requests.UserSkillRequest;
 import com.tyiu.corn.model.responses.UserIdeaResponse;
+import com.tyiu.corn.model.responses.UserProjectResponse;
 import com.tyiu.corn.model.responses.UserSkillResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.core.io.buffer.DataBufferUtils;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.gridfs.GridFsResource;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
 import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 
 @Service
@@ -29,6 +28,7 @@ public class ProfileService {
     private final ReactiveMongoTemplate template;
     private final ReactiveGridFsTemplate gridFsTemplate;
 
+    @Cacheable(cacheNames = "ideas")
     public Flux<UserIdeaResponse> getUserIdeas(String userEmail) {
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery,Profile.class).flatMapMany(p ->
@@ -41,7 +41,20 @@ public class ProfileService {
             )
         );
     }
-
+    @Cacheable(cacheNames = "projects")
+    public Flux<UserProjectResponse> getUserProjects(String userEmail) {
+        Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
+        return template.findOne(profileQuery,Profile.class).flatMapMany(p ->
+                template.find(Query.query(Criteria.where("_id").in(p.getUserProjectsId())), Project.class)
+                        .flatMap(pr ->
+                                Flux.just(UserProjectResponse.builder()
+                                        .projectId(pr.getId())
+                                        .description(pr.getDescription())
+                                        .name(pr.getName()).build())
+                        )
+        );
+    }
+    @Cacheable(cacheNames = "avatar")
     public Flux<DataBuffer> getAvatar(String userEmail) {
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery, Profile.class).flatMap(p ->
@@ -49,7 +62,7 @@ public class ProfileService {
                     .flatMap(gridFsTemplate::getResource)
         ).flatMapMany(ReactiveGridFsResource::getDownloadStream);
     }
-
+    @CacheEvict(cacheNames = "avatar",allEntries = true)
     public Flux<DataBuffer> uploadAvatar(String userEmail,FilePart file){
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery, Profile.class).flatMap(p ->
@@ -61,14 +74,14 @@ public class ProfileService {
                     )
         ).flatMapMany(ReactiveGridFsResource::getDownloadStream);
     }
-
+    @Cacheable(cacheNames = "skills")
     public Flux<UserSkillResponse> getSkills(String userEmail){
         Query skillsQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.find(skillsQuery, UserSkill.class).flatMap(s ->
                 Flux.just(mapper.map(s, UserSkillResponse.class))
         );
     }
-
+    @CacheEvict(cacheNames = "skills",allEntries = true)
     public Flux<UserSkillResponse> saveSkills(String userEmail, Flux<UserSkillRequest> skills){
         return skills.flatMap(s ->
             template.findOne(Query.query(Criteria.where("id").is(s.getSkillId())), Skill.class)

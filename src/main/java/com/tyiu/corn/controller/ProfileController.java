@@ -3,6 +3,7 @@ package com.tyiu.corn.controller;
 import com.mongodb.client.gridfs.model.GridFSFile;
 import com.tyiu.corn.model.requests.UserSkillRequest;
 import com.tyiu.corn.model.responses.UserIdeaResponse;
+import com.tyiu.corn.model.responses.UserProjectResponse;
 import com.tyiu.corn.model.responses.UserSkillResponse;
 import com.tyiu.corn.service.ProfileService;
 
@@ -27,6 +28,11 @@ public class ProfileController {
     public Flux<UserIdeaResponse> getUserIdeas(Principal principal) {
         return profileService.getUserIdeas(principal.getName());
     }
+    @GetMapping("/get/projects")
+    public Flux<UserProjectResponse> getUserProjects(Principal principal) {
+        return profileService.getUserProjects(principal.getName());
+    }
+
 
     @GetMapping("/get/avatar")
     public Flux<DataBuffer> getAvatar(Principal principal) {

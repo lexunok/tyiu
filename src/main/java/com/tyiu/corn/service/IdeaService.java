@@ -4,6 +4,7 @@ import com.tyiu.corn.config.exception.ErrorException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.entities.Idea;
+import com.tyiu.corn.model.entities.Profile;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
@@ -22,6 +23,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -76,7 +78,17 @@ public class IdeaService {
                     }).then(template.findById(savedIdea.getProjectOffice(), Group.class).flatMap(p -> {
                                 savedDTO.setProjectOffice(p);
                                 return Mono.empty();
-                            })).then(Mono.just(savedDTO));
+                    })).then(template.findOne(Query.query(Criteria.where("userEmail").is(initiator)), Profile.class)
+                                    .flatMap(p -> {
+                                        if (!p.getUserIdeasId().isEmpty()) {
+                                            p.getUserIdeasId().add(savedIdea.getId());
+                                        }
+                                        else {
+                                            p.setUserIdeasId(List.of(savedIdea.getId()));
+                                        }
+                                        return template.save(p).then();
+                                    }))
+                            .then(Mono.just(savedDTO));
                 }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
     @CacheEvict(allEntries = true)

@@ -17,7 +17,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class AuthenticationManager implements ReactiveAuthenticationManager {
     private final JwtCore jwtCore;
-    private final UserService userService;
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
         String token;

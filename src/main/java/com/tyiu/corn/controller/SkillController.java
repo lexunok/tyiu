@@ -23,7 +23,7 @@ import reactor.core.publisher.Mono;
 public class SkillController {
     private final SkillService skillService;
 
-    @GetMapping("/users-skill/all")
+    @GetMapping("/users/all")
     public Flux<TeamMemberResponse> getAllUsersWithSkills(){
         return skillService.getAllUsersWithSkills();
     }

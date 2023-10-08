@@ -8,8 +8,8 @@ import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.model.responses.TeamMemberResponse;
 import com.tyiu.corn.repository.SkillRepository;
-import com.tyiu.corn.repository.UserRepository;
 
+import com.tyiu.corn.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
