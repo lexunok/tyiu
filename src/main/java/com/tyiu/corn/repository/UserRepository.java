@@ -8,7 +8,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 @Repository
-public interface UserRepository extends ReactiveCrudRepository<User,String> {
+public interface UserRepository extends ReactiveCrudRepository<User,Long> {
     Mono<User> findFirstByEmail(String email);
     Mono<Boolean> existsByEmail(String email);
 }

@@ -96,8 +96,8 @@ public class ProjectService {
     }
 
     @Cacheable
-    public Flux<ProjectApplication> getProjectApplications(String id){
-        return mongoTemplate.find(Query.query(Criteria.where("projectId").is(id)), ProjectApplication.class)
+    public Flux<ProjectRequest> getProjectApplications(String id){
+        return mongoTemplate.find(Query.query(Criteria.where("projectId").is(id)), ProjectRequest.class)
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
     }
 
@@ -146,10 +146,10 @@ public class ProjectService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<ProjectApplication> sendApplication(String email, String projectId){
+    public Mono<ProjectRequest> sendApplication(String email, String projectId){
         return mongoTemplate.findOne(Query.query(Criteria.where("email").is(email)), User.class)
                 .flatMap(u -> mongoTemplate.find(Query.query(Criteria.where("userEmail").is(email)), UserSkill.class).collectList()
-                        .flatMap(s -> mongoTemplate.save(ProjectApplication.builder()
+                        .flatMap(s -> mongoTemplate.save(ProjectRequest.builder()
                             .projectId(projectId)
                             .sender(TeamMemberDTO.builder()
                                     .email(u.getEmail())
@@ -183,7 +183,7 @@ public class ProjectService {
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteApplication(String id){
-        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), ProjectApplication.class).then()
+        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), ProjectRequest.class).then()
                 .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the application")));
     }
 
@@ -234,7 +234,7 @@ public class ProjectService {
                             .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
                                     .and("receiverEmail").is(email)),ProjectInvitation.class))
                             .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
-                                    .and("sender.getEmail").is(email)),ProjectApplication.class));
+                                    .and("sender.getEmail").is(email)), ProjectRequest.class));
                 }))
                 .then().onErrorResume(ex -> Mono.error(new ErrorException("Failed to add user to project")));
     }

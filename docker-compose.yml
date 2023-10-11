@@ -1,4 +1,16 @@
 services:
+  postgres:
+    container_name: postgres
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: hits
+    ports:
+      - 5432:5432
+    volumes:
+      - postgres:/data/postgres
   mongodb:
     container_name: mongodb
     image: mongo
@@ -12,3 +24,4 @@ services:
       - mongodb:/data/mongodb
 volumes:
   mongodb:
+  postgres:

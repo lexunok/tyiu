@@ -54,17 +54,17 @@ public class SkillController {
     }
 
     @PutMapping("/update/{skillId}")
-    public Mono<SkillDTO> updateSkill(@RequestParam SkillDTO skillDTO, @PathVariable String skillId, Principal principal) {
+    public Mono<SkillDTO> updateSkill(@RequestParam SkillDTO skillDTO, @PathVariable Long skillId, Principal principal) {
         return skillService.updateSkill(skillDTO, skillId, principal.getName());
     }
 
     @PutMapping("/confirm/{skillId}")
-    public Mono<SkillDTO> confirmSkill(@PathVariable String skillId, Principal principal) {
+    public Mono<SkillDTO> confirmSkill(@PathVariable Long skillId, Principal principal) {
         return skillService.confirmSkill(skillId, principal.getName());
     }
     
     @DeleteMapping("/delete/{skillId}")
-    public Mono<InfoResponse> deleteSkill(@PathVariable String skillId, Principal principal) {
-        return skillService.deleteSkill(skillId, principal.getName());
+    public Mono<InfoResponse> deleteSkill(@PathVariable Long skillId) {
+        return skillService.deleteSkill(skillId);
     }
 }

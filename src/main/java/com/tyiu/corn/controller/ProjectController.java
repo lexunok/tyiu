@@ -2,7 +2,7 @@ package com.tyiu.corn.controller;
 
 
 import com.tyiu.corn.model.dto.ProjectDTO;
-import com.tyiu.corn.model.entities.ProjectApplication;
+import com.tyiu.corn.model.entities.ProjectRequest;
 import com.tyiu.corn.model.entities.ProjectInvitation;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.service.ProjectService;
@@ -43,7 +43,7 @@ public class ProjectController {
     }
 
     @GetMapping("/applications/{projectId}")
-    public Flux<ProjectApplication> getProjectApplications(@PathVariable String projectId){
+    public Flux<ProjectRequest> getProjectApplications(@PathVariable String projectId){
         return projectService.getProjectApplications(projectId);
     }
 
@@ -65,7 +65,7 @@ public class ProjectController {
     }
 
     @PostMapping("/send/application/{projectId}")
-    public Mono<ProjectApplication> sendApplication(Principal principal, @PathVariable String projectId){
+    public Mono<ProjectRequest> sendApplication(Principal principal, @PathVariable String projectId){
         return projectService.sendApplication(principal.getName(), projectId);
     }
 

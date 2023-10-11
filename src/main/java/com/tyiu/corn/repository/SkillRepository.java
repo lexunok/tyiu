@@ -11,8 +11,8 @@ import org.springframework.stereotype.Repository;
 import reactor.core.publisher.Flux;
 
 @Repository
-public interface SkillRepository extends ReactiveCrudRepository<Skill, String> {
+public interface SkillRepository extends ReactiveCrudRepository<Skill, Long> {
     Flux<Skill> findByType(SkillType type);
-    Flux<Skill> findByConfirmedOrCreatorId(Boolean confirmed, String creatorId);
+    Flux<Skill> findByConfirmedOrCreatorId(Boolean confirmed, Long creatorId);
 
 }

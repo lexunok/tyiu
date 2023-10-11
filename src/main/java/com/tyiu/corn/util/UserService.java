@@ -3,23 +3,24 @@ package com.tyiu.corn.util;
 
 import com.tyiu.corn.model.entities.User;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
+
 @Service
 @RequiredArgsConstructor
 public class UserService implements ReactiveUserDetailsService {
 
-    private final ReactiveMongoTemplate template;
+    private final R2dbcEntityTemplate template;
 
     @Override
     public Mono<UserDetails> findByUsername(String email) {
-        return template.findOne(Query.query(Criteria.where("email").is(email)), User.class)
+        return template.selectOne(query(where("email").is(email)), User.class)
                 .map(CustomUserDetails::new);
     }
 }

@@ -13,10 +13,9 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 @Document
-public class ProjectApplication {
+public class ProjectRequest {
     @Id
     private String id;
-
     private String projectId;
     private TeamMemberDTO sender;
     private Instant createdAt;

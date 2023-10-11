@@ -94,7 +94,7 @@ public class SkillService {
         });
     }
 
-    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, String skillId, String email) {
+    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, Long skillId, String email) {
         return skillRepository.findById(skillId).flatMap(skill -> {
             return userRepository.findFirstByEmail(email).flatMap(user -> {
                 skill.setName(skillDTO.getName());
@@ -107,7 +107,7 @@ public class SkillService {
         });
     }
 
-    public Mono<SkillDTO> confirmSkill(String skillId, String email) {
+    public Mono<SkillDTO> confirmSkill(Long skillId, String email) {
         return skillRepository.findById(skillId).flatMap(skill -> {
             return userRepository.findFirstByEmail(email).flatMap(user -> {
                 skill.setConfirmed(true);
@@ -119,7 +119,7 @@ public class SkillService {
         });
     }
 
-    public Mono<InfoResponse> deleteSkill(String skillId, String email) {
+    public Mono<InfoResponse> deleteSkill(Long skillId) {
         return skillRepository.existsById(skillId).flatMap(skill -> {
             if (skill) {
                 skillRepository.deleteById(skillId).subscribe();

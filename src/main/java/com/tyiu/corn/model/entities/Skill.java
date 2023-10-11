@@ -17,12 +17,12 @@ import org.springframework.data.annotation.Id;
 @Document
 public class Skill {
     @Id
-    private String id;
+    private Long id;
     private Instant createdAt;
     private String name;
     private SkillType type;
     private Boolean confirmed;
-    private String creatorId;
-    private String updaterId;
-    private String deleterId;
+    private Long creatorId;
+    private Long updaterId;
+    private Long deleterId;
 }

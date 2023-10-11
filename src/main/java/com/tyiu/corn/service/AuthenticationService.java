@@ -10,21 +10,27 @@ import com.tyiu.corn.repository.UserRepository;
 import com.tyiu.corn.util.JwtCore;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.r2dbc.core.DatabaseClient;
 import reactor.core.publisher.Mono;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserRepository userRepository;
-    private final ReactiveMongoTemplate template;
+
+    private final R2dbcEntityTemplate template;
     private final PasswordEncoder passwordEncoder;
     private final JwtCore jwtCore;
 
     public Mono<AuthenticationResponse> login(LoginRequest request) {
-        Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
+        Mono<User> user = template
+                .selectOne(query(where("email").is(request.getEmail())),User.class);
         return user.flatMap(u -> {
             if (passwordEncoder.matches(request.getPassword(), u.getPassword())){
                 String jwt = jwtCore.issueToken(u.getEmail(), u.getRoles());
@@ -42,7 +48,8 @@ public class AuthenticationService {
 
 
     public Mono<AuthenticationResponse> register(RegisterRequest request){
-        Mono<Boolean> isExists = userRepository.existsByEmail(request.getEmail());
+        Mono<Boolean> isExists = template
+                .exists(query(where("email").is(request.getEmail())), User.class);
         return isExists.flatMap(
                 b -> {
                     if (Boolean.FALSE.equals(b)) {
@@ -55,8 +62,8 @@ public class AuthenticationService {
                                 .build();
                         Profile profile = new Profile(user.getEmail());
                         try {
-                            Mono<User> userFromDB = userRepository.save(user);
-                            template.save(profile).subscribe();
+                            Mono<User> userFromDB = //template.insert(profile).then(
+                                    template.insert(user);
                             return userFromDB.flatMap(u -> {
                                 String jwt = jwtCore.issueToken(u.getEmail(),u.getRoles());
                                 return Mono.just(AuthenticationResponse.builder()
@@ -70,7 +77,7 @@ public class AuthenticationService {
                             });
                         }
                         catch (Exception e){
-                            userRepository.delete(user);
+                            template.delete(user).subscribe();
                             return Mono.empty();
                         }
 
