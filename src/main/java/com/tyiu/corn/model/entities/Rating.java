@@ -17,7 +17,7 @@ public class Rating {
     @Indexed
     private String ideaId;
     @Indexed
-    private String expert;
+    private Long expert;
 
     private Long marketValue;
     private Long originality;

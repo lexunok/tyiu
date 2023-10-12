@@ -6,3 +6,10 @@ CREATE TABLE IF NOT EXISTS users (
     first_name TEXT,
     last_name TEXT
 );
+
+CREATE TABLE IF NOT EXISTS groups (
+     id BIGSERIAL PRIMARY KEY,
+     name TEXT NOT NULL,
+     users_id BIGINT[],
+     roles TEXT[] NOT NULL
+);

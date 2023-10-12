@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @Builder
 public class GroupDTO {
-    private String id;
+    private Long id;
     private String name;
     private List<UserDTO> users;
     private List<Role> roles;
