@@ -13,12 +13,11 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document
 public class Rating {
     @Id
-    private String id;
+    private Long id;
     @Indexed
-    private String ideaId;
+    private Long ideaId;
     @Indexed
     private Long expert;
-
     private Long marketValue;
     private Long originality;
     private Long technicalRealizability;

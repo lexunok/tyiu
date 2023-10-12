@@ -21,7 +21,7 @@ public class IdeaController {
     private final IdeaService ideaService;
     
     @GetMapping("/{ideaId}")
-    public Mono<IdeaDTO> getIdea(@PathVariable String ideaId) {
+    public Mono<IdeaDTO> getIdea(@PathVariable Long ideaId) {
         return ideaService.getIdea(ideaId);
     }
 

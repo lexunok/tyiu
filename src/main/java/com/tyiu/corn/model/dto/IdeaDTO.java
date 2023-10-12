@@ -15,7 +15,7 @@ import java.time.Instant;
 @AllArgsConstructor
 @NoArgsConstructor
 public class IdeaDTO {
-    private String id;
+    private Long id;
     private String initiator;
     private String name;
     private Group experts;

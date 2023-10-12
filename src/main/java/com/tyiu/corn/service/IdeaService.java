@@ -6,6 +6,7 @@ import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Profile;
 import com.tyiu.corn.model.entities.Rating;
+import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
@@ -32,21 +34,22 @@ import java.util.List;
 public class IdeaService {
 
     private final ReactiveMongoTemplate template;
+    private final R2dbcEntityTemplate template2;
     private final ModelMapper mapper;
 
     @Cacheable
-    public Mono<IdeaDTO> getIdea(String id) {
-        return template.findById(id, Idea.class).flatMap(i -> {
-            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-            return template.findById(i.getExperts(), Group.class).flatMap(g -> {
-                ideaDTO.setExperts(g);
-                return Mono.empty();
-            }).then(template.findById(i.getProjectOffice(), Group.class).flatMap(g -> {
-                ideaDTO.setProjectOffice(g);
-                return Mono.empty();
-            })).then(Mono.just(ideaDTO));
-        }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+    public Mono<IdeaDTO> getIdea(Long ideaId) {
+        String query = "SELECT idea.*, groups.name AS group_name, groups.id AS group_id" +
+                " FROM idea LEFT JOIN groups ON idea.groupexpertid = groups.id" +
+                " WHERE idea.id =: ideaId";
+        IdeaMapper ideaMapper = new IdeaMapper();
+        return template2.getDatabaseClient()
+                .sql(query)
+                .bind("ideaId", ideaId)
+                .map(ideaMapper::apply)
+                .first().onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
+
     @Cacheable
     public Flux<IdeaDTO> getListIdea() {
         return template.findAll(Idea.class).flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)))
@@ -58,12 +61,12 @@ public class IdeaService {
         idea.setInitiator(initiator);
         idea.setStatus(StatusIdea.NEW);
         idea.setCreatedAt(Instant.now());
-        idea.setExperts(ideaDTO.getExperts().getId());
-        idea.setProjectOffice(ideaDTO.getProjectOffice().getId());
+        idea.setGroupExpertId(ideaDTO.getExperts().getId());
+        idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
         return template.save(idea).flatMap(savedIdea ->
                 {
                     IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                    return template.findById(savedIdea.getExperts(), Group.class).flatMap(g -> {
+                    return template.findById(savedIdea.getGroupExpertId(), Group.class).flatMap(g -> {
                         g.getUsersId()
                                 .forEach(r ->
                                         template.save(Rating.builder()
@@ -75,7 +78,7 @@ public class IdeaService {
                                 );
                         savedDTO.setExperts(g);
                         return Mono.empty();
-                    }).then(template.findById(savedIdea.getProjectOffice(), Group.class).flatMap(p -> {
+                    }).then(template.findById(savedIdea.getGroupProjectOfficeId(), Group.class).flatMap(p -> {
                                 savedDTO.setProjectOffice(p);
                                 return Mono.empty();
                     })).then(template.findOne(Query.query(Criteria.where("userEmail").is(initiator)), Profile.class)
@@ -138,7 +141,7 @@ public class IdeaService {
         return template.findById(id, Idea.class).flatMap(i -> {
             i.setName(updatedIdea.getName());
             i.setProjectType(updatedIdea.getProjectType());
-            i.setExperts(updatedIdea.getExperts().getId());
+            i.setGroupExpertId(updatedIdea.getExperts().getId());
             i.setProblem(updatedIdea.getProblem());
             i.setSolution(updatedIdea.getSolution());
             i.setResult(updatedIdea.getResult());

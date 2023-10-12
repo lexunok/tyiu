@@ -13,13 +13,13 @@ import java.util.List;
 @Document
 public class Profile {
     @Id
-    private String id;
+    private Long id;
     @Indexed
     private String userEmail;
     private String avatarId;
     private List<String> userSkillsId;
     private List<String> userProjectsId;
-    private List<String> userIdeasId;
+    private List<Long> userIdeasId;
 
     public Profile(String userEmail){
         this.userEmail = userEmail;
