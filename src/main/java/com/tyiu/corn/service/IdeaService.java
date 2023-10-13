@@ -39,22 +39,26 @@ public class IdeaService {
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(Long ideaId) {
-        String query = "SELECT idea.*, groups.name AS group_name, groups.id AS group_id" +
-                " FROM idea LEFT JOIN groups ON idea.groupexpertid = groups.id" +
+        String query = "SELECT idea.*, e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
+                " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
+                " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
                 " WHERE idea.id =: ideaId";
         IdeaMapper ideaMapper = new IdeaMapper();
         return template2.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
                 .map(ideaMapper::apply)
-                .first().onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+                .first()
+                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea() {
-        return template.findAll(Idea.class).flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)))
+        return template2.select(Idea.class).all()
+                .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)))
                 .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
+
     @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiator) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
