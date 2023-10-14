@@ -35,7 +35,7 @@ public class ProfileService {
             template.find(Query.query(Criteria.where("_id").in(p.getUserIdeasId())), Idea.class)
                     .flatMap(i ->
                         Flux.just(UserIdeaResponse.builder()
-                                .ideaId(i.getId())
+                                //.ideaId(i.getId())
                                 .description(i.getDescription())
                                 .name(i.getName()).build())
             )

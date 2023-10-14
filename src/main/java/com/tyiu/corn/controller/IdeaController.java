@@ -36,36 +36,36 @@ public class IdeaController {
     }
 
     @DeleteMapping("/delete/{ideaId}")
-    public Mono<ResponseEntity<String>> deleteIdea(@PathVariable String ideaId) {
-        ideaService.deleteIdea(ideaId).subscribe();
-        return Mono.just(new ResponseEntity<>("Success deleting", HttpStatus.OK));
+    public Mono<ResponseEntity<String>> deleteIdea(@PathVariable Long ideaId) {
+        return ideaService.deleteIdea(ideaId)
+                .thenReturn(new ResponseEntity<>("Success deleting", HttpStatus.OK));
     }
 
     @PutMapping("/initiator/update/{ideaId}")
     public Mono<ResponseEntity<String>> updateIdeaByInitiator(
-            @PathVariable String ideaId, @RequestBody IdeaDTO updatedIdea) {
-        ideaService.updateIdeaByInitiator(ideaId, updatedIdea).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+            @PathVariable Long ideaId, @RequestBody IdeaDTO updatedIdea) {
+        return ideaService.updateIdeaByInitiator(ideaId, updatedIdea)
+                .thenReturn(new ResponseEntity<>("Success updating", HttpStatus.OK));
     }
 
     @PutMapping("/initiator/send/{ideaId}")
     public Mono<ResponseEntity<String>> updateStatusByInitiator(
-            @PathVariable String ideaId, Principal principal) {
-        ideaService.updateStatusByInitiator(ideaId, principal.getName()).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+            @PathVariable Long ideaId) {
+        return ideaService.updateStatusByInitiator(ideaId)
+                .thenReturn(new ResponseEntity<>("Success updating", HttpStatus.OK));
     }
 
     @PutMapping("/project-office/update/{ideaId}")
     public Mono<ResponseEntity<String>> updateStatusIdeaByProjectOffice(
-            @PathVariable String ideaId, @RequestBody StatusIdeaRequest status){
-        ideaService.updateStatusByProjectOffice(ideaId, status).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+            @PathVariable Long ideaId, @RequestBody StatusIdeaRequest status){
+        return ideaService.updateStatusByProjectOffice(ideaId, status)
+                .thenReturn(new ResponseEntity<>("Success updating", HttpStatus.OK));
     }
 
     @PutMapping("/admin/update/{ideaId}")
     public Mono<ResponseEntity<String>> updateIdeaByAdmin(
-            @PathVariable String ideaId, @RequestBody IdeaDTO updatedIdea) {
-        ideaService.updateIdeaByAdmin(ideaId, updatedIdea).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+            @PathVariable Long ideaId, @RequestBody IdeaDTO updatedIdea) {
+        return ideaService.updateIdeaByAdmin(ideaId, updatedIdea)
+                .thenReturn(new ResponseEntity<>("Success updating", HttpStatus.OK));
     }
 }
