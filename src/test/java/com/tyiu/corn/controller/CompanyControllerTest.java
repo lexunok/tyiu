@@ -24,10 +24,7 @@ import java.util.List;
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(
-        webEnvironment = RANDOM_PORT,
-        properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
-)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 public class CompanyControllerTest{
 
     @Autowired

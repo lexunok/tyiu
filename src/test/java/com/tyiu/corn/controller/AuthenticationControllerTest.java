@@ -19,10 +19,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(
-        webEnvironment = RANDOM_PORT,
-        properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
-)
+@SpringBootTest(webEnvironment = RANDOM_PORT)
 class AuthenticationControllerTest {
     @Autowired
     private WebTestClient webTestClient;
