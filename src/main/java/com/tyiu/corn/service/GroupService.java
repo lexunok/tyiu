@@ -2,8 +2,9 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.ErrorException;
 import com.tyiu.corn.model.dto.GroupDTO;
-import com.tyiu.corn.model.dto.UserDTO;
-import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.entities.mappers.GroupMapper;
+import com.tyiu.corn.model.entities.relations.Group2User;
+import com.tyiu.corn.model.enums.Role;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -15,11 +16,11 @@ import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
@@ -44,17 +45,21 @@ public class GroupService {
     }
 
     @Cacheable
-    public Mono<GroupDTO> getGroupById(String id) {
-        return template.selectOne(query(where("id").is(id)), Group.class)
-                .flatMap(g -> {
-                    GroupDTO groupDTO = mapper.map(g, GroupDTO.class);
-                    return template.select(query(where("id").in(g.getUsersId())), User.class)
-                            .flatMap(u -> Flux.just(mapper.map(u, UserDTO.class))).collectList()
-                            .flatMap(list -> {
-                                groupDTO.setUsers(list);
-                                return Mono.just(groupDTO);
-                            });
-                }).switchIfEmpty(Mono.error(new ErrorException("Failed to get a group")));
+    public Mono<GroupDTO> getGroupById(Long groupId) {
+        String query = "SELECT groups.*, users.id AS member_id, users.email, users.first_name, users.last_name " +
+                        "FROM groups " +
+                        "LEFT JOIN group2_user ON groups.id = group2_user.group_id " +
+                        "LEFT JOIN users ON group2_user.user_id = users.id " +
+                        "WHERE groups.id = :groupId";
+        GroupMapper groupMapper = new GroupMapper();
+        return template.getDatabaseClient()
+                .sql(query)
+                .bind("groupId", groupId)
+                .map(groupMapper::apply)
+                .all()
+                .collectList()
+                .map(groupDTOMap -> groupDTOMap.get(0))
+        .switchIfEmpty(Mono.error(new ErrorException("Failed to get a group")));
     }
 
     //////////////////////////////
@@ -67,11 +72,10 @@ public class GroupService {
     @CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
         Group group = mapper.map(groupDTO, Group.class);
-        List<Long> users = new ArrayList<>();
-        groupDTO.getUsers().forEach(u -> users.add(u.getId()));
-        group.setUsersId(users);
         return template.insert(group).flatMap(g -> {
             groupDTO.setId(g.getId());
+            groupDTO.getUsers().forEach(u -> template.insert(new Group2User(u.getId(), g.getId()))
+                    .subscribe());
             return Mono.just(groupDTO);
         }).switchIfEmpty(Mono.error(new ErrorException("Failed to create a group")));
     }
@@ -84,9 +88,9 @@ public class GroupService {
     ///////////////////////////////////////////
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteGroup(String id) {
+    public Mono<Void> deleteGroup(Long id) {
         return template.delete(query(where("id").is(id)), Group.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete a group")));
+        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete a group")));
     }
 
     ////////////////////////
@@ -97,17 +101,31 @@ public class GroupService {
     ////////////////////////
 
     @CacheEvict(allEntries = true)
-    public Mono<GroupDTO> updateGroup(String id,GroupDTO groupDTO) {
-        return template.selectOne(query(where("id").is(id)), Group.class)
-                .flatMap(g -> {
-                    g.setName(groupDTO.getName());
-                    g.setUsersId(groupDTO.getUsers().stream().map(UserDTO::getId).toList());
-                    g.setRoles(groupDTO.getRoles());
-                    return template.insert(g).flatMap(group -> {
-                        groupDTO.setId(g.getId());
-                        return Mono.just(groupDTO);
-                    });
-                }).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+    public Mono<Void> addInGroup(Long groupId, Long userId) {
+        return template.insert(new Group2User(userId, groupId)).then()
+        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to add in group")));
+    }
+
+    @CacheEvict(allEntries = true)
+    public Mono<Void> addListInGroup(Long groupId, List<Long> usersId) {
+        usersId.forEach(id -> template.insert(new Group2User(id, groupId)).subscribe());
+        return Mono.empty();
+    }
+
+    @CacheEvict(allEntries = true)
+    public Mono<Void> kickFromGroup(Long groupId, Long userId) {
+        return template.delete(query(where("userId").is(userId)
+                        .and("groupId").is(groupId)), Group2User.class).then()
+                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to kick from group")));
+    }
+
+    @CacheEvict(allEntries = true)
+    public Mono<Void> updateGroup(Long groupId,GroupDTO groupDTO) {
+        return template.update(query(where("id").is(groupId)),
+                update("name", groupDTO.getName())
+                        .set("roles", groupDTO.getRoles().stream().map(Role::name).toArray(String[]::new)),
+                Group.class).then()
+                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to update a group")));
     }
 }
 

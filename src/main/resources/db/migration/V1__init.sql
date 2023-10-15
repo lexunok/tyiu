@@ -29,8 +29,22 @@ CREATE TABLE IF NOT EXISTS idea (
     rating REAL
 );
 CREATE TABLE IF NOT EXISTS groups (
-     id BIGSERIAL PRIMARY KEY,
-     name TEXT NOT NULL,
-     users_id BIGINT[],
-     roles TEXT[] NOT NULL
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    roles TEXT[] NOT NULL
+);
+CREATE TABLE IF NOT EXISTS temporary (
+    id BIGSERIAL PRIMARY KEY,
+    url TEXT NOT NULL,
+    date_expired TIMESTAMP,
+    email TEXT NOT NULL,
+    new_email TEXT,
+    old_email TEXT,
+    code INT,
+    roles TEXT[]
+);
+CREATE TABLE IF NOT EXISTS group2_user (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    group_id BIGINT NOT NULL
 );
