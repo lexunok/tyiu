@@ -1,31 +1,34 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
 import com.tyiu.corn.model.dto.InvitationDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.Temporary;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.ChangeRequest;
-import com.tyiu.corn.model.requests.UserInfoRequest;
 import com.tyiu.corn.model.responses.ChangeResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
 import com.tyiu.corn.model.responses.UserInfoResponse;
-import com.tyiu.corn.repository.AccountChangeRepository;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
-import com.tyiu.corn.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
+import org.modelmapper.ModelMapper;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
@@ -33,76 +36,33 @@ import reactor.core.publisher.Mono;
 public class AccountChangeService {
 
     private final JavaMailSender emailSender;
-    private final AccountChangeRepository accountChangeRepository;
-    private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final R2dbcEntityTemplate template;
+    private final ModelMapper mapper;
 
-    private void sendEmail(String toAdresses, String subject, String message){
+    private void sendEmail(String toAddresses, String subject, String message){
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
-        simpleMailMessage.setTo(toAdresses);
+        simpleMailMessage.setTo(toAddresses);
         simpleMailMessage.setSubject(subject);
         simpleMailMessage.setText(message);
         this.emailSender.send(simpleMailMessage);
     }
 
-    public Flux<Void> sendInvitations(InvitationDTO invitations) throws MailSendException, ErrorException {
-        /*if (invitations.getRoles() == null){
-
-        }*/
-        Flux<String> inv = Flux.fromIterable(invitations.getEmails());
-        return inv.flatMap(e -> userRepository.existsByEmail(e).flatMap(
-                b -> {
-                    if(Boolean.FALSE.equals(b)){
-                        Date date = new Date();
-                        long milliseconds = date.getTime() + 259200000;
-                        date.setTime(milliseconds);
-                        Temporary invitation = new Temporary();
-                        invitation.setRoles(invitations.getRoles());
-                        invitation.setEmail(e);
-                        invitation.setDateExpired(date);
-                        invitation.setUrl(UUID.randomUUID().toString());
-                        sendEmail(
-                                invitation.getEmail(),
-                                "Приглашение",
-                                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
-                        );
-                        accountChangeRepository.save(invitation).subscribe();
-                    }
-                    return Mono.empty();
-                }));
+    @Scheduled(fixedRate = 43200000)
+    public void deleteExpiredData(){
+        template.delete(query(where("dateExpired").is(LocalDateTime.now())), Temporary.class).subscribe();
     }
 
-    public Mono<Void> sendInvitation(Temporary invitation) throws ErrorException {
-        /*if (userRepository.existsByEmail(invitation.getEmail())){
-
-        }*/
-        Mono<String> inv = Mono.just(invitation.getEmail());
-        return inv.flatMap(e -> accountChangeRepository.existsByEmail(e).flatMap(b -> {
-                UUID url = UUID.randomUUID();
-                Date date = new Date();
-                long milliseconds = date.getTime() + 259200000;
-                date.setTime(milliseconds);
-                invitation.setRoles(List.of(Role.INITIATOR));
-                invitation.setDateExpired(date);
-                invitation.setUrl(url.toString());
-                sendEmail(
-                        invitation.getEmail(),
-                        "Приглашение",
-                        String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
-                );
-                if (Boolean.TRUE.equals(b)){
-                    accountChangeRepository.deleteByEmail(e);
-                }
-                accountChangeRepository.save(invitation).subscribe();
-                return Mono.empty();
-        }));
-    }
+    ///////////////////////
+    //  _____   ____ ______
+    // / ___/  / __//_  __/
+    /// (_ /  / _/   / /
+    //\___/  /___/  /_/
+    ///////////////////////
 
     public Mono<InvitationResponse> findByUrl(String url) {
-        Mono<Temporary> invitation = accountChangeRepository.findByUrl(url);
-        return invitation.flatMap(
-                i -> Mono.just(
-                        InvitationResponse.builder()
+        return template.selectOne(query(where("url").is(url)), Temporary.class)
+                .flatMap(i -> Mono.just(InvitationResponse.builder()
                                 .email(i.getEmail())
                                 .roles(i.getRoles())
                                 .build()
@@ -111,134 +71,178 @@ public class AccountChangeService {
     }
 
     public Mono<ChangeResponse> findByUrlAndSendCode(String url) {
-        Mono<Temporary> emailChange = accountChangeRepository.findByUrl(url);
-        /*if (userRepository.existsByEmail(emailChange.getNewEmail())){
-
-        }*/
-        return emailChange.flatMap(e -> {
-            sendEmail(
-                    e.getOldEmail(),
-                    "Код для изменения почты",
-                    String.format("Введите этот код для изменения почты %d", e.getCode())
-            );
-            return Mono.just(
-                    ChangeResponse.builder()
-                            .newEmail(e.getNewEmail())
-                            .oldEmail(e.getOldEmail())
-                            .build()
-            );
+        return template.selectOne(query(where("url").is(url)), Temporary.class)
+                .flatMap(e -> {
+                    sendEmail(
+                            e.getOldEmail(),
+                            "Код для изменения почты",
+                            String.format("Введите этот код для изменения почты %d", e.getCode())
+                    );
+                    return Mono.just(ChangeResponse.builder()
+                                    .newEmail(e.getNewEmail())
+                                    .oldEmail(e.getOldEmail())
+                                    .build()
+                    );
         });
     }
 
-    public Mono<Void> sendEmailToChangeEmail(Temporary emailChange){
-        /*if (userRepository.existsByEmail(emailChange.getNewEmail())){
+    public Flux<UserInfoResponse> getUsersInfo(){
+        return template.select(User.class).all()
+                .flatMap(u -> Mono.just(UserInfoResponse.builder()
+                            .id(u.getId())
+                            .email(u.getEmail())
+                            .roles(u.getRoles())
+                            .firstName(u.getFirstName())
+                            .lastName(u.getLastName())
+                            .build())
+        );
+    }
 
-        }*/
-        Mono<String> ema = Mono.just(emailChange.getOldEmail());
-        return ema.flatMap(e -> accountChangeRepository.existsByOldEmail(e).flatMap(b -> {
-            if (Boolean.TRUE.equals(b)){
-                accountChangeRepository.deleteByOldEmail(e);
-            }
-            Date date = new Date();
-            date.setTime(date.getTime()+43200000);
-            emailChange.setUrl(UUID.randomUUID().toString());
-            emailChange.setDateExpired(date);
-            emailChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
-            sendEmail(
-                    emailChange.getNewEmail(),
-                    "Изменение почты",
-                    String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
-            );
-            accountChangeRepository.save(emailChange).subscribe();
-            return Mono.empty();
+    public Mono<List<String>> getAllEmails(){
+        return template.select(User.class).all().flatMap(u -> Mono.just(u.getEmail())).collectList();
+    }
+
+    //////////////////////////////
+    //   ___   ____    ____ ______
+    //  / _ \ / __ \  / __//_  __/
+    // / ___// /_/ / _\ \   / /
+    ///_/    \____/ /___/  /_/
+    //////////////////////////////
+
+    public Mono<Void> sendInvitation(Temporary invitation) {
+        return Mono.just(invitation.getEmail()).flatMap(e -> template.exists(query(where("email").is(e)), Temporary.class)
+                .flatMap(b -> {
+                    invitation.setRoles(List.of(Role.INITIATOR));
+                    invitation.setDateExpired(LocalDateTime.now().plusDays(3));
+                    invitation.setUrl(UUID.randomUUID().toString());
+                    sendEmail(
+                            invitation.getEmail(),
+                            "Приглашение",
+                            String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                    );
+                    if (Boolean.TRUE.equals(b)){
+                        return template.delete(query(where("email").is(e)), Temporary.class)
+                                .then(template.insert(invitation));
+                    }
+                        return template.insert(invitation);
+        })).then();
+    }
+
+    public Flux<Void> sendInvitations(InvitationDTO invitations){
+        return Flux.fromIterable(invitations.getEmails()).flatMap(e -> template.exists(query(where("email").is(e)), User.class)
+                .flatMap(b -> {
+                    if(Boolean.FALSE.equals(b)){
+                        Temporary invitation = Temporary.builder()
+                                .roles(invitations.getRoles())
+                                .email(e)
+                                .dateExpired(LocalDateTime.now().plusDays(3))
+                                .url(UUID.randomUUID().toString())
+                                .build();
+                        sendEmail(
+                                invitation.getEmail(),
+                                "Приглашение",
+                                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                        );
+                        return template.insert(invitation).then();
+                    }
+                    return Mono.empty();
+                }));
+    }
+
+    public Mono<Void> sendEmailToChangeEmail(Temporary emailChange){
+        return Mono.just(emailChange.getOldEmail()).flatMap(e -> template.exists(query(where("oldEmail").is(e)), Temporary.class)
+                .flatMap(b -> {
+                        emailChange.setUrl(UUID.randomUUID().toString());
+                        emailChange.setDateExpired(LocalDateTime.now().plusHours(12));
+                        emailChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000)+100000);
+                        sendEmail(
+                                emailChange.getNewEmail(),
+                                "Изменение почты",
+                                String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
+                        );
+                        if (Boolean.TRUE.equals(b)){
+                            return template.delete(query(where("oldEmail").is(e)), Temporary.class)
+                                    .then(template.insert(emailChange))
+                                    .then();
+                        }
+                        return template.insert(emailChange).then();
         }));
     }
 
     public Mono<String> sendEmailToChangePassword(Temporary passwordChange) {
-        /*if (!userRepository.existsByEmail(passwordChange.getEmail())) {
-
-        }*/
-        Date date = new Date();
-        date.setTime(date.getTime() + 300000);
-        passwordChange.setDateExpired(date);
+        passwordChange.setDateExpired(LocalDateTime.now().plusMinutes(5));
         passwordChange.setUrl(UUID.randomUUID().toString());
         passwordChange.setCode(new Random(System.currentTimeMillis()).nextInt(900000) + 100000);
         sendEmail(
                 passwordChange.getEmail(),
                 "Восстановление пароля",
                 String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()));
-        return accountChangeRepository.save(passwordChange).flatMap(p -> Mono.just(p.getUrl()));
+        return template.insert(passwordChange).flatMap(p -> Mono.just(p.getUrl()));
     }
 
+    ///////////////////////////////////////////
+    //   ___    ____   __    ____ ______   ____
+    //  / _ \  / __/  / /   / __//_  __/  / __/
+    // / // / / _/   / /__ / _/   / /    / _/
+    ///____/ /___/  /____//___/  /_/    /___/
+    ///////////////////////////////////////////
+
+    public Mono<Void> deleteDataByUrl(String url){
+        return template.delete(query(where("url").is(url)), Temporary.class).then();
+    }
+
+    ////////////////////////
+    //   ___   __  __ ______
+    //  / _ \ / / / //_  __/
+    // / ___// /_/ /  / /
+    ///_/    \____/  /_/
+    ////////////////////////
+
     public Mono<Void> changePasswordByUser(ChangeRequest request){
-        Mono<Temporary> changePassword = accountChangeRepository.findByUrl(request.getKey());
-        return changePassword.flatMap(c -> {
-            if (new Date().getTime() > c.getDateExpired().getTime()){
-                accountChangeRepository.deleteByUrl(c.getUrl());
-            }
-            if (request.getCode() == c.getCode()) {
-                Mono<User> user = userRepository.findFirstByEmail(c.getEmail());
-                user.flatMap(u -> {
-                    u.setPassword(passwordEncoder.encode(request.getPassword()));
-                    return userRepository.save(u);
-                }).subscribe();
-                return accountChangeRepository.delete(c);
-            }
-            return Mono.empty();
+        return template.selectOne(query(where("url").is(request.getKey())), Temporary.class)
+                .flatMap(c -> {
+                    if (request.getCode() == c.getCode()) {
+                        if (LocalDateTime.now().isAfter(c.getDateExpired())){
+                            return template.delete(query(where("url").is(c.getUrl())), Temporary.class)
+                                    .then(template.update(query(where("email").is(c.getEmail())),
+                                                    update("password", passwordEncoder.encode(request.getPassword())),
+                                                    User.class))
+                                    .then(template.delete(c))
+                                    .then();
+                        }
+                        return template.update(query(where("email").is(c.getEmail())),
+                                        update("password", passwordEncoder.encode(request.getPassword())),
+                                        User.class)
+                                .then(template.delete(c))
+                                .then();
+                    }
+                    return Mono.empty();
         });
     }
 
 
     public Mono<Void> changeEmailByUser(ChangeRequest request){
-        Mono<Temporary> emailChange = accountChangeRepository.findByUrl(request.getUrl());
-        return emailChange.flatMap(e -> {
-            if (request.getCode() == e.getCode()){
-                Mono<User> user = userRepository.findFirstByEmail(request.getOldEmail());
-                user.flatMap(u -> {
-                    u.setEmail(request.getNewEmail());
-                    return userRepository.save(u);
-                }).subscribe();
-                return accountChangeRepository.delete(e);
-            }
-            return Mono.empty();
+        return template.selectOne(query(where("url").is(request.getKey())), Temporary.class)
+                .flatMap(e -> {
+                    if (request.getCode() == e.getCode()){
+                        return template.update(query(where("email").is(request.getOldEmail())),
+                                        update("email", request.getNewEmail()),
+                                        User.class)
+                                .then(template.delete(e))
+                                .then();
+                    }
+                    return Mono.empty();
         });
     }
 
-    public Flux<UserInfoResponse> getUsersInfo(){
-        Flux<User> users = userRepository.findAll();
-        return users.flatMap(
-                u -> Mono.just(UserInfoResponse.builder()
-                        .id(u.getId())
-                        .email(u.getEmail())
-                        .roles(u.getRoles())
-                        .firstName(u.getFirstName())
-                        .lastName(u.getLastName())
-                        .build())
-        );
-    }
-
-    public Mono<List<String>> getAllEmails(){
-        return userRepository.findAll().flatMap(u -> Mono.just(u.getEmail())).collectList();
-    }
-
-    public Mono<User> changeUserInfo(UserInfoRequest request){
-        Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
-        return user.flatMap(u -> {
-            u.setEmail(request.getNewEmail());
-            u.setFirstName(request.getNewFirstName());
-            u.setLastName(request.getNewLastName());
-            u.setRoles(request.getNewRoles());
-            return userRepository.save(u);
-        });
-    }
-
-    public void deleteDataByUrl(String url){
-        accountChangeRepository.deleteByUrl(url);
-    }
-
-    @Scheduled(fixedRate = 43200000)
-    public void deleteExpiredData(){
-        Date date = new Date();
-        accountChangeRepository.deleteExpiredData(date);
+    public Mono<UserDTO> changeUserInfo(UserDTO userDTO){
+        return template.update(query(where("email").is(userDTO.getEmail())),
+                update("email", userDTO.getEmail())
+                        .set("first_name", userDTO.getFirstName())
+                        .set("last_name", userDTO.getLastName())
+                        .set("roles", userDTO.getRoles().stream().map(Role::name).toArray(String[]::new)),
+                User.class)
+                .then(template.selectOne(query(where("email").is(userDTO.getEmail())), User.class))
+                .flatMap(u -> Mono.just(mapper.map(u, UserDTO.class)));
     }
 }

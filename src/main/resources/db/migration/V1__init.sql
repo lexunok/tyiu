@@ -35,9 +35,9 @@ CREATE TABLE IF NOT EXISTS groups (
 );
 CREATE TABLE IF NOT EXISTS temporary (
     id BIGSERIAL PRIMARY KEY,
-    url TEXT NOT NULL,
+    url TEXT,
     date_expired TIMESTAMP,
-    email TEXT NOT NULL,
+    email TEXT,
     new_email TEXT,
     old_email TEXT,
     code INT,
