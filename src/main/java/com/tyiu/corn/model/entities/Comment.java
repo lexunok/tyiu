@@ -1,29 +1,19 @@
 package com.tyiu.corn.model.entities;
 import lombok.*;
 
-import java.time.Instant;
-import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.time.LocalDateTime;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.relational.core.mapping.Table;
 
-import java.util.Date;
 
-@Setter
-@Getter
-@AllArgsConstructor
-@NoArgsConstructor
 @Builder
-@Document
+@Table
 public class Comment {
     @Id
-    private String id;
-    private String comment;
-    private String sender;
-    private List<String> checkedBy;
-    private Instant createdAt;
-    @Indexed
-    private String ideaId;
+    private Long id;
+    private String text;
+    private String senderEmail;
+    private LocalDateTime createdAt;
+    private Long ideaId;
 }

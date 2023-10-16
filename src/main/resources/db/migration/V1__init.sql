@@ -48,3 +48,10 @@ CREATE TABLE IF NOT EXISTS group_user (
     user_id BIGINT NOT NULL,
     group_id BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS comment (
+    id BIGSERIAL PRIMARY KEY,
+    text TEXT NOT NULL,
+    senderEmail TEXT NOT NULL,
+    createdAt TIMESTAMP,
+    ideaId BIGINT NOT NULL UNIQUE
+);
