@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities.relations;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -9,7 +10,8 @@ import org.springframework.data.relational.core.mapping.Table;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table
+@Getter
+@Table("group_user")
 public class Group2User {
     @Id
     private Long id;

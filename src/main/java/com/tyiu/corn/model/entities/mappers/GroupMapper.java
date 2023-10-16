@@ -20,11 +20,8 @@ public class GroupMapper implements BiFunction<Row, Object, GroupDTO> {
                 .firstName(row.get("first_name", String.class))
                 .lastName(row.get("last_name", String.class))
                 .build();
-
         Long groupId = row.get("id", Long.class);
-
         GroupDTO existingGroup = groupDTOMap.get(groupId);
-
         if (existingGroup == null) {
             existingGroup = GroupDTO.builder()
                     .id(groupId)
@@ -36,7 +33,6 @@ public class GroupMapper implements BiFunction<Row, Object, GroupDTO> {
                     .build();
             groupDTOMap.put(groupId, existingGroup);
         }
-
         existingGroup.getUsers().add(userDTO);
 
         return existingGroup;

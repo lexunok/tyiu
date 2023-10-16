@@ -7,6 +7,7 @@ import com.tyiu.corn.model.entities.Group;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.entities.mappers.IdeaMapper;
+import com.tyiu.corn.model.entities.relations.Group2User;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import lombok.RequiredArgsConstructor;
@@ -70,18 +71,17 @@ public class IdeaService {
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
         return template.insert(idea).flatMap(savedIdea ->
-            template.selectOne(query(where("id").is(savedIdea.getGroupExpertId())), Group.class)
-                    .flatMap(g -> {
-                        List<Rating> ratings = g.getUsersId().stream().map(u ->
-                                Rating.builder()
-                                        .expert(u)
-                                        .confirmed(false)
-                                        .ideaId(savedIdea.getId())
-                                        .build()).toList();
+            template.select(query(where("group_id").is(savedIdea.getGroupExpertId())), Group2User.class)
+                    .flatMap(u -> {
+                        Rating rating = Rating.builder()
+                                .expert(u.getUserId())
+                                .confirmed(false)
+                                .ideaId(savedIdea.getId())
+                                .build();
                         IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                        savedDTO.setExperts(mapper.map(g, GroupDTO.class));
-                        return template.insert(ratings).thenReturn(savedDTO);
-                    })
+                        savedDTO.setExperts(GroupDTO.builder().id(u.getGroupId()).build());
+                        return template.insert(rating).thenReturn(savedDTO);
+                    }).next()
         ).onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
     @CacheEvict(allEntries = true)

@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS temporary (
     code INT,
     roles TEXT[]
 );
-CREATE TABLE IF NOT EXISTS group2_user (
+CREATE TABLE IF NOT EXISTS group_user (
     id BIGSERIAL PRIMARY KEY,
     user_id BIGINT NOT NULL,
     group_id BIGINT NOT NULL

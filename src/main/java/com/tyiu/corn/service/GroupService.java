@@ -48,8 +48,8 @@ public class GroupService {
     public Mono<GroupDTO> getGroupById(Long groupId) {
         String query = "SELECT groups.*, users.id AS member_id, users.email, users.first_name, users.last_name " +
                         "FROM groups " +
-                        "LEFT JOIN group2_user ON groups.id = group2_user.group_id " +
-                        "LEFT JOIN users ON group2_user.user_id = users.id " +
+                        "LEFT JOIN group_user ON groups.id = group_user.group_id " +
+                        "LEFT JOIN users ON group_user.user_id = users.id " +
                         "WHERE groups.id = :groupId";
         GroupMapper groupMapper = new GroupMapper();
         return template.getDatabaseClient()
