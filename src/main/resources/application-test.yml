@@ -1,4 +1,18 @@
+postgres:
+  url: postgresql://localhost:5432/hits
 spring:
+  r2dbc:
+    url: r2dbc:${postgres.url}
+    username: admin
+    password: admin
+  flyway:
+    url: jdbc:${postgres.url}
+    user: ${spring.r2dbc.username}
+    password: ${spring.r2dbc.password}
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    enabled: true
+    validate-on-migrate: true
   rsocket:
     server:
       port: 7000

@@ -25,7 +25,7 @@ import java.util.List;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class CompanyControllerTest{
+public class CompanyControllerTest extends TestContainers{
 
     @Autowired
     private WebTestClient webTestClient;

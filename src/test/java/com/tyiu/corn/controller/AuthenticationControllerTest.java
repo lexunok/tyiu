@@ -9,7 +9,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import org.springframework.boot.test.context.SpringBootTest;
 
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.utility.DockerImageName;
 import reactor.core.publisher.Mono;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -20,16 +24,17 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class AuthenticationControllerTest {
+class AuthenticationControllerTest extends TestContainers{
     @Autowired
     private WebTestClient webTestClient;
+
 
     @Order(1)
     @Test
     void canRegister(){
         RegisterRequest request = new RegisterRequest(
                 "edqmail","lastnasme","firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
-        AuthenticationResponse response =webTestClient
+        AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)

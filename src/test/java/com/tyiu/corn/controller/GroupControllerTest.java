@@ -26,7 +26,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class GroupControllerTest {
+class GroupControllerTest extends TestContainers{
 
     @Autowired
     private WebTestClient webTestClient;
