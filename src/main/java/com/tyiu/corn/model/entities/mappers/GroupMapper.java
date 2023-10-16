@@ -10,7 +10,7 @@ import java.util.function.BiFunction;
 
 public class GroupMapper implements BiFunction<Row, Object, GroupDTO> {
 
-    private final Map<Long, GroupDTO> groupDTOMap = new HashMap<>();
+    private final Map<Long, GroupDTO> groupDTOMap = new LinkedHashMap<>();
 
     @Override
     public GroupDTO apply(Row row, Object o) {
@@ -20,8 +20,10 @@ public class GroupMapper implements BiFunction<Row, Object, GroupDTO> {
                 .firstName(row.get("first_name", String.class))
                 .lastName(row.get("last_name", String.class))
                 .build();
+
         Long groupId = row.get("id", Long.class);
         GroupDTO existingGroup = groupDTOMap.get(groupId);
+
         if (existingGroup == null) {
             existingGroup = GroupDTO.builder()
                     .id(groupId)
@@ -33,7 +35,10 @@ public class GroupMapper implements BiFunction<Row, Object, GroupDTO> {
                     .build();
             groupDTOMap.put(groupId, existingGroup);
         }
-        existingGroup.getUsers().add(userDTO);
+
+        if(existingGroup.getUsers().stream().noneMatch(user -> user.getId().equals(userDTO.getId()))) {
+            existingGroup.getUsers().add(userDTO);
+        }
 
         return existingGroup;
     }

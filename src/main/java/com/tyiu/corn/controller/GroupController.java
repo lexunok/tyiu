@@ -2,15 +2,12 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.GroupDTO;
 
-import com.tyiu.corn.model.responses.AuthenticationResponse;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.GroupService;
 
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -67,23 +64,8 @@ public class GroupController {
     ///_/    \____/  /_/
     ////////////////////////
 
-    @PutMapping("/add/{groupId}")
-    public Mono<Void> addInGroup(@PathVariable Long groupId, @RequestBody AuthenticationResponse response) {
-        return groupService.addInGroup(groupId, response.getId());
-    }
-
-    @PutMapping("/add-list/{groupId}")
-    public Mono<Void> addListInGroup(@PathVariable Long groupId, @RequestBody List<Long> usersId) {
-        return groupService.addListInGroup(groupId, usersId);
-    }
-
-    @PutMapping("/kick/{groupId}")
-    public Mono<Void> kickFromGroup(@PathVariable Long groupId, @RequestBody AuthenticationResponse response) {
-        return groupService.kickFromGroup(groupId, response.getId());
-    }
-
     @PutMapping("/update/{groupId}")
-    public Mono<Void> updateGroup(@PathVariable Long groupId, @RequestBody GroupDTO group) {
+    public Mono<GroupDTO> updateGroup(@PathVariable Long groupId, @RequestBody GroupDTO group) {
         return groupService.updateGroup(groupId, group);
     }
 }
