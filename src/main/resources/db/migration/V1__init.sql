@@ -48,13 +48,10 @@ CREATE TABLE IF NOT EXISTS group_user (
     user_id BIGINT NOT NULL,
     group_id BIGINT NOT NULL
 );
-CREATE TABLE IF NOT EXITS skills (
+CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMP,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    confirmed BOOLEAN NOT NULL,
-    creator_id BIGINT,
-    updater_id BIGINT,
-    deleter_id BIGINT,
-)
+    text TEXT NOT NULL,
+    senderEmail TEXT NOT NULL,
+    createdAt TIMESTAMP,
+    ideaId BIGINT NOT NULL UNIQUE
+);
