@@ -12,6 +12,7 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
+import org.springframework.core.io.UrlResource;
 import org.springframework.core.io.buffer.DataBuffer;
 import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
@@ -38,14 +39,23 @@ public class ProfileService {
     String path;
 
     public Mono<Resource> uploadAvatar(String userEmail,FilePart file){
-        Path basePath = Paths.get(path).resolve(file.filename()).resolve(userEmail);
-        return file.transferTo(basePath).thenReturn(
-                loader.getResource(basePath.toString())
-        );
+        Path basePath = Paths.get(path, userEmail + ".jpg");
+        file.transferTo(basePath).subscribe();
+        try {
+            Resource resource = new UrlResource(basePath.toUri());
+            return Mono.just(resource);
+        } catch (Exception e) {
+            return Mono.empty();
+        }
     }
     public Mono<Resource> getAvatar(String userEmail){
-        Path basePath = Paths.get(path).resolve(userEmail);
-       return Mono.just(loader.getResource(basePath.toString()));
+        Path basePath = Paths.get(path, userEmail + ".jpg");
+        try {
+            Resource resource = new UrlResource(basePath.toUri());
+            return Mono.just(resource);
+        } catch (Exception e) {
+            return Mono.empty();
+        }
     }
 
 
