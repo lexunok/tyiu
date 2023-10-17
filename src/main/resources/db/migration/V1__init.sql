@@ -55,3 +55,13 @@ CREATE TABLE IF NOT EXISTS comment (
     createdAt TIMESTAMP,
     ideaId BIGINT NOT NULL UNIQUE
 );
+CREATE TABLE IF NOT EXISTS skills (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    confirmed BOOLEAN NOT NULL,
+    creator_id BIGINT,
+    updater_id BIGINT,
+    deleter_id BIGINT
+};
