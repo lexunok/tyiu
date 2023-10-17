@@ -6,15 +6,15 @@ import java.time.Instant;
 
 import lombok.*;
 
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document
+@Table
 public class Skill {
     @Id
     private Long id;
