@@ -88,9 +88,19 @@ CREATE TABLE IF NOT EXISTS rating (
 );
 CREATE TABLE IF NOT EXISTS team (
     id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    closed BOOLEAN NOT NULL,
+    created_at TIMESTAMP,
+    owner_id BIGSERIAL BIGINT NOT NULL UNIQUE,
+    leader_id BIGSERIAL BIGINT NOT NULL UNIQUE
 );
 CREATE TABLE IF NOT EXISTS team_invitation (
     id BIGSERIAL PRIMARY KEY,
+    team_name TEXT NOT NULL,
+    team_id BIGSERIAL BIGINT NOT NULL,
+    receiver_id BIGSERIAL BIGINT NOT NULL,
+    created_at TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS team_member (
     id BIGSERIAL PRIMARY KEY,
