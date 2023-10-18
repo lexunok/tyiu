@@ -2,7 +2,10 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.service.RatingService;
+import com.tyiu.corn.util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -17,22 +20,27 @@ public class RatingController {
     private final RatingService ratingService;
 
     @GetMapping("/all/{ideaId}")
-    public Flux<RatingDTO> getAllIdeasRatings(@PathVariable String ideaId){
+    public Flux<RatingDTO> getAllIdeasRatings(@PathVariable Long ideaId){
         return ratingService.getRatings(ideaId);
     }
 
     @GetMapping("/{ideaId}")
-    public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable String ideaId, Principal principal){
-        return ratingService.getExpertRating(ideaId, principal.getName());
+    public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable Long ideaId,
+                                                  @AuthenticationPrincipal CustomUserDetails user){
+        return ratingService.getExpertRating(ideaId, user.getUserId());
     }
 
-    @PutMapping("/save/{ideaId}")
-    public Mono<Void> saveRating(@RequestBody RatingDTO rating, Principal principal, @PathVariable String ideaId) {
-        return ratingService.saveRating(rating, principal.getName(), ideaId);
+    @PutMapping("/save")
+    public Mono<ResponseEntity<String>> saveRating(@RequestBody RatingDTO ratingDTO,
+                                                   @AuthenticationPrincipal CustomUserDetails user) {
+        return ratingService.saveRating(ratingDTO,  user.getUserId())
+                .thenReturn(ResponseEntity.ok("Success saving!"));
     }
 
-    @PutMapping("/confirm/{ideaId}")
-    public Mono<Void> confirmRating(@RequestBody RatingDTO rating, Principal principal, @PathVariable String ideaId) {
-        return ratingService.confirmRating(rating, principal.getName(), ideaId);
+    @PutMapping("/confirm")
+    public Mono<ResponseEntity<String>> confirmRating(@RequestBody RatingDTO ratingDTO,
+                                                      @AuthenticationPrincipal CustomUserDetails user) {
+        return ratingService.confirmRating(ratingDTO, user.getUserId())
+                .thenReturn(ResponseEntity.ok("Success confirming!"));
     }
 }

@@ -1,15 +1,13 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.model.dto.CompanyDTO;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.CompanyService;
-import com.tyiu.corn.model.dto.UserDTO;
-import com.tyiu.corn.model.entities.Company;
-
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/company")
@@ -18,26 +16,34 @@ public class CompanyController {
 
     private final CompanyService companyService;
 
+    @GetMapping("/{companyId}")
+    public Mono<CompanyDTO> getCompanyById(@PathVariable Long companyId) {
+        return companyService.getCompanyById(companyId);
+    }
+
     @GetMapping("/all")
-    public Flux<Company> getCompanyList(){
+    public Flux<CompanyDTO> getCompanyList() {
         return companyService.getListCompany();
     }
 
-    @GetMapping("/staff/{id}")
-    public Flux<UserDTO> getCompanyStaff(@PathVariable String id){
-        return companyService.getListStaff(id);
+    @GetMapping("/staff/{companyId}")
+    public Mono<CompanyDTO> getCompanyStaff(@PathVariable Long companyId) {
+        return companyService.getListStaff(companyId);
     }
 
-    @PostMapping("/add")
-    public Mono<Company> addCompany(@RequestBody Company company){
-        return companyService.addCompany(company);
+    @PostMapping("/create")
+    public Mono<CompanyDTO> createCompany(@RequestBody CompanyDTO company) {
+        return companyService.createCompany(company);
     }
-    @DeleteMapping("/delete/{id}")
-    public void deleteCompany(@PathVariable String id){
-        companyService.deleteCompany(id);
+
+    @DeleteMapping("/delete/{companyId}")
+    public Mono<ResponseEntity<String>> deleteCompany(@PathVariable Long companyId) {
+        companyService.deleteCompany(companyId).subscribe();
+        return Mono.just(new ResponseEntity<>("Success deleting", HttpStatus.OK));
     }
-    @PutMapping("/update/{id}")
-    public void updateCompany(@PathVariable String id, @RequestBody Company company){
-        companyService.updateCompany(id, company);
+
+    @PutMapping("/update/{companyId}")
+    public Mono<CompanyDTO> updateCompany(@PathVariable Long companyId, @RequestBody CompanyDTO company) {
+        return companyService.updateCompany(companyId, company);
     }
 }
