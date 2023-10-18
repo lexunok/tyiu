@@ -48,6 +48,15 @@ CREATE TABLE IF NOT EXISTS group_user (
     user_id BIGINT NOT NULL,
     group_id BIGINT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS companies (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS company_user (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    company_id BIGINT NOT NULL
+);
 CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,
     text TEXT NOT NULL,
