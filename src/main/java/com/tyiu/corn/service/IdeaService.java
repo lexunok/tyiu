@@ -74,7 +74,7 @@ public class IdeaService {
             template.select(query(where("group_id").is(savedIdea.getGroupExpertId())), Group2User.class)
                     .flatMap(u -> {
                         Rating rating = Rating.builder()
-                                .expert(u.getUserId())
+                                .expertId(u.getUserId())
                                 .confirmed(false)
                                 .ideaId(savedIdea.getId())
                                 .build();

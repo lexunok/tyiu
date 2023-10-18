@@ -114,7 +114,7 @@ public class TeamService {
         if (teamDTO.getSkills() != null)
         {
             List<String> skills = new ArrayList<>();
-            teamDTO.getSkills().forEach(s -> skills.add(s.getId()));
+            //teamDTO.getSkills().forEach(s -> skills.add(s.getId()));
             team.setSkills(skills);
         }
         return mongoTemplate.save(team).flatMap(t -> {
@@ -177,7 +177,7 @@ public class TeamService {
             if (teamDTO.getSkills() != null)
             {
                 List<String> skills = new ArrayList<>();
-                teamDTO.getSkills().forEach(s -> skills.add(s.getId()));
+                //teamDTO.getSkills().forEach(s -> skills.add(s.getId()));
                 t.setSkills(skills);
             }
 

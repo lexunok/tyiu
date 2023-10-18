@@ -22,9 +22,9 @@ CREATE TABLE IF NOT EXISTS idea (
     customer TEXT,
     contact_person TEXT,
     description TEXT,
-    suitability INT,
-    budget INT,
-    technical_realizability INT,
+    suitability BIGINT,
+    budget BIGINT,
+    technical_realizability BIGINT,
     pre_assessment REAL,
     rating REAL
 );
@@ -54,8 +54,8 @@ CREATE TABLE IF NOT EXISTS companies (
 );
 CREATE TABLE IF NOT EXISTS company_user (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    company_id BIGINT NOT NULL
+    user_id BIGINT UNIQUE NOT NULL,
+    company_id BIGINT UNIQUE NOT NULL
 );
 CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,
@@ -73,4 +73,17 @@ CREATE TABLE IF NOT EXISTS skills (
     creator_id BIGINT,
     updater_id BIGINT,
     deleter_id BIGINT
-};
+);
+CREATE TABLE IF NOT EXISTS rating (
+    id BIGSERIAL PRIMARY KEY,
+    idea_id BIGINT NOT NULL UNIQUE,
+    expert_id BIGINT NOT NULL UNIQUE,
+    market_value BIGINT,
+    originality BIGINT,
+    suitability INT,
+    budget BIGINT,
+    technical_realizability BIGINT,
+    confirmed BOOLEAN,
+    rating REAL
+);
+

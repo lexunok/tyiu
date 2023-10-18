@@ -121,7 +121,7 @@ public class ProjectService {
         if (skillsDTO != null)
         {
             List<String> skills = new ArrayList<>();
-            skillsDTO.forEach(s -> skills.add(s.getId()));
+            //skillsDTO.forEach(s -> skills.add(s.getId()));
             project.setSkills(skills);
         }
 
@@ -209,7 +209,7 @@ public class ProjectService {
             if (skillsDTO != null)
             {
                 List<String> skills = new ArrayList<>();
-                skillsDTO.forEach(s -> skills.add(s.getId()));
+                //skillsDTO.forEach(s -> skills.add(s.getId()));
                 p.setSkills(skills);
             }
 
