@@ -10,6 +10,7 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeamMemberDTO {
+    private Long userId;
     private String email;
     private String firstName;
     private String lastName;

@@ -5,12 +5,12 @@ import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.entities.TeamInvitation;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.service.TeamService;
+import com.tyiu.corn.util.CustomUserDetails;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/team")
@@ -20,7 +20,7 @@ public class TeamController {
     private final TeamService teamService;
 
     @GetMapping("/{teamId}")
-    public Mono<TeamDTO> getTeam(@PathVariable String teamId){
+    public Mono<TeamDTO> getTeam(@PathVariable Long teamId){
         return teamService.getTeam(teamId);
     }
 
@@ -30,8 +30,8 @@ public class TeamController {
     }
 
     @GetMapping("/invites")
-    public Flux<TeamInvitation> getInvitation(Principal principal) {
-        return teamService.getInvitation(principal.getName());
+    public Flux<TeamInvitation> getInvitation(@AuthenticationPrincipal CustomUserDetails user) {
+        return teamService.getInvitations(user.getId());
     }
 
     @PostMapping("/add")
@@ -40,32 +40,32 @@ public class TeamController {
     }
 
     @PostMapping("/send-invite/{teamId}")
-    public Mono<TeamInvitation> sendInvite(@RequestBody AuthenticationResponse invitation, @PathVariable String teamId){
-        return teamService.sendInviteToUser(invitation.getEmail(), teamId);
+    public Mono<TeamInvitation> sendInvite(@RequestBody AuthenticationResponse invitation, @PathVariable Long teamId){
+        return teamService.sendInviteToUser(invitation.getId(), teamId);
     }
 
     @DeleteMapping("/delete/{teamId}")
-    public Mono<Void> deleteTeam(@PathVariable String teamId) {
+    public Mono<Void> deleteTeam(@PathVariable Long teamId) {
         return teamService.deleteTeam(teamId);
     }
 
     @DeleteMapping("/delete/invite/{inviteId}")
-    public Mono<Void> deleteInvite(@PathVariable String inviteId) {
+    public Mono<Void> deleteInvite(@PathVariable Long inviteId) {
         return teamService.deleteInvite(inviteId);
     }
 
-    @PutMapping("/kick/{teamId}")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-        return teamService.kickFromTeam(teamId, invitation.getEmail());
-    }
-
-    @PutMapping("/invite/{teamId}")
-    public Mono<Void> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-        return teamService.inviteInTeam(teamId, invitation.getEmail());
-    }
-
-    @PutMapping("/update/{teamId}")
-    public Mono<Void> updateTeam(@PathVariable String teamId,@RequestBody TeamDTO team){
-        return teamService.updateTeam(teamId, team);
-    }
+//    @PutMapping("/kick/{teamId}")
+//    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
+//        return teamService.kickFromTeam(teamId, invitation.getEmail());
+//    }
+//
+//    @PutMapping("/invite/{teamId}")
+//    public Mono<Void> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
+//        return teamService.inviteInTeam(teamId, invitation.getEmail());
+//    }
+//
+//    @PutMapping("/update/{teamId}")
+//    public Mono<Void> updateTeam(@PathVariable String teamId,@RequestBody TeamDTO team){
+//        return teamService.updateTeam(teamId, team);
+//    }
 }

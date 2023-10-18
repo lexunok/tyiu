@@ -27,15 +27,15 @@ public class ProjectController {
     //\___/  /___/  /_/
     ///////////////////////
 
-    @GetMapping("/all")
-    public Flux<ProjectDTO> getAllProject(){
-        return projectService.getAll();
-    }
-
-    @GetMapping("/get/{projectId}")
-    public Mono<ProjectDTO> getProject(@PathVariable String projectId){
-        return projectService.getProject(projectId);
-    }
+//    @GetMapping("/all")
+//    public Flux<ProjectDTO> getAllProject(){
+//        return projectService.getAll();
+//    }
+//
+//    @GetMapping("/get/{projectId}")
+//    public Mono<ProjectDTO> getProject(@PathVariable String projectId){
+//        return projectService.getProject(projectId);
+//    }
 
     @GetMapping("/invites")
     public Flux<ProjectInvitation> getProjectInvitations(Principal principal){
@@ -86,9 +86,9 @@ public class ProjectController {
         return projectService.deleteInvite(inviteId);
     }
 
-    @DeleteMapping("/delete/application/{applicationId}")
-    public Mono<Void> deleteApplication(@PathVariable String applicationId){
-        return projectService.deleteApplication(applicationId);
+    @DeleteMapping("/delete/request/{requestId}")
+    public Mono<Void> deleteRequest(@PathVariable String requestId){
+        return projectService.deleteRequest(requestId);
     }
 
     ////////////////////////
@@ -98,19 +98,19 @@ public class ProjectController {
     ///_/    \____/  /_/
     ////////////////////////
 
-    @PutMapping("/update/{projectId}")
-    public Mono<Void> updateProject(@RequestBody ProjectDTO projectDTO, @PathVariable String projectId){
-        return projectService.updateProject(projectDTO, projectId);
-    }
-
-    @PutMapping("/invite/{projectId}")
-    public Mono<Void> inviteInProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
-        return projectService.addInProject(projectId, invitation.getEmail());
-    }
-
-    @PutMapping("/kick/{projectId}")
-    public Mono<Void> kickFromProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
-        return projectService.kickFromProject(projectId, invitation.getEmail());
-    }
+//    @PutMapping("/update/{projectId}")
+//    public Mono<Void> updateProject(@RequestBody ProjectDTO projectDTO, @PathVariable String projectId){
+//        return projectService.updateProject(projectDTO, projectId);
+//    }
+//
+//    @PutMapping("/invite/{projectId}")
+//    public Mono<Void> inviteInProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
+//        return projectService.addInProject(projectId, invitation.getEmail());
+//    }
+//
+//    @PutMapping("/kick/{projectId}")
+//    public Mono<Void> kickFromProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
+//        return projectService.kickFromProject(projectId, invitation.getEmail());
+//    }
 
 }

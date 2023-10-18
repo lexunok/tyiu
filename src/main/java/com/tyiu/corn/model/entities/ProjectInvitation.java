@@ -2,7 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.relational.core.mapping.Table;
 
 import java.time.Instant;
 
@@ -11,7 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document
+@Table
 public class ProjectInvitation {
     @Id
     private String id;

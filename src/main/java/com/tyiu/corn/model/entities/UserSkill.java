@@ -6,19 +6,18 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.relational.core.mapping.Table;
 
-@Document
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table
 public class UserSkill {
     @Id
-    private String id;
-    @Indexed
-    private String skillId;
-    @Indexed
+    private Long id;
+    private Long skillId;
     private String userEmail;
     private SkillType type;
     private String name;
