@@ -25,18 +25,18 @@ public class TeamService {
 
     public Mono<TeamDTO> getTeam(Long teamId) {
         TeamMapper teamMapper = new TeamMapper();
-        String QUERY = "SELECT team.* " +
-                "o.id o_id, o.email o_email, o.first_name o_first_name, o.last_name o_last_name " +
-                "l.id l_id, l.email l_email, l.first_name l_first_name, l.last_name l_last_name " +
-                "m.id m_id, m.email m_email, m.first_name m_first_name, m.last_name m_last_name " +
-                "skills.id s_id, skills.name s_name, skills.type " +
+        String QUERY = "SELECT team.*, " +
+                "o.id o_id, o.email o_email, o.first_name o_first_name, o.last_name o_last_name, " +
+                "l.id l_id, l.email l_email, l.first_name l_first_name, l.last_name l_last_name, " +
+                "m.id m_id, m.email m_email, m.first_name m_first_name, m.last_name m_last_name, " +
+                "s.id s_id, s.name s_name, s.type " +
                 "FROM team " +
                 "LEFT JOIN team_member ON team.id = team_member.team_id " +
-                "LEFT JOIN team_skill ON s_id = team_skill.team_id " +
+                "LEFT JOIN team_skill ON team.id = team_skill.team_id " +
                 "LEFT JOIN users o ON team.owner_id = o.id " +
                 "LEFT JOIN users l ON team.leader_id = l.id " +
-                "LEFT JOIN users m ON team_member.team_id = m.id " +
-                "LEFT JOIN skills s ON team_skill.skill_id = s.id " +
+                "LEFT JOIN users m ON team_member.member_id = m.id " +
+                "LEFT JOIN skill s ON team_skill.skill_id = s.id " +
                 "WHERE team.id = :teamId";
         return template.getDatabaseClient()
                 .sql(QUERY)
@@ -62,8 +62,9 @@ public class TeamService {
                                                         .build())));
     }
 
-    public Flux<TeamInvitation> getInvitations(Long id) {
-        return template.select(query(where("receiver_id").is(id)), TeamInvitation.class);
+    public Flux<TeamInvitation> getInvitations(String email) {
+        return template.selectOne(query(where("email").is(email)), User.class)
+                .flatMapMany(u -> template.select(query(where("receiver_id").is(u.getId())), TeamInvitation.class));
     }
 
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
@@ -79,6 +80,7 @@ public class TeamService {
                 .flatMap(t -> {
                     teamDTO.setId(t.getId());
                     teamDTO.setMembersCount(teamDTO.getMembers().size());
+                    teamDTO.setCreatedAt(team.getCreatedAt());
 
                     teamDTO.getMembers().forEach(m ->
                             template.insert(new Team2Member(t.getId(),m.getUserId())).subscribe());
@@ -112,12 +114,16 @@ public class TeamService {
     //
 
     public Mono<Void> deleteTeam(Long id) {
-        return template.delete(query(where("id").is(id)), Team.class).then()
+        return template.delete(query(where("id").is(id)), Team.class)
+                .then(template.delete(query(where("team_id").is(id)), Team2Member.class))
+                .then(template.delete(query(where("team_id").is(id)), Team2Skill.class))
+                .then(template.delete(query(where("team_id").is(id)), TeamInvitation.class))
+                .then()
                 .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
 
     public Mono<Void> deleteInvite(Long id) {
-        return template.delete(query(where("id").is(id)), Team.class).then()
+        return template.delete(query(where("id").is(id)), TeamInvitation.class).then()
                 .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
     }
 

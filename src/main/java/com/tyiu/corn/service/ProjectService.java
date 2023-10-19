@@ -12,9 +12,6 @@ import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -159,7 +156,6 @@ public class ProjectService {
                                     .email(u.getEmail())
                                     .firstName(u.getFirstName())
                                     .lastName(u.getLastName())
-                                    .skills(s)
                                     .build())
                             .createdAt(Instant.now())
                             .build())))

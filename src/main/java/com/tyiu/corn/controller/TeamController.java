@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.Principal;
+
 @RestController
 @RequestMapping("/api/v1/team")
 @RequiredArgsConstructor
@@ -30,8 +32,8 @@ public class TeamController {
     }
 
     @GetMapping("/invites")
-    public Flux<TeamInvitation> getInvitation(@AuthenticationPrincipal CustomUserDetails user) {
-        return teamService.getInvitations(user.getId());
+    public Flux<TeamInvitation> getInvitation(Principal principal) {
+        return teamService.getInvitations(principal.getName());
     }
 
     @PostMapping("/add")

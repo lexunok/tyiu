@@ -57,7 +57,7 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
         SkillDTO skill = SkillDTO.builder()
                 .id(row.get("s_id", Long.class))
                 .name(row.get("s_name", String.class))
-                .type(row.get("type", SkillType.class))
+                .type(SkillType.valueOf(row.get("type", String.class)))
                 .build();
 
         if(existingTeam.getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
