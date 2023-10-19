@@ -22,14 +22,14 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @GetMapping("/ideas/get")
-    public Flux<UserIdeaResponse> getUserIdeas(Principal principal) {
-        return profileService.getUserIdeas(principal.getName());
-    }
-    @GetMapping("/projects/get")
-    public Flux<UserProjectResponse> getUserProjects(Principal principal) {
-        return profileService.getUserProjects(principal.getName());
-    }
+    //@GetMapping("/ideas/get")
+    //public Flux<UserIdeaResponse> getUserIdeas(Principal principal) {
+    //    return profileService.getUserIdeas(principal.getName());
+    //}
+    //@GetMapping("/projects/get")
+    //public Flux<UserProjectResponse> getUserProjects(Principal principal) {
+    //    return profileService.getUserProjects(principal.getName());
+    //}
 
 
     @GetMapping("/avatar/get")
@@ -42,13 +42,13 @@ public class ProfileController {
                                          @RequestPart("file") FilePart file) {
         return profileService.uploadAvatar(principal.getName(), file);
     }
-    @GetMapping("/skills/get")
-    public Flux<UserSkillResponse> getUserSkills(Principal principal) {
-        return profileService.getSkills(principal.getName());
-    }
-    @PostMapping("/skills/save")
-    public Flux<UserSkillResponse> saveUserSkills(Principal principal,
-                                                  @RequestBody Flux<UserSkillRequest> skills) {
-        return profileService.saveSkills(principal.getName(), skills);
-    }
+    //@GetMapping("/skills/get")
+    //public Flux<UserSkillResponse> getUserSkills(Principal principal) {
+    //    return profileService.getSkills(principal.getName());
+    //}
+    //@PostMapping("/skills/save")
+    //public Flux<UserSkillResponse> saveUserSkills(Principal principal,
+     //                                             @RequestBody Flux<UserSkillRequest> skills) {
+     //   return profileService.saveSkills(principal.getName(), skills);
+    //}
 }
