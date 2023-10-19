@@ -4,8 +4,6 @@ import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.enums.UserSkillLevel;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Getter

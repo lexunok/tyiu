@@ -11,14 +11,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.UrlResource;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -33,8 +27,7 @@ import java.nio.file.Paths;
 public class ProfileService {
 
     private final ModelMapper mapper;
-    private final ReactiveMongoTemplate template;
-    private final ResourceLoader loader;
+    private final R2dbcEntityTemplate template;
     @Value("${file.path.avatar}")
     String path;
 
@@ -59,7 +52,7 @@ public class ProfileService {
     }
 
 
-    @Cacheable(cacheNames = "ideas")
+    /*@Cacheable(cacheNames = "ideas")
     public Flux<UserIdeaResponse> getUserIdeas(String userEmail) {
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery,Profile.class).flatMapMany(p ->
@@ -108,5 +101,5 @@ public class ProfileService {
                                 ).flatMapMany(us -> Flux.just(mapper.map(us, UserSkillResponse.class)))
                     )
         );
-    }
+    }*/
 }

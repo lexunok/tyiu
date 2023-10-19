@@ -92,14 +92,14 @@ CREATE TABLE IF NOT EXISTS team (
     description TEXT,
     closed BOOLEAN NOT NULL,
     created_at TIMESTAMP,
-    owner_id BIGSERIAL BIGINT NOT NULL UNIQUE,
-    leader_id BIGSERIAL BIGINT NOT NULL UNIQUE
+    owner_id BIGINT NOT NULL UNIQUE,
+    leader_id BIGINT NOT NULL UNIQUE
 );
 CREATE TABLE IF NOT EXISTS team_invitation (
     id BIGSERIAL PRIMARY KEY,
     team_name TEXT NOT NULL,
-    team_id BIGSERIAL BIGINT NOT NULL,
-    receiver_id BIGSERIAL BIGINT NOT NULL,
+    team_id BIGINT NOT NULL,
+    receiver_id BIGINT NOT NULL,
     created_at TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS team_member (
