@@ -11,11 +11,11 @@ import java.time.Instant;
 
 @Builder
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 public class IdeaDTO {
     private Long id;
-    private String initiator;
+    private Long initiatorId;
     private String name;
     private GroupDTO experts;
     private GroupDTO projectOffice;

@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.entities.mappers.CompanyMapper;
 import com.tyiu.corn.model.entities.relations.Company2User;
@@ -46,14 +46,14 @@ public class CompanyService {
                 .all()
                 .collectList()
                 .map(companyDTOMap -> companyDTOMap.get(0))
-                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
     }
 
     @Cacheable
     public Flux<CompanyDTO> getListCompany() {
         return template.select(Company.class).all()
                 .flatMap(c -> Flux.just(mapper.map(c, CompanyDTO.class)))
-                .switchIfEmpty(Mono.error(new ErrorException("Failed to get a list of companies")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list of companies")));
     }
 
     @Cacheable
@@ -67,7 +67,7 @@ public class CompanyService {
                             companyDTO.setUsers(list);
                             return Mono.just(companyDTO);
                         });
-                }).switchIfEmpty(Mono.error(new ErrorException("Not success!")));
+                }).switchIfEmpty(Mono.error(new NotFoundException("Not success!")));
     }
 
     @CacheEvict(allEntries = true)
@@ -80,13 +80,13 @@ public class CompanyService {
             companyDTO.getUsers().forEach(u -> template.insert(new Company2User(u.getId(), c.getId()))
                     .subscribe());
             return Mono.just(companyDTO);
-        }).switchIfEmpty(Mono.error(new ErrorException("Failed to add a company")));
+        }).switchIfEmpty(Mono.error(new NotFoundException("Failed to add a company")));
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteCompany(Long id) {
         return template.delete(query(where("id").is(id)), Company.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete a company")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete a company")));
     }
 
     @CacheEvict(allEntries = true)
@@ -111,6 +111,6 @@ public class CompanyService {
                     }
                     return template.update(mapper.map(c, Company.class)).then(Mono.just(c));
                 })
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to update a company")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to update a company")));
     }
 }

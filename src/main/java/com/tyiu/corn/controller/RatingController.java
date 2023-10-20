@@ -27,20 +27,20 @@ public class RatingController {
     @GetMapping("/{ideaId}")
     public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable Long ideaId,
                                                   @AuthenticationPrincipal CustomUserDetails user){
-        return ratingService.getExpertRating(ideaId, user.getUserId());
+        return ratingService.getExpertRating(ideaId, user.getId());
     }
 
     @PutMapping("/save")
     public Mono<ResponseEntity<String>> saveRating(@RequestBody RatingDTO ratingDTO,
                                                    @AuthenticationPrincipal CustomUserDetails user) {
-        return ratingService.saveRating(ratingDTO,  user.getUserId())
+        return ratingService.saveRating(ratingDTO,  user.getId())
                 .thenReturn(ResponseEntity.ok("Success saving!"));
     }
 
     @PutMapping("/confirm")
     public Mono<ResponseEntity<String>> confirmRating(@RequestBody RatingDTO ratingDTO,
                                                       @AuthenticationPrincipal CustomUserDetails user) {
-        return ratingService.confirmRating(ratingDTO, user.getUserId())
+        return ratingService.confirmRating(ratingDTO, user.getId())
                 .thenReturn(ResponseEntity.ok("Success confirming!"));
     }
 }

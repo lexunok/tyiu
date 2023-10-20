@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.TeamMapper;
@@ -119,12 +119,12 @@ public class TeamService {
                 .then(template.delete(query(where("team_id").is(id)), Team2Skill.class))
                 .then(template.delete(query(where("team_id").is(id)), TeamInvitation.class))
                 .then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
     }
 
     public Mono<Void> deleteInvite(Long id) {
         return template.delete(query(where("id").is(id)), TeamInvitation.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
     }
 
 //    public Mono<Void> inviteInTeam(Long teamId, String email) {
@@ -207,7 +207,7 @@ public class TeamService {
                     if (updatedRows > 0) {
                         return Mono.empty();
                     }
-                    return Mono.error(new ErrorException("Not success!"));
+                    return Mono.error(new NotFoundException("Not success!"));
                 });
     }
 
@@ -226,7 +226,7 @@ public class TeamService {
                     if (updatedRows > 0) {
                         return Mono.empty();
                     }
-                    return Mono.error(new ErrorException("Not success!"));
+                    return Mono.error(new NotFoundException("Not success!"));
                 });
     }
 
@@ -245,7 +245,7 @@ public class TeamService {
                     if (updatedRows > 0) {
                         return Mono.empty();
                     }
-                    return Mono.error(new ErrorException("Not success!"));
+                    return Mono.error(new NotFoundException("Not success!"));
                 });
     }
 
@@ -265,7 +265,7 @@ public class TeamService {
                     if (updatedRows > 0) {
                         return Mono.empty();
                     }
-                    return Mono.error(new ErrorException("Not success!"));
+                    return Mono.error(new NotFoundException("Not success!"));
                 });
     }
 
@@ -284,7 +284,7 @@ public class TeamService {
                     if (updatedRows > 0) {
                         return Mono.empty();
                     }
-                    return Mono.error(new ErrorException("Not success!"));
+                    return Mono.error(new NotFoundException("Not success!"));
                 });
     }
 }

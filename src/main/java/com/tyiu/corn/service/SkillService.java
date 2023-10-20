@@ -1,12 +1,11 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.entities.UserSkill;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.model.responses.TeamMemberResponse;
 
 import lombok.RequiredArgsConstructor;
@@ -43,7 +42,7 @@ public class SkillService {
     public Flux<SkillDTO> getAllSkills() {
         return template.select(Skill.class).all()
                 .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
-                .switchIfEmpty(Mono.error(new ErrorException("Failed to get a list skills")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
     }
 
     public Mono<List<Skill>> getAllConfirmedOrCreatorSkills(String email) {
@@ -57,7 +56,7 @@ public class SkillService {
     public Flux<SkillDTO> getSkillsByType(SkillType type) {
         return template.select(query(where("type").is(type)), Skill.class)
                 .flatMap(skill -> Mono.just(mapper.map(skill, SkillDTO.class)))
-                .switchIfEmpty(Mono.error(new ErrorException("Failed to get a list skills")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
     }
 
     public Mono<SkillDTO> addSkill(SkillDTO skillDTO, String email) {
@@ -68,7 +67,7 @@ public class SkillService {
                 skillDTO.setConfirmed(true);
                 skillDTO.setCreatorId(user.getId());
                 return Mono.just(skillDTO);
-            }).switchIfEmpty(Mono.error(new ErrorException("Failed to create a skill")));
+            }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a skill")));
         });
     }
 
@@ -80,7 +79,7 @@ public class SkillService {
                 skillDTO.setConfirmed(false);
                 skillDTO.setCreatorId(user.getId());
                 return Mono.just(skillDTO);
-            }).switchIfEmpty(Mono.error(new ErrorException("Failed to create a skill")));
+            }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a skill")));
         });
     }
 
@@ -111,6 +110,6 @@ public class SkillService {
 
     public Mono<Void> deleteSkill(Long id) {
         return template.delete(query(where("id").is(id)), Skill.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
     }
 }

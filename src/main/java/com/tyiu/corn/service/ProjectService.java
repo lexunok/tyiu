@@ -1,9 +1,7 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.ProjectDTO;
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMemberDTO;
 import com.tyiu.corn.model.entities.*;
 import lombok.RequiredArgsConstructor;
@@ -18,8 +16,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -93,13 +89,13 @@ public class ProjectService {
     @Cacheable
     public Flux<ProjectInvitation> getProjectInvitations(String email){
         return template.select(query(where("receiver_email").is(email)), ProjectInvitation.class)
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to receive invitations")));
     }
 
     @Cacheable
     public Flux<ProjectRequest> getProjectApplications(String id){
         return template.select(query(where("project_id").is(id)), ProjectRequest.class)
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to receive invitations")));
     }
 
     //////////////////////////////
@@ -131,7 +127,7 @@ public class ProjectService {
             projectDTO.setMembersCount(p.getMembersCount());
             return Mono.just(projectDTO);
         })
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to create a project")));
+        .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to create a project")));
     }
 
     @CacheEvict(allEntries = true)
@@ -143,7 +139,7 @@ public class ProjectService {
                         .projectName(p.getName())
                         .createdAt(Instant.now())
                         .build()))
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to send invitation")));
+        .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to send invitation")));
     }
 
     @CacheEvict(allEntries = true)
@@ -159,7 +155,7 @@ public class ProjectService {
                                     .build())
                             .createdAt(Instant.now())
                             .build())))
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to send application")));
+        .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to send application")));
     }
 
     ///////////////////////////////////////////
@@ -172,19 +168,19 @@ public class ProjectService {
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteProject(String id){
         return template.delete(query(where("id").is(id)), Project.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the project")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete the project")));
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteInvite(String id){
         return template.delete(query(where("id").is(id)), ProjectInvitation.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the invite")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete the invite")));
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteRequest(String id){
         return template.delete(query(where("id").is(id)), ProjectRequest.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the request")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete the request")));
     }
 
     ////////////////////////

@@ -6,12 +6,17 @@ CREATE TABLE IF NOT EXISTS users (
     first_name TEXT,
     last_name TEXT
 );
+CREATE TABLE IF NOT EXISTS groups (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    roles TEXT[] NOT NULL
+);
 CREATE TABLE IF NOT EXISTS idea (
     id BIGSERIAL PRIMARY KEY,
-    initiator TEXT NOT NULL UNIQUE,
+    initiator_id BIGINT REFERENCES users (id),
     name TEXT,
-    group_expert_id BIGINT NOT NULL UNIQUE,
-    group_project_office_id BIGINT NOT NULL UNIQUE,
+    group_expert_id BIGINT REFERENCES groups (id),
+    group_project_office_id BIGINT REFERENCES groups (id),
     status TEXT,
     created_at TIMESTAMP,
     modified_at TIMESTAMP,
@@ -27,11 +32,6 @@ CREATE TABLE IF NOT EXISTS idea (
     technical_realizability BIGINT,
     pre_assessment REAL,
     rating REAL
-);
-CREATE TABLE IF NOT EXISTS groups (
-    id BIGSERIAL PRIMARY KEY,
-    name TEXT NOT NULL,
-    roles TEXT[] NOT NULL
 );
 CREATE TABLE IF NOT EXISTS temporary (
     id BIGSERIAL PRIMARY KEY,
@@ -76,8 +76,8 @@ CREATE TABLE IF NOT EXISTS skill (
 );
 CREATE TABLE IF NOT EXISTS rating (
     id BIGSERIAL PRIMARY KEY,
-    idea_id BIGINT NOT NULL UNIQUE,
-    expert_id BIGINT NOT NULL UNIQUE,
+    idea_id BIGINT REFERENCES idea (id),
+    expert_id BIGINT REFERENCES users (id),
     market_value BIGINT,
     originality BIGINT,
     suitability INT,

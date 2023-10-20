@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
@@ -25,14 +25,14 @@ public class RatingService {
     public Flux<RatingDTO> getRatings(Long ideaId) {
         return template.select(query(where("idea_id").is(ideaId)), Rating.class)
                 .flatMap(r -> Flux.just(mapper.map(r, RatingDTO.class)))
-                .switchIfEmpty(Mono.error(new ErrorException("Failed to get all ratings")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get all ratings")));
     }
 
     public Mono<RatingDTO> getExpertRating(Long ideaId, Long expertId) {
         return template.selectOne(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ideaId))), Rating.class)
                 .flatMap(r -> Mono.just(mapper.map(r, RatingDTO.class)))
-                .switchIfEmpty(Mono.error(new ErrorException("Failed to get a rating")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a rating")));
     }
 
     public Mono<Void> confirmRating(RatingDTO ratingDTO, Long expertId) {
@@ -56,7 +56,7 @@ public class RatingService {
                                         .set("status", StatusIdea.CONFIRMED), Idea.class);
                     }
                     return Mono.empty();
-                }).then().onErrorResume(e -> Mono.error(new ErrorException("Not confirmed")));
+                }).then().onErrorResume(e -> Mono.error(new NotFoundException("Not confirmed")));
     }
     public Mono<Void> saveRating(RatingDTO ratingDTO, Long expertId){
         return template.update(query(where("expert_id")
@@ -69,6 +69,6 @@ public class RatingService {
                                 .set("budget", ratingDTO.getBudget())
                                 .set("rating", ratingDTO.getRating())
                                 .set("confirmed",false), Rating.class)
-                .then().onErrorResume(e -> Mono.error(new ErrorException("Failed to save rating")));
+                .then().onErrorResume(e -> Mono.error(new NotFoundException("Failed to save rating")));
     }
 }

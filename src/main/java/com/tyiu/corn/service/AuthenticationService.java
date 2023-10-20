@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
@@ -29,7 +29,7 @@ public class AuthenticationService {
                 .selectOne(query(where("email").is(request.getEmail())),User.class);
         return user.flatMap(u -> {
             if (passwordEncoder.matches(request.getPassword(), u.getPassword())){
-                String jwt = jwtCore.issueToken(u.getEmail(), u.getRoles());
+                String jwt = jwtCore.issueToken(String.valueOf(u.getId()), u.getRoles());
                 return Mono.just(AuthenticationResponse.builder()
                         .id(u.getId())
                         .email(u.getEmail())
@@ -39,7 +39,7 @@ public class AuthenticationService {
                         .roles(u.getRoles())
                         .build());
             } else return Mono.empty();
-        }).switchIfEmpty(Mono.error(new ErrorException("User not registered")));
+        }).switchIfEmpty(Mono.error(new NotFoundException("User not registered")));
     }
 
 
@@ -59,7 +59,7 @@ public class AuthenticationService {
                         try {
                             Mono<User> userFromDB = template.insert(user);
                             return userFromDB.flatMap(u -> {
-                                String jwt = jwtCore.issueToken(u.getEmail(),u.getRoles());
+                                String jwt = jwtCore.issueToken(String.valueOf(u.getId()),u.getRoles());
                                 return Mono.just(AuthenticationResponse.builder()
                                         .id(u.getId())
                                         .email(u.getEmail())
@@ -77,6 +77,6 @@ public class AuthenticationService {
 
                     } else return Mono.empty();
                 }
-        ).switchIfEmpty(Mono.error(new ErrorException("Authorization not success")));
+        ).switchIfEmpty(Mono.error(new NotFoundException("Authorization not success")));
     }
 }

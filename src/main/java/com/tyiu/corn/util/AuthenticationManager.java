@@ -20,22 +20,22 @@ public class AuthenticationManager implements ReactiveAuthenticationManager {
     @Override
     public Mono<Authentication> authenticate(Authentication authentication) {
         String token;
-        String email;
+        String id;
         try {
             token = authentication.getCredentials().toString();
-            email = jwtCore.getSubject(token);
+            id = jwtCore.getSubject(token);
         } catch (Exception e){
             token = null;
-            email = null;
+            id = null;
             log.info(e.toString());
         }
-        if (email!=null && jwtCore.isTokenValid(token,email)){
+        if (id!=null && jwtCore.isTokenValid(token,id)){
             Claims claims = jwtCore.getClaims(token);
             @SuppressWarnings("unchecked")
             List<String> roles = claims.get("scopes", List.class);
             List<SimpleGrantedAuthority> authorities = roles.stream().map(SimpleGrantedAuthority::new).toList();
             UsernamePasswordAuthenticationToken authenticationToken =
-                    new UsernamePasswordAuthenticationToken(email, null, authorities);
+                    new UsernamePasswordAuthenticationToken(id, null, authorities);
             return Mono.just(authenticationToken);
         }
         return Mono.empty();

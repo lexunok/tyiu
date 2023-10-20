@@ -1,15 +1,13 @@
 package com.tyiu.corn.model.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import com.tyiu.corn.model.enums.Role;
 import java.util.List;
 
+
 @Data
-@AllArgsConstructor
 @NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class GroupDTO {
     private Long id;

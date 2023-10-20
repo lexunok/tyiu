@@ -1,6 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.mappers.GroupMapper;
@@ -47,7 +47,7 @@ public class GroupService {
     public Flux<GroupDTO> getGroups() {
         return template.select(Group.class).all()
                 .flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)))
-                .switchIfEmpty(Mono.error(new ErrorException("Failed to get a list of groups")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list of groups")));
     }
 
     @Cacheable
@@ -59,7 +59,7 @@ public class GroupService {
                 .all()
                 .collectList()
                 .map(groupDTOMap -> groupDTOMap.get(0))
-        .switchIfEmpty(Mono.error(new ErrorException("Failed to get a group")));
+        .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a group")));
     }
 
     //////////////////////////////
@@ -77,7 +77,7 @@ public class GroupService {
             groupDTO.getUsers().forEach(u -> template.insert(new Group2User(u.getId(), g.getId()))
                     .subscribe());
             return Mono.just(groupDTO);
-        }).switchIfEmpty(Mono.error(new ErrorException("Failed to create a group")));
+        }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a group")));
     }
 
     ///////////////////////////////////////////
@@ -90,7 +90,7 @@ public class GroupService {
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteGroup(Long id) {
         return template.delete(query(where("id").is(id)), Group.class).then()
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete a group")));
+        .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete a group")));
     }
 
     ////////////////////////
@@ -125,7 +125,7 @@ public class GroupService {
                     }
                     return template.update(mapper.map(g, Group.class)).then(Mono.just(g));
                 })
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to update a group")));
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to update a group")));
     }
 }
 

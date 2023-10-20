@@ -20,7 +20,7 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
                 .name(row.get("p_name", String.class)).build();
         return IdeaDTO.builder()
                 .id(row.get("id",Long.class))
-                .initiator(row.get("initiator", String.class))
+                .initiatorId(row.get("initiator_id", Long.class))
                 .name(row.get("name", String.class))
                 .experts(experts)
                 .projectOffice(projectOffice)
