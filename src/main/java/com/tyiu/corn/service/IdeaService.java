@@ -1,6 +1,5 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;

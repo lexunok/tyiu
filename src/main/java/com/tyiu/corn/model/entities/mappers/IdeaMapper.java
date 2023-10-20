@@ -6,7 +6,7 @@ import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import io.r2dbc.spi.Row;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 import java.util.function.BiFunction;
 
 public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
@@ -25,8 +25,8 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
                 .experts(experts)
                 .projectOffice(projectOffice)
                 .status(row.get("status", StatusIdea.class))
-                .createdAt(row.get("created_at", Instant.class))
-                .modifiedAt(row.get("modified_at", Instant.class))
+                .createdAt(row.get("created_at", LocalDateTime.class))
+                .modifiedAt(row.get("modified_at", LocalDateTime.class))
                 .projectType(row.get("project_type", ProjectType.class))
                 .problem(row.get("problem", String.class))
                 .solution(row.get("solution", String.class))

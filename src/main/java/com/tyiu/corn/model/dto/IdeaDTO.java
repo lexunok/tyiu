@@ -7,7 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 @Builder
 @Data
@@ -20,8 +20,8 @@ public class IdeaDTO {
     private GroupDTO experts;
     private GroupDTO projectOffice;
     private StatusIdea status;
-    private Instant createdAt;
-    private Instant modifiedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime modifiedAt;
     private ProjectType projectType;
     private String problem;
     private String solution;

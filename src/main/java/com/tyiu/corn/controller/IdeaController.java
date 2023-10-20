@@ -5,11 +5,7 @@ import com.tyiu.corn.model.dto.IdeaDTO;
 
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
-import com.tyiu.corn.util.CustomUserDetails;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +17,6 @@ import java.security.Principal;
 @RestController
 @RequestMapping("/api/v1/idea")
 @RequiredArgsConstructor
-@Slf4j
 public class IdeaController {
     
     private final IdeaService ideaService;
@@ -40,7 +35,6 @@ public class IdeaController {
 
     @PostMapping("/add")
     public Mono<IdeaDTO> addIdea(@RequestBody IdeaDTO idea, Principal principal) {
-        log.info(principal.getName());
         return ideaService.saveIdea(idea, Long.valueOf(principal.getName()))
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
