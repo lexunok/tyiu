@@ -74,7 +74,8 @@ public class GroupController {
 
     @PutMapping("/update/{groupId}")
     public Mono<GroupDTO> updateGroup(@PathVariable Long groupId, @RequestBody GroupDTO group) {
-        return groupService.updateGroup(groupId, group);
+        return groupService.updateGroup(groupId, group)
+                .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));
     }
 }
     
