@@ -33,7 +33,8 @@ class AuthenticationControllerTest extends TestContainers{
     @Test
     void canRegister(){
         RegisterRequest request = new RegisterRequest(
-                "edqmail","lastnasme","firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
+                "edqmail","lastnasme",
+                "firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -63,15 +64,15 @@ class AuthenticationControllerTest extends TestContainers{
     @Test
     void canLoginWhenUserExists(){
         RegisterRequest registerRequest = new RegisterRequest(
-                "email1","lastnasme","firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
+                "email1","lastnasme",
+                "firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(registerRequest), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class);
-        LoginRequest request = new LoginRequest(
-                "email1","psdassword");
+        LoginRequest request = new LoginRequest("email1","psdassword");
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/login")
@@ -84,15 +85,15 @@ class AuthenticationControllerTest extends TestContainers{
     @Test
     void canLoginWhenPasswordNotCorrect(){
         RegisterRequest registerRequest = new RegisterRequest(
-                "email2","lastnasme","firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
+                "email2","lastnasme","firsdstname",
+                "psdassword", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(registerRequest), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class);
-        LoginRequest request = new LoginRequest(
-                "email2","psdasdfdsfssword");
+        LoginRequest request = new LoginRequest("email2","psdasdfdsfssword");
         webTestClient
                 .post()
                 .uri("/api/v1/auth/login")

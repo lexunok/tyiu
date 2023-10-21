@@ -1,7 +1,16 @@
 postgres:
-  url: postgresql://localhost:5432/hits
+  url: postgresql://postgres:5432/hits
 spring:
+  data:
+    r2dbc:
+      repositories:
+        enabled: false
   r2dbc:
+    pool:
+      enabled: true
+      initial-size: 10
+      max-idle-time: 1m
+      max-size: 30
     url: r2dbc:${postgres.url}
     username: admin
     password: admin
@@ -18,9 +27,6 @@ spring:
       port: 7000
       transport: websocket
       mapping-path: /rs
-  data:
-    mongodb:
-      uri: mongodb://admin:admin@localhost:27017/admin
   mail:
     host: smtp.gmail.com
     port: 587
