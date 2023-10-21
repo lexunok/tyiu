@@ -48,21 +48,21 @@ CREATE TABLE IF NOT EXISTS group_user (
     user_id BIGINT REFERENCES users (id),
     group_id BIGINT REFERENCES groups (id)
 );
-CREATE TABLE IF NOT EXISTS companies (
+CREATE TABLE IF NOT EXISTS company (
     id BIGSERIAL PRIMARY KEY,
     name TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS company_user (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT UNIQUE NOT NULL,
-    company_id BIGINT UNIQUE NOT NULL
+    user_id BIGINT REFERENCES users (id),
+    company_id BIGINT REFERENCES company (id)
 );
 CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,
     text TEXT NOT NULL,
     senderEmail TEXT NOT NULL,
     createdAt TIMESTAMP,
-    ideaId BIGINT NOT NULL UNIQUE
+    idea_id BIGINT REFERENCES idea (id)
 );
 CREATE TABLE IF NOT EXISTS skill (
     id BIGSERIAL PRIMARY KEY,

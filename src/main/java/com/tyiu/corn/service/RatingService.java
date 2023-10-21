@@ -1,12 +1,14 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -18,23 +20,22 @@ import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "ratings")
 public class RatingService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
-
+    @Cacheable
     public Flux<RatingDTO> getRatings(Long ideaId) {
         return template.select(query(where("idea_id").is(ideaId)), Rating.class)
-                .flatMap(r -> Flux.just(mapper.map(r, RatingDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get all ratings")));
+                .flatMap(r -> Flux.just(mapper.map(r, RatingDTO.class)));
     }
-
+    @Cacheable(key = "ideaId")
     public Mono<RatingDTO> getExpertRating(Long ideaId, Long expertId) {
         return template.selectOne(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ideaId))), Rating.class)
-                .flatMap(r -> Mono.just(mapper.map(r, RatingDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a rating")));
+                .flatMap(r -> Mono.just(mapper.map(r, RatingDTO.class)));
     }
-
+    @CacheEvict(allEntries = true)
     public Mono<Void> confirmRating(RatingDTO ratingDTO, Long expertId) {
         template.update(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ratingDTO.getIdeaId()))),
@@ -56,8 +57,9 @@ public class RatingService {
                                         .set("status", StatusIdea.CONFIRMED), Idea.class);
                     }
                     return Mono.empty();
-                }).then().onErrorResume(e -> Mono.error(new NotFoundException("Not confirmed")));
+                });
     }
+    @CacheEvict(allEntries = true)
     public Mono<Void> saveRating(RatingDTO ratingDTO, Long expertId){
         return template.update(query(where("expert_id")
                 .is(expertId).and("idea_id")
@@ -68,7 +70,7 @@ public class RatingService {
                                 .set("suitability", ratingDTO.getSuitability())
                                 .set("budget", ratingDTO.getBudget())
                                 .set("rating", ratingDTO.getRating())
-                                .set("confirmed",false), Rating.class)
-                .then().onErrorResume(e -> Mono.error(new NotFoundException("Failed to save rating")));
+                                .set("confirmed",false), Rating.class).
+                then();
     }
 }

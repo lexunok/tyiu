@@ -2,7 +2,7 @@ package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.SkillType;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
 import lombok.*;
 
@@ -18,7 +18,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Skill {
     @Id
     private Long id;
-    private Instant createdAt;
+    private LocalDateTime createdAt;
     private String name;
     private SkillType type;
     private Boolean confirmed;
