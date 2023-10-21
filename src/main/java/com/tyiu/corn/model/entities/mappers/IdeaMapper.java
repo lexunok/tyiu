@@ -27,7 +27,7 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
                 .status(StatusIdea.valueOf(row.get("status",String.class)))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))
-                .projectType(row.get("project_type", ProjectType.class))
+                .projectType(ProjectType.valueOf(row.get("project_type", String.class)))
                 .problem(row.get("problem", String.class))
                 .solution(row.get("solution", String.class))
                 .result(row.get("result", String.class))
