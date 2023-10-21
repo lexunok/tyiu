@@ -31,21 +31,22 @@ public class SkillService {
     public Flux<TeamMemberResponse> getAllUsersWithSkills(){
         return template.select(User.class).all().flatMap(u ->
                 template.select(query(where("userEmail").is(u.getEmail())), UserSkill.class)
-                .collectList().flatMap(s -> Mono.just(TeamMemberResponse.builder()
-                        .email(u.getEmail())
-                        .firstName(u.getFirstName())
-                        .lastName(u.getLastName())
-                        .skills(s)
-                        .build())));
+                        .collectList().flatMap(s -> Mono.just(TeamMemberResponse.builder()
+                                .email(u.getEmail())
+                                .firstName(u.getFirstName())
+                                .lastName(u.getLastName())
+                                .skills(s)
+                                .build())));
     }
 
     public Flux<SkillDTO> getAllSkills() {
         return template.select(Skill.class).all()
-                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
+                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
     }
 
-    public Mono<List<Skill>> getAllConfirmedOrCreatorSkills(String email) {
-        return template.selectOne(query(where("email").is(email)), User.class)
+    public Mono<List<Skill>> getAllConfirmedOrCreatorSkills(Long userId) {
+        return template.selectOne(query(where("id").is(userId)), User.class)
                 .flatMap(user -> {
                     return template.select(query(where("creator_id").is(user.getId()).or(where("confirmed").isTrue())), Skill.class)
                             .collectList();
@@ -58,8 +59,8 @@ public class SkillService {
                 .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
     }
 
-    public Mono<SkillDTO> addSkill(SkillDTO skillDTO, String email) {
-        return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
+    public Mono<SkillDTO> addSkill(SkillDTO skillDTO, Long userId) {
+        return template.selectOne(query(where("id").is(userId)), User.class).flatMap(user -> {
             Skill skill = mapper.map(skillDTO, Skill.class);
             return template.insert(skill).flatMap(s -> {
                 skillDTO.setId(s.getId());
@@ -70,8 +71,8 @@ public class SkillService {
         });
     }
 
-    public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO, String email) {
-        return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
+    public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO, Long userId) {
+        return template.selectOne(query(where("id").is(userId)), User.class).flatMap(user -> {
             Skill skill = mapper.map(skillDTO, Skill.class);
             return template.insert(skill).flatMap(s -> {
                 skillDTO.setId(s.getId());
@@ -82,9 +83,9 @@ public class SkillService {
         });
     }
 
-    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, Long skillId, String email) {
+    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, Long skillId, Long userId) {
         return template.selectOne(query(where("id").is(skillId)), Skill.class).flatMap(skill -> {
-            return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
+            return template.selectOne(query(where("id").is(userId)), User.class).flatMap(user -> {
                 skill.setName(skillDTO.getName());
                 skill.setType(skillDTO.getType());
                 skill.setUpdaterId(user.getId());
@@ -96,9 +97,9 @@ public class SkillService {
         });
     }
 
-    public Mono<SkillDTO> confirmSkill(Long skillId, String email) {
+    public Mono<SkillDTO> confirmSkill(Long skillId, Long userId) {
         return template.selectOne(query(where("id").is(skillId)), Skill.class).flatMap(skill -> {
-            return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
+            return template.selectOne(query(where("email").is(userId)), User.class).flatMap(user -> {
                 skill.setConfirmed(true);
                 skill.setUpdaterId(user.getId());
                 return template.insert(skill).flatMap(savedSkill ->
