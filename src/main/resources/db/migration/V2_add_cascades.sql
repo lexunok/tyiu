@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS temporary (
 );
 CREATE TABLE IF NOT EXISTS group_user (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users (id),
-    group_id BIGINT REFERENCES groups (id)
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    group_id BIGINT REFERENCES groups (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS company (
     id BIGSERIAL PRIMARY KEY,
@@ -54,15 +54,15 @@ CREATE TABLE IF NOT EXISTS company (
 );
 CREATE TABLE IF NOT EXISTS company_user (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users (id),
-    company_id BIGINT REFERENCES company (id)
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    company_id BIGINT REFERENCES company (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,
     text TEXT NOT NULL,
     senderEmail TEXT NOT NULL,
     createdAt TIMESTAMP,
-    idea_id BIGINT REFERENCES idea (id)
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS skill (
     id BIGSERIAL PRIMARY KEY,
@@ -76,8 +76,8 @@ CREATE TABLE IF NOT EXISTS skill (
 );
 CREATE TABLE IF NOT EXISTS rating (
     id BIGSERIAL PRIMARY KEY,
-    idea_id BIGINT REFERENCES idea (id),
-    expert_id BIGINT REFERENCES users (id),
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE,
+    expert_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
     market_value BIGINT,
     originality BIGINT,
     suitability INT,
@@ -98,19 +98,19 @@ CREATE TABLE IF NOT EXISTS team (
 CREATE TABLE IF NOT EXISTS team_invitation (
     id BIGSERIAL PRIMARY KEY,
     team_name TEXT NOT NULL,
-    team_id BIGINT REFERENCES team (id),
-    receiver_id BIGINT REFERENCES users (id),
+    team_id BIGINT REFERENCES team (id) ON DELETE CASCADE,
+    receiver_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS team_member (
     id BIGSERIAL PRIMARY KEY,
-    team_id BIGINT REFERENCES team (id),
-    member_id BIGINT REFERENCES users (id)
+    team_id BIGINT REFERENCES team (id) ON DELETE CASCADE,
+    member_id BIGINT REFERENCES users (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS team_skill (
     id BIGSERIAL PRIMARY KEY,
-    team_id BIGINT REFERENCES team (id),
-    skill_id BIGINT REFERENCES skill (id)
+    team_id BIGINT REFERENCES team (id) ON DELETE CASCADE,
+    skill_id BIGINT REFERENCES skill (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS project (
     id BIGSERIAL PRIMARY KEY,
@@ -121,14 +121,14 @@ CREATE TABLE IF NOT EXISTS project (
 CREATE TABLE IF NOT EXISTS project_invitation (
     id BIGSERIAL PRIMARY KEY,
     project_name TEXT,
-    project_id BIGINT REFERENCES project (id),
-    receiver_id BIGINT REFERENCES users (id),
+    project_id BIGINT REFERENCES project (id) ON DELETE CASCADE,
+    receiver_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
     created_at TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS project_request (
     id BIGSERIAL PRIMARY KEY,
-    project_id BIGINT REFERENCES project (id),
-    user_id BIGINT REFERENCES users (id),
+    project_id BIGINT REFERENCES project (id) ON DELETE CASCADE,
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
     email TEXT,
     first_name TEXT,
     last_name TEXT,
