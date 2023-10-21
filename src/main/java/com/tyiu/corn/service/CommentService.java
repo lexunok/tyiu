@@ -1,8 +1,6 @@
 package com.tyiu.corn.service;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -32,7 +30,7 @@ public class CommentService {
 
     public Flux<CommentDTO> getAllComments(Long ideaId) {
         return template.select(query(where("idea_id").is(ideaId)), Comment.class)
-                .thenMany(c -> mapper.map(c,CommentDTO.class));
+                .flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
     public Flux<CommentDTO> getNewComments(Long ideaId) {
