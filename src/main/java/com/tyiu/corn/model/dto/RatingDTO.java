@@ -1,9 +1,13 @@
 package com.tyiu.corn.model.dto;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class RatingDTO {
     private Long id;
     private Long ideaId;
