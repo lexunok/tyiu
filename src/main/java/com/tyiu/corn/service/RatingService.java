@@ -29,7 +29,7 @@ public class RatingService {
         return template.select(query(where("idea_id").is(ideaId)), Rating.class)
                 .flatMap(r -> Flux.just(mapper.map(r, RatingDTO.class)));
     }
-    @Cacheable(key = "ideaId")
+    @Cacheable(key = "#ideaId")
     public Mono<RatingDTO> getExpertRating(Long ideaId, Long expertId) {
         return template.selectOne(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ideaId))), Rating.class)
