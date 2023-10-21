@@ -29,26 +29,22 @@ public class SkillController {
 
     @GetMapping("/users/all")
     public Flux<TeamMemberResponse> getAllUsersWithSkills(){
-        return skillService.getAllUsersWithSkills()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return skillService.getAllUsersWithSkills();
     }
 
     @GetMapping("/all")
     public Flux<SkillDTO> getAllSkills() {
-        return skillService.getAllSkills()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return skillService.getAllSkills();
     }
 
     @GetMapping("/all-confirmed-or-creator")
-    public Mono<List<Skill>> getAllConfirmedSkills(Principal principal) {
-        return skillService.getAllConfirmedOrCreatorSkills(Long.valueOf(principal.getName()))
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    public Flux<SkillDTO> getAllConfirmedSkills(Principal principal) {
+        return skillService.getAllConfirmedOrCreatorSkills(Long.valueOf(principal.getName()));
     }
 
     @GetMapping("/{skillType}")
     public Flux<SkillDTO> getSkillsByType(@PathVariable SkillType skillType) {
-        return skillService.getSkillsByType(skillType)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return skillService.getSkillsByType(skillType);
     }
 
     @PostMapping("/add")
@@ -64,7 +60,7 @@ public class SkillController {
     }
 
     @PutMapping("/update/{skillId}")
-    public Mono<InfoResponse> updateSkill(@RequestParam SkillDTO skillDTO, @PathVariable Long skillId, Principal principal) {
+    public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable Long skillId, Principal principal) {
         return skillService.updateSkill(skillDTO, skillId, Long.valueOf(principal.getName()))
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));

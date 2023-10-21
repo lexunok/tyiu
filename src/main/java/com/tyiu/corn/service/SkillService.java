@@ -14,12 +14,12 @@ import org.modelmapper.ModelMapper;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import static org.springframework.data.relational.core.query.Update.update;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -41,71 +41,54 @@ public class SkillService {
 
     public Flux<SkillDTO> getAllSkills() {
         return template.select(Skill.class).all()
-                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
+                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
     }
 
-    public Mono<List<Skill>> getAllConfirmedOrCreatorSkills(Long userId) {
-        return template.selectOne(query(where("id").is(userId)), User.class)
-                .flatMap(user -> {
-                    return template.select(query(where("creator_id").is(user.getId()).or(where("confirmed").isTrue())), Skill.class)
-                            .collectList();
-                });
+    public Flux<SkillDTO> getAllConfirmedOrCreatorSkills(Long userId) {
+        return template.select(query(where("creator_id").is(userId).or(where("confirmed").isTrue())), Skill.class)
+                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
     }
 
     public Flux<SkillDTO> getSkillsByType(SkillType type) {
         return template.select(query(where("type").is(type)), Skill.class)
-                .flatMap(skill -> Mono.just(mapper.map(skill, SkillDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
+                .flatMap(skill -> Mono.just(mapper.map(skill, SkillDTO.class)));
     }
 
     public Mono<SkillDTO> addSkill(SkillDTO skillDTO, Long userId) {
-        return template.selectOne(query(where("id").is(userId)), User.class).flatMap(user -> {
             Skill skill = mapper.map(skillDTO, Skill.class);
+            skill.setConfirmed(true);
+            skill.setCreatorId(userId);
             return template.insert(skill).flatMap(s -> {
                 skillDTO.setId(s.getId());
                 skillDTO.setConfirmed(true);
-                skillDTO.setCreatorId(user.getId());
+                skillDTO.setCreatorId(userId);
                 return Mono.just(skillDTO);
-            }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a skill")));
-        });
+            });
     }
 
     public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO, Long userId) {
-        return template.selectOne(query(where("id").is(userId)), User.class).flatMap(user -> {
             Skill skill = mapper.map(skillDTO, Skill.class);
+            skill.setConfirmed(false);
+            skill.setCreatorId(userId);
             return template.insert(skill).flatMap(s -> {
                 skillDTO.setId(s.getId());
                 skillDTO.setConfirmed(false);
-                skillDTO.setCreatorId(user.getId());
+                skillDTO.setCreatorId(userId);
                 return Mono.just(skillDTO);
-            }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a skill")));
-        });
+            });
     }
 
-    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, Long skillId, Long userId) {
-        return template.selectOne(query(where("id").is(skillId)), Skill.class).flatMap(skill -> {
-            return template.selectOne(query(where("id").is(userId)), User.class).flatMap(user -> {
-                skill.setName(skillDTO.getName());
-                skill.setType(skillDTO.getType());
-                skill.setUpdaterId(user.getId());
-                return template.insert(skill).flatMap(s -> {
-                    s.setId(skill.getId());
-                    return Mono.just(skillDTO);
-                });
-            });
-        });
+    public Mono<Void> updateSkill(SkillDTO skillDTO, Long skillId, Long userId){
+        return template.update(query(where("id").is(skillId)),
+                        update("name", skillDTO.getName())
+                                .set("updater_id", userId)
+                                .set("type", skillDTO.getType()), Skill.class).then();
     }
 
-    public Mono<SkillDTO> confirmSkill(Long skillId, Long userId) {
-        return template.selectOne(query(where("id").is(skillId)), Skill.class).flatMap(skill -> {
-            return template.selectOne(query(where("email").is(userId)), User.class).flatMap(user -> {
-                skill.setConfirmed(true);
-                skill.setUpdaterId(user.getId());
-                return template.insert(skill).flatMap(savedSkill ->
-                        Mono.just(mapper.map(savedSkill, SkillDTO.class)));
-            });
-        });
+    public Mono<Void> confirmSkill(Long skillId, Long userId) {
+        return template.update(query(where("id").is(skillId)),
+                update("confirmed", true)
+                        .set("updater_id", userId), Skill.class).then();
     }
 
     public Mono<Void> deleteSkill(Long id) {
