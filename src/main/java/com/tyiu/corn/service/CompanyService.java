@@ -45,15 +45,13 @@ public class CompanyService {
                 .map(companyMapper::apply)
                 .all()
                 .collectList()
-                .map(companyDTOMap -> companyDTOMap.get(0))
-                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
+                .map(companyDTOMap -> companyDTOMap.get(0));
     }
 
     @Cacheable
     public Flux<CompanyDTO> getListCompany() {
         return template.select(Company.class).all()
-                .flatMap(c -> Flux.just(mapper.map(c, CompanyDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list of companies")));
+                .flatMap(g -> Flux.just(mapper.map(g, CompanyDTO.class)));
     }
 
     @Cacheable
@@ -80,13 +78,12 @@ public class CompanyService {
             companyDTO.getUsers().forEach(u -> template.insert(new Company2User(u.getId(), c.getId()))
                     .subscribe());
             return Mono.just(companyDTO);
-        }).switchIfEmpty(Mono.error(new NotFoundException("Failed to add a company")));
+        });
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteCompany(Long id) {
-        return template.delete(query(where("id").is(id)), Company.class).then()
-                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete a company")));
+        return template.delete(query(where("id").is(id)), Company.class).then();
     }
 
     @CacheEvict(allEntries = true)

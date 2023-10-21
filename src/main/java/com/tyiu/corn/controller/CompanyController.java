@@ -1,8 +1,9 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.CompanyDTO;
+import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.CompanyService;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +19,8 @@ public class CompanyController {
 
     @GetMapping("/{companyId}")
     public Mono<CompanyDTO> getCompanyById(@PathVariable Long companyId) {
-        return companyService.getCompanyById(companyId);
+        return companyService.getCompanyById(companyId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/all")
@@ -28,22 +30,28 @@ public class CompanyController {
 
     @GetMapping("/staff/{companyId}")
     public Mono<CompanyDTO> getCompanyStaff(@PathVariable Long companyId) {
-        return companyService.getListStaff(companyId);
+        return companyService.getListStaff(companyId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/create")
     public Mono<CompanyDTO> createCompany(@RequestBody CompanyDTO company) {
-        return companyService.createCompany(company);
+        return companyService.createCompany(company)
+                .switchIfEmpty(Mono.error(new NotFoundException("Create is not success!")));
     }
 
     @DeleteMapping("/delete/{companyId}")
-    public Mono<ResponseEntity<String>> deleteCompany(@PathVariable Long companyId) {
-        companyService.deleteCompany(companyId).subscribe();
-        return Mono.just(new ResponseEntity<>("Success deleting", HttpStatus.OK));
+    public Mono<InfoResponse> deleteCompany(@PathVariable Long companyId) {
+        return companyService.deleteCompany(companyId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success!"));
     }
 
     @PutMapping("/update/{companyId}")
-    public Mono<CompanyDTO> updateCompany(@PathVariable Long companyId, @RequestBody CompanyDTO company) {
-        return companyService.updateCompany(companyId, company);
+    public Mono<InfoResponse> updateCompany(@PathVariable Long companyId,
+                                            @RequestBody CompanyDTO company) {
+        return companyService.updateCompany(companyId, company)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 }
