@@ -6,23 +6,23 @@ import java.time.Instant;
 
 import lombok.*;
 
-import org.springframework.data.mongodb.core.mapping.Document;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-@Document
+@Table
 public class Skill {
     @Id
-    private String id;
+    private Long id;
     private Instant createdAt;
     private String name;
     private SkillType type;
     private Boolean confirmed;
-    private String creatorId;
-    private String updaterId;
-    private String deleterId;
+    private Long creatorId;
+    private Long updaterId;
+    private Long deleterId;
 }

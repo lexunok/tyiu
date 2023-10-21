@@ -9,6 +9,6 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class UserSkillRequest {
-    private String skillId;
+    private Long skillId;
     private UserSkillLevel level;
 }

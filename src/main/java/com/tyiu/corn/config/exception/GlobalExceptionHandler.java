@@ -13,7 +13,7 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GlobalExceptionHandler {
     @ExceptionHandler
-    public Mono<ResponseEntity<ErrorResponse>> globalException(ErrorException ex) {
+    public Mono<ResponseEntity<ErrorResponse>> globalException(NotFoundException ex) {
         log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity
                 .status(HttpStatus.BAD_REQUEST.value())

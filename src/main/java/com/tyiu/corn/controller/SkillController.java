@@ -1,6 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.model.responses.TeamMemberResponse;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 
 import java.security.Principal;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.web.bind.annotation.*;
@@ -34,7 +36,7 @@ public class SkillController {
     }
 
     @GetMapping("/all-confirmed-or-creator")
-    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(Principal principal) {
+    public Mono<List<Skill>> getAllConfirmedSkills(Principal principal) {
         return skillService.getAllConfirmedOrCreatorSkills(principal.getName());
     }
 
@@ -54,17 +56,17 @@ public class SkillController {
     }
 
     @PutMapping("/update/{skillId}")
-    public Mono<SkillDTO> updateSkill(@RequestParam SkillDTO skillDTO, @PathVariable String skillId, Principal principal) {
+    public Mono<SkillDTO> updateSkill(@RequestParam SkillDTO skillDTO, @PathVariable Long skillId, Principal principal) {
         return skillService.updateSkill(skillDTO, skillId, principal.getName());
     }
 
     @PutMapping("/confirm/{skillId}")
-    public Mono<SkillDTO> confirmSkill(@PathVariable String skillId, Principal principal) {
+    public Mono<SkillDTO> confirmSkill(@PathVariable Long skillId, Principal principal) {
         return skillService.confirmSkill(skillId, principal.getName());
     }
     
     @DeleteMapping("/delete/{skillId}")
-    public Mono<InfoResponse> deleteSkill(@PathVariable String skillId, Principal principal) {
-        return skillService.deleteSkill(skillId, principal.getName());
+    public Mono<Void> deleteSkill(@PathVariable Long skillId) {
+        return skillService.deleteSkill(skillId);
     }
 }

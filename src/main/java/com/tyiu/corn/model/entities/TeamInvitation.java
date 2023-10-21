@@ -2,23 +2,21 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document
+@Table
 public class TeamInvitation {
     @Id
-    private String id;
+    private Long id;
     private String teamName;
-    @Indexed
-    private String teamId;
-    private String receiverEmail;
-    private Instant createdAt;
+    private Long teamId;
+    private Long receiverId;
+    private LocalDate createdAt;
 }

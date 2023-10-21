@@ -2,31 +2,26 @@ package com.tyiu.corn.model.entities;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.Instant;
-import java.util.List;
+import java.time.LocalDate;
 
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document
+@Table
 public class Team {
     @Id
-    private String id;
+    private Long id;
 
     private String name;
     private String description;
 
     private Boolean closed;
-    private Integer membersCount;
-    private Instant createdAt;
+    private LocalDate createdAt;
 
-    private String ownerEmail;
-    private String leaderEmail;
-
-    private List<String> members;
-    private List<String> skills;
+    private Long ownerId;
+    private Long leaderId;
 }

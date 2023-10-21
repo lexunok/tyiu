@@ -1,27 +1,24 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
 import com.tyiu.corn.model.dto.ProjectDTO;
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
-import com.tyiu.corn.model.dto.TeamMemberDTO;
 import com.tyiu.corn.model.entities.*;
+import com.tyiu.corn.model.entities.mappers.ProjectMapper;
+import com.tyiu.corn.model.entities.relations.Team2Member;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.time.LocalDate;
+
+import static org.springframework.data.relational.core.query.Update.update;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
 
 @Service
 @RequiredArgsConstructor
@@ -29,8 +26,7 @@ import java.util.List;
 @CacheConfig(cacheNames = "projects")
 public class ProjectService {
 
-    private final ReactiveMongoTemplate mongoTemplate;
-    private final ModelMapper mapper;
+    private final R2dbcEntityTemplate template;
 
     ///////////////////////
     //  _____   ____ ______
@@ -41,64 +37,52 @@ public class ProjectService {
 
     @Cacheable
     public Flux<ProjectDTO> getAll(){
-        return mongoTemplate.findAll(Project.class).flatMap(p -> {
-            ProjectDTO projectDTO = ProjectDTO.builder()
-                    .id(p.getId())
-                    .name(p.getName())
-                    .description(p.getDescription())
-                    .membersCount(p.getMembersCount())
-                    .build();
-            return mongoTemplate.find(Query.query(Criteria.where("id").in(p.getSkills())), Skill.class)
-                    .flatMap(s -> Flux.just(mapper.map(s, SkillDTO.class)))
-                    .collectList().flatMap(skills -> {
-                        projectDTO.setSkills(skills);
-                        return Mono.just(projectDTO);
-                    });
-        }).onErrorResume(ex -> Mono.error(new ErrorException("Failed to get a list of projects")));
+        return template.select(Project.class).all()
+                .flatMap(p -> template.select(query(where("team_id").is(p.getTeamId())), Team2Member.class)
+                        .collectList()
+                        .flatMap(list -> Mono.just(ProjectDTO.builder()
+                                .id(p.getId())
+                                .name(p.getName())
+                                .description(p.getDescription())
+                                .membersCount(list.size())
+                                .build())));
     }
 
     @Cacheable
-    public Mono<ProjectDTO> getProject(String id){
-        return mongoTemplate.findById(id, Project.class).flatMap(p -> {
-            ProjectDTO projectDTO = ProjectDTO.builder()
-                    .id(p.getId())
-                    .name(p.getName())
-                    .description(p.getDescription())
-                    .build();
-            return mongoTemplate.find(Query.query(Criteria.where("id").in(p.getSkills())), Skill.class)
-                    .flatMap(s -> Flux.just(mapper.map(s, SkillDTO.class)))
-                    .collectList().flatMap(skills -> {
-                        projectDTO.setSkills(skills);
-                        return Mono.empty();
-                    })
-                    .then(mongoTemplate.findById(p.getTeamId(), Team.class).flatMap(t ->
-                        mongoTemplate.find(Query.query(Criteria.where("email").in(t.getMembers())), User.class).flatMap(u ->
-                            mongoTemplate.find(Query.query(Criteria.where("userEmail").is(u.getEmail())), UserSkill.class)
-                                    .collectList().flatMap(s -> Mono.just(TeamMemberDTO.builder()
-                                            .email(u.getEmail())
-                                            .firstName(u.getFirstName())
-                                            .lastName(u.getLastName())
-                                            .skills(s)
-                                            .build())))
-                            .collectList().flatMap(users -> {
-                                projectDTO.setTeam(mapper.map(t, TeamDTO.class));
-                                projectDTO.getTeam().setMembers(users);
-                                projectDTO.setMembersCount(t.getMembersCount());
-                                return Mono.just(projectDTO);
-                    })));
-        }).onErrorResume(ex -> Mono.error(new ErrorException("Failed to get the project")));
+    public Mono<ProjectDTO> getProject(Long projectId){
+        String QUERY = "SELECT project.*, " +
+                "t.id t_id, t.name t_name, t.description t_description, t.closed, t.created_at, t.owner_id, t.leader_id, " +
+                "o.id o_id, o.email o_email, o.first_name o_first_name, o.last_name o_last_name, " +
+                "l.id l_id, l.email l_email, l.first_name l_first_name, l.last_name l_last_name, " +
+                "m.id m_id, m.email m_email, m.first_name m_first_name, m.last_name m_last_name, " +
+                "s.id s_id, s.name s_name, s.type " +
+                "FROM project " +
+                "LEFT JOIN team t ON project.team_id = t.id " +
+                "LEFT JOIN team_member ON t.id = team_member.team_id " +
+                "LEFT JOIN team_skill ON t.id = team_skill.team_id " +
+                "LEFT JOIN users o ON t.owner_id = o.id " +
+                "LEFT JOIN users l ON t.leader_id = l.id " +
+                "LEFT JOIN users m ON team_member.member_id = m.id " +
+                "LEFT JOIN skill s ON team_skill.skill_id = s.id " +
+                "WHERE project.id = :projectId";
+        ProjectMapper projectMapper = new ProjectMapper();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("projectId", projectId)
+                .map(projectMapper::apply)
+                .all()
+                .collectList()
+                .map(groupDTOMap -> groupDTOMap.get(0));
     }
 
-    @Cacheable
-    public Flux<ProjectInvitation> getProjectInvitations(String email){
-        return mongoTemplate.find(Query.query(Criteria.where("receiverEmail").is(email)), ProjectInvitation.class)
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
+    @Cacheable(cacheNames = "project_invitation")
+    public Flux<ProjectInvitation> getProjectInvitations(Long id){
+        return template.select(query(where("receiver_id").is(id)), ProjectInvitation.class);
     }
 
-    @Cacheable
-    public Flux<ProjectApplication> getProjectApplications(String id){
-        return mongoTemplate.find(Query.query(Criteria.where("projectId").is(id)), ProjectApplication.class)
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to receive invitations")));
+    @Cacheable(cacheNames = "project_request")
+    public Flux<ProjectRequest> getProjectRequests(Long id){
+        return template.select(query(where("project_id").is(id)), ProjectRequest.class);
     }
 
     //////////////////////////////
@@ -114,52 +98,38 @@ public class ProjectService {
                 .name(projectDTO.getName())
                 .description(projectDTO.getDescription())
                 .teamId(projectDTO.getTeam().getId())
-                .membersCount(projectDTO.getTeam().getMembers().size())
                 .build();
 
-        List<SkillDTO> skillsDTO = projectDTO.getSkills();
-        if (skillsDTO != null)
-        {
-            List<String> skills = new ArrayList<>();
-            skillsDTO.forEach(s -> skills.add(s.getId()));
-            project.setSkills(skills);
-        }
-
-        return mongoTemplate.save(project).flatMap(p -> {
+        return template.insert(project).flatMap(p -> {
             projectDTO.setId(p.getId());
-            projectDTO.setMembersCount(p.getMembersCount());
+            projectDTO.setMembersCount(projectDTO.getTeam().getMembers().size());
+
             return Mono.just(projectDTO);
-        })
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to create a project")));
+        });
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<ProjectInvitation> sendInvitation(String email, String projectId){
-        return mongoTemplate.findById(projectId, Project.class).flatMap(t ->
-                mongoTemplate.save(ProjectInvitation.builder()
-                        .receiverEmail(email)
+    public Mono<ProjectInvitation> sendInvitation(Long userId, Long projectId){
+        return template.selectOne(query(where("id").is(projectId)), Project.class).flatMap(p ->
+                template.insert(ProjectInvitation.builder()
+                        .receiverId(userId)
                         .projectId(projectId)
-                        .projectName(t.getName())
-                        .createdAt(Instant.now())
-                        .build()))
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to send invitation")));
+                        .projectName(p.getName())
+                        .createdAt(LocalDate.now())
+                        .build()));
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<ProjectApplication> sendApplication(String email, String projectId){
-        return mongoTemplate.findOne(Query.query(Criteria.where("email").is(email)), User.class)
-                .flatMap(u -> mongoTemplate.find(Query.query(Criteria.where("userEmail").is(email)), UserSkill.class).collectList()
-                        .flatMap(s -> mongoTemplate.save(ProjectApplication.builder()
-                            .projectId(projectId)
-                            .sender(TeamMemberDTO.builder()
-                                    .email(u.getEmail())
-                                    .firstName(u.getFirstName())
-                                    .lastName(u.getLastName())
-                                    .skills(s)
-                                    .build())
-                            .createdAt(Instant.now())
-                            .build())))
-        .onErrorResume(ex -> Mono.error(new ErrorException("Failed to send application")));
+    public Mono<ProjectRequest> sendApplication(Long userId, Long projectId){
+        return template.selectOne(query(where("id").is(userId)), User.class)
+                .flatMap(u -> template.insert(ProjectRequest.builder()
+                        .projectId(projectId)
+                        .userId(u.getId())
+                        .email(u.getEmail())
+                        .firstName(u.getFirstName())
+                        .lastName(u.getLastName())
+                        .createdAt(LocalDate.now())
+                        .build()));
     }
 
     ///////////////////////////////////////////
@@ -170,21 +140,18 @@ public class ProjectService {
     ///////////////////////////////////////////
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteProject(String id){
-        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), Project.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the project")));
+    public Mono<Void> deleteProject(Long id){
+        return template.delete(query(where("id").is(id)), Project.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteInvite(String id){
-        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), ProjectInvitation.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the invite")));
+    public Mono<Void> deleteInvite(Long id){
+        return template.delete(query(where("id").is(id)), ProjectInvitation.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteApplication(String id){
-        return mongoTemplate.remove(Query.query(Criteria.where("id").is(id)), ProjectApplication.class).then()
-                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to delete the application")));
+    public Mono<Void> deleteRequest(Long id){
+        return template.delete(query(where("id").is(id)), ProjectRequest.class).then();
     }
 
     ////////////////////////
@@ -195,58 +162,27 @@ public class ProjectService {
     ////////////////////////
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateProject(ProjectDTO projectDTO, String id){
-        return mongoTemplate.findById(id, Project.class).flatMap(p -> {
-
-            List<TeamMemberDTO> teamMemberDTOS = projectDTO.getTeam().getMembers();
-            List<String> eUsers = new ArrayList<>();
-            if (teamMemberDTOS != null)
-            {
-                teamMemberDTOS.forEach(u -> eUsers.add(u.getEmail()));
-            }
-
-            List<SkillDTO> skillsDTO = projectDTO.getSkills();
-            if (skillsDTO != null)
-            {
-                List<String> skills = new ArrayList<>();
-                skillsDTO.forEach(s -> skills.add(s.getId()));
-                p.setSkills(skills);
-            }
-
-            p.setName(projectDTO.getName());
-            p.setDescription(projectDTO.getDescription());
-            return mongoTemplate.findById(p.getTeamId(), Team.class).flatMap(t -> {
-                t.setMembers(eUsers);
-                p.setMembersCount(eUsers.size());
-                return mongoTemplate.save(p).then();
-            });
-        }).onErrorResume(ex -> Mono.error(new ErrorException("Failed to update the project")));
+    public Mono<Void> updateProject(ProjectDTO projectDTO, Long id){
+        return template.update(query(where("id").is(id)),
+                update("name", projectDTO.getName())
+                        .set("description", projectDTO.getDescription()),
+                Project.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> addInProject(String projectId, String email){
-        return mongoTemplate.findById(projectId, Project.class).flatMap(p ->
-                mongoTemplate.findById(p.getTeamId(), Team.class).flatMap(t -> {
-                    t.getMembers().add(email);
-                    t.setMembersCount(t.getMembers().size());
-                    return mongoTemplate.save(t)
-                            .then(mongoTemplate.save(p))
-                            .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
-                                    .and("receiverEmail").is(email)),ProjectInvitation.class))
-                            .then(mongoTemplate.remove(Query.query(Criteria.where("projectId").is(projectId)
-                                    .and("sender.getEmail").is(email)),ProjectApplication.class));
-                }))
-                .then().onErrorResume(ex -> Mono.error(new ErrorException("Failed to add user to project")));
+    public Mono<Void> addInProject(Long projectId, Long userId){
+        return template.selectOne(query(where("id").is(projectId)), Project.class)
+                .flatMap(p -> template.insert(new Team2Member(p.getTeamId(), userId))
+                        .then(template.delete(query(where("project_id").is(projectId)
+                                .and("receiver_id").is(userId)),ProjectInvitation.class))
+                        .then(template.delete(query(where("project_id").is(projectId)
+                                .and("user_id").is(userId)), ProjectRequest.class)).then());
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> kickFromProject(String projectId, String email){
-        return mongoTemplate.findById(projectId, Project.class).flatMap(p ->
-                mongoTemplate.findById(p.getTeamId(), Team.class).flatMap(t -> {
-                    t.getMembers().remove(email);
-                    t.setMembersCount(t.getMembers().size());
-                    return mongoTemplate.save(t).then(mongoTemplate.save(p));
-                }))
-                .then().onErrorResume(ex -> Mono.error(new ErrorException("User could not be excluded from the project")));
+    public Mono<Void> kickFromProject(Long projectId, Long userId){
+        return template.selectOne(query(where("id").is(projectId)), Project.class)
+                .flatMap(p -> template.delete(query(where("team_id").is(p.getTeamId())
+                        .and("member_id").is(userId)),Team2Member.class)).then();
     }
 }

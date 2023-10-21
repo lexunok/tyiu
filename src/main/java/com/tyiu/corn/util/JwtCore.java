@@ -18,7 +18,7 @@ import java.util.Map;
 @Component
 public class JwtCore {
     @Value("${jwt.secret}")
-    private String secret;
+    String secret;
 
     public String issueToken(String subject, List<Role> scopes){
         List<String> roles = scopes.stream().map(Enum::name).toList();
@@ -47,9 +47,9 @@ public class JwtCore {
                 .parseClaimsJws(token)
                 .getBody();
     }
-    public boolean isTokenValid(String jwt, String username){
+    public boolean isTokenValid(String jwt, String id){
         String subject = getSubject(jwt);
-        return subject.equals(username) && !isTokenExpired(jwt);
+        return subject.equals(id) && !isTokenExpired(jwt);
     }
     public boolean isTokenExpired(String jwt){
         return getClaims(jwt).getExpiration().before(Date.from(Instant.now()));

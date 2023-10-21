@@ -4,26 +4,25 @@ import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-
-import java.time.Instant;
+import org.springframework.data.relational.core.mapping.Table;
+import java.time.LocalDateTime;
 
 @Setter
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document
+@Table
 public class Idea {
     @Id
-    private String id;
-    private String initiator;
+    private Long id;
+    private Long initiatorId;
     private String name;
-    private String experts;
-    private String projectOffice;
+    private Long groupExpertId;
+    private Long groupProjectOfficeId;
     private StatusIdea status;
-    private Instant createdAt;
-    private Instant modifiedAt;
+    private LocalDateTime createdAt;
+    private LocalDateTime modifiedAt;
     private ProjectType projectType;
     private String problem;
     private String solution;

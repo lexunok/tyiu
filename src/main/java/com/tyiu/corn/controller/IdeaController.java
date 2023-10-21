@@ -1,10 +1,11 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
+import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
@@ -21,51 +22,58 @@ public class IdeaController {
     private final IdeaService ideaService;
     
     @GetMapping("/{ideaId}")
-    public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId) {
-        return ideaService.getIdea(ideaId);
+    public Mono<IdeaDTO> getIdea(@PathVariable Long ideaId) {
+        return ideaService.getIdea(ideaId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/all")
     public Flux<IdeaDTO> showListIdeaForAdmin(){
-        return ideaService.getListIdea();
+        return ideaService.getListIdea()
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/add")
     public Mono<IdeaDTO> addIdea(@RequestBody IdeaDTO idea, Principal principal) {
-        return ideaService.saveIdea(idea, principal.getName());
+        return ideaService.saveIdea(idea, Long.valueOf(principal.getName()))
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @DeleteMapping("/delete/{ideaId}")
-    public Mono<ResponseEntity<String>> deleteIdea(@PathVariable String ideaId) {
-        ideaService.deleteIdea(ideaId).subscribe();
-        return Mono.just(new ResponseEntity<>("Success deleting", HttpStatus.OK));
+    public Mono<InfoResponse> deleteIdea(@PathVariable Long ideaId) {
+        return ideaService.deleteIdea(ideaId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     @PutMapping("/initiator/update/{ideaId}")
-    public Mono<ResponseEntity<String>> updateIdeaByInitiator(
-            @PathVariable String ideaId, @RequestBody IdeaDTO updatedIdea) {
-        ideaService.updateIdeaByInitiator(ideaId, updatedIdea).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+    public Mono<InfoResponse> updateIdeaByInitiator(@PathVariable Long ideaId,
+                                                    @RequestBody IdeaDTO updatedIdea) {
+        return ideaService.updateIdeaByInitiator(ideaId, updatedIdea)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
     @PutMapping("/initiator/send/{ideaId}")
-    public Mono<ResponseEntity<String>> updateStatusByInitiator(
-            @PathVariable String ideaId, Principal principal) {
-        ideaService.updateStatusByInitiator(ideaId, principal.getName()).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+    public Mono<InfoResponse> updateStatusByInitiator(@PathVariable Long ideaId) {
+        return ideaService.updateStatusByInitiator(ideaId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
     @PutMapping("/project-office/update/{ideaId}")
-    public Mono<ResponseEntity<String>> updateStatusIdeaByProjectOffice(
-            @PathVariable String ideaId, @RequestBody StatusIdeaRequest status){
-        ideaService.updateStatusByProjectOffice(ideaId, status).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+    public Mono<InfoResponse> updateStatusIdeaByProjectOffice(@PathVariable Long ideaId,
+                                                              @RequestBody StatusIdeaRequest status){
+        return ideaService.updateStatusByProjectOffice(ideaId, status)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
     @PutMapping("/admin/update/{ideaId}")
-    public Mono<ResponseEntity<String>> updateIdeaByAdmin(
-            @PathVariable String ideaId, @RequestBody IdeaDTO updatedIdea) {
-        ideaService.updateIdeaByAdmin(ideaId, updatedIdea).subscribe();
-        return Mono.just(new ResponseEntity<>("Success updating", HttpStatus.OK));
+    public Mono<InfoResponse> updateIdeaByAdmin(@PathVariable Long ideaId,
+                                                @RequestBody IdeaDTO updatedIdea) {
+        return ideaService.updateIdeaByAdmin(ideaId, updatedIdea)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 }

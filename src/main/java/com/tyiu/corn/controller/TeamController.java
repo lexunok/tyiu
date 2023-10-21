@@ -1,11 +1,14 @@
 package com.tyiu.corn.controller;
 
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.entities.TeamInvitation;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
+import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.TeamService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -20,52 +23,61 @@ public class TeamController {
     private final TeamService teamService;
 
     @GetMapping("/{teamId}")
-    public Mono<TeamDTO> getTeam(@PathVariable String teamId){
-        return teamService.getTeam(teamId);
+    public Mono<TeamDTO> getTeam(@PathVariable Long teamId){
+        return teamService.getTeam(teamId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/all")
     public Flux<TeamDTO> getTeams() {
-        return teamService.getTeams();
+        return teamService.getTeams()
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/invites")
     public Flux<TeamInvitation> getInvitation(Principal principal) {
-        return teamService.getInvitation(principal.getName());
+        return teamService.getInvitations(Long.valueOf(principal.getName()))
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/add")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
-        return teamService.addTeam(team);
+        return teamService.addTeam(team)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/send-invite/{teamId}")
-    public Mono<TeamInvitation> sendInvite(@RequestBody AuthenticationResponse invitation, @PathVariable String teamId){
-        return teamService.sendInviteToUser(invitation.getEmail(), teamId);
+    public Mono<TeamInvitation> sendInvite(@RequestBody AuthenticationResponse invitation, @PathVariable Long teamId){
+        return teamService.sendInviteToUser(invitation.getId(), teamId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @DeleteMapping("/delete/{teamId}")
-    public Mono<Void> deleteTeam(@PathVariable String teamId) {
-        return teamService.deleteTeam(teamId);
+    public Mono<InfoResponse> deleteTeam(@PathVariable Long teamId) {
+        return teamService.deleteTeam(teamId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     @DeleteMapping("/delete/invite/{inviteId}")
-    public Mono<Void> deleteInvite(@PathVariable String inviteId) {
-        return teamService.deleteInvite(inviteId);
+    public Mono<InfoResponse> deleteInvite(@PathVariable Long inviteId) {
+        return teamService.deleteInvite(inviteId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
-    @PutMapping("/kick/{teamId}")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-        return teamService.kickFromTeam(teamId, invitation.getEmail());
-    }
-
-    @PutMapping("/invite/{teamId}")
-    public Mono<Void> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-        return teamService.inviteInTeam(teamId, invitation.getEmail());
-    }
-
-    @PutMapping("/update/{teamId}")
-    public Mono<Void> updateTeam(@PathVariable String teamId,@RequestBody TeamDTO team){
-        return teamService.updateTeam(teamId, team);
-    }
+//    @PutMapping("/kick/{teamId}")
+//    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
+//        return teamService.kickFromTeam(teamId, invitation.getEmail());
+//    }
+//
+//    @PutMapping("/invite/{teamId}")
+//    public Mono<Void> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
+//        return teamService.inviteInTeam(teamId, invitation.getEmail());
+//    }
+//
+//    @PutMapping("/update/{teamId}")
+//    public Mono<Void> updateTeam(@PathVariable String teamId,@RequestBody TeamDTO team){
+//        return teamService.updateTeam(teamId, team);
+//    }
 }

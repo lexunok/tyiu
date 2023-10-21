@@ -3,26 +3,24 @@ package com.tyiu.corn.model.entities;
 
 import com.tyiu.corn.model.enums.Role;
 
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import lombok.*;
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.Document;
+import org.springframework.data.relational.core.mapping.Table;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Document
+@Table
 public class Temporary {
     @Id
-    private String id;
-    @Indexed
+    private Long id;
     private String url;
-    private Date dateExpired;
+    private LocalDateTime dateExpired;
     private String email;
     private String newEmail;
     private String oldEmail;

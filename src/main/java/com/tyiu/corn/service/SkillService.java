@@ -1,41 +1,36 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.entities.UserSkill;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.model.responses.TeamMemberResponse;
-import com.tyiu.corn.repository.SkillRepository;
 
-import com.tyiu.corn.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 import org.modelmapper.ModelMapper;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
+import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Criteria.where;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.Instant;
-import java.util.Collection;
-import java.util.Map;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
 public class SkillService {
-    private final SkillRepository skillRepository;
-    private final UserRepository userRepository;
-    private final ReactiveMongoTemplate mongoTemplate;
+
+    private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
 
     public Flux<TeamMemberResponse> getAllUsersWithSkills(){
-        return mongoTemplate.findAll(User.class).flatMap(u ->
-                mongoTemplate.find(Query.query(Criteria.where("userEmail").is(u.getEmail())), UserSkill.class)
+        return template.select(User.class).all().flatMap(u ->
+                template.select(query(where("userEmail").is(u.getEmail())), UserSkill.class)
                 .collectList().flatMap(s -> Mono.just(TeamMemberResponse.builder()
                         .email(u.getEmail())
                         .firstName(u.getFirstName())
@@ -45,88 +40,76 @@ public class SkillService {
     }
 
     public Flux<SkillDTO> getAllSkills() {
-        return skillRepository.findAll().flatMap(skill ->
-                Flux.just(mapper.map(skill, SkillDTO.class))
-        );
-    }
-
-    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedOrCreatorSkills(String email) {
-        return userRepository.findFirstByEmail(email).flatMap(user -> {
-            return skillRepository.findByConfirmedOrCreatorId(true, user.getId())
+        return template.select(Skill.class).all()
                 .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
-                .collectMultimap( SkillDTO::getType );
-        });
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
     }
 
-    public Flux<SkillDTO> getSkillsByType(SkillType skillType) {
-        return skillRepository.findByType(skillType).flatMap(skill ->
-                Mono.just(mapper.map(skill, SkillDTO.class))
-        );
+    public Mono<List<Skill>> getAllConfirmedOrCreatorSkills(String email) {
+        return template.selectOne(query(where("email").is(email)), User.class)
+                .flatMap(user -> {
+                    return template.select(query(where("creator_id").is(user.getId()).or(where("confirmed").isTrue())), Skill.class)
+                            .collectList();
+                });
+    }
+
+    public Flux<SkillDTO> getSkillsByType(SkillType type) {
+        return template.select(query(where("type").is(type)), Skill.class)
+                .flatMap(skill -> Mono.just(mapper.map(skill, SkillDTO.class)))
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
     }
 
     public Mono<SkillDTO> addSkill(SkillDTO skillDTO, String email) {
-        return userRepository.findFirstByEmail(email).flatMap(user -> {
-            Skill skill = Skill.builder()
-                .name(skillDTO.getName())
-                .type(skillDTO.getType())
-                .confirmed(true)
-                .createdAt(Instant.now())
-                .creatorId(user.getId())
-                .build();
-            return skillRepository.save(skill).flatMap(savedSkill ->
-                Mono.just(mapper.map(savedSkill, SkillDTO.class))
-        );
+        return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
+            Skill skill = mapper.map(skillDTO, Skill.class);
+            return template.insert(skill).flatMap(s -> {
+                skillDTO.setId(s.getId());
+                skillDTO.setConfirmed(true);
+                skillDTO.setCreatorId(user.getId());
+                return Mono.just(skillDTO);
+            }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a skill")));
         });
     }
 
     public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO, String email) {
-        return userRepository.findFirstByEmail(email).flatMap(user -> {
-            Skill skill = Skill.builder()
-                .name(skillDTO.getName())
-                .type(skillDTO.getType())
-                .confirmed(false)
-                .createdAt(Instant.now())
-                .creatorId(user.getId())
-                .build();
-            return skillRepository.save(skill).flatMap(savedSkill ->
-                Mono.just(mapper.map(savedSkill, SkillDTO.class))
-        );
+        return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
+            Skill skill = mapper.map(skillDTO, Skill.class);
+            return template.insert(skill).flatMap(s -> {
+                skillDTO.setId(s.getId());
+                skillDTO.setConfirmed(false);
+                skillDTO.setCreatorId(user.getId());
+                return Mono.just(skillDTO);
+            }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a skill")));
         });
     }
 
-    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, String skillId, String email) {
-        return skillRepository.findById(skillId).flatMap(skill -> {
-            return userRepository.findFirstByEmail(email).flatMap(user -> {
+    public Mono<SkillDTO> updateSkill(SkillDTO skillDTO, Long skillId, String email) {
+        return template.selectOne(query(where("id").is(skillId)), Skill.class).flatMap(skill -> {
+            return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
                 skill.setName(skillDTO.getName());
                 skill.setType(skillDTO.getType());
                 skill.setUpdaterId(user.getId());
-                return skillRepository.save(skill).flatMap(updatedSkill ->
-                    Mono.just(mapper.map(updatedSkill, SkillDTO.class))
-                );
+                return template.insert(skill).flatMap(s -> {
+                    s.setId(skill.getId());
+                    return Mono.just(skillDTO);
+                });
             });
         });
     }
 
-    public Mono<SkillDTO> confirmSkill(String skillId, String email) {
-        return skillRepository.findById(skillId).flatMap(skill -> {
-            return userRepository.findFirstByEmail(email).flatMap(user -> {
+    public Mono<SkillDTO> confirmSkill(Long skillId, String email) {
+        return template.selectOne(query(where("id").is(skillId)), Skill.class).flatMap(skill -> {
+            return template.selectOne(query(where("email").is(email)), User.class).flatMap(user -> {
                 skill.setConfirmed(true);
                 skill.setUpdaterId(user.getId());
-                return skillRepository.save(skill).flatMap(savedSkill ->
-                        Mono.just(mapper.map(savedSkill, SkillDTO.class))
-            );
+                return template.insert(skill).flatMap(savedSkill ->
+                        Mono.just(mapper.map(savedSkill, SkillDTO.class)));
             });
         });
     }
 
-    public Mono<InfoResponse> deleteSkill(String skillId, String email) {
-        return skillRepository.existsById(skillId).flatMap(skill -> {
-            if (skill) {
-                skillRepository.deleteById(skillId).subscribe();
-                return Mono.just(new InfoResponse(200, "Успешное удаление компетенции"));
-            } else {
-                return Mono.just(new InfoResponse(405, "Компетенция не найдена"));
-            }
-        });
+    public Mono<Void> deleteSkill(Long id) {
+        return template.delete(query(where("id").is(id)), Skill.class).then()
+                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
     }
 }

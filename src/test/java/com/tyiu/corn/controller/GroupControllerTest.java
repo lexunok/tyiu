@@ -25,12 +25,8 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest(
-        webEnvironment = RANDOM_PORT,
-        properties = "de.flapdoodle.mongodb.embedded.version=5.0.5"
-)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
-class GroupControllerTest {
+@SpringBootTest(webEnvironment = RANDOM_PORT)
+class GroupControllerTest extends TestContainers{
 
     @Autowired
     private WebTestClient webTestClient;
@@ -94,7 +90,7 @@ class GroupControllerTest {
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
         assertEquals(group5.getName(), response4.getName());
-        String id = response4.getId();
+        Long id = response4.getId();
         group5 = GroupDTO.builder()
                 .name("title 2")
                 .users(List.of(userDTO))
@@ -123,7 +119,7 @@ class GroupControllerTest {
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
         assertEquals(group6.getName(), response6.getName());
-        String id = response6.getId();
+        Long id = response6.getId();
         webTestClient
                 .delete()
                 .uri("/api/v1/group/delete/{id}", id)
@@ -146,7 +142,7 @@ class GroupControllerTest {
                 .exchange()
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
-        String id = addGroupResponse.getId();
+        Long id = addGroupResponse.getId();
         assertEquals(group.getName(), addGroupResponse.getName());
 
         GroupDTO responseGet = webTestClient

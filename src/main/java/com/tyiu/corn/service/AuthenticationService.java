@@ -1,33 +1,35 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.ErrorException;
-import com.tyiu.corn.model.entities.Profile;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
-import com.tyiu.corn.repository.UserRepository;
 import com.tyiu.corn.util.JwtCore;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import reactor.core.publisher.Mono;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import static org.springframework.data.relational.core.query.Criteria.where;
+import static org.springframework.data.relational.core.query.Query.query;
+
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
-    private final UserRepository userRepository;
-    private final ReactiveMongoTemplate template;
+
+    private final R2dbcEntityTemplate template;
     private final PasswordEncoder passwordEncoder;
     private final JwtCore jwtCore;
 
     public Mono<AuthenticationResponse> login(LoginRequest request) {
-        Mono<User> user = userRepository.findFirstByEmail(request.getEmail());
+        Mono<User> user = template
+                .selectOne(query(where("email").is(request.getEmail())),User.class);
         return user.flatMap(u -> {
             if (passwordEncoder.matches(request.getPassword(), u.getPassword())){
-                String jwt = jwtCore.issueToken(u.getEmail(), u.getRoles());
+                String jwt = jwtCore.issueToken(String.valueOf(u.getId()), u.getRoles());
                 return Mono.just(AuthenticationResponse.builder()
                         .id(u.getId())
                         .email(u.getEmail())
@@ -37,12 +39,13 @@ public class AuthenticationService {
                         .roles(u.getRoles())
                         .build());
             } else return Mono.empty();
-        }).switchIfEmpty(Mono.error(new ErrorException("User not registered")));
+        }).switchIfEmpty(Mono.error(new NotFoundException("User not registered")));
     }
 
 
     public Mono<AuthenticationResponse> register(RegisterRequest request){
-        Mono<Boolean> isExists = userRepository.existsByEmail(request.getEmail());
+        Mono<Boolean> isExists = template
+                .exists(query(where("email").is(request.getEmail())), User.class);
         return isExists.flatMap(
                 b -> {
                     if (Boolean.FALSE.equals(b)) {
@@ -53,12 +56,10 @@ public class AuthenticationService {
                                 .lastName(request.getLastName())
                                 .password(passwordEncoder.encode(request.getPassword()))
                                 .build();
-                        Profile profile = new Profile(user.getEmail());
                         try {
-                            Mono<User> userFromDB = userRepository.save(user);
-                            template.save(profile).subscribe();
+                            Mono<User> userFromDB = template.insert(user);
                             return userFromDB.flatMap(u -> {
-                                String jwt = jwtCore.issueToken(u.getEmail(),u.getRoles());
+                                String jwt = jwtCore.issueToken(String.valueOf(u.getId()),u.getRoles());
                                 return Mono.just(AuthenticationResponse.builder()
                                         .id(u.getId())
                                         .email(u.getEmail())
@@ -70,12 +71,12 @@ public class AuthenticationService {
                             });
                         }
                         catch (Exception e){
-                            userRepository.delete(user);
+                            template.delete(user).subscribe();
                             return Mono.empty();
                         }
 
                     } else return Mono.empty();
                 }
-        ).switchIfEmpty(Mono.error(new ErrorException("Authorization not success")));
+        ).switchIfEmpty(Mono.error(new NotFoundException("Authorization not success")));
     }
 }

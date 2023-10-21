@@ -5,20 +5,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class ProjectDTO {
-    private String id;
+    private Long id;
 
     private String name;
     private String description;
 
     private TeamDTO team;
     private Integer membersCount;
-
-    private List<SkillDTO> skills;
 }

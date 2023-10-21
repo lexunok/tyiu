@@ -1,11 +1,10 @@
 package com.tyiu.corn.controller;
 
-
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.GroupDTO;
-import org.springframework.beans.factory.annotation.Autowired;
 
+import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.GroupService;
 
@@ -17,32 +16,66 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/group")
 public class GroupController {
-    @Autowired
+
     private final GroupService groupService;
+
+    ///////////////////////
+    //  _____   ____ ______
+    // / ___/  / __//_  __/
+    /// (_ /  / _/   / /
+    //\___/  /___/  /_/
+    ///////////////////////
 
     @GetMapping("/all")
     public Flux<GroupDTO> getGroups() {
-        return groupService.getGroups();
+        return groupService.getGroups()
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
-    @GetMapping("/{id}")
-    public Mono<GroupDTO> getGroupById(@PathVariable String id) {
-        return groupService.getGroupById(id);
+    @GetMapping("/{groupId}")
+    public Mono<GroupDTO> getGroupById(@PathVariable Long groupId) {
+        return groupService.getGroupById(groupId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
-    @PostMapping("/add")
+
+    //////////////////////////////
+    //   ___   ____    ____ ______
+    //  / _ \ / __ \  / __//_  __/
+    // / ___// /_/ / _\ \   / /
+    ///_/    \____/ /___/  /_/
+    //////////////////////////////
+
+    @PostMapping("/create")
     public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
-        return groupService.createGroup(group);
+        return groupService.createGroup(group)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
-    @PutMapping("/update/{id}")
-    public Mono<GroupDTO> updateGroup(@PathVariable String id, @RequestBody GroupDTO group) {
-        return groupService.updateGroup(id, group);
 
+    ///////////////////////////////////////////
+    //   ___    ____   __    ____ ______   ____
+    //  / _ \  / __/  / /   / __//_  __/  / __/
+    // / // / / _/   / /__ / _/   / /    / _/
+    ///____/ /___/  /____//___/  /_/    /___/
+    ///////////////////////////////////////////
+
+    @DeleteMapping("/delete/{groupId}")
+    public Mono<InfoResponse> deleteGroup(@PathVariable Long groupId) {
+        return groupService.deleteGroup(groupId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
-    @DeleteMapping("/delete/{id}")
-    public Mono<ResponseEntity<String>> deleteGroup(@PathVariable String id) {
-        groupService.deleteGroup(id).subscribe();
-        return Mono.just(new ResponseEntity<>("Success deleting", HttpStatus.OK));
+
+    ////////////////////////
+    //   ___   __  __ ______
+    //  / _ \ / / / //_  __/
+    // / ___// /_/ /  / /
+    ///_/    \____/  /_/
+    ////////////////////////
+
+    @PutMapping("/update/{groupId}")
+    public Mono<GroupDTO> updateGroup(@PathVariable Long groupId, @RequestBody GroupDTO group) {
+        return groupService.updateGroup(groupId, group)
+                .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));
     }
-    
 }
     

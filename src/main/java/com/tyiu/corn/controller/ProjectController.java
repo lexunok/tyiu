@@ -1,12 +1,15 @@
 package com.tyiu.corn.controller;
 
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.ProjectDTO;
-import com.tyiu.corn.model.entities.ProjectApplication;
+import com.tyiu.corn.model.entities.ProjectRequest;
 import com.tyiu.corn.model.entities.ProjectInvitation;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
+import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.ProjectService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,22 +32,26 @@ public class ProjectController {
 
     @GetMapping("/all")
     public Flux<ProjectDTO> getAllProject(){
-        return projectService.getAll();
+        return projectService.getAll()
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/get/{projectId}")
-    public Mono<ProjectDTO> getProject(@PathVariable String projectId){
-        return projectService.getProject(projectId);
+    public Mono<ProjectDTO> getProject(@PathVariable Long projectId){
+        return projectService.getProject(projectId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/invites")
     public Flux<ProjectInvitation> getProjectInvitations(Principal principal){
-        return projectService.getProjectInvitations(principal.getName());
+        return projectService.getProjectInvitations(Long.valueOf(principal.getName()))
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
-    @GetMapping("/applications/{projectId}")
-    public Flux<ProjectApplication> getProjectApplications(@PathVariable String projectId){
-        return projectService.getProjectApplications(projectId);
+    @GetMapping("/request/{projectId}")
+    public Flux<ProjectRequest> getProjectRequests(@PathVariable Long projectId){
+        return projectService.getProjectRequests(projectId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     //////////////////////////////
@@ -56,17 +63,20 @@ public class ProjectController {
 
     @PostMapping("/create")
     public Mono<ProjectDTO> createProject(@RequestBody ProjectDTO projectDTO){
-        return projectService.createProject(projectDTO);
+        return projectService.createProject(projectDTO)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/send/invite/{projectId}")
-    public Mono<ProjectInvitation> sendInvitation(@RequestBody AuthenticationResponse invitation, @PathVariable String projectId){
-        return projectService.sendInvitation(invitation.getEmail(), projectId);
+    public Mono<ProjectInvitation> sendInvitation(@RequestBody AuthenticationResponse invitation, @PathVariable Long projectId){
+        return projectService.sendInvitation(invitation.getId(), projectId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
-    @PostMapping("/send/application/{projectId}")
-    public Mono<ProjectApplication> sendApplication(Principal principal, @PathVariable String projectId){
-        return projectService.sendApplication(principal.getName(), projectId);
+    @PostMapping("/send/request/{projectId}")
+    public Mono<ProjectRequest> sendApplication(Principal principal, @PathVariable Long projectId){
+        return projectService.sendApplication(Long.valueOf(principal.getName()), projectId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     ///////////////////////////////////////////
@@ -77,18 +87,24 @@ public class ProjectController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{projectId}")
-    public Mono<Void> deleteProject(@PathVariable String projectId){
-        return projectService.deleteProject(projectId);
+    public Mono<InfoResponse> deleteProject(@PathVariable Long projectId){
+        return projectService.deleteProject(projectId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     @DeleteMapping("/delete/invite/{inviteId}")
-    public Mono<Void> deleteInvite(@PathVariable String inviteId){
-        return projectService.deleteInvite(inviteId);
+    public Mono<InfoResponse> deleteInvite(@PathVariable Long inviteId){
+        return projectService.deleteInvite(inviteId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
-    @DeleteMapping("/delete/application/{applicationId}")
-    public Mono<Void> deleteApplication(@PathVariable String applicationId){
-        return projectService.deleteApplication(applicationId);
+    @DeleteMapping("/delete/request/{requestId}")
+    public Mono<InfoResponse> deleteRequest(@PathVariable Long requestId){
+        return projectService.deleteRequest(requestId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     ////////////////////////
@@ -99,18 +115,24 @@ public class ProjectController {
     ////////////////////////
 
     @PutMapping("/update/{projectId}")
-    public Mono<Void> updateProject(@RequestBody ProjectDTO projectDTO, @PathVariable String projectId){
-        return projectService.updateProject(projectDTO, projectId);
+    public Mono<InfoResponse> updateProject(@RequestBody ProjectDTO projectDTO, @PathVariable Long projectId){
+        return projectService.updateProject(projectDTO, projectId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
     @PutMapping("/invite/{projectId}")
-    public Mono<Void> inviteInProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
-        return projectService.addInProject(projectId, invitation.getEmail());
+    public Mono<InfoResponse> inviteInProject(@PathVariable Long projectId, @RequestBody AuthenticationResponse invitation){
+        return projectService.addInProject(projectId, invitation.getId())
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Successful invitation"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"The invitation was not successful"));
     }
 
     @PutMapping("/kick/{projectId}")
-    public Mono<Void> kickFromProject(@PathVariable String projectId, @RequestBody AuthenticationResponse invitation){
-        return projectService.kickFromProject(projectId, invitation.getEmail());
+    public Mono<InfoResponse> kickFromProject(@PathVariable Long projectId, @RequestBody AuthenticationResponse invitation){
+        return projectService.kickFromProject(projectId, invitation.getId())
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Successful exclusion"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"The exception was not successful"));
     }
 
 }

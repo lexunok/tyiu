@@ -7,17 +7,19 @@ import com.tyiu.corn.model.responses.UserProjectResponse;
 import com.tyiu.corn.model.responses.UserSkillResponse;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.core.io.buffer.DataBuffer;
-import org.springframework.data.mongodb.core.ReactiveMongoTemplate;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsResource;
-import org.springframework.data.mongodb.gridfs.ReactiveGridFsTemplate;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 
 @Service
@@ -25,17 +27,39 @@ import reactor.core.publisher.Flux;
 public class ProfileService {
 
     private final ModelMapper mapper;
-    private final ReactiveMongoTemplate template;
-    private final ReactiveGridFsTemplate gridFsTemplate;
+    private final R2dbcEntityTemplate template;
+    @Value("${file.path.avatar}")
+    String path;
 
-    @Cacheable(cacheNames = "ideas")
+    public Mono<Resource> uploadAvatar(String userEmail,FilePart file){
+        Path basePath = Paths.get(path, userEmail + ".jpg");
+        file.transferTo(basePath).subscribe();
+        try {
+            Resource resource = new UrlResource(basePath.toUri());
+            return Mono.just(resource);
+        } catch (Exception e) {
+            return Mono.empty();
+        }
+    }
+    public Mono<Resource> getAvatar(String userEmail){
+        Path basePath = Paths.get(path, userEmail + ".jpg");
+        try {
+            Resource resource = new UrlResource(basePath.toUri());
+            return Mono.just(resource);
+        } catch (Exception e) {
+            return Mono.empty();
+        }
+    }
+
+
+    /*@Cacheable(cacheNames = "ideas")
     public Flux<UserIdeaResponse> getUserIdeas(String userEmail) {
         Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
         return template.findOne(profileQuery,Profile.class).flatMapMany(p ->
             template.find(Query.query(Criteria.where("_id").in(p.getUserIdeasId())), Idea.class)
                     .flatMap(i ->
                         Flux.just(UserIdeaResponse.builder()
-                                .ideaId(i.getId())
+                                //.ideaId(i.getId())
                                 .description(i.getDescription())
                                 .name(i.getName()).build())
             )
@@ -54,26 +78,7 @@ public class ProfileService {
                         )
         );
     }
-    @Cacheable(cacheNames = "avatar")
-    public Flux<DataBuffer> getAvatar(String userEmail) {
-        Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
-        return template.findOne(profileQuery, Profile.class).flatMap(p ->
-            gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(p.getAvatarId())))
-                    .flatMap(gridFsTemplate::getResource)
-        ).flatMapMany(ReactiveGridFsResource::getDownloadStream);
-    }
-    @CacheEvict(cacheNames = "avatar",allEntries = true)
-    public Flux<DataBuffer> uploadAvatar(String userEmail,FilePart file){
-        Query profileQuery = Query.query(Criteria.where("userEmail").is(userEmail));
-        return template.findOne(profileQuery, Profile.class).flatMap(p ->
-            gridFsTemplate.store(file.content(), file.filename())
-                    .doOnSuccess(image -> p.setAvatarId(image.toString()))
-                    .flatMap(image ->
-                        gridFsTemplate.findOne(Query.query(Criteria.where("_id").is(image)))
-                                .flatMap(gridFsTemplate::getResource)
-                    )
-        ).flatMapMany(ReactiveGridFsResource::getDownloadStream);
-    }
+
     @Cacheable(cacheNames = "skills")
     public Flux<UserSkillResponse> getSkills(String userEmail){
         Query skillsQuery = Query.query(Criteria.where("userEmail").is(userEmail));
@@ -96,5 +101,5 @@ public class ProfileService {
                                 ).flatMapMany(us -> Flux.just(mapper.map(us, UserSkillResponse.class)))
                     )
         );
-    }
+    }*/
 }
