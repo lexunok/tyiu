@@ -29,8 +29,7 @@ public class IdeaController {
 
     @GetMapping("/all")
     public Flux<IdeaDTO> showListIdeaForAdmin(){
-        return ideaService.getListIdea()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return ideaService.getListIdea();
     }
 
     @PostMapping("/add")

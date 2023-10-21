@@ -41,8 +41,7 @@ public class SkillService {
 
     public Flux<SkillDTO> getAllSkills() {
         return template.select(Skill.class).all()
-                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list skills")));
+                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
     }
 
     public Mono<List<Skill>> getAllConfirmedOrCreatorSkills(String email) {

@@ -28,8 +28,7 @@ public class GroupController {
 
     @GetMapping("/all")
     public Flux<GroupDTO> getGroups() {
-        return groupService.getGroups()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return groupService.getGroups();
     }
 
     @GetMapping("/{groupId}")
