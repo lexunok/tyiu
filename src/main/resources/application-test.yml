@@ -1,16 +1,42 @@
+postgres:
+  url: postgresql://postgres:5432/hits
+file:
+  path:
+    avatar: "./src/main/resources/avatars/"
 spring:
+  data:
+    r2dbc:
+      repositories:
+        enabled: false
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 10
+      max-idle-time: 1m
+      max-size: 30
+    url: r2dbc:${postgres.url}
+    username: admin
+    password: admin
+  flyway:
+    url: jdbc:${postgres.url}
+    user: ${spring.r2dbc.username}
+    password: ${spring.r2dbc.password}
+    baseline-on-migrate: true
+    locations: classpath:db/migration
+    enabled: true
+    validate-on-migrate: true
   rsocket:
     server:
       port: 7000
       transport: websocket
       mapping-path: /rs
-  data:
-    mongodb:
-      uri: mongodb://admin:admin@localhost:27017/admin
+  output:
+    ansi:
+      enabled: ALWAYS
   mail:
     host: smtp.gmail.com
     port: 587
-    username: ${MAIL_LOGIN}
+    username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     properties:
       mail:
