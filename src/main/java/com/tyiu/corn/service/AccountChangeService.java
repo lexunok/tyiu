@@ -222,7 +222,7 @@ public class AccountChangeService {
 
 
     public Mono<Void> changeEmailByUser(ChangeRequest request){
-        return template.selectOne(query(where("url").is(request.getKey())), Temporary.class)
+        return template.selectOne(query(where("url").is(request.getUrl())), Temporary.class)
                 .flatMap(e -> {
                     if (request.getCode() == e.getCode()){
                         return template.update(query(where("email").is(request.getOldEmail())),
