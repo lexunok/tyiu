@@ -33,9 +33,10 @@ public class IdeaService {
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(Long ideaId) {
-        String query = "SELECT idea.*, e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
+        String query = "SELECT idea.*, u.email initiator_email,e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
                 " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
                 " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
+                " LEFT JOIN users u ON idea.initiator_id = u.id" +
                 " WHERE idea.id =:ideaId";
         IdeaMapper ideaMapper = new IdeaMapper();
         return template.getDatabaseClient()
