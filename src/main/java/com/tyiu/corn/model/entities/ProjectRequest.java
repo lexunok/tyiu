@@ -1,11 +1,10 @@
 package com.tyiu.corn.model.entities;
 
-import com.tyiu.corn.model.dto.TeamMemberDTO;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Setter
 @Getter
@@ -15,8 +14,11 @@ import java.time.Instant;
 @Table
 public class ProjectRequest {
     @Id
-    private String id;
-    private String projectId;
-    private TeamMemberDTO sender;
-    private Instant createdAt;
+    private Long id;
+    private Long projectId;
+    private Long userId;
+    private String email;
+    private String firstName;
+    private String lastName;
+    private LocalDate createdAt;
 }

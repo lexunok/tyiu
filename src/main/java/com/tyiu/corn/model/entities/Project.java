@@ -12,9 +12,8 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table
 public class Project {
     @Id
-    private String id;
+    private Long id;
     private String name;
     private String description;
-    private String teamId;
-    private Integer membersCount;
+    private Long teamId;
 }

@@ -4,7 +4,7 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 
-import java.time.Instant;
+import java.time.LocalDate;
 
 @Setter
 @Getter
@@ -14,10 +14,10 @@ import java.time.Instant;
 @Table
 public class ProjectInvitation {
     @Id
-    private String id;
+    private Long id;
 
     private String projectName;
-    private String projectId;
-    private String receiverEmail;
-    private Instant createdAt;
+    private Long projectId;
+    private Long receiverId;
+    private LocalDate createdAt;
 }

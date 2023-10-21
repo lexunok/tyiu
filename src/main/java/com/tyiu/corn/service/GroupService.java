@@ -46,8 +46,7 @@ public class GroupService {
     @Cacheable
     public Flux<GroupDTO> getGroups() {
         return template.select(Group.class).all()
-                .flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)))
-                .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a list of groups")));
+                .flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)));
     }
 
     @Cacheable
@@ -58,8 +57,7 @@ public class GroupService {
                 .map(groupMapper::apply)
                 .all()
                 .collectList()
-                .map(groupDTOMap -> groupDTOMap.get(0))
-        .switchIfEmpty(Mono.error(new NotFoundException("Failed to get a group")));
+                .map(groupDTOMap -> groupDTOMap.get(0));
     }
 
     //////////////////////////////
@@ -77,7 +75,7 @@ public class GroupService {
             groupDTO.getUsers().forEach(u -> template.insert(new Group2User(u.getId(), g.getId()))
                     .subscribe());
             return Mono.just(groupDTO);
-        }).switchIfEmpty(Mono.error(new NotFoundException("Failed to create a group")));
+        });
     }
 
     ///////////////////////////////////////////
@@ -89,8 +87,7 @@ public class GroupService {
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteGroup(Long id) {
-        return template.delete(query(where("id").is(id)), Group.class).then()
-        .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to delete a group")));
+        return template.delete(query(where("id").is(id)), Group.class).then();
     }
 
     ////////////////////////

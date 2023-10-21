@@ -1,7 +1,10 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.GroupDTO;
 
+import com.tyiu.corn.model.responses.InfoResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.GroupService;
 
@@ -25,12 +28,14 @@ public class GroupController {
 
     @GetMapping("/all")
     public Flux<GroupDTO> getGroups() {
-        return groupService.getGroups();
+        return groupService.getGroups()
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/{groupId}")
     public Mono<GroupDTO> getGroupById(@PathVariable Long groupId) {
-        return groupService.getGroupById(groupId);
+        return groupService.getGroupById(groupId)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     //////////////////////////////
@@ -42,7 +47,8 @@ public class GroupController {
 
     @PostMapping("/create")
     public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
-        return groupService.createGroup(group);
+        return groupService.createGroup(group)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     ///////////////////////////////////////////
@@ -53,8 +59,10 @@ public class GroupController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{groupId}")
-    public Mono<Void> deleteGroup(@PathVariable Long groupId) {
-        return groupService.deleteGroup(groupId);
+    public Mono<InfoResponse> deleteGroup(@PathVariable Long groupId) {
+        return groupService.deleteGroup(groupId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     ////////////////////////

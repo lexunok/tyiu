@@ -45,7 +45,6 @@ public class TeamService {
                 .all()
                 .collectList()
                 .map(groupDTOMap -> groupDTOMap.get(0));
-                //.switchIfEmpty(Mono.error(new ErrorException("Failed to get a group")));
     }
 
     public Flux<TeamDTO> getTeams() {
@@ -62,9 +61,8 @@ public class TeamService {
                                                         .build())));
     }
 
-    public Flux<TeamInvitation> getInvitations(String email) {
-        return template.selectOne(query(where("email").is(email)), User.class)
-                .flatMapMany(u -> template.select(query(where("receiver_id").is(u.getId())), TeamInvitation.class));
+    public Flux<TeamInvitation> getInvitations(Long userId) {
+        return template.select(query(where("receiver_id").is(userId)), TeamInvitation.class);
     }
 
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
@@ -90,7 +88,6 @@ public class TeamService {
 
                     return Mono.just(teamDTO);
                 });
-                //.onErrorResume(ex -> Mono.error(new ErrorException("Failed to add team")));
     }
 
     public Mono<TeamInvitation> sendInviteToUser(Long userId, Long teamId) {
@@ -102,29 +99,14 @@ public class TeamService {
                                 .teamName(t.getName())
                                 .createdAt(LocalDate.now())
                                 .build()));
-                //.onErrorResume(ex -> Mono.error(new ErrorException("Failed to send invitation")));
     }
 
-    //
-    //
-    //
-    //
-    //
-    //
-    //
-
     public Mono<Void> deleteTeam(Long id) {
-        return template.delete(query(where("id").is(id)), Team.class)
-                .then(template.delete(query(where("team_id").is(id)), Team2Member.class))
-                .then(template.delete(query(where("team_id").is(id)), Team2Skill.class))
-                .then(template.delete(query(where("team_id").is(id)), TeamInvitation.class))
-                .then()
-                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
+        return template.delete(query(where("id").is(id)), Team.class).then();
     }
 
     public Mono<Void> deleteInvite(Long id) {
-        return template.delete(query(where("id").is(id)), TeamInvitation.class).then()
-                .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
+        return template.delete(query(where("id").is(id)), TeamInvitation.class).then();
     }
 
 //    public Mono<Void> inviteInTeam(Long teamId, String email) {

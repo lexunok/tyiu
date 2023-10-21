@@ -45,8 +45,8 @@ CREATE TABLE IF NOT EXISTS temporary (
 );
 CREATE TABLE IF NOT EXISTS group_user (
     id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT NOT NULL,
-    group_id BIGINT NOT NULL
+    user_id BIGINT REFERENCES users (id),
+    group_id BIGINT REFERENCES groups (id)
 );
 CREATE TABLE IF NOT EXISTS companies (
     id BIGSERIAL PRIMARY KEY,
@@ -92,23 +92,45 @@ CREATE TABLE IF NOT EXISTS team (
     description TEXT,
     closed BOOLEAN NOT NULL,
     created_at TIMESTAMP,
-    owner_id BIGINT NOT NULL,
-    leader_id BIGINT NOT NULL
+    owner_id BIGINT REFERENCES users (id),
+    leader_id BIGINT REFERENCES users (id)
 );
 CREATE TABLE IF NOT EXISTS team_invitation (
     id BIGSERIAL PRIMARY KEY,
     team_name TEXT NOT NULL,
-    team_id BIGINT NOT NULL,
-    receiver_id BIGINT NOT NULL,
+    team_id BIGINT REFERENCES team (id),
+    receiver_id BIGINT REFERENCES users (id),
     created_at TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS team_member (
     id BIGSERIAL PRIMARY KEY,
-    team_id BIGINT NOT NULL,
-    member_id BIGINT NOT NULL
+    team_id BIGINT REFERENCES team (id),
+    member_id BIGINT REFERENCES users (id)
 );
 CREATE TABLE IF NOT EXISTS team_skill (
     id BIGSERIAL PRIMARY KEY,
-    team_id BIGINT NOT NULL,
-    skill_id BIGINT NOT NULL
+    team_id BIGINT REFERENCES team (id),
+    skill_id BIGINT REFERENCES skill (id)
+);
+CREATE TABLE IF NOT EXISTS project (
+    id BIGSERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    team_id BIGINT REFERENCES team (id)
+);
+CREATE TABLE IF NOT EXISTS project_invitation (
+    id BIGSERIAL PRIMARY KEY,
+    project_name TEXT,
+    project_id BIGINT REFERENCES project (id),
+    receiver_id BIGINT REFERENCES users (id),
+    created_at TIMESTAMP
+);
+CREATE TABLE IF NOT EXISTS project_request (
+    id BIGSERIAL PRIMARY KEY,
+    project_id BIGINT REFERENCES project (id),
+    user_id BIGINT REFERENCES users (id),
+    email TEXT,
+    first_name TEXT,
+    last_name TEXT,
+    created_at TIMESTAMP
 );
