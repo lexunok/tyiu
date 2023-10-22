@@ -28,7 +28,7 @@ public class CommentController {
     }
 
     @PostMapping("/send")
-    public Mono<Void> createComment(@RequestBody CommentDTO comment, Principal principal){
+    public Mono<CommentDTO> createComment(@RequestBody CommentDTO comment, Principal principal){
         return commentService.createComment(comment, Long.valueOf(principal.getName()));
     }
 

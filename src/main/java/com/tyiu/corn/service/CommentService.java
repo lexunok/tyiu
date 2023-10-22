@@ -38,7 +38,7 @@ public class CommentService {
         return sink.asFlux().doOnCancel(() -> userSinks.remove(ideaId));
     }
 
-    public Mono<Void> createComment(CommentDTO commentDTO, Long userId) {
+    public Mono<CommentDTO> createComment(CommentDTO commentDTO, Long userId) {
         Comment comment = Comment.builder()
                 .ideaId(commentDTO.getIdeaId())
                 .text(commentDTO.getText())
@@ -47,11 +47,12 @@ public class CommentService {
                 .senderEmail(commentDTO.getSenderEmail())
                 .build();
         Sinks.Many<CommentDTO> sink = userSinks.get(commentDTO.getIdeaId());
-        return template.insert(comment).doOnSuccess(c -> {
+        return template.insert(comment).flatMap(c -> {
             if (sink!=null){
                 sink.tryEmitNext(mapper.map(c,CommentDTO.class));
             }
-        }).then();
+            return Mono.just(mapper.map(c,CommentDTO.class));
+        });
     }
 
 
