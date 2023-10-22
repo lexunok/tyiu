@@ -5,7 +5,6 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -21,7 +20,6 @@ import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 @CacheConfig(cacheNames = "ratings")
 public class RatingService {
     private final R2dbcEntityTemplate template;

@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS idea (
     status TEXT,
     created_at TIMESTAMP,
     modified_at TIMESTAMP,
-    project_type TEXT,
+    project_type TEXT NOT NULL,
     problem TEXT,
     solution TEXT,
     result TEXT,
@@ -44,7 +44,6 @@ CREATE TABLE IF NOT EXISTS temporary (
     roles TEXT[]
 );
 CREATE TABLE IF NOT EXISTS group_user (
-    id BIGSERIAL PRIMARY KEY,
     user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
     group_id BIGINT REFERENCES groups (id) ON DELETE CASCADE
 );
@@ -53,16 +52,16 @@ CREATE TABLE IF NOT EXISTS company (
     name TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS company_user (
-    id BIGSERIAL PRIMARY KEY,
-    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
-    company_id BIGINT REFERENCES company (id) ON DELETE CASCADE
+    user_id BIGINT REFERENCES users (id),
+    company_id BIGINT REFERENCES company (id)
 );
 CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,
     text TEXT NOT NULL,
-    senderEmail TEXT NOT NULL,
-    createdAt TIMESTAMP,
-    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE
+    sender_email TEXT NOT NULL,
+    checked_by BIGINT[],
+    created_at TIMESTAMP,
+    idea_id BIGINT REFERENCES idea (id)
 );
 CREATE TABLE IF NOT EXISTS skill (
     id BIGSERIAL PRIMARY KEY,
@@ -103,12 +102,10 @@ CREATE TABLE IF NOT EXISTS team_invitation (
     created_at TIMESTAMP
 );
 CREATE TABLE IF NOT EXISTS team_member (
-    id BIGSERIAL PRIMARY KEY,
     team_id BIGINT REFERENCES team (id) ON DELETE CASCADE,
     member_id BIGINT REFERENCES users (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS team_skill (
-    id BIGSERIAL PRIMARY KEY,
     team_id BIGINT REFERENCES team (id) ON DELETE CASCADE,
     skill_id BIGINT REFERENCES skill (id) ON DELETE CASCADE
 );
