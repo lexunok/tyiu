@@ -34,7 +34,7 @@ public class IdeaController {
         return ideaService.getListIdea();
     }
     @GetMapping("/skills/{ideaId}")
-    public Flux<SkillDTO> getIdeaSkills(@PathVariable Long ideaId) {
+    public Mono<IdeaSkillRequest> getIdeaSkills(@PathVariable Long ideaId) {
         return ideaService.getIdeaSkills(ideaId);
     }
     @PostMapping("/skills/add")
