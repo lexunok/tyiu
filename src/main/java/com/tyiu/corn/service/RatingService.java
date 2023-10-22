@@ -5,6 +5,7 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -20,6 +21,7 @@ import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 @CacheConfig(cacheNames = "ratings")
 public class RatingService {
     private final R2dbcEntityTemplate template;
@@ -36,7 +38,7 @@ public class RatingService {
     }
     @CacheEvict(allEntries = true)
     public Mono<Void> confirmRating(RatingDTO ratingDTO, Long expertId) {
-        template.update(query(where("expert_id").is(expertId)
+        return template.update(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ratingDTO.getIdeaId()))),
                 update("market_value",ratingDTO.getMarketValue())
                         .set("originality",ratingDTO.getOriginality())
@@ -44,19 +46,21 @@ public class RatingService {
                         .set("suitability", ratingDTO.getSuitability())
                         .set("budget", ratingDTO.getBudget())
                         .set("rating", ratingDTO.getRating())
-                        .set("confirmed", true), Rating.class).subscribe();
-        return template.select(query(where("idea_id").is(ratingDTO.getIdeaId())), Rating.class)
-                .collectList()
-                .flatMap(list ->{
-                    if (list.size() == list.stream().filter(Rating::getConfirmed).count()) {
-                        double number = list.stream().mapToDouble(Rating::getRating).sum();
-                        Double rating = number / list.size();
-                        template.update(query(where("id").is(ratingDTO.getIdeaId())),
-                                update("rating",rating)
-                                        .set("status", StatusIdea.CONFIRMED), Idea.class);
-                    }
-                    return Mono.empty();
-                });
+                        .set("confirmed", true), Rating.class)
+                .flatMap(r ->
+                    template.select(query(where("idea_id").is(ratingDTO.getIdeaId())), Rating.class)
+                            .collectList()
+                            .flatMap(list -> {
+                                if (list.size() == list.stream().filter(Rating::getConfirmed).count()) {
+                                    double number = list.stream().mapToDouble(Rating::getRating).sum();
+                                    Double rating = number / list.size();
+                                    return template.update(query(where("id").is(ratingDTO.getIdeaId())),
+                                            update("rating", rating)
+                                                    .set("status", StatusIdea.CONFIRMED), Idea.class).then();
+                                }
+                                return Mono.empty();
+                            })
+                ).then();
     }
     @CacheEvict(allEntries = true)
     public Mono<Void> saveRating(RatingDTO ratingDTO, Long expertId){
