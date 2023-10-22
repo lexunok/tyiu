@@ -38,7 +38,7 @@ public class SkillController {
     }
 
     @GetMapping("/all-confirmed-or-creator")
-    public Flux<SkillDTO> getAllConfirmedSkills(Principal principal) {
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(Principal principal) {
         return skillService.getAllConfirmedOrCreatorSkills(Long.valueOf(principal.getName()));
     }
 

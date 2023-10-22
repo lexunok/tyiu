@@ -20,6 +20,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Collection;
+import java.util.Map;
+
 
 @Service
 @RequiredArgsConstructor
@@ -44,9 +47,10 @@ public class SkillService {
                 .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
     }
 
-    public Flux<SkillDTO> getAllConfirmedOrCreatorSkills(Long userId) {
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedOrCreatorSkills(Long userId) {
         return template.select(query(where("creator_id").is(userId).or(where("confirmed").isTrue())), Skill.class)
-                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
+                .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
+                .collectMultimap(SkillDTO::getType);
     }
 
     public Flux<SkillDTO> getSkillsByType(SkillType type) {
