@@ -1,13 +1,13 @@
 package com.tyiu.corn.service;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.tyiu.corn.model.entities.Comment;
 import com.tyiu.corn.model.dto.CommentDTO;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
@@ -21,7 +21,6 @@ import static org.springframework.data.relational.core.query.Query.query;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class CommentService {
 
     private final R2dbcEntityTemplate template;
@@ -39,24 +38,32 @@ public class CommentService {
         return sink.asFlux().doOnCancel(() -> userSinks.remove(ideaId));
     }
 
-    public Mono<Void> createComment(CommentDTO commentDTO, String email) {
+    public Mono<CommentDTO> createComment(CommentDTO commentDTO, Long userId) {
         Comment comment = Comment.builder()
                 .ideaId(commentDTO.getIdeaId())
                 .text(commentDTO.getText())
+                .checkedBy(List.of(userId))
                 .createdAt(LocalDateTime.now())
-                .senderEmail(email)
+                .senderEmail(commentDTO.getSenderEmail())
                 .build();
         Sinks.Many<CommentDTO> sink = userSinks.get(commentDTO.getIdeaId());
-        return template.insert(comment).doOnSuccess(c -> {
+        return template.insert(comment).flatMap(c -> {
             if (sink!=null){
                 sink.tryEmitNext(mapper.map(c,CommentDTO.class));
             }
-        }).then();
+            return Mono.just(mapper.map(c,CommentDTO.class));
+        });
     }
 
 
-    public Mono<Void> deleteComment(String commentId) {
+    public Mono<Void> deleteComment(Long commentId) {
         return template.delete(query(where("id").is(commentId)), Comment.class).then();
+    }
+    public Mono<Void> checkCommentByUser(Long commentId, Long userId){
+        String query = "UPDATE comment SET checked_by = array_append(checked_by,:userId) WHERE id =:commentId";
+        return template.getDatabaseClient().sql(query)
+                .bind("userId",userId)
+                .bind("commentId",commentId).then();
     }
 
 }

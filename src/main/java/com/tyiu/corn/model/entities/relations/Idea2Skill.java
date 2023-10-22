@@ -6,10 +6,8 @@ import org.springframework.data.relational.core.mapping.Table;
 
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(name = "team_skill")
-public class Team2Skill {
-
-    private Long teamId;
+@Table("idea_skill")
+public class Idea2Skill {
+    private Long ideaId;
     private Long skillId;
-
 }

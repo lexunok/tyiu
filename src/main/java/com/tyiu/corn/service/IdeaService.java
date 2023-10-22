@@ -1,11 +1,15 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.IdeaDTO;
+import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
+import com.tyiu.corn.model.entities.relations.Idea2Skill;
+import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -130,5 +134,32 @@ public class IdeaService {
                         .set("budget",updatedIdea.getBudget())
                         .set("status",updatedIdea.getStatus())
                         .set("rating", updatedIdea.getRating()), Idea.class).then();
+    }
+    //TODO:сохранять одним запросом
+    public Mono<Void> addIdeaSkills(IdeaSkillRequest request) {
+        return Flux.fromIterable(request.getSkills()).flatMap(s ->
+                template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
+    }
+    public Mono<Void> updateIdeaSkills(IdeaSkillRequest request) {
+        template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class).subscribe();
+        return Flux.fromIterable(request.getSkills()).flatMap(s ->
+                template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
+    }
+    public Flux<SkillDTO> getIdeaSkills(Long ideaId) {
+        String query = "SELECT skill.*, i.skill_id skill_id FROM idea_skill i " +
+                "LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId";
+        return template.getDatabaseClient().sql(query)
+                .bind("ideaId", ideaId)
+                .map((row, rowMetadata) ->
+                    SkillDTO.builder()
+                            .id(row.get("id",Long.class))
+                            .name(row.get("name",String.class))
+                            .type(SkillType.valueOf(row.get("type",String.class)))
+                            .creatorId(row.get("creator_id",Long.class))
+                            .deleterId(row.get("deleter_id",Long.class))
+                            .updaterId(row.get("updater_id",Long.class))
+                            .confirmed(row.get("confirmed",Boolean.class))
+                            .build()
+                ).all();
     }
 }

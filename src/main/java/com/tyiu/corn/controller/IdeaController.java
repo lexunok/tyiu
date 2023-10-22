@@ -3,6 +3,8 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 
+import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
@@ -30,6 +32,16 @@ public class IdeaController {
     @GetMapping("/all")
     public Flux<IdeaDTO> showListIdeaForAdmin(){
         return ideaService.getListIdea();
+    }
+    @GetMapping("/skills/{ideaId}")
+    public Flux<SkillDTO> getIdeaSkills(@PathVariable Long ideaId) {
+        return ideaService.getIdeaSkills(ideaId);
+    }
+    @PostMapping("/skills/add")
+    public Mono<InfoResponse> addIdeaSkills(@RequestBody IdeaSkillRequest request) {
+        return ideaService.addIdeaSkills(request)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Success!"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Not success."));
     }
 
     @PostMapping("/add")
@@ -72,6 +84,12 @@ public class IdeaController {
     public Mono<InfoResponse> updateIdeaByAdmin(@PathVariable Long ideaId,
                                                 @RequestBody IdeaDTO updatedIdea) {
         return ideaService.updateIdeaByAdmin(ideaId, updatedIdea)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
+    }
+    @PutMapping("/skills/update")
+    public Mono<InfoResponse> updateIdeaSkills(@RequestBody IdeaSkillRequest request) {
+        return ideaService.updateIdeaSkills(request)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }

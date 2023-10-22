@@ -28,13 +28,17 @@ public class CommentController {
     }
 
     @PostMapping("/send")
-    public Mono<Void> createComment(@RequestBody CommentDTO comment, Principal principal){
-        return commentService.createComment(comment, principal.getName());
+    public Mono<CommentDTO> createComment(@RequestBody CommentDTO comment, Principal principal){
+        return commentService.createComment(comment, Long.valueOf(principal.getName()));
     }
 
     @DeleteMapping("/delete/{commentId}")
-    public Mono<Void> deleteComment(@PathVariable String commentId){
+    public Mono<Void> deleteComment(@PathVariable Long commentId){
         return commentService.deleteComment(commentId);
+    }
+    @PutMapping("/check/{commentId}")
+    public Mono<Void> checkComment(@PathVariable Long commentId, Principal principal){
+        return commentService.checkCommentByUser(commentId, Long.valueOf(principal.getName()));
     }
 
 }
