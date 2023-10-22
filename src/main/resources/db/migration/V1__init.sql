@@ -33,6 +33,20 @@ CREATE TABLE IF NOT EXISTS idea (
     pre_assessment REAL,
     rating REAL
 );
+CREATE TABLE IF NOT EXISTS skill (
+    id BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL,
+    confirmed BOOLEAN NOT NULL,
+    creator_id BIGINT,
+    updater_id BIGINT,
+    deleter_id BIGINT
+);
+CREATE TABLE IF NOT EXISTS idea_skill (
+    idea_id BIGINT REFERENCES idea (id),
+    skill_id BIGINT REFERENCES skill (id)
+);
 CREATE TABLE IF NOT EXISTS temporary (
     id BIGSERIAL PRIMARY KEY,
     url TEXT,
@@ -62,16 +76,6 @@ CREATE TABLE IF NOT EXISTS comment (
     checked_by BIGINT[],
     created_at TIMESTAMP,
     idea_id BIGINT REFERENCES idea (id)
-);
-CREATE TABLE IF NOT EXISTS skill (
-    id BIGSERIAL PRIMARY KEY,
-    created_at TIMESTAMP,
-    name TEXT NOT NULL,
-    type TEXT NOT NULL,
-    confirmed BOOLEAN NOT NULL,
-    creator_id BIGINT,
-    updater_id BIGINT,
-    deleter_id BIGINT
 );
 CREATE TABLE IF NOT EXISTS rating (
     id BIGSERIAL PRIMARY KEY,
