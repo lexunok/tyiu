@@ -145,7 +145,7 @@ public class IdeaService {
         return Flux.fromIterable(request.getSkills()).flatMap(s ->
                 template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
     }
-    public Flux<SkillDTO> getIdeaSkills(Long ideaId) {
+    public Mono<IdeaSkillRequest> getIdeaSkills(Long ideaId) {
         String query = "SELECT skill.*, i.skill_id skill_id FROM idea_skill i " +
                 "LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId";
         return template.getDatabaseClient().sql(query)
@@ -160,6 +160,11 @@ public class IdeaService {
                             .updaterId(row.get("updater_id",Long.class))
                             .confirmed(row.get("confirmed",Boolean.class))
                             .build()
-                ).all();
+                ).all().collectList()
+                .flatMap(list -> Mono.just(IdeaSkillRequest.builder()
+                        .skills(list)
+                        .ideaId(ideaId)
+                        .build())
+                );
     }
 }
