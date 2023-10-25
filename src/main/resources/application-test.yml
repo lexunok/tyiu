@@ -1,5 +1,10 @@
+logging:
+  level:
+    org:
+      springframework:
+        r2dbc: DEBUG
 postgres:
-  url: postgresql://postgres:5432/hits
+  url: postgresql://localhost:5432/hits
 file:
   path:
     avatar: "./src/main/resources/avatars/"

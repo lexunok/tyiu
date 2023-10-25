@@ -28,11 +28,11 @@ public class CompanyService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
     private final CompanyMapper companyMapper = new CompanyMapper();
-    private final String Query = "SELECT companies.* users.id AS member_id, users.email, users.first_name, users.last_name" +
-            "FROM companies" +
-            "LEFT JOIN company_user ON companies.id = company_user.company_id" +
-            "LEFT JOIN users ON company_user.user_id = users.id" +
-            "WHERE companies.id = :companyId";
+    private final String Query = "SELECT company.* users.id AS member_id, users.email, users.first_name, users.last_name " +
+            "FROM company " +
+            "LEFT JOIN company_user ON companies.id = company_user.company_id " +
+            "LEFT JOIN users ON company_user.user_id = users.id " +
+            "WHERE company.id = :companyId";
 
     @Cacheable
     public Mono<CompanyDTO> getCompanyById(Long companyId){
