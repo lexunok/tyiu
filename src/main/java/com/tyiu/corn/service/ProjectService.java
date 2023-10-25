@@ -132,6 +132,16 @@ public class ProjectService {
                         .build()));
     }
 
+    @CacheEvict(allEntries = true)
+    public Mono<Void> addInProject(Long projectId, Long userId){
+        return template.selectOne(query(where("id").is(projectId)), Project.class)
+                .flatMap(p -> template.insert(new Team2Member(p.getTeamId(), userId))
+                        .then(template.delete(query(where("project_id").is(projectId)
+                                .and("receiver_id").is(userId)),ProjectInvitation.class))
+                        .then(template.delete(query(where("project_id").is(projectId)
+                                .and("user_id").is(userId)), ProjectRequest.class)).then());
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -154,6 +164,13 @@ public class ProjectService {
         return template.delete(query(where("id").is(id)), ProjectRequest.class).then();
     }
 
+    @CacheEvict(allEntries = true)
+    public Mono<Void> kickFromProject(Long projectId, Long userId){
+        return template.selectOne(query(where("id").is(projectId)), Project.class)
+                .flatMap(p -> template.delete(query(where("team_id").is(p.getTeamId())
+                        .and("member_id").is(userId)),Team2Member.class)).then();
+    }
+
     ////////////////////////
     //   ___   __  __ ______
     //  / _ \ / / / //_  __/
@@ -167,22 +184,5 @@ public class ProjectService {
                 update("name", projectDTO.getName())
                         .set("description", projectDTO.getDescription()),
                 Project.class).then();
-    }
-
-    @CacheEvict(allEntries = true)
-    public Mono<Void> addInProject(Long projectId, Long userId){
-        return template.selectOne(query(where("id").is(projectId)), Project.class)
-                .flatMap(p -> template.insert(new Team2Member(p.getTeamId(), userId))
-                        .then(template.delete(query(where("project_id").is(projectId)
-                                .and("receiver_id").is(userId)),ProjectInvitation.class))
-                        .then(template.delete(query(where("project_id").is(projectId)
-                                .and("user_id").is(userId)), ProjectRequest.class)).then());
-    }
-
-    @CacheEvict(allEntries = true)
-    public Mono<Void> kickFromProject(Long projectId, Long userId){
-        return template.selectOne(query(where("id").is(projectId)), Project.class)
-                .flatMap(p -> template.delete(query(where("team_id").is(p.getTeamId())
-                        .and("member_id").is(userId)),Team2Member.class)).then();
     }
 }
