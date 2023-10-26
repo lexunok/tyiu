@@ -9,6 +9,7 @@ import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
 import com.tyiu.corn.model.entities.relations.Idea2Company;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
+import com.tyiu.corn.model.entities.relations.User2Idea;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.IdeaCompanyRequest;
@@ -73,6 +74,7 @@ public class IdeaService {
             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
             savedDTO.setExperts(ideaDTO.getExperts());
             savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+            template.insert(new User2Idea(initiatorId,savedIdea.getId())).subscribe();
             //TODO: сохранять рейтинг одним запросом
             template.select(query(where("group_id").is(savedIdea.getGroupExpertId())), Group2User.class)
                     .flatMap(u -> {

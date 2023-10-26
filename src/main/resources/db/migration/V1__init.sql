@@ -44,8 +44,8 @@ CREATE TABLE IF NOT EXISTS skill (
     deleter_id BIGINT
 );
 CREATE TABLE IF NOT EXISTS idea_skill (
-    idea_id BIGINT REFERENCES idea (id),
-    skill_id BIGINT REFERENCES skill (id)
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE,
+    skill_id BIGINT REFERENCES skill (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS idea_company (
     idea_id BIGINT REFERENCES idea (id),
@@ -79,7 +79,7 @@ CREATE TABLE IF NOT EXISTS comment (
     sender_email TEXT NOT NULL,
     checked_by BIGINT[],
     created_at TIMESTAMP,
-    idea_id BIGINT REFERENCES idea (id)
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS rating (
     id BIGSERIAL PRIMARY KEY,
