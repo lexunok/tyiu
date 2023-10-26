@@ -1,14 +1,17 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
+import com.tyiu.corn.model.entities.relations.Idea2Company;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.model.requests.IdeaCompanyRequest;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import lombok.RequiredArgsConstructor;
@@ -83,6 +86,7 @@ public class IdeaService {
             return Mono.just(savedDTO);
         });
     }
+
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteIdea(Long id) {
         return template.delete(query(where("id").is(id)), Idea.class).then();
@@ -111,6 +115,7 @@ public class IdeaService {
                         .set("pre_assessment",updatedIdea.getPreAssessment())
                         .set("modified_at", LocalDateTime.now()), Idea.class).then();
     }
+
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByProjectOffice(Long id, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(id)),
@@ -135,16 +140,19 @@ public class IdeaService {
                         .set("status",updatedIdea.getStatus())
                         .set("rating", updatedIdea.getRating()), Idea.class).then();
     }
+
     //TODO:сохранять одним запросом
     public Mono<Void> addIdeaSkills(IdeaSkillRequest request) {
         return Flux.fromIterable(request.getSkills()).flatMap(s ->
                 template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
     }
+
     public Mono<Void> updateIdeaSkills(IdeaSkillRequest request) {
         template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class).subscribe();
         return Flux.fromIterable(request.getSkills()).flatMap(s ->
                 template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
     }
+
     public Mono<IdeaSkillRequest> getIdeaSkills(Long ideaId) {
         String query = "SELECT skill.*, i.skill_id skill_id FROM idea_skill i " +
                 "LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId";
@@ -163,6 +171,35 @@ public class IdeaService {
                 ).all().collectList()
                 .flatMap(list -> Mono.just(IdeaSkillRequest.builder()
                         .skills(list)
+                        .ideaId(ideaId)
+                        .build())
+                );
+    }
+
+    public Mono<Void> addIdeaCompanies(IdeaCompanyRequest request) {
+        return Flux.fromIterable(request.getCompanies()).flatMap(c ->
+                template.insert(new Idea2Company(request.getIdeaId(),c.getId()))).then();
+    }
+
+    public Mono<Void> updateIdeaCompanies(IdeaCompanyRequest request) {
+        template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Company.class).subscribe();
+        return Flux.fromIterable(request.getCompanies()).flatMap(c ->
+                template.insert(new Idea2Company(request.getIdeaId(), c.getId()))).then();
+    }
+
+    public Mono<IdeaCompanyRequest> getIdeaCompanies(Long ideaId) {
+        String Query = "SELECT company.*, i.company_id company_id FROM idea_company i " +
+                "LEFT JOIN company ON company.id = company_id WHERE i.idea_id =:ideaId";
+        return template.getDatabaseClient().sql(Query)
+                .bind("ideaId", ideaId)
+                .map((row, rowMetadata) ->
+                        CompanyDTO.builder()
+                                .id(row.get("id",Long.class))
+                                .name(row.get("name",String.class))
+                                .build()
+                ).all().collectList()
+                .flatMap(list -> Mono.just(IdeaCompanyRequest.builder()
+                        .companies(list)
                         .ideaId(ideaId)
                         .build())
                 );

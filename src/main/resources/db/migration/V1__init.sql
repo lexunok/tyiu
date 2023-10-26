@@ -47,6 +47,10 @@ CREATE TABLE IF NOT EXISTS idea_skill (
     idea_id BIGINT REFERENCES idea (id),
     skill_id BIGINT REFERENCES skill (id)
 );
+CREATE TABLE IF NOT EXISTS idea_company (
+    idea_id BIGINT REFERENCES idea (id),
+    company_id BIGINT REFERENCES company (id)
+);
 CREATE TABLE IF NOT EXISTS temporary (
     id BIGSERIAL PRIMARY KEY,
     url TEXT,
@@ -66,8 +70,8 @@ CREATE TABLE IF NOT EXISTS company (
     name TEXT NOT NULL
 );
 CREATE TABLE IF NOT EXISTS company_user (
-    user_id BIGINT REFERENCES users (id),
-    company_id BIGINT REFERENCES company (id)
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    company_id BIGINT REFERENCES company (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS comment (
     id BIGSERIAL PRIMARY KEY,

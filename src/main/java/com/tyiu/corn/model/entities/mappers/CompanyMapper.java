@@ -4,13 +4,13 @@ import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.dto.UserDTO;
 import io.r2dbc.spi.Row;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
 
 public class CompanyMapper implements BiFunction<Row, Object, CompanyDTO> {
 
-    private final Map<Long, CompanyDTO> companyDTOMap = new HashMap<>();
+    private final Map<Long, CompanyDTO> companyDTOMap = new LinkedHashMap<>();
 
     @Override
     public CompanyDTO apply(Row row, Object o) {
