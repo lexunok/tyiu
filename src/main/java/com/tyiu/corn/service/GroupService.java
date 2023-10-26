@@ -29,19 +29,11 @@ public class GroupService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
     private final GroupMapper groupMapper = new GroupMapper();
-
     private final String QUERY = "SELECT groups.*, users.id AS member_id, users.email, users.first_name, users.last_name " +
                                     "FROM groups " +
                                     "LEFT JOIN group_user ON groups.id = group_user.group_id " +
                                     "LEFT JOIN users ON group_user.user_id = users.id " +
                                     "WHERE groups.id = :groupId";
-
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
     @Cacheable
     public Flux<GroupDTO> getGroups() {
@@ -60,22 +52,16 @@ public class GroupService {
                 .map(groupDTOMap -> groupDTOMap.get(0));
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
-
+    //TODO:Добавлять пользователей одним запросом
     @CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO) {
         Group group = mapper.map(groupDTO, Group.class);
         return template.insert(group).flatMap(g -> {
             groupDTO.setId(g.getId());
-            groupDTO.getUsers().forEach(u -> template.insert(new Group2User(u.getId(), g.getId()))
-                    .subscribe());
-            return Mono.just(groupDTO);
-        });
+            return Flux.fromIterable(groupDTO.getUsers()).flatMap(u ->
+                    template.insert(new Group2User(u.getId(), g.getId())
+                    )).then();
+        }).thenReturn(groupDTO);
     }
 
     ///////////////////////////////////////////
