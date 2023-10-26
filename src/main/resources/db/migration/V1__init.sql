@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS comment (
     sender_email TEXT NOT NULL,
     checked_by BIGINT[],
     created_at TIMESTAMP,
-    idea_id BIGINT REFERENCES idea (id)
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE
 );
 CREATE TABLE IF NOT EXISTS rating (
     id BIGSERIAL PRIMARY KEY,
