@@ -22,6 +22,13 @@ public class TeamController {
 
     private final TeamService teamService;
 
+    ///////////////////////
+    //  _____   ____ ______
+    // / ___/  / __//_  __/
+    /// (_ /  / _/   / /
+    //\___/  /___/  /_/
+    ///////////////////////
+
     @GetMapping("/{teamId}")
     public Mono<TeamDTO> getTeam(@PathVariable Long teamId){
         return teamService.getTeam(teamId)
@@ -40,6 +47,13 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
+    //////////////////////////////
+    //   ___   ____    ____ ______
+    //  / _ \ / __ \  / __//_  __/
+    // / ___// /_/ / _\ \   / /
+    ///_/    \____/ /___/  /_/
+    //////////////////////////////
+
     @PostMapping("/add")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
         return teamService.addTeam(team)
@@ -51,6 +65,20 @@ public class TeamController {
         return teamService.sendInviteToUser(invitation.getId(), teamId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
+
+    @PostMapping("/invite/{teamId}")
+    public Mono<InfoResponse> inviteInTeam(@PathVariable Long teamId, @RequestBody AuthenticationResponse invitation) {
+        return teamService.inviteInTeam(teamId, invitation.getId())
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Success inviting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Invite is not successful"));
+    }
+
+    ///////////////////////////////////////////
+    //   ___    ____   __    ____ ______   ____
+    //  / _ \  / __/  / /   / __//_  __/  / __/
+    // / // / / _/   / /__ / _/   / /    / _/
+    ///____/ /___/  /____//___/  /_/    /___/
+    ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{teamId}")
     public Mono<InfoResponse> deleteTeam(@PathVariable Long teamId) {
@@ -66,18 +94,25 @@ public class TeamController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
-//    @PutMapping("/kick/{teamId}")
-//    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-//        return teamService.kickFromTeam(teamId, invitation.getEmail());
-//    }
-//
-//    @PutMapping("/invite/{teamId}")
-//    public Mono<Void> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation){
-//        return teamService.inviteInTeam(teamId, invitation.getEmail());
-//    }
-//
-//    @PutMapping("/update/{teamId}")
-//    public Mono<Void> updateTeam(@PathVariable String teamId,@RequestBody TeamDTO team){
-//        return teamService.updateTeam(teamId, team);
-//    }
+    @DeleteMapping("/delete/request/{requestId}")
+    public Mono<Void> deleteRequest(@PathVariable Long requestId) {
+        return teamService.deleteRequest(requestId);
+    }
+
+    @DeleteMapping("/kick/{teamId}")
+    public Mono<Void> kickFromTeam(@PathVariable Long teamId, @RequestBody AuthenticationResponse invitation) {
+        return teamService.kickFromTeam(teamId, invitation.getId());
+    }
+
+    ////////////////////////
+    //   ___   __  __ ______
+    //  / _ \ / / / //_  __/
+    // / ___// /_/ /  / /
+    ///_/    \____/  /_/
+    ////////////////////////
+
+    @PutMapping("/update/{teamId}")
+    public Mono<Void> updateTeam(@PathVariable Long teamId, @RequestBody TeamDTO team) {
+        return teamService.updateTeam(teamId, team);
+    }
 }

@@ -16,12 +16,20 @@ import java.time.LocalDate;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
 
 @Service
 @RequiredArgsConstructor
 public class TeamService {
     private final R2dbcEntityTemplate template;
+
+    ///////////////////////
+    //  _____   ____ ______
+    // / ___/  / __//_  __/
+    /// (_ /  / _/   / /
+    //\___/  /___/  /_/
+    ///////////////////////
 
     public Mono<TeamDTO> getTeam(Long teamId) {
         TeamMapper teamMapper = new TeamMapper();
@@ -44,7 +52,7 @@ public class TeamService {
                 .map(teamMapper::apply)
                 .all()
                 .collectList()
-                .map(groupDTOMap -> groupDTOMap.get(0));
+                .map(t -> t.get(0));
     }
 
     public Flux<TeamDTO> getTeams() {
@@ -64,6 +72,13 @@ public class TeamService {
     public Flux<TeamInvitation> getInvitations(Long userId) {
         return template.select(query(where("receiver_id").is(userId)), TeamInvitation.class);
     }
+
+    //////////////////////////////
+    //   ___   ____    ____ ______
+    //  / _ \ / __ \  / __//_  __/
+    // / ___// /_/ / _\ \   / /
+    ///_/    \____/ /___/  /_/
+    //////////////////////////////
 
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
         Team team = Team.builder()
@@ -101,6 +116,21 @@ public class TeamService {
                                 .build()));
     }
 
+    public Mono<Void> inviteInTeam(Long teamId, Long userId){
+        return template.insert(new Team2Member(teamId, userId))
+                        .then(template.delete(query(where("teamI_id").is(teamId)
+                                .and("receiver_id").is(userId)),TeamInvitation.class))
+                        .then(template.delete(query(where("teamI_id").is(teamId)
+                                .and("user_id").is(userId)), TeamRequest.class)).then();
+    }
+
+    ///////////////////////////////////////////
+    //   ___    ____   __    ____ ______   ____
+    //  / _ \  / __/  / /   / __//_  __/  / __/
+    // / // / / _/   / /__ / _/   / /    / _/
+    ///____/ /___/  /____//___/  /_/    /___/
+    ///////////////////////////////////////////
+
     public Mono<Void> deleteTeam(Long id) {
         return template.delete(query(where("id").is(id)), Team.class).then();
     }
@@ -109,164 +139,30 @@ public class TeamService {
         return template.delete(query(where("id").is(id)), TeamInvitation.class).then();
     }
 
-//    public Mono<Void> inviteInTeam(Long teamId, String email) {
-//        return template.select(Team.class)
-//                .matching(where("id").is(teamId))
-//                .one()
-//                .flatMap(team -> {
-//                    team.getMembers().add(email);
-//                    team.setMembersCount(team.getMembers().size());
-//                    return template.update(team)
-//                            .then(template.delete()
-//                                    .from(TeamInvitation.class)
-//                                    .matching(where("teamId").is(teamId)
-//                                            .and("receiverEmail").is(email))
-//                                    .all())
-//                            .then();
-//                })
-//                .onErrorResume(ex -> Mono.error(new ErrorException("Failed to invite")));
-//    }
-//    public Mono<Void> updateTeam(Long id, TeamDTO teamDTO) {
-//        return template.selectOne(query(where("id").is(id)), Team.class)
-//                .flatMap(team -> {
-//                    if (teamDTO.getMembers() != null) {
-//                        team.setMembers(teamDTO.getMembers().stream()
-//                                .map(UserDTO::getEmail)
-//                                .collect(toList()));
-//                    }
-//                    if (teamDTO.getSkills() != null) {
-//                        team.setSkills(teamDTO.getSkills().stream()
-//                                .map(SkillDTO::getId)
-//                                .collect(toList()));
-//                    }
-//
-//                    team.setName(teamDTO.getName());
-//                    team.setDescription(teamDTO.getDescription());
-//                    team.setClosed(teamDTO.getClosed());
-//                    team.setMembersCount(teamDTO.getMembers().size());
-//                    team.setOwnerEmail(teamDTO.getOwner().getEmail());
-//                    team.setLeaderEmail(teamDTO.getLeader().getEmail());
-//
-//                    return template.update(team)
-//                            .then();
-//                })
-//                .onErrorResume(ex -> Mono.error(new ErrorException("Not success!")));
-//    }
-//    public Mono<Void> applyToOpenTeam(Long teamId, User user) {
-//        String updateSql = "UPDATE team " +
-//                "SET applications = array_append(applications, :userId) " +
-//                "WHERE id = :teamId AND status = 'OPEN' " +
-//                "AND :userId NOT IN members " +
-//                "AND :userId NOT IN invitations";
-//
-//        return template.getDatabaseClient()
-//                .sql(updateSql)
-//                .bind("teamId", teamId)
-//                .bind("userId", user.getId())
-//                .fetch()
-//                .rowsUpdated()
-//                .flatMap(updatedRows -> {
-//                    if (updatedRows > 0) {
-//                        return Mono.empty();
-//                    }
-//                    return Mono.error(new ErrorException("Not success!"));
-//                });
-//    }
-
-    public Mono<Void> acceptApplication(Long teamId, Long userId) {
-        String updateSql = "UPDATE team " +
-                "SET applications = array_remove(applications, :userId), " +
-                "members = array_append(members, :userId) " +
-                "WHERE id = :teamId AND :userId = ANY(applications)";
-
-        return template.getDatabaseClient()
-                .sql(updateSql)
-                .bind("teamId", teamId)
-                .bind("userId", userId)
-                .fetch()
-                .rowsUpdated()
-                .flatMap(updatedRows -> {
-                    if (updatedRows > 0) {
-                        return Mono.empty();
-                    }
-                    return Mono.error(new NotFoundException("Not success!"));
-                });
+    public Mono<Void> deleteRequest(Long id){
+        return template.delete(query(where("id").is(id)), TeamRequest.class).then();
     }
 
-    public Mono<Void> rejectApplication(Long teamId, Long userId) {
-        String updateSql = "UPDATE team " +
-                "SET applications = array_remove(applications, :userId) " +
-                "WHERE id = :teamId AND :userId = ANY(applications)";
-
-        return template.getDatabaseClient()
-                .sql(updateSql)
-                .bind("teamId", teamId)
-                .bind("userId", userId)
-                .fetch()
-                .rowsUpdated()
-                .flatMap(updatedRows -> {
-                    if (updatedRows > 0) {
-                        return Mono.empty();
-                    }
-                    return Mono.error(new NotFoundException("Not success!"));
-                });
+    public Mono<Void> kickFromTeam(Long teamId, Long userId){
+        return template.delete(query(where("team_id").is(teamId)
+                .and("member_id").is(userId)),Team2Member.class).then();
     }
 
-    public Mono<Void> sendInvitationToClosedTeam(Long teamId, Long userId) {
-        String updateSql = "UPDATE team " +
-                "SET invitations = array_append(invitations, :userId) " +
-                "WHERE id = :teamId AND status = 'CLOSED'";
+    ////////////////////////
+    //   ___   __  __ ______
+    //  / _ \ / / / //_  __/
+    // / ___// /_/ /  / /
+    ///_/    \____/  /_/
+    ////////////////////////
 
-        return template.getDatabaseClient()
-                .sql(updateSql)
-                .bind("teamId", teamId)
-                .bind("userId", userId)
-                .fetch()
-                .rowsUpdated()
-                .flatMap(updatedRows -> {
-                    if (updatedRows > 0) {
-                        return Mono.empty();
-                    }
-                    return Mono.error(new NotFoundException("Not success!"));
-                });
-    }
-
-    public Mono<Void> acceptInvitation(Long teamId, Long userId) {
-        String updateSql = "UPDATE team " +
-                "SET invitations = array_remove(invitations, :userId), " +
-                "members = array_append(members, :userId) " +
-                "WHERE id = :teamId AND :userId = ANY(invitations)";
-
-        return template.getDatabaseClient()
-                .sql(updateSql)
-                .bind("teamId", teamId)
-                .bind("userId", userId)
-                .fetch()
-                .rowsUpdated()
-                .flatMap(updatedRows -> {
-                    if (updatedRows > 0) {
-                        return Mono.empty();
-                    }
-                    return Mono.error(new NotFoundException("Not success!"));
-                });
-    }
-
-    public Mono<Void> declineInvitation(Long teamId, Long userId) {
-        String updateSql = "UPDATE team " +
-                "SET invitations = array_remove(invitations, :userId) " +
-                "WHERE id = :teamId AND :userId = ANY(invitations)";
-
-        return template.getDatabaseClient()
-                .sql(updateSql)
-                .bind("teamId", teamId)
-                .bind("userId", userId)
-                .fetch()
-                .rowsUpdated()
-                .flatMap(updatedRows -> {
-                    if (updatedRows > 0) {
-                        return Mono.empty();
-                    }
-                    return Mono.error(new NotFoundException("Not success!"));
-                });
+    public Mono<Void> updateTeam(Long id, TeamDTO teamDTO) {
+        return template.update(query(where("id").is(id)),
+                        update("name", teamDTO.getName())
+                                .set("description", teamDTO.getDescription())
+                                .set("closed", teamDTO.getClosed())
+                                .set("membersCount", teamDTO.getMembers().size())
+                                .set("ownerEmail", teamDTO.getOwner().getEmail())
+                                .set("leaderEmail", teamDTO.getLeader().getEmail()),
+                        Team.class).then();
     }
 }

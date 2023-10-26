@@ -79,6 +79,13 @@ public class ProjectController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
+    @PostMapping("/invite/{projectId}")
+    public Mono<InfoResponse> inviteInProject(@PathVariable Long projectId, @RequestBody AuthenticationResponse invitation){
+        return projectService.addInProject(projectId, invitation.getId())
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Successful invitation"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"The invitation was not successful"));
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -107,6 +114,13 @@ public class ProjectController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
+    @DeleteMapping("/kick/{projectId}")
+    public Mono<InfoResponse> kickFromProject(@PathVariable Long projectId, @RequestBody AuthenticationResponse invitation){
+        return projectService.kickFromProject(projectId, invitation.getId())
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Successful exclusion"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"The exception was not successful"));
+    }
+
     ////////////////////////
     //   ___   __  __ ______
     //  / _ \ / / / //_  __/
@@ -119,20 +133,6 @@ public class ProjectController {
         return projectService.updateProject(projectDTO, projectId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
-    }
-
-    @PutMapping("/invite/{projectId}")
-    public Mono<InfoResponse> inviteInProject(@PathVariable Long projectId, @RequestBody AuthenticationResponse invitation){
-        return projectService.addInProject(projectId, invitation.getId())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Successful invitation"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"The invitation was not successful"));
-    }
-
-    @PutMapping("/kick/{projectId}")
-    public Mono<InfoResponse> kickFromProject(@PathVariable Long projectId, @RequestBody AuthenticationResponse invitation){
-        return projectService.kickFromProject(projectId, invitation.getId())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Successful exclusion"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"The exception was not successful"));
     }
 
 }
