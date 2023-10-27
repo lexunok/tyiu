@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS idea (
     name TEXT,
     group_expert_id BIGINT REFERENCES groups (id),
     group_project_office_id BIGINT REFERENCES groups (id),
+    company_id BIGINT REFERENCES company (id),
     status TEXT,
     created_at TIMESTAMP,
     modified_at TIMESTAMP,
@@ -46,10 +47,6 @@ CREATE TABLE IF NOT EXISTS skill (
 CREATE TABLE IF NOT EXISTS idea_skill (
     idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE,
     skill_id BIGINT REFERENCES skill (id) ON DELETE CASCADE
-);
-CREATE TABLE IF NOT EXISTS idea_company (
-    idea_id BIGINT REFERENCES idea (id),
-    company_id BIGINT REFERENCES company (id)
 );
 CREATE TABLE IF NOT EXISTS temporary (
     id BIGSERIAL PRIMARY KEY,

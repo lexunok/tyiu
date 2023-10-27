@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.entities.mappers;
 
+import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.enums.ProjectType;
@@ -13,18 +14,22 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
     @Override
     public IdeaDTO apply(Row row, Object o) {
         GroupDTO experts = GroupDTO.builder()
-                .id(row.get("e_id",Long.class))
+                .id(row.get("e_id", Long.class))
                 .name(row.get("e_name", String.class)).build();
         GroupDTO projectOffice = GroupDTO.builder()
-                .id(row.get("p_id",Long.class))
+                .id(row.get("p_id", Long.class))
                 .name(row.get("p_name", String.class)).build();
+        CompanyDTO company = CompanyDTO.builder()
+                .id(row.get("id", Long.class))
+                .name(row.get("name", String.class)).build();
         return IdeaDTO.builder()
-                .id(row.get("id",Long.class))
+                .id(row.get("id", Long.class))
                 .initiator(row.get("initiator_email", String.class))
                 .name(row.get("name", String.class))
                 .experts(experts)
                 .projectOffice(projectOffice)
-                .status(StatusIdea.valueOf(row.get("status",String.class)))
+                .company(company)
+                .status(StatusIdea.valueOf(row.get("status", String.class)))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))
                 .projectType(ProjectType.valueOf(row.get("project_type", String.class)))

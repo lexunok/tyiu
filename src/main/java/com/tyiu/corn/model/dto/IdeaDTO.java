@@ -19,6 +19,7 @@ public class IdeaDTO {
     private String name;
     private GroupDTO experts;
     private GroupDTO projectOffice;
+    private CompanyDTO company;
     private StatusIdea status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;

@@ -1,18 +1,15 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
-import com.tyiu.corn.model.entities.relations.Idea2Company;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
 import com.tyiu.corn.model.entities.relations.User2Idea;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.enums.StatusIdea;
-import com.tyiu.corn.model.requests.IdeaCompanyRequest;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import lombok.RequiredArgsConstructor;
@@ -41,10 +38,11 @@ public class IdeaService {
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(Long ideaId) {
-        String query = "SELECT idea.*, u.email initiator_email,e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
+        String query = "SELECT idea.*, u.email initiator_email, e.name e_name, e.id e_id, p.name p_name, p.id p_id, c.name c_name, c.id c_id" +
                 " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
                 " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
                 " LEFT JOIN users u ON idea.initiator_id = u.id" +
+                " LEFT JOIN company c ON idea.company_id = c.id" +
                 " WHERE idea.id =:ideaId";
         IdeaMapper ideaMapper = new IdeaMapper();
         return template.getDatabaseClient()
@@ -70,6 +68,7 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
+        idea.setCompanyId(ideaDTO.getCompany().getId());
         return template.insert(idea).flatMap(savedIdea -> {
             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
             savedDTO.setExperts(ideaDTO.getExperts());
@@ -103,18 +102,19 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByInitiator(Long id, IdeaDTO updatedIdea) {
         return template.update(query(where("id").is(id)),
-                update("name",updatedIdea.getName())
-                        .set("project_type",updatedIdea.getProjectType())
+                update("name", updatedIdea.getName())
+                        .set("project_type", updatedIdea.getProjectType())
                         .set("problem", updatedIdea.getProblem())
                         .set("solution", updatedIdea.getSolution())
-                        .set("result",updatedIdea.getResult())
-                        .set("customer",updatedIdea.getCustomer())
-                        .set("contact_person",updatedIdea.getContactPerson())
-                        .set("description",updatedIdea.getDescription())
-                        .set("technical_realizability",updatedIdea.getTechnicalRealizability())
-                        .set("suitability",updatedIdea.getSuitability())
-                        .set("budget",updatedIdea.getBudget())
-                        .set("pre_assessment",updatedIdea.getPreAssessment())
+                        .set("result", updatedIdea.getResult())
+                        .set("customer", updatedIdea.getCustomer())
+                        .set("contact_person", updatedIdea.getContactPerson())
+                        .set("description", updatedIdea.getDescription())
+                        .set("technical_realizability", updatedIdea.getTechnicalRealizability())
+                        .set("suitability", updatedIdea.getSuitability())
+                        .set("budget", updatedIdea.getBudget())
+                        .set("pre_assessment", updatedIdea.getPreAssessment())
+                        .set("company_id", updatedIdea.getCompany().getId())
                         .set("modified_at", LocalDateTime.now()), Idea.class).then();
     }
 
@@ -127,19 +127,20 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
         return template.update(query(where("id").is(id)),
-                update("name",updatedIdea.getName())
-                        .set("project_type",updatedIdea.getProjectType())
-                        .set("group_expert_id",updatedIdea.getExperts().getId())
+                update("name", updatedIdea.getName())
+                        .set("project_type", updatedIdea.getProjectType())
+                        .set("group_expert_id", updatedIdea.getExperts().getId())
+                        .set("company_id", updatedIdea.getCompany().getId())
                         .set("problem", updatedIdea.getProblem())
                         .set("solution", updatedIdea.getSolution())
-                        .set("result",updatedIdea.getResult())
-                        .set("customer",updatedIdea.getCustomer())
-                        .set("contact_person",updatedIdea.getContactPerson())
-                        .set("description",updatedIdea.getDescription())
-                        .set("technical_realizability",updatedIdea.getTechnicalRealizability())
-                        .set("suitability",updatedIdea.getSuitability())
-                        .set("budget",updatedIdea.getBudget())
-                        .set("status",updatedIdea.getStatus())
+                        .set("result", updatedIdea.getResult())
+                        .set("customer", updatedIdea.getCustomer())
+                        .set("contact_person", updatedIdea.getContactPerson())
+                        .set("description", updatedIdea.getDescription())
+                        .set("technical_realizability", updatedIdea.getTechnicalRealizability())
+                        .set("suitability", updatedIdea.getSuitability())
+                        .set("budget", updatedIdea.getBudget())
+                        .set("status", updatedIdea.getStatus())
                         .set("rating", updatedIdea.getRating()), Idea.class).then();
     }
 
@@ -173,35 +174,6 @@ public class IdeaService {
                 ).all().collectList()
                 .flatMap(list -> Mono.just(IdeaSkillRequest.builder()
                         .skills(list)
-                        .ideaId(ideaId)
-                        .build())
-                );
-    }
-
-    public Mono<Void> addIdeaCompanies(IdeaCompanyRequest request) {
-        return Flux.fromIterable(request.getCompanies()).flatMap(c ->
-                template.insert(new Idea2Company(request.getIdeaId(),c.getId()))).then();
-    }
-
-    public Mono<Void> updateIdeaCompanies(IdeaCompanyRequest request) {
-        template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Company.class).subscribe();
-        return Flux.fromIterable(request.getCompanies()).flatMap(c ->
-                template.insert(new Idea2Company(request.getIdeaId(), c.getId()))).then();
-    }
-
-    public Mono<IdeaCompanyRequest> getIdeaCompanies(Long ideaId) {
-        String Query = "SELECT company.*, i.company_id company_id FROM idea_company i " +
-                "LEFT JOIN company ON company.id = company_id WHERE i.idea_id =:ideaId";
-        return template.getDatabaseClient().sql(Query)
-                .bind("ideaId", ideaId)
-                .map((row, rowMetadata) ->
-                        CompanyDTO.builder()
-                                .id(row.get("id",Long.class))
-                                .name(row.get("name",String.class))
-                                .build()
-                ).all().collectList()
-                .flatMap(list -> Mono.just(IdeaCompanyRequest.builder()
-                        .companies(list)
                         .ideaId(ideaId)
                         .build())
                 );

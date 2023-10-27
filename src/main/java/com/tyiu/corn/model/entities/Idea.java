@@ -20,6 +20,7 @@ public class Idea {
     private String name;
     private Long groupExpertId;
     private Long groupProjectOfficeId;
+    private Long companyId;
     private StatusIdea status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
