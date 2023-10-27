@@ -203,7 +203,7 @@ public class CompanyControllerTest extends TestContainers{
                 .expectBodyList(CompanyDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(listCompany);
-        assertEquals(2, listCompany.size());
+        assertEquals(6, listCompany.size());
     }
 
     @Test
