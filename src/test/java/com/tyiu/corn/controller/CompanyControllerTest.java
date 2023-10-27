@@ -47,7 +47,7 @@ public class CompanyControllerTest extends TestContainers{
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "fakemail2", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
+                "fakemail72", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
 
         AuthenticationResponse response = webTestClient
                 .post()
