@@ -136,7 +136,7 @@ public class CompanyControllerTest extends TestContainers{
     }
 
     @Test
-    void testGetGroupById() {
+    void testGetCompanyById() {
         CompanyDTO company = CompanyDTO.builder()
                 .name("company")
                 .users(List.of(userDTO))
