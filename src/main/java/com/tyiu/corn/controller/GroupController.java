@@ -19,13 +19,6 @@ public class GroupController {
 
     private final GroupService groupService;
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
-
     @GetMapping("/all")
     public Flux<GroupDTO> getGroups() {
         return groupService.getGroups();
@@ -37,25 +30,12 @@ public class GroupController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
-
     @PostMapping("/create")
     public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
         return groupService.createGroup(group)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Not success!")));
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{groupId}")
     public Mono<InfoResponse> deleteGroup(@PathVariable Long groupId) {
@@ -63,13 +43,6 @@ public class GroupController {
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
-
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     @PutMapping("/update/{groupId}")
     public Mono<GroupDTO> updateGroup(@PathVariable Long groupId, @RequestBody GroupDTO group) {
