@@ -5,6 +5,7 @@ import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.mappers.GroupMapper;
 import com.tyiu.corn.model.entities.mappers.UserMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -25,6 +26,7 @@ import static org.springframework.data.relational.core.query.Query.query;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "groups")
+@Slf4j
 public class GroupService {
     private final GroupMapper groupMapper;
     private final UserMapper userMapper;
@@ -79,21 +81,18 @@ public class GroupService {
                 "LEFT JOIN group_user ON groups.id = group_user.group_id " +
                 "LEFT JOIN users ON group_user.user_id = users.id " +
                 "WHERE groups.id = :groupId";
-        List<UserDTO> users = new ArrayList<>();
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("groupId", groupId)
-                .map((row, rowMetadata) -> {
-                    GroupDTO groupDTO = groupMapper.apply(row,rowMetadata);
-                    users.add(userMapper.apply(row,rowMetadata));
-                    return groupDTO;
-                })
-                .all()
-                .elementAt(0)
-                .map(g -> {
-                    g.setUsers(users);
-                    return g;
-                }).doFinally(u -> users.clear());
+                .flatMap(d -> {
+                    List<UserDTO> users = new ArrayList<>();
+                    return d.map((row, rowMetadata) -> {
+                        users.add(userMapper.apply(row,rowMetadata));
+                        GroupDTO groupDTO = groupMapper.apply(row,rowMetadata);
+                        groupDTO.setUsers(users);
+                        return groupDTO;
+                    });
+                }).last();
     }
 }
 
