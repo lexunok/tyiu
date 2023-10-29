@@ -51,12 +51,12 @@ public class IdeaMarketController {
     //////////////////////////////
 
     @PostMapping("/send/{ideaId}")
-    public Mono<Void> createGroup(@PathVariable Long ideaId, @RequestBody IdeaMarketDTO ideaMarketDTO) {
+    public Mono<Void> createMarketIdea(@PathVariable Long ideaId, @RequestBody IdeaMarketDTO ideaMarketDTO) {
         return ideaMarketService.sendIdeaOnMarket(ideaId, ideaMarketDTO);
     }
 
     @PostMapping("/declare/{teamId}")
-    public Mono<Void> createGroup(@PathVariable Long teamId, @RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
+    public Mono<Void> createTeamMarketRequest(@PathVariable Long teamId, @RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
         return ideaMarketService.declareTeam(teamId, teamMarketRequestDTO);
     }
 
@@ -94,8 +94,8 @@ public class IdeaMarketController {
     ///_/    \____/  /_/
     ////////////////////////
 
-    @PutMapping("/accept/{ideaMarketId}")
-    public Mono<Void> acceptTeam(@PathVariable Long ideaMarketId) {
-        return ideaMarketService.acceptTeam(ideaMarketId);
+    @PutMapping("/accept/{teamMarketId}")
+    public Mono<Void> acceptTeam(@PathVariable Long teamMarketId) {
+        return ideaMarketService.acceptTeam(teamMarketId);
     }
 }

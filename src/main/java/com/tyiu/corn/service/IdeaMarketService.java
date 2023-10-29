@@ -165,8 +165,8 @@ public class IdeaMarketService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<Void> acceptTeam(Long ideaMarketId){
-        return template.update(query(where("idea_id").is(ideaMarketId)),
+    public Mono<Void> acceptTeam(Long teamMarketId){
+        return template.update(query(where("id").is(teamMarketId)),
                 update("accepted", true),
                 TeamMarketRequest.class).then();
     }
