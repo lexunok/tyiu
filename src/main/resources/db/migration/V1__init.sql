@@ -136,3 +136,33 @@ CREATE TABLE IF NOT EXISTS project_request (
     last_name TEXT,
     created_at TIMESTAMP
 );
+CREATE TABLE IF NOT EXISTS idea_market (
+    id BIGSERIAL PRIMARY KEY,
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE,
+    position BIGINT,
+    name TEXT NOT NULL,
+    initiator TEXT,
+    description TEXT,
+    created_at TIMESTAMP,
+    max_team_size BIGINT NOT NULL,
+    status TEXT NOT NULL,
+    requests BIGINT NOT NULL,
+    accepted_requests BIGINT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS team_market_request (
+    id BIGSERIAL PRIMARY KEY,
+    idea_id BIGINT REFERENCES idea (id) ON DELETE CASCADE,
+    team_id BIGINT REFERENCES team (id) ON DELETE CASCADE,
+    accepted BOOLEAN NOT NULL,
+    name TEXT NOT NULL,
+    updated_at TIMESTAMP,
+    closed BOOLEAN NOT NULL,
+    description TEXT,
+    owner_id BIGINT REFERENCES users (id),
+    leader_id BIGINT REFERENCES users (id),
+    letter TEXT
+);
+CREATE TABLE IF NOT EXISTS favorite_idea (
+    user_id BIGINT REFERENCES users (id) ON DELETE CASCADE,
+    idea_market_id BIGINT REFERENCES idea_market (id) ON DELETE CASCADE
+);
