@@ -1,5 +1,6 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.service.IdeaMarketService;
@@ -29,7 +30,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/{ideaMarketId}")
-    public Mono<IdeaMarketDTO> getMarketIdea(Principal principal, @PathVariable Long ideaMarketId) {
+    public Mono<IdeaMarketDTO> getOneMarketIdea(Principal principal, @PathVariable Long ideaMarketId) {
         return ideaMarketService.getMarketIdea(Long.valueOf(principal.getName()), ideaMarketId);
     }
 
@@ -51,12 +52,12 @@ public class IdeaMarketController {
     //////////////////////////////
 
     @PostMapping("/send/{ideaId}")
-    public Mono<Void> createMarketIdea(@PathVariable Long ideaId, @RequestBody IdeaMarketDTO ideaMarketDTO) {
+    public Mono<IdeaMarketDTO> createMarketIdea(@PathVariable Long ideaId, @RequestBody IdeaMarketDTO ideaMarketDTO) {
         return ideaMarketService.sendIdeaOnMarket(ideaId, ideaMarketDTO);
     }
 
     @PostMapping("/declare/{teamId}")
-    public Mono<Void> createTeamMarketRequest(@PathVariable Long teamId, @RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
+    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@PathVariable Long teamId, @RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
         return ideaMarketService.declareTeam(teamId, teamMarketRequestDTO);
     }
 

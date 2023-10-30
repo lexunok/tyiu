@@ -116,22 +116,30 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Mono<Void> sendIdeaOnMarket(Long ideaId, IdeaMarketDTO ideaMarketDTO){
+    public Mono<IdeaMarketDTO> sendIdeaOnMarket(Long ideaId, IdeaMarketDTO ideaMarketDTO){
+        ideaMarketDTO.setCreatedAt(LocalDate.now());
+        ideaMarketDTO.setRequests(0L);
+        ideaMarketDTO.setAcceptedRequests(0L);
+        ideaMarketDTO.setIsFavorite(false);
         IdeaMarket ideaMarket = mapper.map(ideaMarketDTO, IdeaMarket.class);
         ideaMarket.setIdeaId(ideaId);
-        ideaMarket.setCreatedAt(LocalDate.now());
-        ideaMarket.setRequests(0L);
-        ideaMarket.setAcceptedRequests(0L);
-        return template.insert(ideaMarket).then();
+        return template.insert(ideaMarket)
+                .flatMap(i -> {
+                    ideaMarketDTO.setId(i.getId());
+                    return Mono.just(ideaMarketDTO);
+                });
     }
 
-    public Mono<Void> declareTeam(Long teamId, TeamMarketRequestDTO teamMarketRequestDTO){
+    public Mono<TeamMarketRequestDTO> declareTeam(Long teamId, TeamMarketRequestDTO teamMarketRequestDTO){
+        teamMarketRequestDTO.setUpdatedAt(LocalDate.now());
         TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
-        teamMarketRequest.setUpdatedAt(LocalDate.now());
         teamMarketRequest.setTeamId(teamId);
         teamMarketRequest.setOwnerId(teamMarketRequestDTO.getOwner().getUserId());
         teamMarketRequest.setLeaderId(teamMarketRequestDTO.getLeader().getUserId());
-        return template.insert(teamMarketRequest).then();
+        return template.insert(teamMarketRequest).flatMap(r -> {
+            teamMarketRequestDTO.setId(r.getId());
+            return Mono.just(teamMarketRequestDTO);
+        });
     }
 
     public Mono<Void> makeMarketIdeaFavorite(Long userId, Long ideaMarketId){
