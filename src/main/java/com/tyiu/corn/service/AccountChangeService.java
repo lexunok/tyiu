@@ -123,7 +123,7 @@ public class AccountChangeService {
                             invitation.getEmail(),
                             "Приглашение",
                             String.format("Приглашение на регистрацию " + path + "/register/%s", invitation.getUrl())
-                    );
+                    ).subscribe();
                     if (Boolean.TRUE.equals(b)){
                         return template.delete(query(where("email").is(e)), Temporary.class)
                                 .then(template.insert(invitation));
