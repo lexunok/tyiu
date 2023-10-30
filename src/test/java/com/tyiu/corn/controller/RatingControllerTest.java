@@ -107,8 +107,7 @@ public class RatingControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(IdeaDTO.class)
                 .returnResult().getResponseBody();
-
-        assert ideaResponse != null;
+        assertNotNull(ideaResponse);
         ideaId = ideaResponse.getId();
     }
 
