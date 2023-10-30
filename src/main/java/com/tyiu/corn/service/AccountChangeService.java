@@ -146,7 +146,7 @@ public class AccountChangeService {
                                 invitation.getEmail(),
                                 "Приглашение",
                                 String.format("Приглашение на регистрацию " + path + "/register/%s", invitation.getUrl())
-                        );
+                        ).subscribe();
                         return template.insert(invitation).then();
                     }
                     return Mono.empty();
