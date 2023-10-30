@@ -5,7 +5,6 @@ import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.entities.mappers.GroupMapper;
 import com.tyiu.corn.model.entities.mappers.UserMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -26,7 +25,6 @@ import static org.springframework.data.relational.core.query.Query.query;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "groups")
-@Slf4j
 public class GroupService {
     private final GroupMapper groupMapper;
     private final UserMapper userMapper;
@@ -76,7 +74,7 @@ public class GroupService {
     }
 
     private Mono<GroupDTO> getGroup(Long groupId){
-        String query = "SELECT groups.*, users.id AS member_id, users.email, users.first_name, users.last_name " +
+        String query = "SELECT groups.*, users.id user_id, users.email, users.first_name, users.last_name " +
                 "FROM groups " +
                 "LEFT JOIN group_user ON groups.id = group_user.group_id " +
                 "LEFT JOIN users ON group_user.user_id = users.id " +
