@@ -1,6 +1,5 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.TestContainers;
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.enums.*;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
