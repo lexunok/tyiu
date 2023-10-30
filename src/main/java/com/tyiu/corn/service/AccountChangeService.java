@@ -15,7 +15,6 @@ import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 
-import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -38,7 +37,9 @@ public class AccountChangeService {
     private final JavaMailSender emailSender;
     private final PasswordEncoder passwordEncoder;
     private final R2dbcEntityTemplate template;
-    private final ModelMapper mapper;
+
+    //private final String path = "http://localhost:8080";
+    private final String path = "https://hits1.tyuiu.ru";
 
     private void sendEmail(String toAddresses, String subject, String message){
         SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
@@ -118,7 +119,7 @@ public class AccountChangeService {
                     sendEmail(
                             invitation.getEmail(),
                             "Приглашение",
-                            String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                            String.format("Приглашение на регистрацию " + path + "/register/%s", invitation.getUrl())
                     );
                     if (Boolean.TRUE.equals(b)){
                         return template.delete(query(where("email").is(e)), Temporary.class)
@@ -141,7 +142,7 @@ public class AccountChangeService {
                         sendEmail(
                                 invitation.getEmail(),
                                 "Приглашение",
-                                String.format("Приглашение на регистрацию http://localhost:8080/register/%s", invitation.getUrl())
+                                String.format("Приглашение на регистрацию " + path + "/register/%s", invitation.getUrl())
                         );
                         return template.insert(invitation).then();
                     }
@@ -158,7 +159,7 @@ public class AccountChangeService {
                         sendEmail(
                                 emailChange.getNewEmail(),
                                 "Изменение почты",
-                                String.format("Ссылка для смены почты: http://localhost:8080/change-email/%s", emailChange.getUrl())
+                                String.format("Ссылка для смены почты: " + path + "/change-email/%s", emailChange.getUrl())
                         );
                         if (Boolean.TRUE.equals(b)){
                             return template.delete(query(where("oldEmail").is(e)), Temporary.class)
