@@ -23,7 +23,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class RatingControllerTest extends TestContainers {
+class RatingControllerTest extends TestContainers {
     @Autowired
     private WebTestClient webTestClient;
 
@@ -36,7 +36,7 @@ public class RatingControllerTest extends TestContainers {
 
     @BeforeAll
     void setUp() {
-        RegisterRequest request = new RegisterRequest("user@mail.com", "firstname", "lastname", "password", List.of(Role.ADMIN, Role.INITIATOR, Role.EXPERT));
+        RegisterRequest request = new RegisterRequest("user.rating@mail.com", "firstname", "lastname", "password", List.of(Role.ADMIN, Role.INITIATOR, Role.EXPERT));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -108,6 +108,7 @@ public class RatingControllerTest extends TestContainers {
                 .expectBody(IdeaDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(ideaResponse);
+        ideaId = ideaResponse.getId();
     }
 
     @Test
