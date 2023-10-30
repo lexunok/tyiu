@@ -42,13 +42,13 @@ public class AccountChangeService {
     private final String path = "https://hits1.tyuiu.ru";
 
     private Mono<Void> sendEmail(String toAddresses, String subject, String message){
-        return Mono.fromCallable(() -> {
-            SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
-            simpleMailMessage.setTo(toAddresses);
-            simpleMailMessage.setSubject(subject);
-            simpleMailMessage.setText(message);
-            emailSender.send(simpleMailMessage);
-            return null;
+        return Mono.just(new SimpleMailMessage())
+                            .flatMap(m -> {
+                                m.setTo(toAddresses);
+                                m.setSubject(subject);
+                                m.setText(message);
+                                emailSender.send(m);
+                                return Mono.empty();
         });
     }
 
@@ -81,7 +81,7 @@ public class AccountChangeService {
                             e.getOldEmail(),
                             "Код для изменения почты",
                             String.format("Введите этот код для изменения почты %d", e.getCode())
-                    );
+                    ).subscribe();
                     return Mono.just(ChangeResponse.builder()
                                     .newEmail(e.getNewEmail())
                                     .oldEmail(e.getOldEmail())
@@ -163,7 +163,7 @@ public class AccountChangeService {
                                 emailChange.getNewEmail(),
                                 "Изменение почты",
                                 String.format("Ссылка для смены почты: " + path + "/change-email/%s", emailChange.getUrl())
-                        );
+                        ).subscribe();
                         if (Boolean.TRUE.equals(b)){
                             return template.delete(query(where("oldEmail").is(e)), Temporary.class)
                                     .then(template.insert(emailChange))
@@ -180,7 +180,7 @@ public class AccountChangeService {
         sendEmail(
                 passwordChange.getEmail(),
                 "Восстановление пароля",
-                String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()));
+                String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode())).subscribe();
         return template.insert(passwordChange).flatMap(p -> Mono.just(p.getUrl()));
     }
 
