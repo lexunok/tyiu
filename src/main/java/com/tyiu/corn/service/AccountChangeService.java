@@ -41,12 +41,15 @@ public class AccountChangeService {
     //private final String path = "http://localhost:8080";
     private final String path = "https://hits1.tyuiu.ru";
 
-    private void sendEmail(String toAddresses, String subject, String message){
-        SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
-        simpleMailMessage.setTo(toAddresses);
-        simpleMailMessage.setSubject(subject);
-        simpleMailMessage.setText(message);
-        this.emailSender.send(simpleMailMessage);
+    private Mono<Void> sendEmail(String toAddresses, String subject, String message){
+        return Mono.fromCallable(() -> {
+            SimpleMailMessage simpleMailMessage = new SimpleMailMessage();
+            simpleMailMessage.setTo(toAddresses);
+            simpleMailMessage.setSubject(subject);
+            simpleMailMessage.setText(message);
+            emailSender.send(simpleMailMessage);
+            return null;
+        });
     }
 
     @Scheduled(fixedRate = 43200000)
