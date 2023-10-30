@@ -236,13 +236,12 @@ public class AccountChangeService {
     }
 
     public Mono<UserDTO> changeUserInfo(UserDTO userDTO){
-        return template.update(query(where("email").is(userDTO.getEmail())),
+        return template.update(query(where("id").is(userDTO.getId())),
                 update("email", userDTO.getEmail())
                         .set("first_name", userDTO.getFirstName())
                         .set("last_name", userDTO.getLastName())
                         .set("roles", userDTO.getRoles().stream().map(Role::name).toArray(String[]::new)),
                 User.class)
-                .then(template.selectOne(query(where("email").is(userDTO.getEmail())), User.class))
-                .flatMap(u -> Mono.just(mapper.map(u, UserDTO.class)));
+                .thenReturn(userDTO);
     }
 }
