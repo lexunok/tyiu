@@ -46,7 +46,7 @@ spring:
         smtp:
           auth: true
           starttls:
-            enable: false
+            enable: true
 server:
   port: 80
 jwt:
