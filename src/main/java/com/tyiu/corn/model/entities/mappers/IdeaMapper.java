@@ -1,6 +1,5 @@
 package com.tyiu.corn.model.entities.mappers;
 
-import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.enums.ProjectType;
@@ -19,16 +18,12 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
         GroupDTO projectOffice = GroupDTO.builder()
                 .id(row.get("p_id", Long.class))
                 .name(row.get("p_name", String.class)).build();
-        CompanyDTO company = CompanyDTO.builder()
-                .id(row.get("id", Long.class))
-                .name(row.get("name", String.class)).build();
         return IdeaDTO.builder()
                 .id(row.get("id", Long.class))
                 .initiator(row.get("initiator_email", String.class))
                 .name(row.get("name", String.class))
                 .experts(experts)
                 .projectOffice(projectOffice)
-                .company(company)
                 .status(StatusIdea.valueOf(row.get("status", String.class)))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))

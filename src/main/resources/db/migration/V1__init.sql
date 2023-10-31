@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS idea (
     name TEXT,
     group_expert_id BIGINT REFERENCES groups (id),
     group_project_office_id BIGINT REFERENCES groups (id),
-    company_id BIGINT REFERENCES company (id),
     status TEXT,
     created_at TIMESTAMP,
     modified_at TIMESTAMP,

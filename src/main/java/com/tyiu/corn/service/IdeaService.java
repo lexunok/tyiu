@@ -38,11 +38,10 @@ public class IdeaService {
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(Long ideaId) {
-        String query = "SELECT idea.*, u.email initiator_email, e.name e_name, e.id e_id, p.name p_name, p.id p_id, c.name c_name, c.id c_id" +
+        String query = "SELECT idea.*, u.email initiator_email, e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
                 " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
                 " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
                 " LEFT JOIN users u ON idea.initiator_id = u.id" +
-                " LEFT JOIN company c ON idea.company_id = c.id" +
                 " WHERE idea.id =:ideaId";
         IdeaMapper ideaMapper = new IdeaMapper();
         return template.getDatabaseClient()
@@ -68,7 +67,6 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        //idea.setCompanyId(ideaDTO.getCompany().getId());
         return template.insert(idea).flatMap(savedIdea -> {
             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
             savedDTO.setExperts(ideaDTO.getExperts());
@@ -114,7 +112,6 @@ public class IdeaService {
                         .set("suitability", updatedIdea.getSuitability())
                         .set("budget", updatedIdea.getBudget())
                         .set("pre_assessment", updatedIdea.getPreAssessment())
-                        .set("company_id", updatedIdea.getCompany().getId())
                         .set("modified_at", LocalDateTime.now()), Idea.class).then();
     }
 
@@ -130,7 +127,6 @@ public class IdeaService {
                 update("name", updatedIdea.getName())
                         .set("project_type", updatedIdea.getProjectType())
                         .set("group_expert_id", updatedIdea.getExperts().getId())
-                        .set("company_id", updatedIdea.getCompany().getId())
                         .set("problem", updatedIdea.getProblem())
                         .set("solution", updatedIdea.getSolution())
                         .set("result", updatedIdea.getResult())
