@@ -37,7 +37,7 @@ spring:
       mapping-path: /rs
   mail:
     host: smtp.gmail.com
-    port: 465
+    port: 587
     username: ${MAIL_LOGIN}
     password: ${MAIL_PASSWORD}
     properties:
