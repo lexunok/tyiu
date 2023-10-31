@@ -68,7 +68,7 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        idea.setCompanyId(ideaDTO.getCompany().getId());
+        //idea.setCompanyId(ideaDTO.getCompany().getId());
         return template.insert(idea).flatMap(savedIdea -> {
             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
             savedDTO.setExperts(ideaDTO.getExperts());
