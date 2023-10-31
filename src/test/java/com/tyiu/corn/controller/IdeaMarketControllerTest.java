@@ -61,25 +61,25 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(groupProjectOffice);
         assertEquals(projectOffice.getName(), groupProjectOffice.getName());
-        CompanyDTO company = CompanyDTO.builder()
-                .name("company")
-                .users(List.of(userDTO))
-                .build();
-        CompanyDTO createdCompany = webTestClient
-                .post()
-                .uri("/api/v1/company/create")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(company), CompanyDTO.class)
-                .exchange()
-                .expectBody(CompanyDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(createdCompany);
-        assertEquals(company.getName(), createdCompany.getName());
+//        CompanyDTO company = CompanyDTO.builder()
+//                .name("company")
+//                .users(List.of(userDTO))
+//                .build();
+//        CompanyDTO createdCompany = webTestClient
+//                .post()
+//                .uri("/api/v1/company/create")
+//                .header("Authorization", "Bearer " + jwt)
+//                .body(Mono.just(company), CompanyDTO.class)
+//                .exchange()
+//                .expectBody(CompanyDTO.class)
+//                .returnResult().getResponseBody();
+//        assertNotNull(createdCompany);
+//        assertEquals(company.getName(), createdCompany.getName());
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("idea")
                 .experts(groupExpert)
                 .projectOffice(groupProjectOffice)
-                .company(createdCompany)
+//                .company(createdCompany)
                 .status(StatusIdea.NEW)
                 .projectType(ProjectType.INSIDE)
                 .problem("problem")

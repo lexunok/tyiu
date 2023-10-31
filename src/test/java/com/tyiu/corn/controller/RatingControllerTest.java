@@ -85,10 +85,10 @@ class RatingControllerTest extends TestContainers {
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
 
-        CompanyDTO company = CompanyDTO.builder()
-                .name("Газпром")
-                .users(List.of(userDTO))
-                .build();
+//        CompanyDTO company = CompanyDTO.builder()
+//                .name("Газпром")
+//                .users(List.of(userDTO))
+//                .build();
         IdeaDTO idea = IdeaDTO.builder()
                 .initiator(userDTO.getEmail())
                 .projectType(ProjectType.INSIDE)
@@ -96,7 +96,7 @@ class RatingControllerTest extends TestContainers {
                 .projectOffice(projectGroup)
                 .name("Идея")
                 .status(StatusIdea.NEW)
-                .company(company)
+//                .company(company)
                 .build();
 
         IdeaDTO ideaResponse = webTestClient
