@@ -29,9 +29,15 @@ public class IdeaController {
     }
 
     @GetMapping("/all")
-    public Flux<IdeaDTO> showListIdeaForAdmin(){
+    public Flux<IdeaDTO> showListIdea(){
         return ideaService.getListIdea();
     }
+
+    @GetMapping("/initiator/all")
+    public Flux<IdeaDTO> showListIdeaByInitiator(Principal principal){
+        return ideaService.getListIdeaByInitiator(Long.valueOf(principal.getName()));
+    }
+
 
     @GetMapping("/skills/{ideaId}")
     public Mono<IdeaSkillRequest> getIdeaSkills(@PathVariable Long ideaId) {
@@ -46,8 +52,13 @@ public class IdeaController {
     }
 
     @PostMapping("/add")
-    public Mono<IdeaDTO> addIdea(@RequestBody IdeaDTO idea, Principal principal) {
-        return ideaService.saveIdea(idea, Long.valueOf(principal.getName()))
+    public Mono<IdeaDTO> saveIdea(@RequestBody IdeaDTO idea, Principal principal) {
+        return ideaService.saveIdeaToApproval(idea, Long.valueOf(principal.getName()))
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    }
+    @PostMapping("/draft/add")
+    public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, Principal principal) {
+        return ideaService.saveIdeaInDraft(idea, Long.valueOf(principal.getName()))
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 

@@ -1,6 +1,5 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -22,7 +21,6 @@ public class IdeaDTO {
     private StatusIdea status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
-    private ProjectType projectType;
     private String problem;
     private String solution;
     private String result;
@@ -31,7 +29,8 @@ public class IdeaDTO {
     private String description;
     private Long suitability;
     private Long budget;
-    private Long technicalRealizability;
     private Double preAssessment;
     private Double rating;
+    private Short maxTeamSize;
+    private Short minTeamSize;
 }

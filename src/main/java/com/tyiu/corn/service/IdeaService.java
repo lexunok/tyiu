@@ -7,7 +7,6 @@ import com.tyiu.corn.model.entities.Rating;
 import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
-import com.tyiu.corn.model.entities.relations.User2Idea;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
@@ -56,14 +55,50 @@ public class IdeaService {
         return template.select(Idea.class).all()
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
+    @Cacheable
+    public Flux<IdeaDTO> getListIdeaByInitiator(Long initiatorId) {
+        return template.select(query(where("initiator_id").is(initiatorId)),Idea.class)
+                .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
+    }
 
-    //TODO: Добавлять идею в профиль
     @CacheEvict(allEntries = true)
-    public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, Long initiatorId) {
+    public Mono<IdeaDTO> saveIdeaToApproval(IdeaDTO ideaDTO, Long initiatorId) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiatorId(initiatorId);
-        idea.setStatus(StatusIdea.NEW);
+        idea.setStatus(StatusIdea.ON_APPROVAL);
         idea.setCreatedAt(LocalDateTime.now());
+        idea.setModifiedAt(LocalDateTime.now());
+        idea.setGroupExpertId(ideaDTO.getExperts().getId());
+        idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
+        return template.exists(query(where("id").is(ideaDTO.getId())),Idea.class)
+                .flatMap(b -> {
+                    if (Boolean.TRUE.equals(b) && ideaDTO.getId()!=null) {
+                        return template.update(idea);
+                    } else {
+                        return template.insert(idea);
+                    }
+                }).flatMap(savedIdea -> {
+                    IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
+                    savedDTO.setExperts(ideaDTO.getExperts());
+                    savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                    //TODO: сохранять рейтинг одним запросом
+                    return template.select(query(where("group_id")
+                                    .is(savedIdea.getGroupExpertId())), Group2User.class)
+                            .flatMap(u -> {
+                                Rating rating = Rating.builder()
+                                        .expertId(u.getUserId())
+                                        .confirmed(false)
+                                        .ideaId(savedIdea.getId())
+                                        .build();
+                                return template.insert(rating);
+                            }).then().thenReturn(savedDTO);
+                });
+    }
+    @CacheEvict(allEntries = true)
+    public Mono<IdeaDTO> saveIdeaInDraft(IdeaDTO ideaDTO, Long initiatorId) {
+        Idea idea = mapper.map(ideaDTO, Idea.class);
+        idea.setInitiatorId(initiatorId);
+        idea.setStatus(StatusIdea.DRAFT);
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
@@ -71,17 +106,6 @@ public class IdeaService {
             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
             savedDTO.setExperts(ideaDTO.getExperts());
             savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
-            template.insert(new User2Idea(initiatorId,savedIdea.getId())).subscribe();
-            //TODO: сохранять рейтинг одним запросом
-            template.select(query(where("group_id").is(savedIdea.getGroupExpertId())), Group2User.class)
-                    .flatMap(u -> {
-                        Rating rating = Rating.builder()
-                                .expertId(u.getUserId())
-                                .confirmed(false)
-                                .ideaId(savedIdea.getId())
-                                .build();
-                        return template.insert(rating);
-                    }).subscribe();
             return Mono.just(savedDTO);
         });
     }
@@ -101,14 +125,14 @@ public class IdeaService {
     public Mono<Void> updateIdeaByInitiator(Long id, IdeaDTO updatedIdea) {
         return template.update(query(where("id").is(id)),
                 update("name", updatedIdea.getName())
-                        .set("project_type", updatedIdea.getProjectType())
+                        .set("max_team_size", updatedIdea.getMaxTeamSize())
                         .set("problem", updatedIdea.getProblem())
                         .set("solution", updatedIdea.getSolution())
                         .set("result", updatedIdea.getResult())
                         .set("customer", updatedIdea.getCustomer())
                         .set("contact_person", updatedIdea.getContactPerson())
                         .set("description", updatedIdea.getDescription())
-                        .set("technical_realizability", updatedIdea.getTechnicalRealizability())
+                        .set("min_team_size", updatedIdea.getMinTeamSize())
                         .set("suitability", updatedIdea.getSuitability())
                         .set("budget", updatedIdea.getBudget())
                         .set("pre_assessment", updatedIdea.getPreAssessment())
@@ -125,7 +149,7 @@ public class IdeaService {
     public Mono<Void> updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
         return template.update(query(where("id").is(id)),
                 update("name", updatedIdea.getName())
-                        .set("project_type", updatedIdea.getProjectType())
+                        .set("max_team_size", updatedIdea.getMaxTeamSize())
                         .set("group_expert_id", updatedIdea.getExperts().getId())
                         .set("problem", updatedIdea.getProblem())
                         .set("solution", updatedIdea.getSolution())
@@ -133,7 +157,7 @@ public class IdeaService {
                         .set("customer", updatedIdea.getCustomer())
                         .set("contact_person", updatedIdea.getContactPerson())
                         .set("description", updatedIdea.getDescription())
-                        .set("technical_realizability", updatedIdea.getTechnicalRealizability())
+                        .set("min_team_size", updatedIdea.getMinTeamSize())
                         .set("suitability", updatedIdea.getSuitability())
                         .set("budget", updatedIdea.getBudget())
                         .set("status", updatedIdea.getStatus())

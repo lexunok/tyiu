@@ -1,6 +1,5 @@
 package com.tyiu.corn.model.entities;
 
-import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
 import org.springframework.data.annotation.Id;
@@ -23,7 +22,6 @@ public class Idea {
     private StatusIdea status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
-    private ProjectType projectType;
     private String problem;
     private String solution;
     private String result;
@@ -32,7 +30,8 @@ public class Idea {
     private String description;
     private Long suitability;
     private Long budget;
-    private Long technicalRealizability;
+    private Short maxTeamSize;
+    private Short minTeamSize;
     private Double preAssessment;
     private Double rating;
 }

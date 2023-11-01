@@ -27,7 +27,8 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
                 .status(StatusIdea.valueOf(row.get("status", String.class)))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))
-                .projectType(ProjectType.valueOf(row.get("project_type", String.class)))
+                .maxTeamSize(row.get("max_team_size", Short.class))
+                .minTeamSize(row.get("min_team_size", Short.class))
                 .problem(row.get("problem", String.class))
                 .solution(row.get("solution", String.class))
                 .result(row.get("result", String.class))
@@ -36,7 +37,6 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
                 .description(row.get("description", String.class))
                 .suitability(row.get("suitability", Long.class))
                 .budget(row.get("budget", Long.class))
-                .technicalRealizability(row.get("technical_realizability", Long.class))
                 .preAssessment(row.get("pre_assessment", Double.class))
                 .rating(row.get("rating", Double.class))
                 .build();
