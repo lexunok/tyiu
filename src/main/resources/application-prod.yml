@@ -40,13 +40,14 @@ spring:
     port: 587
     username: ${MAIL_LOGIN}
     password: ${MAIL_PASSWORD}
+    protocol: smtps
     properties:
       mail:
         debug: true
         smtp:
           auth: true
           starttls:
-            enable: true
+            enable: false
 server:
   port: 80
 jwt:
