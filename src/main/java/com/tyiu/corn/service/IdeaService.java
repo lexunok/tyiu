@@ -102,12 +102,19 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        return template.insert(idea).flatMap(savedIdea -> {
-            IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-            savedDTO.setExperts(ideaDTO.getExperts());
-            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
-            return Mono.just(savedDTO);
-        });
+        return template.exists(query(where("id").is(ideaDTO.getId())),Idea.class)
+                .flatMap(b -> {
+                    if (Boolean.TRUE.equals(b) && ideaDTO.getId()!=null){
+                        return template.update(idea);
+                    } else {
+                        return template.insert(idea);
+                    }
+                }).flatMap(savedIdea ->{
+                    IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
+                    savedDTO.setExperts(ideaDTO.getExperts());
+                    savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                    return Mono.just(savedDTO);
+                });
     }
 
     @CacheEvict(allEntries = true)
