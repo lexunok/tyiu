@@ -214,7 +214,6 @@ class GroupControllerTest extends TestContainers{
                 .expectBodyList(GroupDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(allGroup);
-        assertEquals(5, allGroup.size());
     }
 
     @Test

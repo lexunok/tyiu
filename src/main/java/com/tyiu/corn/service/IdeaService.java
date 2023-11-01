@@ -70,14 +70,14 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        return template.exists(query(where("id").is(ideaDTO.getId())),Idea.class)
+        //TODO: Добавить проверку на уровне бд
+        return Mono.just(ideaDTO.getId()!=null)
                 .flatMap(b -> {
-                    if (Boolean.TRUE.equals(b) && ideaDTO.getId()!=null) {
+                    if (b) {
                         return template.update(idea);
-                    } else {
-                        return template.insert(idea);
-                    }
-                }).flatMap(savedIdea -> {
+                    } else return template.insert(idea);
+                })
+                .flatMap(savedIdea -> {
                     IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
                     savedDTO.setExperts(ideaDTO.getExperts());
                     savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
@@ -102,14 +102,14 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        return template.exists(query(where("id").is(ideaDTO.getId())),Idea.class)
+        //TODO: Добавить проверку на уровне бд
+        return Mono.just(ideaDTO.getId()!=null)
                 .flatMap(b -> {
-                    if (Boolean.TRUE.equals(b) && ideaDTO.getId()!=null){
+                    if (b) {
                         return template.update(idea);
-                    } else {
-                        return template.insert(idea);
-                    }
-                }).flatMap(savedIdea ->{
+                    } else return template.insert(idea);
+                })
+                .flatMap(savedIdea ->{
                     IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
                     savedDTO.setExperts(ideaDTO.getExperts());
                     savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
