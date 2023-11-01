@@ -84,10 +84,10 @@ public class IdeaController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
-    @PutMapping("/project-office/update/{ideaId}")
-    public Mono<InfoResponse> updateStatusIdeaByProjectOffice(@PathVariable Long ideaId,
+    @PutMapping("/status/update/{ideaId}")
+    public Mono<InfoResponse> updateStatusIdea(@PathVariable Long ideaId,
                                                               @RequestBody StatusIdeaRequest status){
-        return ideaService.updateStatusByProjectOffice(ideaId, status)
+        return ideaService.updateStatusIdea(ideaId, status)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }

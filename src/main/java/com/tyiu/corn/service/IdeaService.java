@@ -98,7 +98,7 @@ public class IdeaService {
     public Mono<IdeaDTO> saveIdeaInDraft(IdeaDTO ideaDTO, Long initiatorId) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiatorId(initiatorId);
-        idea.setStatus(StatusIdea.DRAFT);
+        idea.setStatus(StatusIdea.NEW);
         idea.setModifiedAt(LocalDateTime.now());
         idea.setGroupExpertId(ideaDTO.getExperts().getId());
         idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
@@ -140,7 +140,7 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByProjectOffice(Long id, StatusIdeaRequest newStatus){
+    public Mono<Void> updateStatusIdea(Long id, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(id)),
                         update("status",newStatus.getStatus()),Idea.class).then();
     }
