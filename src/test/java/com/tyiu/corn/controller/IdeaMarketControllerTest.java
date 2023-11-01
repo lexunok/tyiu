@@ -81,7 +81,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .projectOffice(groupProjectOffice)
 //                .company(createdCompany)
                 .status(StatusIdea.NEW)
-                .projectType(ProjectType.INSIDE)
                 .problem("problem")
                 .solution("solution")
                 .result("result")
@@ -90,7 +89,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .description("description")
                 .suitability(1L)
                 .budget(2L)
-                .technicalRealizability(3L)
                 .preAssessment(4.0)
                 .rating(4.0)
                 .build();
