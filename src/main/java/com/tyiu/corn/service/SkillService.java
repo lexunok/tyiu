@@ -4,7 +4,6 @@ import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Skill;
 import com.tyiu.corn.model.entities.User;
-import com.tyiu.corn.model.entities.UserSkill;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.TeamMemberResponse;
 
@@ -31,16 +30,16 @@ public class SkillService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
 
-    public Flux<TeamMemberResponse> getAllUsersWithSkills(){
+    /*public Flux<TeamMemberResponse> getAllUsersWithSkills(){
         return template.select(User.class).all().flatMap(u ->
-                template.select(query(where("userEmail").is(u.getEmail())), UserSkill.class)
+                template.select(query(where("").is(u.getEmail())), UserSkill.class)
                         .collectList().flatMap(s -> Mono.just(TeamMemberResponse.builder()
                                 .email(u.getEmail())
                                 .firstName(u.getFirstName())
                                 .lastName(u.getLastName())
                                 .skills(s)
                                 .build())));
-    }
+    }*/
 
     public Flux<SkillDTO> getAllSkills() {
         return template.select(Skill.class).all()
