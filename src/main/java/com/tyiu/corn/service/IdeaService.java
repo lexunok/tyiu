@@ -73,25 +73,31 @@ public class IdeaService {
         //TODO: Добавить проверку на уровне бд
         return Mono.just(ideaDTO.getId()!=null)
                 .flatMap(b -> {
-                    if (b) {
-                        return template.update(idea);
-                    } else return template.insert(idea);
-                })
-                .flatMap(savedIdea -> {
-                    IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                    savedDTO.setExperts(ideaDTO.getExperts());
-                    savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
-                    //TODO: сохранять рейтинг одним запросом
-                    return template.select(query(where("group_id")
-                                    .is(savedIdea.getGroupExpertId())), Group2User.class)
-                            .flatMap(u -> {
-                                Rating rating = Rating.builder()
-                                        .expertId(u.getUserId())
-                                        .confirmed(false)
-                                        .ideaId(savedIdea.getId())
-                                        .build();
-                                return template.insert(rating);
-                            }).then().thenReturn(savedDTO);
+                    if (Boolean.TRUE.equals(b)) {
+                        return template.update(idea).flatMap(savedIdea -> {
+                            IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
+                            savedDTO.setExperts(ideaDTO.getExperts());
+                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            return Mono.just(savedDTO);
+                        });
+                    } else {
+                        return template.insert(idea).flatMap(savedIdea -> {
+                            IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
+                            savedDTO.setExperts(ideaDTO.getExperts());
+                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            //TODO: сохранять рейтинг одним запросом
+                            return template.select(query(where("group_id")
+                                            .is(savedIdea.getGroupExpertId())), Group2User.class)
+                                    .flatMap(u -> {
+                                        Rating rating = Rating.builder()
+                                                .expertId(u.getUserId())
+                                                .confirmed(false)
+                                                .ideaId(savedIdea.getId())
+                                                .build();
+                                        return template.insert(rating);
+                                    }).then().thenReturn(savedDTO);
+                        });
+                    }
                 });
     }
     @CacheEvict(allEntries = true)
@@ -105,15 +111,31 @@ public class IdeaService {
         //TODO: Добавить проверку на уровне бд
         return Mono.just(ideaDTO.getId()!=null)
                 .flatMap(b -> {
-                    if (b) {
-                        return template.update(idea);
-                    } else return template.insert(idea);
-                })
-                .flatMap(savedIdea ->{
-                    IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                    savedDTO.setExperts(ideaDTO.getExperts());
-                    savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
-                    return Mono.just(savedDTO);
+                    if (Boolean.TRUE.equals(b)) {
+                        return template.update(idea).flatMap(savedIdea -> {
+                            IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
+                            savedDTO.setExperts(ideaDTO.getExperts());
+                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            return Mono.just(savedDTO);
+                        });
+                    } else {
+                        return template.insert(idea).flatMap(savedIdea -> {
+                            IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
+                            savedDTO.setExperts(ideaDTO.getExperts());
+                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            //TODO: сохранять рейтинг одним запросом
+                            return template.select(query(where("group_id")
+                                            .is(savedIdea.getGroupExpertId())), Group2User.class)
+                                    .flatMap(u -> {
+                                        Rating rating = Rating.builder()
+                                                .expertId(u.getUserId())
+                                                .confirmed(false)
+                                                .ideaId(savedIdea.getId())
+                                                .build();
+                                        return template.insert(rating);
+                                    }).then().thenReturn(savedDTO);
+                        });
+                    }
                 });
     }
 
