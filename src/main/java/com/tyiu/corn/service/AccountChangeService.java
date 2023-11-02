@@ -41,11 +41,10 @@ public class AccountChangeService {
     //private final String path = "http://localhost:8080";
     private final String path = "https://hits1.tyuiu.ru";
 
-    private Mono<Void> sendEmail(String receiver, String subject, String message,String sender){
+    private Mono<Void> sendEmail(String receiver, String subject, String message){
         return Mono.just(new SimpleMailMessage())
                             .flatMap(m -> {
                                 m.setTo(receiver);
-                                m.setFrom(sender);
                                 m.setSubject(subject);
                                 m.setText(message);
                                 emailSender.send(m);
@@ -81,8 +80,7 @@ public class AccountChangeService {
                     sendEmail(
                             e.getOldEmail(),
                             "Код для изменения почты",
-                            String.format("Введите этот код для изменения почты %d", e.getCode()),
-                            "ВШЦТ"
+                            String.format("Введите этот код для изменения почты %d", e.getCode())
                     ).subscribe();
                     return Mono.just(ChangeResponse.builder()
                                     .newEmail(e.getNewEmail())
@@ -124,8 +122,7 @@ public class AccountChangeService {
                     sendEmail(
                             invitation.getEmail(),
                             "Приглашение на портал ВШЦТ",
-                            String.format("Приглашаем вас для регистрации на портале ВШЦТ" + path + "/register/%s", invitation.getUrl()),
-                            "ВШЦТ"
+                            String.format("Приглашаем вас для регистрации на портале ВШЦТ" + path + "/register/%s", invitation.getUrl())
                     ).subscribe();
                     if (Boolean.TRUE.equals(b)){
                         return template.delete(query(where("email").is(e)), Temporary.class)
@@ -148,8 +145,7 @@ public class AccountChangeService {
                         sendEmail(
                                 invitation.getEmail(),
                                 "Приглашение на портал ВШЦТ",
-                                String.format("Приглашаем вас для регистрации на портале ВШЦТ" + path + "/register/%s", invitation.getUrl()),
-                                "ВШЦТ"
+                                String.format("Приглашаем вас для регистрации на портале ВШЦТ" + path + "/register/%s", invitation.getUrl())
                         ).subscribe();
                         return template.insert(invitation).then();
                     }
@@ -166,8 +162,7 @@ public class AccountChangeService {
                         sendEmail(
                                 emailChange.getNewEmail(),
                                 "Изменение почты",
-                                String.format("Ссылка для смены почты: " + path + "/change-email/%s", emailChange.getUrl()),
-                                "ВШЦТ"
+                                String.format("Ссылка для смены почты: " + path + "/change-email/%s", emailChange.getUrl())
                         ).subscribe();
                         if (Boolean.TRUE.equals(b)){
                             return template.delete(query(where("oldEmail").is(e)), Temporary.class)
@@ -185,7 +180,7 @@ public class AccountChangeService {
         sendEmail(
                 passwordChange.getEmail(),
                 "Восстановление пароля",
-                String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode()),"ВШЦТ").subscribe();
+                String.format("Введите этот код для восстановления пароля: %d", passwordChange.getCode())).subscribe();
         return template.insert(passwordChange).flatMap(p -> Mono.just(p.getUrl()));
     }
 
