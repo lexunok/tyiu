@@ -1,9 +1,9 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.requests.UserSkillRequest;
-import com.tyiu.corn.model.responses.UserIdeaResponse;
-import com.tyiu.corn.model.responses.UserProjectResponse;
-import com.tyiu.corn.model.responses.UserSkillResponse;
+import com.tyiu.corn.model.requests.ProfileSkillRequest;
+import com.tyiu.corn.model.responses.ProfileIdeaResponse;
+import com.tyiu.corn.model.responses.ProfileSkillResponse;
+import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import com.tyiu.corn.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
@@ -22,13 +22,19 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    //@GetMapping("/ideas/get")
-    //public Flux<UserIdeaResponse> getUserIdeas(Principal principal) {
-    //    return profileService.getUserIdeas(principal.getName());
-    //}
-    //@GetMapping("/projects/get")
-    //public Flux<UserProjectResponse> getUserProjects(Principal principal) {
-    //    return profileService.getUserProjects(principal.getName());
+    @GetMapping("/ideas/get")
+    public Flux<ProfileIdeaResponse> getUserIdeas(Principal principal) {
+        return profileService.getUserIdeas(Long.valueOf(principal.getName()));
+    }
+
+    @GetMapping("/projects/get")
+    public Flux<ProfileProjectResponse> getUserProjects(Principal principal) {
+        return profileService.getUserProjects(Long.valueOf(principal.getName()));
+    }
+
+    //@GetMapping("/my")
+    //public Mono<ProfileDTO> getProfile(Principal principal){
+    //    return profileService.getProfile(Long.valueOf(principal.getName()));
     //}
 
 
@@ -42,13 +48,13 @@ public class ProfileController {
                                          @RequestPart("file") FilePart file) {
         return profileService.uploadAvatar(principal.getName(), file);
     }
-    //@GetMapping("/skills/get")
-    //public Flux<UserSkillResponse> getUserSkills(Principal principal) {
-    //    return profileService.getSkills(principal.getName());
-    //}
-    //@PostMapping("/skills/save")
-    //public Flux<UserSkillResponse> saveUserSkills(Principal principal,
-     //                                             @RequestBody Flux<UserSkillRequest> skills) {
-     //   return profileService.saveSkills(principal.getName(), skills);
-    //}
+    @GetMapping("/skills/get")
+    public Flux<ProfileSkillResponse> getUserSkills(Principal principal) {
+        return profileService.getSkills(Long.valueOf(principal.getName()));
+    }
+    @PostMapping("/skills/save")
+    public Flux<ProfileSkillResponse> saveUserSkills(Principal principal,
+                                                     @RequestBody Flux<ProfileSkillRequest> skills) {
+        return profileService.saveSkills(Long.valueOf(principal.getName()), skills);
+    }
 }

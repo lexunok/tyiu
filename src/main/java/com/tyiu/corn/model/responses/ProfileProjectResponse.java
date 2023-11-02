@@ -5,8 +5,8 @@ import lombok.Data;
 
 @Data
 @Builder
-public class UserProjectResponse {
-    private String projectId;
+public class ProfileProjectResponse {
+    private Long id;
     private String name;
     private String description;
 }

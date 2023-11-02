@@ -7,7 +7,8 @@ postgres:
   url: postgresql://postgres:5432/hits
 file:
   path:
-    avatar: "./src/main/resources/avatars/"
+    avatar: "./src/main/resources/files/avatars/"
+    idea: "./src/main/resources/files/ideas/"
 spring:
   data:
     r2dbc:

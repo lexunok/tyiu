@@ -27,10 +27,10 @@ import reactor.core.publisher.Mono;
 public class SkillController {
     private final SkillService skillService;
 
-    @GetMapping("/users/all")
+    /*@GetMapping("/users/all")
     public Flux<TeamMemberResponse> getAllUsersWithSkills(){
         return skillService.getAllUsersWithSkills();
-    }
+    }*/
 
     @GetMapping("/all")
     public Flux<SkillDTO> getAllSkills() {
