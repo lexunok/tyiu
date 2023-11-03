@@ -98,8 +98,8 @@ public class ProfileService {
     public Flux<ProfileSkillResponse> saveSkills(Long userId, Flux<ProfileSkillRequest> skills) {
         return skills.flatMap(s -> {
             template.insert(new User2Skill(userId, s.getSkillId()));
-            String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id sk FROM user_skill " +
-                    "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =:userId";
+            String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id FROM user_skill" +
+                    " JOIN skill s ON s.id = user_skill.skill_id WHERE user_skill.user_id =:userId";
             return template.getDatabaseClient().sql(query)
                     .bind("userId",userId)
                     .map((row, rowMetadata) -> ProfileSkillResponse.builder()
