@@ -1,12 +1,16 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
+import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.model.entities.IdeaMarket;
 import com.tyiu.corn.model.entities.TeamMarketRequest;
 import com.tyiu.corn.model.entities.mappers.IdeaMarketMapper;
 import com.tyiu.corn.model.entities.mappers.TeamMarketMapper;
 import com.tyiu.corn.model.entities.relations.Favorite2Idea;
+import com.tyiu.corn.model.enums.IdeaMarketStatusType;
+import com.tyiu.corn.model.enums.SkillType;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -15,6 +19,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -54,13 +61,53 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(Long userId){
         return template.getDatabaseClient()
-                .sql("SELECT idea_market.id FROM idea_market")
-                .map((row, rowMetadata) ->
-                        IdeaMarketDTO.builder()
-                                .id(row.get("id",Long.class))
-                                .build())
+                .sql("SELECT idea_market.*, favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests) " +
+                        "FROM idea_market " +
+                        "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId")
+                .bind("userId",userId)
+                .map((row, rowMetadata) -> {
+                    IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
+                            .id(row.get("id", Long.class))
+                            .ideaId(row.get("idea_id", Long.class))
+                            .position(row.get("row_number", Long.class))
+                            .name(row.get("name", String.class))
+                            .initiator(row.get("initiator", String.class))
+                            .description(row.get("description", String.class))
+                            .stack(new ArrayList<>())
+                            .createdAt(row.get("created_at", LocalDate.class))
+                            .maxTeamSize(row.get("max_team_size", Short.class))
+                            .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
+                            .requests(row.get("requests", Long.class))
+                            .acceptedRequests(row.get("accepted_requests", Long.class))
+                            .isFavorite(false)
+                            .build();
+                    if (Objects.equals(row.get("idea_market_id", Long.class), ideaMarketDTO.getId()))
+                    {
+                        ideaMarketDTO.setIsFavorite(true);
+                    }
+                    return ideaMarketDTO;
+                })
                 .all()
-                .flatMap(id -> getOneMarketIdea(userId, id.getId()));
+                .flatMap(idea -> template.getDatabaseClient()
+                        .sql("SELECT skill.* " +
+                            "FROM skill " +
+                            "LEFT JOIN idea_skill ON idea_skill.idea_id = :ideaMarketId " +
+                            "WHERE skill.id = idea_skill.skill_id")
+                        .bind("ideaMarketId", idea.getIdeaId())
+                        .map((row, rowMetadata) -> {
+                            SkillDTO skillDTO = SkillDTO.builder()
+                                    .id(row.get("id", Long.class))
+                                    .name(row.get("name", String.class))
+                                    .type(SkillType.valueOf(row.get("type", String.class)))
+                                    .build();
+                            if(idea.getStack().stream().noneMatch(skill -> skill.getId().equals(skillDTO.getId()))) {
+                                idea.getStack().add(skillDTO);
+                            }
+                            return idea;
+                        })
+                        .all()
+                        .collectList()
+                        .map(i -> i.get(0)));
     }
 
     public Mono<IdeaMarketDTO> getMarketIdea(Long userId, Long ideaMarketId){
@@ -116,18 +163,22 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Mono<IdeaMarketDTO> sendIdeaOnMarket(Long ideaId, IdeaMarketDTO ideaMarketDTO){
-        ideaMarketDTO.setCreatedAt(LocalDate.now());
-        ideaMarketDTO.setRequests(0L);
-        ideaMarketDTO.setAcceptedRequests(0L);
-        ideaMarketDTO.setIsFavorite(false);
-        IdeaMarket ideaMarket = mapper.map(ideaMarketDTO, IdeaMarket.class);
-        ideaMarket.setIdeaId(ideaId);
-        return template.insert(ideaMarket)
-                .flatMap(i -> {
-                    ideaMarketDTO.setId(i.getId());
-                    return Mono.just(ideaMarketDTO);
-                });
+    public Flux<IdeaMarketDTO> sendIdeaOnMarket(List<IdeaDTO> ideaDTOList) {
+        return Flux.fromIterable(ideaDTOList)
+                .flatMap(ideaDTO -> template.insert(IdeaMarket.builder()
+                                .ideaId(ideaDTO.getId())
+                                .position(1L)
+                                .name(ideaDTO.getName())
+                                .initiator(ideaDTO.getInitiator())
+                                .description(ideaDTO.getDescription())
+                                .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
+                                .maxTeamSize(ideaDTO.getMaxTeamSize())
+                                .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
+                                .requests(0L)
+                                .acceptedRequests(0L)
+                                .build())
+                        .map(i -> mapper.map(i, IdeaMarketDTO.class))
+                );
     }
 
     public Mono<TeamMarketRequestDTO> declareTeam(Long teamId, TeamMarketRequestDTO teamMarketRequestDTO){
