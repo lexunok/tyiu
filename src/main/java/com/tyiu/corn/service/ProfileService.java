@@ -1,9 +1,9 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.relations.User2Skill;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.requests.ProfileSkillRequest;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import com.tyiu.corn.model.responses.ProfileSkillResponse;
@@ -72,7 +72,7 @@ public class ProfileService {
 
     public Flux<ProfileProjectResponse> getUserProjects(Long userId) {
         String query = "SELECT t.id t_id, p.id p_id, p.name p_name, p.description p_desc FROM team t " +
-                "JOIN project p ON p.team_id = t.id WHERE t.owner_id =: userId";
+                "JOIN project p ON p.team_id = t.id WHERE t.owner_id =:userId";
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> ProfileProjectResponse.builder()
@@ -84,8 +84,8 @@ public class ProfileService {
     }
 
     public Flux<ProfileSkillResponse> getSkills(Long userId){
-        String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id sk FROM user_skill " +
-                "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =: userId";
+        String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id FROM user_skill" +
+                " JOIN skill s ON s.id = user_skill.skill_id WHERE user_skill.user_id =:userId";
         return template.getDatabaseClient().sql(query)
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> ProfileSkillResponse.builder()
@@ -95,11 +95,11 @@ public class ProfileService {
                 .all();
     }
 
-    public Flux<ProfileSkillResponse> saveSkills(Long userId, Flux<ProfileSkillRequest> skills) {
+    public Flux<ProfileSkillResponse> saveSkills(Long userId, Flux<SkillDTO> skills) {
         return skills.flatMap(s -> {
-            template.insert(new User2Skill(userId, s.getSkillId()));
-            String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id sk FROM user_skill " +
-                    "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =: userId";
+            template.insert(new User2Skill(userId, s.getId())).subscribe();
+            String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id FROM user_skill" +
+                    " JOIN skill s ON s.id = user_skill.skill_id WHERE user_skill.user_id =:userId";
             return template.getDatabaseClient().sql(query)
                     .bind("userId",userId)
                     .map((row, rowMetadata) -> ProfileSkillResponse.builder()

@@ -1,6 +1,6 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.requests.ProfileSkillRequest;
+import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileSkillResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
@@ -54,7 +54,7 @@ public class ProfileController {
     }
     @PostMapping("/skills/save")
     public Flux<ProfileSkillResponse> saveUserSkills(Principal principal,
-                                                     @RequestBody Flux<ProfileSkillRequest> skills) {
+                                                     @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(Long.valueOf(principal.getName()), skills);
     }
 }

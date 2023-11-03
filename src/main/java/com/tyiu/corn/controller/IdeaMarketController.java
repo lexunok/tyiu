@@ -1,6 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
+import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.service.IdeaMarketService;
@@ -10,6 +11,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.security.Principal;
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -51,14 +53,14 @@ public class IdeaMarketController {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    @PostMapping("/send/{ideaId}")
-    public Mono<IdeaMarketDTO> createMarketIdea(@PathVariable Long ideaId, @RequestBody IdeaMarketDTO ideaMarketDTO) {
-        return ideaMarketService.sendIdeaOnMarket(ideaId, ideaMarketDTO);
+    @PostMapping("/send")
+    public Flux<IdeaMarketDTO> createMarketIdea(@RequestBody List<IdeaDTO> ideaDTOList) {
+        return ideaMarketService.sendIdeaOnMarket(ideaDTOList);
     }
 
-    @PostMapping("/declare/{teamId}")
-    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@PathVariable Long teamId, @RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
-        return ideaMarketService.declareTeam(teamId, teamMarketRequestDTO);
+    @PostMapping("/declare")
+    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
+        return ideaMarketService.declareTeam(teamMarketRequestDTO);
     }
 
     @PostMapping("/favorite/{ideaMarketId}")

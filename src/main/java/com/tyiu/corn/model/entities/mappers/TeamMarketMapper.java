@@ -26,6 +26,7 @@ public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketReque
             existingTeamMarketRequest = TeamMarketRequestDTO.builder()
                     .id(teamMarketRequestId)
                     .ideaId(row.get("idea_id", Long.class))
+                    .teamId(row.get("team_id", Long.class))
                     .accepted(row.get("accepted", Boolean.class))
                     .name(row.get("name", String.class))
                     .updatedAt(row.get("updated_at", LocalDate.class))
