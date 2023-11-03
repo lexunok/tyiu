@@ -72,7 +72,7 @@ public class ProfileService {
 
     public Flux<ProfileProjectResponse> getUserProjects(Long userId) {
         String query = "SELECT t.id t_id, p.id p_id, p.name p_name, p.description p_desc FROM team t " +
-                "JOIN project p ON p.team_id = t.id WHERE t.owner_id =: userId";
+                "JOIN project p ON p.team_id = t.id WHERE t.owner_id =:userId";
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> ProfileProjectResponse.builder()
@@ -85,7 +85,7 @@ public class ProfileService {
 
     public Flux<ProfileSkillResponse> getSkills(Long userId){
         String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id sk FROM user_skill " +
-                "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =: userId";
+                "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =:userId";
         return template.getDatabaseClient().sql(query)
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> ProfileSkillResponse.builder()
@@ -99,7 +99,7 @@ public class ProfileService {
         return skills.flatMap(s -> {
             template.insert(new User2Skill(userId, s.getSkillId()));
             String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id sk FROM user_skill " +
-                    "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =: userId";
+                    "JOIN skill s ON skill.id = sk WHERE user_skill.user_id =:userId";
             return template.getDatabaseClient().sql(query)
                     .bind("userId",userId)
                     .map((row, rowMetadata) -> ProfileSkillResponse.builder()
