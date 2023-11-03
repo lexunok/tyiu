@@ -21,11 +21,13 @@ public class AuthenticationController {
 
     @PostMapping("/login")
     public Mono<AuthenticationResponse> signIn(@RequestBody LoginRequest request) {
+        log.info("/login by " + request.getEmail());
         return authenticationService.login(request);
     }
 
     @PostMapping("/register")
     public Mono<AuthenticationResponse> signUp(@RequestBody RegisterRequest request) {
+        log.info("/register by " + request.getEmail());
         return authenticationService.register(request);
     }
 }
