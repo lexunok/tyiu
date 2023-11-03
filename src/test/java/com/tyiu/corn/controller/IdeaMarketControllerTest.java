@@ -268,6 +268,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertEquals(teamDTO.getName(),createdTeam.getName());
         TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
                 .ideaId(ideaMarketId)
+                .teamId(createdTeam.getId())
                 .accepted(false)
                 .name(createdTeam.getName())
                 .closed(createdTeam.getClosed())
@@ -280,7 +281,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .build();
         TeamMarketRequestDTO createdTeamMarketRequest = webTestClient
                 .post()
-                .uri("/api/v1/market/declare/{teamId}", createdTeam.getId())
+                .uri("/api/v1/market/declare")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(teamMarketRequest), TeamMarketRequestDTO.class)
                 .exchange()

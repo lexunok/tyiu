@@ -181,10 +181,9 @@ public class IdeaMarketService {
                 );
     }
 
-    public Mono<TeamMarketRequestDTO> declareTeam(Long teamId, TeamMarketRequestDTO teamMarketRequestDTO){
+    public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO){
         teamMarketRequestDTO.setUpdatedAt(LocalDate.now());
         TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
-        teamMarketRequest.setTeamId(teamId);
         teamMarketRequest.setOwnerId(teamMarketRequestDTO.getOwner().getUserId());
         teamMarketRequest.setLeaderId(teamMarketRequestDTO.getLeader().getUserId());
         return template.insert(teamMarketRequest).flatMap(r -> {

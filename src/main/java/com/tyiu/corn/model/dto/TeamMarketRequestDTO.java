@@ -14,6 +14,7 @@ import java.util.List;
 public class TeamMarketRequestDTO {
     private Long id;
     private Long ideaId;
+    private Long teamId;
     private Boolean accepted;
 
     private String name;

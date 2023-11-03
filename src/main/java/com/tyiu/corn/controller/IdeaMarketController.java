@@ -58,9 +58,9 @@ public class IdeaMarketController {
         return ideaMarketService.sendIdeaOnMarket(ideaDTOList);
     }
 
-    @PostMapping("/declare/{teamId}")
-    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@PathVariable Long teamId, @RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
-        return ideaMarketService.declareTeam(teamId, teamMarketRequestDTO);
+    @PostMapping("/declare")
+    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
+        return ideaMarketService.declareTeam(teamMarketRequestDTO);
     }
 
     @PostMapping("/favorite/{ideaMarketId}")
