@@ -22,7 +22,7 @@ public class IdeaMarket {
     private String initiator;
     private String description;
     private LocalDate createdAt;
-    private Long maxTeamSize;
+    private Short maxTeamSize;
     private IdeaMarketStatusType status;
     private Long requests;
     private Long acceptedRequests;

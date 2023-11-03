@@ -1,0 +1,1 @@
+ALTER TABLE idea_market ALTER COLUMN max_team_size TYPE SMALLINT;

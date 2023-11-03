@@ -15,13 +15,14 @@ import java.util.List;
 @AllArgsConstructor
 public class IdeaMarketDTO {
     private Long id;
+    private Long ideaId;
     private Long position;
     private String name;
     private String initiator;
     private String description;
     private List<SkillDTO> stack;
     private LocalDate createdAt;
-    private Long maxTeamSize;
+    private Short maxTeamSize;
     private IdeaMarketStatusType status;
     private Long requests;
     private Long acceptedRequests;
