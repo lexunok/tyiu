@@ -39,7 +39,7 @@ public class AccountChangeService {
     private final R2dbcEntityTemplate template;
 
     //private final String path = "http://localhost:8080";
-    private final String path = "https://hits1.tyuiu.ru";
+    private final String path = "https://hits.tyuiu.ru";
 
     private Mono<Void> sendEmail(String receiver, String subject, String message){
         return Mono.just(new SimpleMailMessage())
@@ -145,7 +145,8 @@ public class AccountChangeService {
                         sendEmail(
                                 invitation.getEmail(),
                                 "Приглашение на портал ВШЦТ",
-                                String.format("Приглашаем вас для регистрации на портале ВШЦТ" + path + "/register/%s", invitation.getUrl())
+                                String.format("Здравствуйте! Вы были приглашены в качестве пользователя на Портал ВШЦТ." +
+                                        " Для регистрации на сервисе перейдите по данной ссылке и заполните все поля " + path + "/register/%s", invitation.getUrl())
                         ).subscribe();
                         return template.insert(invitation).then();
                     }
