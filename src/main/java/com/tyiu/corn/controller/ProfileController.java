@@ -32,11 +32,6 @@ public class ProfileController {
         return profileService.getUserProjects(Long.valueOf(principal.getName()));
     }
 
-    //@GetMapping("/my")
-    //public Mono<ProfileDTO> getProfile(Principal principal){
-    //    return profileService.getProfile(Long.valueOf(principal.getName()));
-    //}
-
 
     @GetMapping("/avatar/get")
     public Mono<Resource> getAvatar(Principal principal) {
@@ -53,7 +48,7 @@ public class ProfileController {
         return profileService.getSkills(Long.valueOf(principal.getName()));
     }
     @PostMapping("/skills/save")
-    public Flux<ProfileSkillResponse> saveUserSkills(Principal principal,
+    public Flux<SkillDTO> saveUserSkills(Principal principal,
                                                      @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(Long.valueOf(principal.getName()), skills);
     }

@@ -1,10 +1,10 @@
 package com.tyiu.corn.model.entities.relations;
 
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Data
+@NoArgsConstructor
 @Table("user_skill")
 @AllArgsConstructor
 public class User2Skill {

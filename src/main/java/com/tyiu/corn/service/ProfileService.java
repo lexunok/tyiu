@@ -53,14 +53,6 @@ public class ProfileService {
         }
     }
 
-    /*public Mono<ProfileDTO> getProfile(Long userId){
-        String query = "SELECT u.id u_id, u.email u_email, i.id i_id, i.description i_description, i.name i_name FROM users u JOIN idea i ON i.initiator_id = u.id WHERE u.id =: userId";
-        return template.getDatabaseClient().sql(query)
-                .bind("userId",userId)
-                .map()
-    }*/
-
-
     public Flux<ProfileIdeaResponse> getUserIdeas(Long userId) {
         return template.select(query(where("initiator_id").is(userId)), Idea.class)
                 .flatMap(i -> Flux.just(ProfileIdeaResponse.builder()
@@ -95,18 +87,11 @@ public class ProfileService {
                 .all();
     }
 
-    public Flux<ProfileSkillResponse> saveSkills(Long userId, Flux<SkillDTO> skills) {
-        return skills.flatMap(s -> {
-            template.insert(new User2Skill(userId, s.getId())).subscribe();
-            String query = "SELECT s.id s_id, s.name s_name, s.type s_type, user_skill.skill_id FROM user_skill" +
-                    " JOIN skill s ON s.id = user_skill.skill_id WHERE user_skill.user_id =:userId";
-            return template.getDatabaseClient().sql(query)
-                    .bind("userId",userId)
-                    .map((row, rowMetadata) -> ProfileSkillResponse.builder()
-                            .id(row.get("s_id",Long.class))
-                            .name(row.get("s_name", String.class))
-                            .type(SkillType.valueOf(row.get("s_type", String.class))).build())
-                    .all();
+    public Flux<SkillDTO> saveSkills(Long userId, Flux<SkillDTO> skills) {
+        template.delete(query(where("user_id").is(userId)), User2Skill.class).subscribe();
+        return skills.map(s -> {
+            template.insert(new User2Skill(userId,s.getId())).subscribe();
+            return s;
         });
     }
 }

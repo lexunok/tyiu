@@ -43,12 +43,12 @@ public class NotificationController {
         return notificationService.removeNotificationFromFavourite(userId, notificationId);
     }
 
-    @PutMapping("/{notificationId}")
+    @PutMapping("/show/{notificationId}")
     public Mono<Void> showNotification(Long notificationId) {
         return notificationService.showNotification(notificationId);
     }
 
-    @PutMapping("/{notificationId}")
+    @PutMapping("/read/{notificationId}")
     public Mono<Void> readNotification(Principal principal) {
         return notificationService.readNotification(Long.valueOf(principal.getName()));
     }
