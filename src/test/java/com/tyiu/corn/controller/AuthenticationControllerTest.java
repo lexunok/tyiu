@@ -10,25 +10,23 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.util.List;
 
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 class AuthenticationControllerTest extends TestContainers{
     @Autowired
     private WebTestClient webTestClient;
 
-    @Order(1)
     @Test
     void canRegister(){
         RegisterRequest request = new RegisterRequest(
-                "edqmail","lastnasme",
-                "firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
+                "authentication","auth",
+                "auth","password", List.of(Role.ADMIN,Role.EXPERT));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -43,11 +41,29 @@ class AuthenticationControllerTest extends TestContainers{
         assertEquals(request.getRoles(),response.getRoles());
         assertTrue(response.getToken().length()>10);
     }
+    @Test
+    void canRegisterWhenUserExists(){
+        RegisterRequest request = new RegisterRequest(
+                "authentication2","auth",
+                "auth","password", List.of(Role.ADMIN,Role.EXPERT));
+        webTestClient
+                .post()
+                .uri("/api/v1/auth/register")
+                .body(Mono.just(request), RegisterRequest.class)
+                .exchange()
+                .expectStatus().isOk();
+        webTestClient
+                .post()
+                .uri("/api/v1/auth/register")
+                .body(Mono.just(request), RegisterRequest.class)
+                .exchange()
+                .expectStatus().is4xxClientError();
+    }
 
     @Test
     void canLoginWhenUserNotExists(){
         LoginRequest request = new LoginRequest(
-                "edasmail3","lasdfsdsdsf");
+                "notregistered","password");
         webTestClient
                 .post()
                 .uri("/api/v1/auth/login")
@@ -58,15 +74,15 @@ class AuthenticationControllerTest extends TestContainers{
     @Test
     void canLoginWhenUserExists(){
         RegisterRequest registerRequest = new RegisterRequest(
-                "email1","lastnasme",
-                "firsdstname","psdassword", List.of(Role.ADMIN,Role.EXPERT));
+                "authentication3","auth",
+                "auth","password", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(registerRequest), RegisterRequest.class)
                 .exchange()
-                .expectBody(AuthenticationResponse.class);
-        LoginRequest request = new LoginRequest("email1","psdassword");
+                .expectStatus().isOk();
+        LoginRequest request = new LoginRequest("authentication3","password");
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/login")
@@ -79,15 +95,15 @@ class AuthenticationControllerTest extends TestContainers{
     @Test
     void canLoginWhenPasswordNotCorrect(){
         RegisterRequest registerRequest = new RegisterRequest(
-                "email2","lastnasme","firsdstname",
-                "psdassword", List.of(Role.ADMIN,Role.EXPERT));
+                "authentication4","auth","auth",
+                "password", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(registerRequest), RegisterRequest.class)
                 .exchange()
-                .expectBody(AuthenticationResponse.class);
-        LoginRequest request = new LoginRequest("email2","psdasdfdsfssword");
+                .expectStatus().isOk();
+        LoginRequest request = new LoginRequest("authentication4","passwordnotcorrect");
         webTestClient
                 .post()
                 .uri("/api/v1/auth/login")

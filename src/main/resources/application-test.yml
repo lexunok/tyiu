@@ -33,7 +33,6 @@ spring:
     validate-on-migrate: true
   rsocket:
     server:
-      port: 7000
       transport: websocket
       mapping-path: /rs
   output:
