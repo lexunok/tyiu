@@ -44,6 +44,11 @@ public class NotificationController {
     }
 
     @PutMapping("/{notificationId}")
+    public Mono<Void> showNotification(Long notificationId) {
+        return notificationService.showNotification(notificationId);
+    }
+
+    @PutMapping("/{notificationId}")
     public Mono<Void> readNotification(Principal principal) {
         return notificationService.readNotification(Long.valueOf(principal.getName()));
     }

@@ -26,7 +26,7 @@ public class NotificationService {
                         .id(n.getId())
                         .title(n.getTitle())
                         .message(n.getMessage())
-                        .isShowed(true)
+                        .isShowed(false)
                         .isReaded(n.isReaded())
                         .isFavourite(n.isFavourite())
                         .createdAt(n.getCreatedAt())
@@ -74,6 +74,11 @@ public class NotificationService {
         return template.update(query(where("userId").is(userId)
                 .and(where("id").is(notificationId))),
                 update("is_showed", true).set("is_readed", true).set("is_favourite", false), Notification.class).then();
+    }
+
+    public Mono<Void> showNotification(Long notificationId) {
+        return template.update(query(where("id").is(notificationId)),
+                update("is_showed", true), Notification.class).then();
     }
 
     public Mono<Void> readNotification(Long notificationId) {
