@@ -61,7 +61,7 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(Long userId){
         return template.getDatabaseClient()
-                .sql("SELECT idea_market.*, favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests) " +
+                .sql("SELECT idea_market.*, favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
                         "FROM idea_market " +
                         "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId")
                 .bind("userId",userId)
@@ -188,7 +188,11 @@ public class IdeaMarketService {
         teamMarketRequest.setLeaderId(teamMarketRequestDTO.getLeader().getUserId());
         return template.insert(teamMarketRequest).flatMap(r -> {
             teamMarketRequestDTO.setId(r.getId());
-            return Mono.just(teamMarketRequestDTO);
+            Long id = r.getIdeaId();
+            return template.select(query(where("idea_id").is(id)),TeamMarketRequest.class).count().flatMap(c ->
+                    template.update(query(where("id").is(id)),
+                            update("requests", c),
+                            IdeaMarket.class).thenReturn(teamMarketRequestDTO));
         });
     }
 
