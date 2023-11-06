@@ -1,6 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileSkillResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
@@ -22,20 +23,25 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @GetMapping("/ideas/get")
-    public Flux<ProfileIdeaResponse> getUserIdeas(Principal principal) {
-        return profileService.getUserIdeas(Long.valueOf(principal.getName()));
+    @GetMapping("/ideas/get/{email}")
+    public Flux<ProfileIdeaResponse> getUserIdeas(@PathVariable String email) {
+        return profileService.getUserIdeas(email);
     }
 
-    @GetMapping("/projects/get")
-    public Flux<ProfileProjectResponse> getUserProjects(Principal principal) {
-        return profileService.getUserProjects(Long.valueOf(principal.getName()));
+    @GetMapping("/projects/get/{email}")
+    public Flux<ProfileProjectResponse> getUserProjects(@PathVariable String email) {
+        return profileService.getUserProjects(email);
+    }
+
+    @GetMapping("/{email}")
+    public Mono<UserDTO> getUserProfile(@PathVariable String email) {
+        return profileService.getUserProfile(email);
     }
 
 
-    @GetMapping("/avatar/get")
-    public Mono<Resource> getAvatar(Principal principal) {
-        return profileService.getAvatar(principal.getName());
+    @GetMapping("/avatar/get/{email}")
+    public Mono<Resource> getAvatar(@PathVariable String email) {
+        return profileService.getAvatar(email);
     }
 
     @PostMapping("/avatar/upload")
@@ -43,9 +49,9 @@ public class ProfileController {
                                          @RequestPart("file") FilePart file) {
         return profileService.uploadAvatar(principal.getName(), file);
     }
-    @GetMapping("/skills/get")
-    public Flux<ProfileSkillResponse> getUserSkills(Principal principal) {
-        return profileService.getSkills(Long.valueOf(principal.getName()));
+    @GetMapping("/skills/get/{email}")
+    public Flux<ProfileSkillResponse> getUserSkills(@PathVariable String email) {
+        return profileService.getSkills(email);
     }
     @PostMapping("/skills/save")
     public Flux<SkillDTO> saveUserSkills(Principal principal,
