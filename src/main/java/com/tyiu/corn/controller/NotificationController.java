@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.NotificationDTO;
+import com.tyiu.corn.model.entities.Notification;
 import com.tyiu.corn.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -28,7 +29,7 @@ public class NotificationController {
     }
 
     @PostMapping("/create")
-    public Mono<NotificationDTO> createNotification(@RequestBody NotificationDTO notification) {
+    public Mono<Notification> createNotification(@RequestBody Notification notification) {
         return notificationService.createNotification(notification)
                 .switchIfEmpty(Mono.error(new NotFoundException("Create is not success!")));
     }

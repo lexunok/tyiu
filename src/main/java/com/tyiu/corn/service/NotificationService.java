@@ -50,7 +50,7 @@ public class NotificationService {
                 ));
     }
 
-    public Mono<NotificationDTO> createNotification(NotificationDTO notification) {
+    public Mono<Notification> createNotification(Notification notification) {
         return template.insert(notification).flatMap(n -> {
             notification.setId(n.getId());
             notification.setTitle(n.getTitle());
@@ -67,22 +67,31 @@ public class NotificationService {
     public Mono<Void> addNotificationToFavourite(Long userId, Long notificationId) {
         return template.update(query(where("userId").is(userId)
                 .and(where("id").is(notificationId))),
-                update("is_showed", true).set("is_readed", true).set("is_favourite", true), Notification.class).then();
+                update("is_showed", true)
+                        .set("is_readed", true)
+                        .set("is_favourite", true),
+                Notification.class).then();
     }
 
     public Mono<Void> removeNotificationFromFavourite(Long userId, Long notificationId) {
         return template.update(query(where("userId").is(userId)
                 .and(where("id").is(notificationId))),
-                update("is_showed", true).set("is_readed", true).set("is_favourite", false), Notification.class).then();
+                update("is_showed", true)
+                        .set("is_readed", true)
+                        .set("is_favourite", false),
+                Notification.class).then();
     }
 
     public Mono<Void> showNotification(Long notificationId) {
         return template.update(query(where("id").is(notificationId)),
-                update("is_showed", true), Notification.class).then();
+                update("is_showed", true),
+                Notification.class).then();
     }
 
     public Mono<Void> readNotification(Long notificationId) {
         return template.update(query(where("id").is(notificationId)),
-                update("is_showed", true).set("is_readed", true), Notification.class).then();
+                update("is_showed", true)
+                        .set("is_readed", true),
+                Notification.class).then();
     }
 }
