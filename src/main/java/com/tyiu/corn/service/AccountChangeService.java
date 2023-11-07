@@ -46,6 +46,7 @@ public class AccountChangeService {
                             .flatMap(m -> {
                                 m.setTo(receiver);
                                 m.setSubject(subject);
+                                m.setFrom("hits1.tyuiu.ru");
                                 m.setText(message);
                                 emailSender.send(m);
                                 return Mono.empty();
