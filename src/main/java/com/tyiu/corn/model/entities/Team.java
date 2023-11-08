@@ -15,7 +15,6 @@ import java.time.LocalDate;
 public class Team {
     @Id
     private Long id;
-
     private String name;
     private String description;
 
