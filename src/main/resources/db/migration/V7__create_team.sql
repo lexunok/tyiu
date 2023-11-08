@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS team_accessıon(
     accession_stage TEXT NOT NULL,
     target_registered BOOLEAN NOT NULL,
     target_email TEXT NOT NULL,
-    inviter_user_id BIGINT REFERENCES team_member(id),
-    team_dto_id REFERENCES team (id)
+    inviter_user_id BIGINT REFERENCES team_member (id)
 );
 DROP TABLE team_invitation;
