@@ -67,8 +67,8 @@ public class TeamService {
                                 .membersCount(list.size())
                                 .build())));
     }
-    public Flux<TeamAccession> getAccessions(Long teamId) {
-        return template.select(TeamAccession.class)
+    public Flux<TeamAccessionDTO> getAccessions(Long teamId) {
+        return template.select(TeamAccessionDTO.class)
                 .matching(query(where("teamId").is(teamId)))
                 .all();
     }
@@ -123,7 +123,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> respondeToRequest(Long teamId, Long userId) {
+    public Mono<Void> responseToRequest(Long teamId, Long userId) {
         return template.select(TeamAccession.class)
                 .matching(query(where("team_id").is(teamId)
                         .and("user_id").is(userId)
@@ -167,10 +167,6 @@ public class TeamService {
                 Team.class).then();
     }
 
-    /////////////
-    ////////////
-    ///////////
-
     public Mono<Void> inviteRegisteredUsers(List<User> users) {
         return Flux.fromIterable(users)
                 .flatMap(user -> {
@@ -201,35 +197,23 @@ public class TeamService {
                 .then();
     }
 
-
-
     public Mono<Void> deleteAccession(Long accessionId) {
         return template.delete(TeamAccessionDTO.class)
                 .matching(query(where("id").is(accessionId)))
                 .all()
                 .then();
     }
-    public Mono<Void> processTeamInvitation(Long accessionId, boolean accept) {
+    public Mono<Void> responseToInvitation(Long accessionId, TeamAccessionDTO teamAccessionDTO) {
         return template.selectOne(query(where("id").is(accessionId)), TeamAccessionDTO.class)
                 .flatMap(accession -> {
-                    if (accept) {
-                        if (accession.getAccessionStage() == AccessionStage.INVITATION) {
-                            accession.setAccessionStage(AccessionStage.REQUEST);
-                            accession.setRequestType(RequestType.ENTER);
-                            return template.update(accession).then();
-                        } else if (accession.getAccessionStage() == AccessionStage.ACCEPTED) {
-                            accession.setAccessionStage(AccessionStage.REQUEST);
-                            return template.update(accession).then();
-                        }
-                    } else {
-                        accession.setAccessionStage(AccessionStage.REJECTED);
-                        return template.update(accession).then();
-                    }
-                    return Mono.error(new IllegalArgumentException("Invalid access stage for processing"));
+                    teamAccessionDTO.setTargetRegistered(true);
+                    return template.update(teamAccessionDTO).then();
                 });
     }
+
     public Mono<Void> sendRequest(TeamAccessionDTO teamAccessionDTO) {
         return template.insert(teamAccessionDTO)
                 .then();
     }
+
 }
