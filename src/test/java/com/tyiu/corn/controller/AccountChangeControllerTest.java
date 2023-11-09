@@ -95,7 +95,7 @@ public class AccountChangeControllerTest extends TestContainers {
         Temporary temporary = Temporary.builder()
                 .email(EMAIL)
                 .newEmail(EMAIL)
-                .oldEmail("vlasov.vadom@gmail.com")
+                .oldEmail(EMAIL)
                 .build();
         String changerUrl = webTestClient
                 .post()
@@ -189,7 +189,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testRequestToChangeEmail(){
         Temporary temporary = Temporary.builder()
-                .oldEmail("vlasov.vadom@gmail.com")
+                .oldEmail(EMAIL)
                 .newEmail(EMAIL)
                 .build();
         InfoResponse invitationSend = webTestClient
