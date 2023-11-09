@@ -30,6 +30,8 @@ public class AccountChangeControllerTest extends TestContainers {
     private String jwt;
     private UserDTO userDTO;
 
+    private String EMAIL = "vshtst.hits0@gmail.com";
+
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
@@ -65,7 +67,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testRegisterByInvitation(){
         Temporary temporary = Temporary.builder()
-                .email("vlasov.vadom@gmail.com")
+                .email(EMAIL)
                 .build();
         String changerUrl = webTestClient
                 .post()
@@ -91,8 +93,8 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testChangeNewEmail(){
         Temporary temporary = Temporary.builder()
-                .email("vlasov.vadom@gmail.com")
-                .newEmail("vadimxxz14@gmail.com")
+                .email(EMAIL)
+                .newEmail(EMAIL)
                 .oldEmail("vlasov.vadom@gmail.com")
                 .build();
         String changerUrl = webTestClient
@@ -155,7 +157,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testInvitationSend(){
         Temporary temporary = Temporary.builder()
-                .email("vlasov.vadom@gmail.com")
+                .email(EMAIL)
                 .build();
         InfoResponse invitationSend = webTestClient
                 .post()
@@ -173,7 +175,7 @@ public class AccountChangeControllerTest extends TestContainers {
     void testInvitationFileSend(){
         InvitationDTO invitationDTO = InvitationDTO.builder()
                 .roles(List.of(Role.INITIATOR))
-                .emails(List.of("vlasov.vadom@gmail.com","vadimxxz14@gmail.com"))
+                .emails(List.of(EMAIL))
                 .build();
         webTestClient
                 .post()
@@ -188,7 +190,7 @@ public class AccountChangeControllerTest extends TestContainers {
     void testRequestToChangeEmail(){
         Temporary temporary = Temporary.builder()
                 .oldEmail("vlasov.vadom@gmail.com")
-                .newEmail("vadimxxz14@gmail.com")
+                .newEmail(EMAIL)
                 .build();
         InfoResponse invitationSend = webTestClient
                 .post()
@@ -205,7 +207,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testRequestToChangePassword(){
         Temporary temporary = Temporary.builder()
-                .email("vlasov.vadom@gmail.com")
+                .email(EMAIL)
                 .build();
         String changerUrl = webTestClient
                 .post()
@@ -229,7 +231,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testDeleteByUrl(){
         Temporary temporary = Temporary.builder()
-                .email("vlasov.vadom@gmail.com")
+                .email(EMAIL)
                 .build();
         String changerUrl = webTestClient
                 .post()
