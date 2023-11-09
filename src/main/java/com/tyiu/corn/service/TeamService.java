@@ -84,7 +84,8 @@ public class TeamService {
                 .map(user -> TeamMemberDTO.builder()
                         .userId(user.getId())
                         .email(user.getEmail())
-                        // Другие необходимые поля из User, например, имя пользователя и дополнительная информация
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
                         .build());
     }
 
@@ -95,7 +96,8 @@ public class TeamService {
                 .map(user -> TeamMemberDTO.builder()
                         .userId(user.getId())
                         .email(user.getEmail())
-                        // Другие необходимые поля из User, например, имя пользователя и дополнительная информация
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
                         .build());
     }
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
@@ -123,26 +125,6 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> responseToRequest(Long teamId, Long userId) {
-        return template.select(TeamAccession.class)
-                .matching(query(where("team_id").is(teamId)
-                        .and("user_id").is(userId)
-                        .and("accessionStage").is(AccessionStage.ACCEPTED)))
-                .one()
-                .flatMap(accession -> {
-                    if (accession.getAccessionStage() == AccessionStage.ACCEPTED) {
-                        accession.setAccessionStage(AccessionStage.ACCEPTED);
-                        return template.update(accession)
-                                .then(template.insert(new Team2Member(teamId, userId)))
-                                .then();
-                    } else {
-                        accession.setAccessionStage(AccessionStage.REJECTED);
-                        return template.update(accession).then();
-                    }
-                })
-                .switchIfEmpty(Mono.error(new IllegalArgumentException("Заявка не найдена")));
-    }
-
     public Mono<Void> deleteTeam(Long id) {
         return template.delete(query(where("id").is(id)), Team.class).then();
     }
@@ -167,7 +149,7 @@ public class TeamService {
                 Team.class).then();
     }
 
-    public Mono<Void> inviteRegisteredUsers(List<User> users) {
+    public Mono<Void> inviteRegisteredUsers(List<TeamMemberDTO> users) {
         return Flux.fromIterable(users)
                 .flatMap(user -> {
                     TeamAccession teamAccession = TeamAccession.builder()
@@ -175,7 +157,7 @@ public class TeamService {
                             .requestType(RequestType.ENTER)
                             .accessionStage(AccessionStage.REQUEST)
                             .targetRegistered(true)
-                            .userId(user.getId())
+                            .targetId(user.getUserId())
                             .build();
                     return template.insert(teamAccession).then();
                 })
@@ -203,15 +185,36 @@ public class TeamService {
                 .all()
                 .then();
     }
-    public Mono<Void> responseToInvitation(Long accessionId, TeamAccessionDTO teamAccessionDTO) {
+    public Mono<Void> responseToInvitation(Long accessionId, Long targetId, TeamAccessionDTO teamAccessionDTO) {
         return template.selectOne(query(where("id").is(accessionId)), TeamAccessionDTO.class)
                 .flatMap(accession -> {
                     teamAccessionDTO.setTargetRegistered(true);
+                    teamAccessionDTO.setTargetId(targetId);
                     return template.update(teamAccessionDTO).then();
                 });
     }
 
-    public Mono<Void> sendRequest(TeamAccessionDTO teamAccessionDTO) {
+    public Mono<Void> responseToRequest(Long teamId, TeamAccessionDTO teamAccessionDTO) {
+        return template.selectOne(query(where("id").is(teamAccessionDTO.getId())
+                        ), TeamAccessionDTO.class)
+                .flatMap(accession -> {
+                    if (teamAccessionDTO.getAccessionStage() == AccessionStage.ACCEPTED) {
+                        accession.setAccessionStage(AccessionStage.ACCEPTED);
+                        accession.setUpdateAt(LocalDate.now());
+                        return template.update(accession)
+                                .then(template.insert(new Team2Member(teamId, teamAccessionDTO.getTargetId())))
+                                .then();
+                    } else {
+                        accession.setAccessionStage(AccessionStage.REJECTED);
+                        return template.update(accession).then();
+                    }
+                });
+    }
+
+    public Mono<Void> sendRequest(TeamAccessionDTO teamAccessionDTO, Long targetId) {
+        teamAccessionDTO.setTargetId(targetId);
+        teamAccessionDTO.setUpdateAt(LocalDate.now());
+        teamAccessionDTO.setTargetRegistered(true);
         return template.insert(teamAccessionDTO)
                 .then();
     }
