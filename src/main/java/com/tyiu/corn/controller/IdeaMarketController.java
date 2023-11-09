@@ -31,6 +31,11 @@ public class IdeaMarketController {
         return ideaMarketService.getAllMarketIdeas(Long.valueOf(principal.getName()));
     }
 
+    @GetMapping("initiator/all")
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(Principal principal) {
+        return ideaMarketService.getAllInitiatorMarketIdeas(Long.valueOf(principal.getName()));
+    }
+
     @GetMapping("/{ideaMarketId}")
     public Mono<IdeaMarketDTO> getOneMarketIdea(Principal principal, @PathVariable Long ideaMarketId) {
         return ideaMarketService.getMarketIdea(Long.valueOf(principal.getName()), ideaMarketId);
