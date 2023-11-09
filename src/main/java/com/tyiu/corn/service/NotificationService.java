@@ -21,7 +21,7 @@ public class NotificationService {
     private final R2dbcEntityTemplate template;
 
     public Flux<NotificationDTO> getAllNotifications(Long userId) {
-        return template.select(query(where("userId").is(userId)), Notification.class)
+        return template.select(query(where("user_id").is(userId)), Notification.class)
                 .flatMap(n -> Flux.just(NotificationDTO.builder()
                         .id(n.getId())
                         .title(n.getTitle())
@@ -65,7 +65,7 @@ public class NotificationService {
     }
 
     public Mono<Void> addNotificationToFavourite(Long userId, Long notificationId) {
-        return template.update(query(where("userId").is(userId)
+        return template.update(query(where("user_id").is(userId)
                 .and(where("id").is(notificationId))),
                 update("is_showed", true)
                         .set("is_readed", true)
@@ -74,7 +74,7 @@ public class NotificationService {
     }
 
     public Mono<Void> removeNotificationFromFavourite(Long userId, Long notificationId) {
-        return template.update(query(where("userId").is(userId)
+        return template.update(query(where("user_id").is(userId)
                 .and(where("id").is(notificationId))),
                 update("is_showed", true)
                         .set("is_readed", true)
