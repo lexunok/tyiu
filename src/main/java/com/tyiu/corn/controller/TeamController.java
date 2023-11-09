@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -51,7 +52,7 @@ public class TeamController {
     public Mono<TeamAccessionDTO> getAccessionByTargetEmail(@PathVariable String targetEmail) {
         return teamService.getAccessionByTargetEmail(targetEmail);
     }
-    @GetMapping("/profile")
+    @GetMapping("/profile/{userId}")
     public Mono<TeamMemberDTO> getTeamProfile(@PathVariable Long userId) {
         return teamService.getTeamProfile(userId);
     }
@@ -73,13 +74,8 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
-
-    @PostMapping("/respondToRequest/{teamId}/{userId}")
-    public Mono<Void> responseToRequest(@PathVariable Long teamId, @PathVariable Long userId) {
-        return teamService.responseToRequest(teamId, userId);
-    }
     @PostMapping("/invite/users")
-    public Mono<Void> inviteRegisteredUsers(@RequestBody List<User> users) {
+    public Mono<Void> inviteRegisteredUsers(@RequestBody List<TeamMemberDTO> users) {
         return teamService.inviteRegisteredUsers(users);
     }
 
@@ -88,8 +84,8 @@ public class TeamController {
         return teamService.inviteUnregisteredUser(email, teamId);
     }
     @PostMapping
-    public Mono<Void> sendRequest(@RequestBody TeamAccessionDTO teamAccessionDTO) {
-        return teamService.sendRequest(teamAccessionDTO);
+    public Mono<Void> sendRequest(@RequestBody TeamAccessionDTO teamAccessionDTO, Principal principal) {
+        return teamService.sendRequest(teamAccessionDTO, Long.valueOf(principal.getName()));
     }
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
@@ -105,10 +101,7 @@ public class TeamController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
-    @DeleteMapping("/kick/{teamId}")
-    public Mono<Void> kickFromTeam(@PathVariable Long teamId, @RequestBody AuthenticationResponse invitation) {
-        return teamService.kickFromTeam(teamId, invitation.getId());
-    }
+    
     @DeleteMapping("/delete/accession/{accessionId}")
     public Mono<Void> deleteAccession(@PathVariable Long accessionId) {
         return teamService.deleteAccession(accessionId);
@@ -126,8 +119,18 @@ public class TeamController {
         return teamService.updateTeam(teamId, team);
     }
     @PutMapping("/{accessionId}")
-    public Mono<Void> responseToInvitation(@PathVariable Long accessionId, @RequestBody TeamAccessionDTO teamAccessionDTO) {
-        return teamService.responseToInvitation(accessionId, teamAccessionDTO);
+    public Mono<Void> responseToInvitation(@PathVariable Long accessionId, @RequestBody TeamAccessionDTO teamAccessionDTO, Principal principal) {
+        return teamService.responseToInvitation(accessionId, Long.valueOf(principal.getName()), teamAccessionDTO);
+    }
+
+    @PostMapping("/respondToRequest/{teamId}/{userId}")
+    public Mono<Void> responseToRequest(@PathVariable Long teamId, @RequestBody TeamAccessionDTO teamAccessionDTO) {
+        return teamService.responseToRequest(teamId, teamAccessionDTO);
+    }
+
+    @PutMapping("/kick/{teamId}")
+    public Mono<Void> kickFromTeam(@PathVariable Long teamId, @RequestBody TeamMemberDTO member) {
+        return teamService.kickFromTeam(teamId, member.getUserId());
     }
 
 }
