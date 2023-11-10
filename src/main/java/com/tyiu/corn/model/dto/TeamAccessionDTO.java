@@ -19,6 +19,7 @@ public class TeamAccessionDTO {
     private AccessionStage accessionStage; // статус присоединения (принято, ожидает, принято или отклонено)
     private Boolean targetRegistered; // зарегана цель или нет
     private String targetEmail; // email пользователя - цель, кто присоединяется в команду или уходит из команды
+    private Long targetId;
     private TeamMemberDTO inviter;
     private TeamDTO teamDTO;
 }
