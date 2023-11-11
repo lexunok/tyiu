@@ -20,7 +20,6 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -88,7 +87,6 @@ public class TeamService {
                 .map(user -> TeamMemberDTO.builder()
                         .userId(user.getId())
                         .email(user.getEmail())
-                        // Другие необходимые поля из User, например, имя пользователя и дополнительная информация
                         .build());
     }
 
@@ -99,7 +97,6 @@ public class TeamService {
                 .map(user -> TeamMemberDTO.builder()
                         .userId(user.getId())
                         .email(user.getEmail())
-                        // Другие необходимые поля из User, например, имя пользователя и дополнительная информация
                         .build());
     }
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
@@ -155,12 +152,18 @@ public class TeamService {
                 .flatMap(teamMembers -> {
                     List<SkillDTO> updatedSkills = new ArrayList<>();
                     for (Team2Member teamMember : teamMembers) {
-                        List<SkillDTO> memberSkills = template.select(TeamMemberDTO.class)
+                        List<SkillDTO> memberSkills = (List<SkillDTO>) template.select(TeamMemberDTO.class)
                                 .matching(query(where("userId").is(teamMember.getMemberId())))
                                 .one()
-                                .map(TeamMemberDTO::getSkills)
-                                .orElse(Collections.emptyList());
+                                .map(TeamMemberDTO::getSkills);
+
+                        for (SkillDTO skill : memberSkills) {
+                            if (updatedSkills.stream().noneMatch(existingSkill -> Objects.equals(existingSkill.getId(), skill.getId()))) {
+                                updatedSkills.add(skill);
+                            }
+                        }
                     }
+
                     return template.update(Team.class)
                             .matching(query(where("id").is(teamId)))
                             .apply(update("skills", updatedSkills))
