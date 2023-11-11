@@ -7,6 +7,7 @@ import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +22,7 @@ import java.security.Principal;
 public class IdeaController {
     
     private final IdeaService ideaService;
-    
+
     @GetMapping("/{ideaId}")
     public Mono<IdeaDTO> getIdea(@PathVariable Long ideaId) {
         return ideaService.getIdea(ideaId)
@@ -34,10 +35,10 @@ public class IdeaController {
     }
 
     @GetMapping("/initiator/all")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Flux<IdeaDTO> showListIdeaByInitiator(Principal principal){
         return ideaService.getListIdeaByInitiator(Long.valueOf(principal.getName()));
     }
-
 
     @GetMapping("/skills/{ideaId}")
     public Mono<IdeaSkillRequest> getIdeaSkills(@PathVariable Long ideaId) {
@@ -45,6 +46,7 @@ public class IdeaController {
     }
 
     @PostMapping("/skills/add")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> addIdeaSkills(@RequestBody IdeaSkillRequest request) {
         return ideaService.addIdeaSkills(request)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success!"))
@@ -52,17 +54,21 @@ public class IdeaController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<IdeaDTO> saveIdea(@RequestBody IdeaDTO idea, Principal principal) {
         return ideaService.saveIdeaToApproval(idea, Long.valueOf(principal.getName()))
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
+
     @PostMapping("/draft/add")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, Principal principal) {
         return ideaService.saveIdeaInDraft(idea, Long.valueOf(principal.getName()))
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @DeleteMapping("/delete/{ideaId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> deleteIdea(@PathVariable Long ideaId) {
         return ideaService.deleteIdea(ideaId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
@@ -70,6 +76,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/update/{ideaId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateIdeaByInitiator(@PathVariable Long ideaId,
                                                     @RequestBody IdeaDTO updatedIdea) {
         return ideaService.updateIdeaByInitiator(ideaId, updatedIdea)
@@ -78,6 +85,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/send/{ideaId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateStatusByInitiator(@PathVariable Long ideaId) {
         return ideaService.updateStatusByInitiator(ideaId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
@@ -85,6 +93,7 @@ public class IdeaController {
     }
 
     @PutMapping("/status/update/{ideaId}")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT')")
     public Mono<InfoResponse> updateStatusIdea(@PathVariable Long ideaId,
                                                               @RequestBody StatusIdeaRequest status){
         return ideaService.updateStatusIdea(ideaId, status)
@@ -93,6 +102,7 @@ public class IdeaController {
     }
 
     @PutMapping("/admin/update/{ideaId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateIdeaByAdmin(@PathVariable Long ideaId,
                                                 @RequestBody IdeaDTO updatedIdea) {
         return ideaService.updateIdeaByAdmin(ideaId, updatedIdea)
@@ -101,6 +111,7 @@ public class IdeaController {
     }
 
     @PutMapping("/skills/update")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateIdeaSkills(@RequestBody IdeaSkillRequest request) {
         return ideaService.updateIdeaSkills(request)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))

@@ -291,7 +291,11 @@ public class IdeaMarketControllerTest extends TestContainers {
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "fakemail104", "fakename104", "fakename104", "fakepass104", List.of(Role.ADMIN));
+                "fakemail104", "fakename104", "fakename104", "fakepass104",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
 
         AuthenticationResponse response = webTestClient
                 .post()

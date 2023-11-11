@@ -36,7 +36,11 @@ public class AccountChangeControllerTest extends TestContainers {
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "account.change@gmail.com", "account", "change", "account.change", List.of(Role.ADMIN));
+                "account.change@gmail.com", "account", "change", "account.change",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
 
         AuthenticationResponse response = webTestClient
                 .post()

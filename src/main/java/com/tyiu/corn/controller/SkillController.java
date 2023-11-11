@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import reactor.core.publisher.Flux;
@@ -48,6 +49,7 @@ public class SkillController {
     }
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill, Principal principal) {
         return skillService.addSkill(skill, Long.valueOf(principal.getName()))
                 .switchIfEmpty(Mono.error(new NotFoundException("Not add!")));
@@ -60,6 +62,7 @@ public class SkillController {
     }
 
     @PutMapping("/update/{skillId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable Long skillId, Principal principal) {
         return skillService.updateSkill(skillDTO, skillId, Long.valueOf(principal.getName()))
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
@@ -67,6 +70,7 @@ public class SkillController {
     }
 
     @PutMapping("/confirm/{skillId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<InfoResponse> confirmSkill(@PathVariable Long skillId, Principal principal) {
         return skillService.confirmSkill(skillId, Long.valueOf(principal.getName()))
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming"))
@@ -74,6 +78,7 @@ public class SkillController {
     }
     
     @DeleteMapping("/delete/{skillId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<InfoResponse> deleteSkill(@PathVariable Long skillId) {
         return skillService.deleteSkill(skillId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))

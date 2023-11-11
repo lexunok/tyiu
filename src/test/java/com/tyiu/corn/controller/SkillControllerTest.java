@@ -21,7 +21,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class SkillControllerTest extends TestContainers{
+public class SkillControllerTest extends TestContainers {
     @Autowired
     private WebTestClient webTestClient;
 
@@ -32,7 +32,11 @@ public class SkillControllerTest extends TestContainers{
     @BeforeAll
     void setUp(){
         RegisterRequest request = new RegisterRequest(
-                "email@email.com", "lastName", "firstName", "password", List.of(Role.ADMIN));
+                "email@email.com", "lastName", "firstName", "password",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")

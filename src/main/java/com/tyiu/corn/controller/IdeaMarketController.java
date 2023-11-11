@@ -4,8 +4,11 @@ import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
+import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.IdeaMarketService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -32,6 +35,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/initiator/all")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(Principal principal) {
         return ideaMarketService.getAllInitiatorMarketIdeas(Long.valueOf(principal.getName()));
     }
@@ -59,18 +63,23 @@ public class IdeaMarketController {
     //////////////////////////////
 
     @PostMapping("/send")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> createMarketIdea(@RequestBody List<IdeaDTO> ideaDTOList) {
-        return ideaMarketService.sendIdeaOnMarket(ideaDTOList);
+        return ideaMarketService.sendIdeaOnMarket(ideaDTOList)
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to send the idea to the market")));
     }
 
     @PostMapping("/declare")
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
-        return ideaMarketService.declareTeam(teamMarketRequestDTO);
+        return ideaMarketService.declareTeam(teamMarketRequestDTO)
+                .switchIfEmpty(Mono.error(new NotFoundException("Failed to declare a team in the idea")));
     }
 
     @PostMapping("/favorite/{ideaMarketId}")
-    public Mono<Void> makeMarketIdeaFavorite(Principal principal, @PathVariable Long ideaMarketId) {
-        return ideaMarketService.makeMarketIdeaFavorite(Long.valueOf(principal.getName()), ideaMarketId);
+    public Mono<InfoResponse> makeMarketIdeaFavorite(Principal principal, @PathVariable Long ideaMarketId) {
+        return ideaMarketService.makeMarketIdeaFavorite(Long.valueOf(principal.getName()), ideaMarketId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Idea added to favorites"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to make the idea a favorite"));
     }
 
     ///////////////////////////////////////////
@@ -81,18 +90,25 @@ public class IdeaMarketController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/idea/{ideaMarketId}")
-    public Mono<Void> deleteMarketIdea(@PathVariable Long ideaMarketId) {
-        return ideaMarketService.deleteMarketIdea(ideaMarketId);
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    public Mono<InfoResponse> deleteMarketIdea(@PathVariable Long ideaMarketId) {
+        return ideaMarketService.deleteMarketIdea(ideaMarketId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to remove the idea from the market"));
     }
 
     @DeleteMapping("/delete/request/{teamMarketRequestId}")
-    public Mono<Void> deleteTeamMarketRequest(@PathVariable Long teamMarketRequestId) {
-        return ideaMarketService.deleteTeamMarketRequest(teamMarketRequestId);
+    public Mono<InfoResponse> deleteTeamMarketRequest(@PathVariable Long teamMarketRequestId) {
+        return ideaMarketService.deleteTeamMarketRequest(teamMarketRequestId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Success deleting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Couldn't delete the application from the idea"));
     }
 
     @DeleteMapping("/unfavorite/{ideaMarketId}")
-    public Mono<Void> deleteFavoriteMarketIdea(Principal principal, @PathVariable Long ideaMarketId) {
-        return ideaMarketService.deleteMarketIdeaFromFavorite(Long.valueOf(principal.getName()), ideaMarketId);
+    public Mono<InfoResponse> deleteFavoriteMarketIdea(Principal principal, @PathVariable Long ideaMarketId) {
+        return ideaMarketService.deleteMarketIdeaFromFavorite(Long.valueOf(principal.getName()), ideaMarketId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Idea removed from favorites"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Couldn't delete an idea from favorites"));
     }
 
     ////////////////////////
@@ -103,7 +119,10 @@ public class IdeaMarketController {
     ////////////////////////
 
     @PutMapping("/accept/{teamMarketId}")
-    public Mono<Void> acceptTeam(@PathVariable Long teamMarketId) {
-        return ideaMarketService.acceptTeam(teamMarketId);
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    public Mono<InfoResponse> acceptTeam(@PathVariable Long teamMarketId) {
+        return ideaMarketService.acceptTeam(teamMarketId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "The team is accepted into the idea"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Error when approving an idea"));
     }
 }
