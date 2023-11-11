@@ -6,6 +6,7 @@ import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.RatingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,12 +27,14 @@ public class RatingController {
     }
 
     @GetMapping("/{ideaId}")
+    @PreAuthorize("hasAuthority('EXPERT')")
     public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable Long ideaId, Principal principal){
         return ratingService.getExpertRating(ideaId, Long.valueOf(principal.getName()))
                 .switchIfEmpty(Mono.error(new NotFoundException("Not Found")));
     }
 
     @PutMapping("/save")
+    @PreAuthorize("hasAuthority('EXPERT')")
     public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO, Principal principal) {
         return ratingService.saveRating(ratingDTO, Long.valueOf(principal.getName()))
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success saving!"))
@@ -39,6 +42,7 @@ public class RatingController {
     }
 
     @PutMapping("/confirm")
+    @PreAuthorize("hasAuthority('EXPERT')")
     public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO, Principal principal) {
         return ratingService.confirmRating(ratingDTO, Long.valueOf(principal.getName()))
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming!"))

@@ -48,10 +48,9 @@ public class CompanyController {
     }
 
     @PutMapping("/update/{companyId}")
-    public Mono<InfoResponse> updateCompany(@PathVariable Long companyId,
+    public Mono<CompanyDTO> updateCompany(@PathVariable Long companyId,
                                             @RequestBody CompanyDTO company) {
         return companyService.updateCompany(companyId, company)
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
+                .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));
     }
 }

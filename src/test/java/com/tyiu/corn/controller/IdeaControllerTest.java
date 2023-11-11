@@ -9,13 +9,11 @@ import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -38,7 +36,11 @@ class IdeaControllerTest extends TestContainers {
 
     @BeforeAll
     void setUp() {
-        RegisterRequest request = new RegisterRequest("user.idea@mail.com", "firstname", "lastname", "password", List.of(Role.ADMIN, Role.INITIATOR, Role.EXPERT));
+        RegisterRequest request = new RegisterRequest("user.idea@mail.com", "firstname", "lastname", "password",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")

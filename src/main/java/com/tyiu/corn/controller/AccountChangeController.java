@@ -4,6 +4,7 @@ import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
@@ -46,12 +47,14 @@ public class AccountChangeController {
     }
 
     @GetMapping("/get/users")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Flux<UserInfoResponse> getUsersInfo(){
         return accountChangeService.getUsersInfo()
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/get/emails")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<List<String>> getUsersEmail(){
         return accountChangeService.getAllEmails()
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
@@ -65,6 +68,7 @@ public class AccountChangeController {
     //////////////////////////////
 
     @PostMapping("/send/email")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<InfoResponse> invitationSend(@RequestBody Temporary invitation){
         return accountChangeService.sendInvitation(invitation)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное приглашение"))
@@ -72,6 +76,7 @@ public class AccountChangeController {
     }
 
     @PostMapping("/send/emails")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Flux<Void> invitationFileSend(@RequestBody InvitationDTO invitationDTO){
         return accountChangeService.sendInvitations(invitationDTO);
     }
@@ -125,6 +130,7 @@ public class AccountChangeController {
     }
 
     @PutMapping("/change/info")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<UserDTO> changeUserInfoByAdmin(@RequestBody UserDTO user){
         return accountChangeService.changeUserInfo(user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось изменить пользователя")));

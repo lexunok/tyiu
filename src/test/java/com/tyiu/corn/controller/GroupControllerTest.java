@@ -2,25 +2,20 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.UserDTO;
-import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
-import com.tyiu.corn.service.AuthenticationService;
-import com.tyiu.corn.controller.TestContainers;
+import com.tyiu.corn.TestContainers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
-import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
-import static org.mockito.Mockito.*;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -59,7 +54,11 @@ class GroupControllerTest extends TestContainers{
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "fakemail2", "fakename", "fakename", "fakepass", List.of(Role.ADMIN));
+                "fakemail2", "fakename", "fakename", "fakepass",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")

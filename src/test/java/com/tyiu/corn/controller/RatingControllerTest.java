@@ -1,7 +1,6 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
-import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
@@ -36,7 +35,11 @@ class RatingControllerTest extends TestContainers {
 
     @BeforeAll
     void setUp() {
-        RegisterRequest request = new RegisterRequest("user.rating@mail.com", "firstname", "lastname", "password", List.of(Role.ADMIN, Role.INITIATOR, Role.EXPERT));
+        RegisterRequest request = new RegisterRequest("user.rating@mail.com", "firstname", "lastname", "password",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")

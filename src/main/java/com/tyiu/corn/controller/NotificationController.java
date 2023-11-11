@@ -2,7 +2,6 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.NotificationDTO;
-import com.tyiu.corn.model.entities.Notification;
 import com.tyiu.corn.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -29,28 +28,28 @@ public class NotificationController {
     }
 
     @PostMapping("/create")
-    public Mono<Notification> createNotification(@RequestBody Notification notification) {
+    public Mono<NotificationDTO> createNotification(@RequestBody NotificationDTO notification) {
         return notificationService.createNotification(notification)
                 .switchIfEmpty(Mono.error(new NotFoundException("Create is not success!")));
     }
 
-    @PostMapping("/favourite/{notificationId}")
-    public Mono<Void> addNotificationToFavourite(Long userId, Long notificationId) {
-        return notificationService.addNotificationToFavourite(userId, notificationId);
+    @PutMapping("/favourite/{notificationId}")
+    public Mono<Void> addNotificationToFavourite(@PathVariable  Long notificationId) {
+        return notificationService.addNotificationToFavourite(notificationId);
     }
 
-    @DeleteMapping("/unfavourite/{notificationId}")
-    public Mono<Void> removeNotificationFromFavourite(Long userId, Long notificationId) {
-        return notificationService.removeNotificationFromFavourite(userId, notificationId);
+    @PutMapping("/unfavourite/{notificationId}")
+    public Mono<Void> removeNotificationFromFavourite(@PathVariable  Long notificationId) {
+        return notificationService.removeNotificationFromFavourite(notificationId);
     }
 
     @PutMapping("/show/{notificationId}")
-    public Mono<Void> showNotification(Long notificationId) {
+    public Mono<Void> showNotification(@PathVariable Long notificationId) {
         return notificationService.showNotification(notificationId);
     }
 
     @PutMapping("/read/{notificationId}")
-    public Mono<Void> readNotification(Principal principal) {
-        return notificationService.readNotification(Long.valueOf(principal.getName()));
+    public Mono<Void> readNotification(@PathVariable Long notificationId) {
+        return notificationService.readNotification(notificationId);
     }
 }

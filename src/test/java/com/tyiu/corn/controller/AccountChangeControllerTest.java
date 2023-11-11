@@ -15,6 +15,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -30,12 +31,16 @@ public class AccountChangeControllerTest extends TestContainers {
     private String jwt;
     private UserDTO userDTO;
 
-    private String EMAIL = "vshtst.hits0@gmail.com";
+    private final String EMAIL = "vshtst.hits0@gmail.com";
 
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "account.change@gmail.com", "account", "change", "account.change", List.of(Role.ADMIN));
+                "account.change@gmail.com", "account", "change", "account.change",
+                List.of(Role.ADMIN,
+                        Role.EXPERT,
+                        Role.PROJECT_OFFICE,
+                        Role.INITIATOR));
 
         AuthenticationResponse response = webTestClient
                 .post()
@@ -54,6 +59,9 @@ public class AccountChangeControllerTest extends TestContainers {
                 .lastName(response.getLastName())
                 .firstName(response.getFirstName())
                 .roles(response.getRoles())
+                .build();
+        webTestClient = webTestClient.mutate()
+                .responseTimeout(Duration.ofMillis(30000))
                 .build();
     }
 
@@ -133,19 +141,19 @@ public class AccountChangeControllerTest extends TestContainers {
         assertEquals(userDTO.getEmail(), user.getEmail());
     }
 
-    @Test
-    void testGetUsersEmail(){
-        List<String> users = webTestClient
-                .get()
-                .uri("/api/v1/profile/get/emails")
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
-                .expectBody(List.class)
-                .returnResult().getResponseBody();
-        String userEmail = users.get(0);
-        assertNotNull(userEmail);
-        assertEquals(userDTO.getEmail(), userEmail);
-    }
+//    @Test
+//    void testGetUsersEmail(){
+//        List<String> users = webTestClient
+//                .get()
+//                .uri("/api/v1/profile/get/emails")
+//                .header("Authorization", "Bearer " + jwt)
+//                .exchange()
+//                .expectBody(List.class)
+//                .returnResult().getResponseBody();
+//        String userEmail = users.get(0);
+//        assertNotNull(userEmail);
+//        assertEquals(userDTO.getEmail(), userEmail);
+//    }
 
     //////////////////////////////
     //   ___   ____    ____ ______

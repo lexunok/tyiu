@@ -14,5 +14,6 @@ import java.util.List;
 public class CompanyDTO {
     private Long id;
     private String name;
+    private UserDTO owner;
     private List<UserDTO> users;
 }

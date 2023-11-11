@@ -20,12 +20,12 @@ public class TeamAccession {
     @Id
     private Long id;
     private Long teamId;
-    private Long userId;
     private LocalDate updateAt;
     private String text;
     private RequestType requestType; // тип заявки
     private AccessionStage accessionStage; // статус присоединения (принято, ожидает, принято или отклонено)
     private Boolean targetRegistered; // зарегана цель или нет
     private String targetEmail; // email пользователя - цель, кто присоединяется в команду или уходит из команды
+    private Long targetId;
     private TeamMemberDTO inviter;
 }
