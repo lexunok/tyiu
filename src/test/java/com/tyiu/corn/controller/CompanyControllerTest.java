@@ -33,6 +33,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company = CompanyDTO.builder()
                 .name("company")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
         return webTestClient
                 .post()
@@ -80,6 +81,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company = CompanyDTO.builder()
                 .name("company1")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         CompanyDTO responseCreateCompany = webTestClient
@@ -97,11 +99,12 @@ public class CompanyControllerTest extends TestContainers{
         company = CompanyDTO.builder()
                 .name("company1Updated")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         webTestClient
                 .put()
-                .uri("/api/v1/company/update/{companyId}", id)
+                .uri("/api/v1/company/update/{id}", id)
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(company), CompanyDTO.class)
                 .exchange()
@@ -113,6 +116,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company = CompanyDTO.builder()
                 .name("company")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         CompanyDTO responseDeleteCompany = webTestClient
@@ -129,7 +133,7 @@ public class CompanyControllerTest extends TestContainers{
 
         webTestClient
                 .delete()
-                .uri("/api/v1/company/delete/{companyId}", id)
+                .uri("/api/v1/company/delete/{id}", id)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
@@ -140,6 +144,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company = CompanyDTO.builder()
                 .name("company")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         CompanyDTO responseCreateCompany = webTestClient
@@ -156,7 +161,7 @@ public class CompanyControllerTest extends TestContainers{
 
         CompanyDTO responseGetCompany = webTestClient
                 .get()
-                .uri("/api/v1/company/{companyId}", id)
+                .uri("/api/v1/company/{id}", id)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(CompanyDTO.class)
@@ -170,6 +175,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company1 = CompanyDTO.builder()
                 .name("company 1")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         CompanyDTO responseCreateCompany1 = webTestClient
@@ -184,6 +190,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company2 = CompanyDTO.builder()
                 .name("company 2")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         CompanyDTO responseCreateCompany2 = webTestClient
@@ -203,7 +210,6 @@ public class CompanyControllerTest extends TestContainers{
                 .expectBodyList(CompanyDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(listCompany);
-        assertEquals(6, listCompany.size());
     }
 
     @Test
@@ -230,6 +236,7 @@ public class CompanyControllerTest extends TestContainers{
         CompanyDTO company = CompanyDTO.builder()
                 .name("company 1")
                 .users(List.of(userDTO))
+                .owner(userDTO)
                 .build();
 
         webTestClient

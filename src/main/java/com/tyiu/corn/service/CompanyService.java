@@ -3,6 +3,7 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.entities.mappers.CompanyMapper;
+import com.tyiu.corn.model.entities.mappers.UserMapper;
 import com.tyiu.corn.model.entities.relations.Company2User;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -18,6 +19,8 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -27,31 +30,43 @@ public class CompanyService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
-    private final CompanyMapper companyMapper = new CompanyMapper();
-    private final String Query = "SELECT company.*, users.id AS member_id, users.email, users.first_name, users.last_name " +
-            "FROM company " +
-            "LEFT JOIN company_user ON company.id = company_user.company_id " +
-            "LEFT JOIN users ON company_user.user_id = users.id " +
-            "WHERE company.id = :companyId";
+    private final UserMapper userMapper;
+    private final CompanyMapper companyMapper;
+
+    private Mono<CompanyDTO> getCompany(Long companyId) {
+        String query = "SELECT company.*, users.id AS user_id, users.email, users.first_name, users.last_name," +
+                "owner.id owner_id, owner.email owner_email, owner.first_name owner_first_name, owner.last_name owner_last_name " +
+                "FROM company " +
+                "LEFT JOIN company_user ON company.id = company_user.company_id " +
+                "LEFT JOIN users ON company_user.user_id = users.id " +
+                "LEFT JOIN users owner ON company.owner_id = owner.id " +
+                "WHERE company.id = :companyId";
+
+        return template.getDatabaseClient()
+                .sql(query)
+                .bind("companyId", companyId)
+                .flatMap(c -> {
+                    UserDTO owner = new UserDTO();
+                    List<UserDTO> users = new ArrayList<>();
+                    return c.map((row, rowMetadata) -> {
+                        users.add(userMapper.apply(row,rowMetadata));
+                        CompanyDTO companyDTO = companyMapper.apply(row,rowMetadata);
+                        companyDTO.setUsers(users);
+                        companyDTO.setOwner(owner);
+                        return companyDTO;
+                    });
+                }).last();
+    }
 
     @Cacheable
     public Mono<CompanyDTO> getCompanyById(Long companyId){
-
-        CompanyMapper companyMapper = new CompanyMapper();
-
-        return template.getDatabaseClient()
-                .sql(Query)
-                .bind("companyId", companyId)
-                .map(companyMapper::apply)
-                .all()
-                .collectList()
-                .map(companyDTOMap -> companyDTOMap.get(0));
+        return getCompany(companyId);
     }
 
     @Cacheable
     public Flux<CompanyDTO> getListCompany() {
         return template.select(Company.class).all()
-                .flatMap(g -> Flux.just(mapper.map(g, CompanyDTO.class)));
+                .flatMap(c -> Flux.just(mapper.map(c, CompanyDTO.class)));
     }
 
     @Cacheable
@@ -75,10 +90,10 @@ public class CompanyService {
 
         return template.insert(company).flatMap(c -> {
             companyDTO.setId(c.getId());
-            companyDTO.getUsers().forEach(u -> template.insert(new Company2User(u.getId(), c.getId()))
-                    .subscribe());
-            return Mono.just(companyDTO);
-        });
+            return Flux.fromIterable(companyDTO.getUsers()).flatMap(u ->
+                    template.insert(new Company2User(u.getId(), c.getId())
+                    )).then();
+        }).thenReturn(companyDTO);
     }
 
     @CacheEvict(allEntries = true)
@@ -87,27 +102,20 @@ public class CompanyService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<CompanyDTO> updateCompany(Long companyId,CompanyDTO companyDTO) {
-        return template.getDatabaseClient()
-                .sql(Query)
-                .bind("companyId", companyId)
-                .map(companyMapper::apply)
-                .all()
-                .collectList()
-                .map(companyDTOMap -> companyDTOMap.get(0))
+    public Mono<CompanyDTO> updateCompany(Long companyId, CompanyDTO companyDTO) {
+        return getCompany(companyId)
                 .flatMap(c -> {
-                    c.setName(companyDTO.getName());
+                    companyDTO.setId(c.getId());
+                    companyDTO.setOwner(c.getOwner());
                     List<UserDTO> newUsers = companyDTO.getUsers();
-                    List<UserDTO> oldUsers = c.getUsers();
-                    if (!newUsers.equals(oldUsers))
-                    {
-                        oldUsers.forEach(u -> template.delete(query(where("company_id").is(companyId)
-                                .and("user_id").is(u.getId())), Company2User.class).subscribe());
-                        newUsers.forEach(u -> template.insert((new Company2User(u.getId(), companyId))).subscribe());
-                        c.setUsers(companyDTO.getUsers());
+
+                    if (!newUsers.equals(c.getUsers())) {
+                        template.delete(query(where("company_id").is(companyId)), Company2User.class).subscribe();
+                        Flux.fromIterable(newUsers).flatMap(u ->
+                                template.insert(new Company2User(u.getId(), companyId))
+                        );
                     }
-                    return template.update(mapper.map(c, Company.class)).then(Mono.just(c));
-                })
-                .onErrorResume(ex -> Mono.error(new NotFoundException("Failed to update a company")));
+                    return template.update(mapper.map(companyDTO, Company.class)).thenReturn(companyDTO);
+                });
     }
 }
