@@ -204,7 +204,7 @@ public class TeamService {
                             .requestType(RequestType.ENTER)
                             .accessionStage(AccessionStage.REQUEST)
                             .targetRegistered(true)
-                            .userId(user.getId())
+                            .targetId(user.getId())
                             .build();
                     return template.insert(teamAccession).then();
                 })
