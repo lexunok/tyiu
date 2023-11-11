@@ -5,6 +5,7 @@ import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
+import com.tyiu.corn.TestContainers;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
