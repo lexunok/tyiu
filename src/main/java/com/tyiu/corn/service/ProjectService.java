@@ -49,7 +49,7 @@ public class ProjectService {
     }
 
     @Cacheable
-    public Mono<ProjectDTO> getProject(Long projectId){
+    public Mono<ProjectDTO> getProject(String projectId){
         String QUERY = "SELECT project.*, " +
                 "t.id t_id, t.name t_name, t.description t_description, t.closed, t.created_at, t.owner_id, t.leader_id, " +
                 "o.id o_id, o.email o_email, o.first_name o_first_name, o.last_name o_last_name, " +
@@ -76,12 +76,12 @@ public class ProjectService {
     }
 
     @Cacheable(cacheNames = "project_invitation")
-    public Flux<ProjectInvitation> getProjectInvitations(Long id){
+    public Flux<ProjectInvitation> getProjectInvitations(String id){
         return template.select(query(where("receiver_id").is(id)), ProjectInvitation.class);
     }
 
     @Cacheable(cacheNames = "project_request")
-    public Flux<ProjectRequest> getProjectRequests(Long id){
+    public Flux<ProjectRequest> getProjectRequests(String id){
         return template.select(query(where("project_id").is(id)), ProjectRequest.class);
     }
 
@@ -109,7 +109,7 @@ public class ProjectService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<ProjectInvitation> sendInvitation(Long userId, Long projectId){
+    public Mono<ProjectInvitation> sendInvitation(String userId, String projectId){
         return template.selectOne(query(where("id").is(projectId)), Project.class).flatMap(p ->
                 template.insert(ProjectInvitation.builder()
                         .receiverId(userId)
@@ -120,7 +120,7 @@ public class ProjectService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<ProjectRequest> sendApplication(Long userId, Long projectId){
+    public Mono<ProjectRequest> sendApplication(String userId, String projectId){
         return template.selectOne(query(where("id").is(userId)), User.class)
                 .flatMap(u -> template.insert(ProjectRequest.builder()
                         .projectId(projectId)
@@ -133,7 +133,7 @@ public class ProjectService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> addInProject(Long projectId, Long userId){
+    public Mono<Void> addInProject(String projectId, String userId){
         return template.selectOne(query(where("id").is(projectId)), Project.class)
                 .flatMap(p -> template.insert(new Team2Member(p.getTeamId(), userId))
                         .then(template.delete(query(where("project_id").is(projectId)
@@ -150,22 +150,22 @@ public class ProjectService {
     ///////////////////////////////////////////
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteProject(Long id){
+    public Mono<Void> deleteProject(String id){
         return template.delete(query(where("id").is(id)), Project.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteInvite(Long id){
+    public Mono<Void> deleteInvite(String id){
         return template.delete(query(where("id").is(id)), ProjectInvitation.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteRequest(Long id){
+    public Mono<Void> deleteRequest(String id){
         return template.delete(query(where("id").is(id)), ProjectRequest.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> kickFromProject(Long projectId, Long userId){
+    public Mono<Void> kickFromProject(String projectId, String userId){
         return template.selectOne(query(where("id").is(projectId)), Project.class)
                 .flatMap(p -> template.delete(query(where("team_id").is(p.getTeamId())
                         .and("member_id").is(userId)),Team2Member.class)).then();
@@ -179,7 +179,7 @@ public class ProjectService {
     ////////////////////////
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateProject(ProjectDTO projectDTO, Long id){
+    public Mono<Void> updateProject(ProjectDTO projectDTO, String id){
         return template.update(query(where("id").is(id)),
                 update("name", projectDTO.getName())
                         .set("description", projectDTO.getDescription()),

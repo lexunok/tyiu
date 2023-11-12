@@ -25,17 +25,17 @@ public class RatingService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
     @Cacheable
-    public Flux<RatingDTO> getRatings(Long ideaId) {
+    public Flux<RatingDTO> getRatings(String ideaId) {
         return template.select(query(where("idea_id").is(ideaId)), Rating.class)
                 .flatMap(r -> Flux.just(mapper.map(r, RatingDTO.class)));
     }
-    public Mono<RatingDTO> getExpertRating(Long ideaId, Long expertId) {
+    public Mono<RatingDTO> getExpertRating(String ideaId, String expertId) {
         return template.selectOne(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ideaId))), Rating.class)
                 .flatMap(r -> Mono.just(mapper.map(r, RatingDTO.class)));
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> confirmRating(RatingDTO ratingDTO, Long expertId) {
+    public Mono<Void> confirmRating(RatingDTO ratingDTO, String expertId) {
         return template.update(query(where("expert_id").is(expertId)
                 .and(where("idea_id").is(ratingDTO.getIdeaId()))),
                 update("market_value",ratingDTO.getMarketValue())
@@ -61,7 +61,7 @@ public class RatingService {
                 ).then();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> saveRating(RatingDTO ratingDTO, Long expertId){
+    public Mono<Void> saveRating(RatingDTO ratingDTO, String expertId){
         return template.update(query(where("expert_id")
                 .is(expertId).and("idea_id")
                 .is(ratingDTO.getIdeaId())),

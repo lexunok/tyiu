@@ -10,11 +10,11 @@ import java.util.function.BiFunction;
 
 public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
 
-    private final Map<Long, TeamDTO> teamDTOMap = new LinkedHashMap<>();
+    private final Map<String, TeamDTO> teamDTOMap = new LinkedHashMap<>();
 
     @Override
     public TeamDTO apply(Row row, Object o) {
-        Long teamId = row.get("id", Long.class);
+        String teamId = row.get("id", String.class);
         TeamDTO existingTeam = teamDTOMap.get(teamId);
 
         if (existingTeam == null) {
@@ -25,13 +25,13 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
                     .closed(row.get("closed", Boolean.class))
                     .createdAt(row.get("created_at", LocalDate.class))
                     .owner(TeamMemberDTO.builder()
-                            .userId(row.get("o_id", Long.class))
+                            .userId(row.get("o_id", String.class))
                             .email(row.get("o_email", String.class))
                             .firstName(row.get("o_first_name", String.class))
                             .lastName(row.get("o_last_name", String.class))
                             .build())
                     .leader(TeamMemberDTO.builder()
-                            .userId(row.get("l_id", Long.class))
+                            .userId(row.get("l_id", String.class))
                             .email(row.get("l_email", String.class))
                             .firstName(row.get("l_first_name", String.class))
                             .lastName(row.get("l_last_name", String.class))
@@ -43,7 +43,7 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
         }
 
         TeamMemberDTO member = TeamMemberDTO.builder()
-                .userId(row.get("m_id", Long.class))
+                .userId(row.get("m_id", String.class))
                 .email(row.get("m_email", String.class))
                 .firstName(row.get("m_first_name", String.class))
                 .lastName(row.get("m_last_name", String.class))
@@ -55,7 +55,7 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
         }
 
         SkillDTO skill = SkillDTO.builder()
-                .id(row.get("s_id", Long.class))
+                .id(row.get("s_id", String.class))
                 .name(row.get("s_name", String.class))
                 .type(SkillType.valueOf(row.get("type", String.class)))
                 .build();

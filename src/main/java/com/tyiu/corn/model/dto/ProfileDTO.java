@@ -8,7 +8,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.core.io.Resource;
 
 import java.util.List;
 
@@ -17,8 +16,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProfileDTO {
-    Resource avatar;
-    Long id;
+    String id;
     String email;
     String lastName;
     String firstName;

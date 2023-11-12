@@ -12,8 +12,8 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class NotificationDTO {
-    private Long id;
-    private Long userId;
+    private String id;
+    private String userId;
     private String title;
     private String message;
     private boolean isShowed;

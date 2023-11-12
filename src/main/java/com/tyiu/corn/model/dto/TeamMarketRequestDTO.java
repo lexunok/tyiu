@@ -12,9 +12,9 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeamMarketRequestDTO {
-    private Long id;
-    private Long ideaId;
-    private Long teamId;
+    private String id;
+    private String ideaId;
+    private String teamId;
     private Boolean accepted;
 
     private String name;

@@ -14,10 +14,10 @@ import java.time.LocalDate;
 @Table
 public class ProjectInvitation {
     @Id
-    private Long id;
+    private String id;
 
     private String projectName;
-    private Long projectId;
-    private Long receiverId;
+    private String projectId;
+    private String receiverId;
     private LocalDate createdAt;
 }

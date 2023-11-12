@@ -34,7 +34,7 @@ public class IdeaMarketService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
 
-    private Mono<IdeaMarketDTO> getOneMarketIdea(Long userId, Long ideaMarketId){
+    private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
         String QUERY = "SELECT idea_market.*, skill.id s_id, skill.name s_name, skill.type, favorite_idea.* " +
                 "FROM idea_market " +
                 "LEFT JOIN idea_skill ON idea_skill.idea_id = idea_market.idea_id " +
@@ -59,7 +59,7 @@ public class IdeaMarketService {
     //\___/  /___/  /_/
     ///////////////////////
 
-    public Flux<IdeaMarketDTO> getAllMarketIdeas(Long userId){
+    public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
         return template.getDatabaseClient()
                 .sql("SELECT idea_market.*, favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
                         "FROM idea_market " +
@@ -67,8 +67,8 @@ public class IdeaMarketService {
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> {
                     IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
-                            .id(row.get("id", Long.class))
-                            .ideaId(row.get("idea_id", Long.class))
+                            .id(row.get("id", String.class))
+                            .ideaId(row.get("idea_id", String.class))
                             .position(row.get("row_number", Long.class))
                             .name(row.get("name", String.class))
                             .initiator(row.get("initiator", String.class))
@@ -96,7 +96,7 @@ public class IdeaMarketService {
                         .bind("ideaMarketId", idea.getIdeaId())
                         .map((row, rowMetadata) -> {
                             SkillDTO skillDTO = SkillDTO.builder()
-                                    .id(row.get("id", Long.class))
+                                    .id(row.get("id", String.class))
                                     .name(row.get("name", String.class))
                                     .type(SkillType.valueOf(row.get("type", String.class)))
                                     .build();
@@ -110,7 +110,7 @@ public class IdeaMarketService {
                         .map(i -> i.get(0)));
     }
 
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(Long userId){
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId){
         return template.getDatabaseClient()
                 .sql("SELECT idea_market.*, favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
                         "FROM idea_market " +
@@ -120,8 +120,8 @@ public class IdeaMarketService {
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> {
                     IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
-                            .id(row.get("id", Long.class))
-                            .ideaId(row.get("idea_id", Long.class))
+                            .id(row.get("id", String.class))
+                            .ideaId(row.get("idea_id", String.class))
                             .position(row.get("row_number", Long.class))
                             .name(row.get("name", String.class))
                             .initiator(row.get("initiator", String.class))
@@ -149,7 +149,7 @@ public class IdeaMarketService {
                         .bind("ideaMarketId", idea.getIdeaId())
                         .map((row, rowMetadata) -> {
                             SkillDTO skillDTO = SkillDTO.builder()
-                                    .id(row.get("id", Long.class))
+                                    .id(row.get("id", String.class))
                                     .name(row.get("name", String.class))
                                     .type(SkillType.valueOf(row.get("type", String.class)))
                                     .build();
@@ -163,16 +163,16 @@ public class IdeaMarketService {
                         .map(i -> i.get(0)));
     }
 
-    public Mono<IdeaMarketDTO> getMarketIdea(Long userId, Long ideaMarketId){
+    public Mono<IdeaMarketDTO> getMarketIdea(String userId, String ideaMarketId){
         return getOneMarketIdea(userId, ideaMarketId);
     }
 
-    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(Long userId){
+    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId){
         return template.select(query(where("user_id").is(userId)), Favorite2Idea.class)
                 .flatMap(id -> getOneMarketIdea(userId, id.getIdeaMarketId()));
     }
 
-    public Flux<TeamMarketRequestDTO> getAllTeamsRequests(Long ideaId){
+    public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
         String query = "SELECT team_market_request.id, team_market_request.idea_id " +
                 "FROM team_market_request " +
                 "WHERE team_market_request.idea_id = :ideaId";
@@ -181,7 +181,7 @@ public class IdeaMarketService {
                 .bind("ideaId", ideaId)
                 .map((row, rowMetadata) ->
                         IdeaMarketDTO.builder()
-                                .id(row.get("id",Long.class))
+                                .id(row.get("id",String.class))
                                 .build())
                 .all()
                 .flatMap(id -> {
@@ -241,7 +241,7 @@ public class IdeaMarketService {
         teamMarketRequest.setLeaderId(teamMarketRequestDTO.getLeader().getUserId());
         return template.insert(teamMarketRequest).flatMap(r -> {
             teamMarketRequestDTO.setId(r.getId());
-            Long id = r.getIdeaId();
+            String id = r.getIdeaId();
             return template.select(query(where("idea_id").is(id)),TeamMarketRequest.class).count().flatMap(c ->
                     template.update(query(where("id").is(id)),
                             update("requests", c),
@@ -249,7 +249,7 @@ public class IdeaMarketService {
         });
     }
 
-    public Mono<Void> makeMarketIdeaFavorite(Long userId, Long ideaMarketId){
+    public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
     }
 
@@ -260,15 +260,15 @@ public class IdeaMarketService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteMarketIdea(Long ideaMarketId){
+    public Mono<Void> deleteMarketIdea(String ideaMarketId){
         return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class).then();
     }
 
-    public Mono<Void> deleteTeamMarketRequest(Long teamMarketRequestId){
+    public Mono<Void> deleteTeamMarketRequest(String teamMarketRequestId){
         return template.delete(query(where("id").is(teamMarketRequestId)), TeamMarketRequest.class).then();
     }
 
-    public Mono<Void> deleteMarketIdeaFromFavorite(Long userId, Long ideaMarketId){
+    public Mono<Void> deleteMarketIdeaFromFavorite(String userId, String ideaMarketId){
         return template.delete(query(where("user_id").is(userId)
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
     }
@@ -280,7 +280,7 @@ public class IdeaMarketService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<Void> acceptTeam(Long teamMarketId){
+    public Mono<Void> acceptTeam(String teamMarketId){
         return template.update(query(where("id").is(teamMarketId)),
                 update("accepted", true),
                 TeamMarketRequest.class).then();

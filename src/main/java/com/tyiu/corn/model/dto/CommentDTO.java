@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class CommentDTO {
-    private Long id;
+    private String id;
     private String text;
     private String senderEmail;
     private List<Long> checkedBy;

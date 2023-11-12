@@ -14,13 +14,13 @@ import java.time.LocalDate;
 @Table
 public class Team {
     @Id
-    private Long id;
+    private String id;
     private String name;
     private String description;
 
     private Boolean closed;
     private LocalDate createdAt;
 
-    private Long ownerId;
-    private Long leaderId;
+    private String ownerId;
+    private String leaderId;
 }

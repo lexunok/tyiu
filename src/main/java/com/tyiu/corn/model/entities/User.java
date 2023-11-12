@@ -16,7 +16,7 @@ import java.util.List;
 @Table(name = "users")
 public class User {
     @Id
-    private Long id;
+    private String id;
     private String email;
     private String lastName;
     private String firstName;

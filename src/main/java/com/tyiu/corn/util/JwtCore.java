@@ -28,7 +28,7 @@ public class JwtCore {
         return Jwts.builder()
                 .setClaims(claims)
                 .setSubject(subject)
-                .setIssuer("localhost:3000")
+                .setIssuer("hits.tyuiu.ru")
                 .setIssuedAt(Date.from(Instant.now()))
                 .setExpiration(Date.from(Instant.now().plus(1, ChronoUnit.DAYS)))
                 .signWith(getKey(),SignatureAlgorithm.HS256)

@@ -19,7 +19,7 @@ public class StorageService {
     @Value("${file.path.idea}")
     String path;
 
-    public Mono<Resource> uploadFileIdea(Long ideaId,FilePart file){
+    public Mono<Resource> uploadFileIdea(String ideaId,FilePart file){
         Path basePath = Paths.get(path, ideaId + ".txt");
         file.transferTo(basePath).subscribe();
         try {
@@ -29,7 +29,7 @@ public class StorageService {
             return Mono.empty();
         }
     }
-    public Mono<Resource> getFileIdea(Long ideaId){
+    public Mono<Resource> getFileIdea(String ideaId){
         Path basePath = Paths.get(path, ideaId + ".txt");
         try {
             Resource resource = new UrlResource(basePath.toUri());

@@ -12,7 +12,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "company")
 public class Company {
     @Id
-    private Long id;
+    private String id;
     private String name;
-    private Long ownerId;
+    private String ownerId;
 }

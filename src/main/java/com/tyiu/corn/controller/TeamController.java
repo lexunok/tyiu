@@ -32,7 +32,7 @@ public class TeamController {
     ///////////////////////
 
     @GetMapping("/{teamId}")
-    public Mono<TeamDTO> getTeam(@PathVariable Long teamId){
+    public Mono<TeamDTO> getTeam(@PathVariable String teamId){
         return teamService.getTeam(teamId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
@@ -43,7 +43,7 @@ public class TeamController {
     }
 
     @GetMapping("/invites/{teamId}")
-    public Flux<TeamAccessionDTO> getAccessions(@PathVariable Long teamId) {
+    public Flux<TeamAccessionDTO> getAccessions(@PathVariable String teamId) {
         return teamService.getAccessions(teamId);
     }
     @GetMapping("/invite/{targetEmail}")
@@ -51,7 +51,7 @@ public class TeamController {
         return teamService.getAccessionByTargetEmail(targetEmail);
     }
     @GetMapping("/profile")
-    public Mono<TeamMemberDTO> getTeamProfile(@PathVariable Long userId) {
+    public Mono<TeamMemberDTO> getTeamProfile(@PathVariable String userId) {
         return teamService.getTeamProfile(userId);
     }
     @GetMapping("/profile/all")
@@ -74,7 +74,7 @@ public class TeamController {
 
 
     @PostMapping("/respondToRequest/{teamId}/{userId}")
-    public Mono<Void> responseToRequest(@PathVariable Long teamId, @PathVariable Long userId) {
+    public Mono<Void> responseToRequest(@PathVariable String teamId, @PathVariable String userId) {
         return teamService.responseToRequest(teamId, userId);
     }
     @PostMapping("/invite/users")
@@ -83,7 +83,7 @@ public class TeamController {
     }
 
     @PostMapping("/invite/emaıl")
-    public Mono<Void> inviteUnregisteredUser(@RequestParam String email, @RequestParam Long teamId) {
+    public Mono<Void> inviteUnregisteredUser(@RequestParam String email, @RequestParam String teamId) {
         return teamService.inviteUnregisteredUser(email, teamId);
     }
     @PostMapping
@@ -98,18 +98,18 @@ public class TeamController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{teamId}")
-    public Mono<InfoResponse> deleteTeam(@PathVariable Long teamId) {
+    public Mono<InfoResponse> deleteTeam(@PathVariable String teamId) {
         return teamService.deleteTeam(teamId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     @DeleteMapping("/kick/{teamId}")
-    public Mono<Void> kickFromTeam(@PathVariable Long teamId, @RequestBody AuthenticationResponse invitation) {
+    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation) {
         return teamService.kickFromTeam(teamId, invitation.getId());
     }
     @DeleteMapping("/delete/accession/{accessionId}")
-    public Mono<Void> deleteAccession(@PathVariable Long accessionId) {
+    public Mono<Void> deleteAccession(@PathVariable String accessionId) {
         return teamService.deleteAccession(accessionId);
     }
 
@@ -121,11 +121,11 @@ public class TeamController {
     ////////////////////////
 
     @PutMapping("/update/{teamId}")
-    public Mono<Void> updateTeam(@PathVariable Long teamId, @RequestBody TeamDTO team) {
+    public Mono<Void> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
         return teamService.updateTeam(teamId, team);
     }
     @PutMapping("/{accessionId}")
-    public Mono<Void> responseToInvitation(@PathVariable Long accessionId, @RequestBody TeamAccessionDTO teamAccessionDTO) {
+    public Mono<Void> responseToInvitation(@PathVariable String accessionId, @RequestBody TeamAccessionDTO teamAccessionDTO) {
         return teamService.responseToInvitation(accessionId, teamAccessionDTO);
     }
 

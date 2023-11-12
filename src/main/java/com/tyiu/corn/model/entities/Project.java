@@ -12,8 +12,8 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table
 public class Project {
     @Id
-    private Long id;
+    private String id;
     private String name;
     private String description;
-    private Long teamId;
+    private String teamId;
 }

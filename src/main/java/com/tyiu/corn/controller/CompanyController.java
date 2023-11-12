@@ -18,7 +18,7 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @GetMapping("/{companyId}")
-    public Mono<CompanyDTO> getCompanyById(@PathVariable Long companyId) {
+    public Mono<CompanyDTO> getCompanyById(@PathVariable String companyId) {
         return companyService.getCompanyById(companyId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
@@ -29,7 +29,7 @@ public class CompanyController {
     }
 
     @GetMapping("/staff/{companyId}")
-    public Mono<CompanyDTO> getCompanyStaff(@PathVariable Long companyId) {
+    public Mono<CompanyDTO> getCompanyStaff(@PathVariable String companyId) {
         return companyService.getListStaff(companyId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
@@ -41,14 +41,14 @@ public class CompanyController {
     }
 
     @DeleteMapping("/delete/{companyId}")
-    public Mono<InfoResponse> deleteCompany(@PathVariable Long companyId) {
+    public Mono<InfoResponse> deleteCompany(@PathVariable String companyId) {
         return companyService.deleteCompany(companyId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success!"));
     }
 
     @PutMapping("/update/{companyId}")
-    public Mono<CompanyDTO> updateCompany(@PathVariable Long companyId,
+    public Mono<CompanyDTO> updateCompany(@PathVariable String companyId,
                                             @RequestBody CompanyDTO company) {
         return companyService.updateCompany(companyId, company)
                 .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));

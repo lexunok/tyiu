@@ -43,6 +43,6 @@ public class ProfileController {
     @PostMapping("/skills/save")
     public Flux<SkillDTO> saveUserSkills(Principal principal,
                                                      @RequestBody Flux<SkillDTO> skills) {
-        return profileService.saveSkills(Long.valueOf(principal.getName()), skills);
+        return profileService.saveSkills(principal.getName(), skills);
     }
 }

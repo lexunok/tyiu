@@ -14,32 +14,32 @@ import java.util.function.BiFunction;
 
 public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketRequestDTO> {
 
-    private final Map<Long, TeamMarketRequestDTO> teamMarketRequestDTOMap = new LinkedHashMap<>();
+    private final Map<String, TeamMarketRequestDTO> teamMarketRequestDTOMap = new LinkedHashMap<>();
 
     @Override
     public TeamMarketRequestDTO apply(Row row, Object o) {
-        Long teamMarketRequestId = row.get("id", Long.class);
+        String teamMarketRequestId = row.get("id", String.class);
         TeamMarketRequestDTO existingTeamMarketRequest = teamMarketRequestDTOMap.get(teamMarketRequestId);
 
         if (existingTeamMarketRequest == null)
         {
             existingTeamMarketRequest = TeamMarketRequestDTO.builder()
                     .id(teamMarketRequestId)
-                    .ideaId(row.get("idea_id", Long.class))
-                    .teamId(row.get("team_id", Long.class))
+                    .ideaId(row.get("idea_id", String.class))
+                    .teamId(row.get("team_id", String.class))
                     .accepted(row.get("accepted", Boolean.class))
                     .name(row.get("name", String.class))
                     .updatedAt(row.get("updated_at", LocalDate.class))
                     .closed(row.get("closed", Boolean.class))
                     .description(row.get("description", String.class))
                     .owner(TeamMemberDTO.builder()
-                            .userId(row.get("o_id", Long.class))
+                            .userId(row.get("o_id", String.class))
                             .email(row.get("o_email", String.class))
                             .firstName(row.get("o_first_name", String.class))
                             .lastName(row.get("o_last_name", String.class))
                             .build())
                     .leader(TeamMemberDTO.builder()
-                            .userId(row.get("l_id", Long.class))
+                            .userId(row.get("l_id", String.class))
                             .email(row.get("l_email", String.class))
                             .firstName(row.get("l_first_name", String.class))
                             .lastName(row.get("l_last_name", String.class))
@@ -52,7 +52,7 @@ public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketReque
         }
 
         TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
-                .userId(row.get("m_id", Long.class))
+                .userId(row.get("m_id", String.class))
                 .email(row.get("m_email", String.class))
                 .firstName(row.get("m_first_name", String.class))
                 .lastName(row.get("m_last_name", String.class))
@@ -63,7 +63,7 @@ public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketReque
         }
 
         SkillDTO skillDTO = SkillDTO.builder()
-                .id(row.get("s_id", Long.class))
+                .id(row.get("s_id", String.class))
                 .name(row.get("s_name", String.class))
                 .type(SkillType.valueOf(row.get("type", String.class)))
                 .build();

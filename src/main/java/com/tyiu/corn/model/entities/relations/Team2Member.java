@@ -10,7 +10,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @Table(name = "team_member")
 public class Team2Member {
-    private Long teamId;
-    private Long memberId;
+    private String teamId;
+    private String memberId;
 
 }

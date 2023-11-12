@@ -10,9 +10,9 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table
 public class Rating {
     @Id
-    private Long id;
-    private Long ideaId;
-    private Long expertId;
+    private String id;
+    private String ideaId;
+    private String expertId;
     private Long marketValue;
     private Long originality;
     private Long technicalRealizability;

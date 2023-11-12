@@ -19,12 +19,12 @@ public class NotificationController {
 
     @GetMapping("/all")
     public Flux<NotificationDTO> getAllNotifications(Principal principal) {
-        return notificationService.getAllNotifications(Long.valueOf(principal.getName()));
+        return notificationService.getAllNotifications(principal.getName());
     }
 
     @GetMapping("/favourite")
     public Flux<NotificationDTO> getAllFavouriteNotifications(Principal principal) {
-        return notificationService.getAllFavouriteNotifications(Long.valueOf(principal.getName()));
+        return notificationService.getAllFavouriteNotifications(principal.getName());
     }
 
     @PostMapping("/create")
@@ -34,22 +34,22 @@ public class NotificationController {
     }
 
     @PutMapping("/favourite/{notificationId}")
-    public Mono<Void> addNotificationToFavourite(@PathVariable  Long notificationId) {
+    public Mono<Void> addNotificationToFavourite(@PathVariable String notificationId) {
         return notificationService.addNotificationToFavourite(notificationId);
     }
 
     @PutMapping("/unfavourite/{notificationId}")
-    public Mono<Void> removeNotificationFromFavourite(@PathVariable  Long notificationId) {
+    public Mono<Void> removeNotificationFromFavourite(@PathVariable String notificationId) {
         return notificationService.removeNotificationFromFavourite(notificationId);
     }
 
     @PutMapping("/show/{notificationId}")
-    public Mono<Void> showNotification(@PathVariable Long notificationId) {
+    public Mono<Void> showNotification(@PathVariable String notificationId) {
         return notificationService.showNotification(notificationId);
     }
 
     @PutMapping("/read/{notificationId}")
-    public Mono<Void> readNotification(@PathVariable Long notificationId) {
+    public Mono<Void> readNotification(@PathVariable String notificationId) {
         return notificationService.readNotification(notificationId);
     }
 }

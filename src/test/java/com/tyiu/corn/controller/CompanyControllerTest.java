@@ -98,7 +98,7 @@ public class CompanyControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(responseCreateCompany);
         assertEquals(company.getName(), responseCreateCompany.getName());
-        Long id = responseCreateCompany.getId();
+        String id = responseCreateCompany.getId();
 
         company = CompanyDTO.builder()
                 .name("company1Updated")
@@ -133,7 +133,7 @@ public class CompanyControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(responseDeleteCompany);
         assertEquals(company.getName(), responseDeleteCompany.getName());
-        Long id = responseDeleteCompany.getId();
+        String id = responseDeleteCompany.getId();
 
         webTestClient
                 .delete()
@@ -161,7 +161,7 @@ public class CompanyControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(responseCreateCompany);
         assertEquals(company.getName(), responseCreateCompany.getName());
-        Long id = responseCreateCompany.getId();
+        String id = responseCreateCompany.getId();
 
         CompanyDTO responseGetCompany = webTestClient
                 .get()

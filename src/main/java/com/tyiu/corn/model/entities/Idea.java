@@ -14,11 +14,11 @@ import java.time.LocalDateTime;
 @Table
 public class Idea {
     @Id
-    private Long id;
-    private Long initiatorId;
+    private String id;
+    private String initiatorId;
     private String name;
-    private Long groupExpertId;
-    private Long groupProjectOfficeId;
+    private String groupExpertId;
+    private String groupProjectOfficeId;
     private StatusIdea status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;

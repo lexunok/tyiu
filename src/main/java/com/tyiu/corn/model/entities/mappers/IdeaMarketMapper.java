@@ -15,18 +15,18 @@ import java.util.function.BiFunction;
 
 public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> {
 
-    private final Map<Long, IdeaMarketDTO> ideaMarketDTOMap = new LinkedHashMap<>();
+    private final Map<String, IdeaMarketDTO> ideaMarketDTOMap = new LinkedHashMap<>();
 
     //@Override
     public IdeaMarketDTO apply(Row row, Object o) {
-        Long ideaMarketId = row.get("id", Long.class);
+        String ideaMarketId = row.get("id", String.class);
         IdeaMarketDTO existingIdeaMarket = ideaMarketDTOMap.get(ideaMarketId);
 
         if (existingIdeaMarket == null)
         {
             existingIdeaMarket = IdeaMarketDTO.builder()
                     .id(ideaMarketId)
-                    .ideaId(row.get("idea_id", Long.class))
+                    .ideaId(row.get("idea_id", String.class))
                     .position(row.get("position", Long.class))
                     .name(row.get("name", String.class))
                     .initiator(row.get("initiator", String.class))
@@ -43,12 +43,12 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
         }
 
         SkillDTO skillDTO = SkillDTO.builder()
-                .id(row.get("s_id", Long.class))
+                .id(row.get("s_id", String.class))
                 .name(row.get("s_name", String.class))
                 .type(SkillType.valueOf(row.get("type", String.class)))
                 .build();
 
-        if (Objects.equals(row.get("idea_market_id", Long.class), ideaMarketId))
+        if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketId))
         {
             existingIdeaMarket.setIsFavorite(true);
         }

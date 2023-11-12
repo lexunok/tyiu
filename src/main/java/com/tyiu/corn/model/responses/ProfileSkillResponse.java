@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @Builder
 public class ProfileSkillResponse {
-    private Long id;
+    private String id;
     private String name;
     private SkillType type;
 }

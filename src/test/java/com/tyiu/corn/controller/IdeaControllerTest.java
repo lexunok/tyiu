@@ -32,7 +32,7 @@ class IdeaControllerTest extends TestContainers {
     private UserDTO userDTO;
     private GroupDTO expertGroup;
     private GroupDTO projectGroup;
-    private Long ideaId;
+    private String ideaId;
 
     @BeforeAll
     void setUp() {

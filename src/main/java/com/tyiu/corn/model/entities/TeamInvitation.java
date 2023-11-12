@@ -14,9 +14,9 @@ import java.time.LocalDate;
 @Table
 public class TeamInvitation {
     @Id
-    private Long id;
+    private String id;
     private String teamName;
-    private Long teamId;
-    private Long receiverId;
+    private String teamId;
+    private String receiverId;
     private LocalDate createdAt;
 }

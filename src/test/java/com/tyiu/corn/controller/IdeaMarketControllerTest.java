@@ -197,7 +197,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         return ideaMarketDTO;
     }
 
-    private IdeaMarketDTO getMarketIdea(Long ideaMarketId){
+    private IdeaMarketDTO getMarketIdea(String ideaMarketId){
         IdeaMarketDTO responseBody = webTestClient
                 .get()
                 .uri("/api/v1/market/{ideaMarketId}", ideaMarketId)
@@ -210,7 +210,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         return responseBody;
     }
 
-    private TeamMarketRequestDTO createMarketTeamRequest(Long ideaMarketId){
+    private TeamMarketRequestDTO createMarketTeamRequest(String ideaMarketId){
         SkillDTO skillDTO1 = SkillDTO.builder()
                 .name("skill1")
                 .type(SkillType.LANGUAGE)
@@ -326,7 +326,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllMarketIdeas() {
-        Long ideaId = createMarketIdea().getId();
+        String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
         List<IdeaMarketDTO> marketIdeas = webTestClient
@@ -343,7 +343,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllInitiatorMarketIdeas() {
-        Long ideaId = createMarketIdea().getId();
+        String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
         List<IdeaMarketDTO> marketIdeas = webTestClient
@@ -365,7 +365,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllFavoriteMarketIdeas() {
-        Long ideaMarketId = createMarketIdea().getId();
+        String ideaMarketId = createMarketIdea().getId();
         webTestClient
                 .post()
                 .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
@@ -376,7 +376,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllTeamMarketRequests() {
-        Long ideaMarketId = createMarketIdea().getId();
+        String ideaMarketId = createMarketIdea().getId();
         createMarketTeamRequest(ideaMarketId);
         List<TeamMarketRequestDTO> marketTeamsRequests =  webTestClient
                 .get()
@@ -408,7 +408,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testMakeMarketIdeaFavorite() {
-        Long ideaMarketId = createMarketIdea().getId();
+        String ideaMarketId = createMarketIdea().getId();
         webTestClient
                 .post()
                 .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
@@ -426,7 +426,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testDeleteMarketIdea() {
-        Long ideaMarketId = createMarketIdea().getId();
+        String ideaMarketId = createMarketIdea().getId();
         getMarketIdea(ideaMarketId);
         webTestClient
                 .delete()
@@ -449,7 +449,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testUnfavoriteIdea() {
-        Long ideaMarketId = createMarketIdea().getId();
+        String ideaMarketId = createMarketIdea().getId();
         webTestClient
                 .post()
                 .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)

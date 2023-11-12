@@ -13,7 +13,7 @@ public class GroupMapper implements BiFunction<Row, Object, GroupDTO> {
     @Override
     public GroupDTO apply(Row row, Object o) {
         return GroupDTO.builder()
-                    .id(row.get("id", Long.class))
+                    .id(row.get("id", String.class))
                     .name(row.get("name", String.class))
                     .roles(Arrays.stream(row.get("roles",String[].class))
                             .map(Role::valueOf).toList())

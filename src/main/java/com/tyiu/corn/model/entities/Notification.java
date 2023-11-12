@@ -14,8 +14,8 @@ import java.time.LocalDateTime;
 @Table(name = "notification")
 public class Notification {
     @Id
-    private Long id;
-    private Long userId;
+    private String id;
+    private String userId;
     private String title;
     private String message;
     private boolean isShowed;

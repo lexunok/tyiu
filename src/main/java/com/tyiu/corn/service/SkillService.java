@@ -46,7 +46,7 @@ public class SkillService {
                 .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)));
     }
 
-    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedOrCreatorSkills(Long userId) {
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedOrCreatorSkills(String userId) {
         return template.select(query(where("creator_id").is(userId).or(where("confirmed").isTrue())), Skill.class)
                 .flatMap(skill -> Flux.just(mapper.map(skill, SkillDTO.class)))
                 .collectMultimap(SkillDTO::getType);
@@ -57,7 +57,7 @@ public class SkillService {
                 .flatMap(skill -> Mono.just(mapper.map(skill, SkillDTO.class)));
     }
 
-    public Mono<SkillDTO> addSkill(SkillDTO skillDTO, Long userId) {
+    public Mono<SkillDTO> addSkill(SkillDTO skillDTO, String userId) {
             Skill skill = mapper.map(skillDTO, Skill.class);
             skill.setConfirmed(true);
             skill.setCreatorId(userId);
@@ -69,7 +69,7 @@ public class SkillService {
             });
     }
 
-    public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO, Long userId) {
+    public Mono<SkillDTO> addNoConfirmedSkill(SkillDTO skillDTO, String userId) {
             Skill skill = mapper.map(skillDTO, Skill.class);
             skill.setConfirmed(false);
             skill.setCreatorId(userId);
@@ -81,20 +81,20 @@ public class SkillService {
             });
     }
 
-    public Mono<Void> updateSkill(SkillDTO skillDTO, Long skillId, Long userId){
+    public Mono<Void> updateSkill(SkillDTO skillDTO, String skillId, String userId){
         return template.update(query(where("id").is(skillId)),
                         update("name", skillDTO.getName())
                                 .set("updater_id", userId)
                                 .set("type", skillDTO.getType()), Skill.class).then();
     }
 
-    public Mono<Void> confirmSkill(Long skillId, Long userId) {
+    public Mono<Void> confirmSkill(String skillId, String userId) {
         return template.update(query(where("id").is(skillId)),
                 update("confirmed", true)
                         .set("updater_id", userId), Skill.class).then();
     }
 
-    public Mono<Void> deleteSkill(Long id) {
+    public Mono<Void> deleteSkill(String id) {
         return template.delete(query(where("id").is(id)), Skill.class).then()
                 .onErrorResume(ex -> Mono.error(new NotFoundException("Not success!")));
     }

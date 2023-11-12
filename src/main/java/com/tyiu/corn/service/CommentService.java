@@ -24,25 +24,25 @@ import static org.springframework.data.relational.core.query.Query.query;
 public class CommentService {
 
     private final R2dbcEntityTemplate template;
-    private final Map<Long, Sinks.Many<CommentDTO>> userSinks = new ConcurrentHashMap<>();
+    private final Map<String, Sinks.Many<CommentDTO>> userSinks = new ConcurrentHashMap<>();
     private final ModelMapper mapper;
 
-    public Flux<CommentDTO> getAllComments(Long ideaId) {
+    public Flux<CommentDTO> getAllComments(String ideaId) {
         return template.select(query(where("idea_id").is(ideaId)), Comment.class)
                 .flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
     }
 
-    public Flux<CommentDTO> getNewComments(Long ideaId) {
+    public Flux<CommentDTO> getNewComments(String ideaId) {
         Sinks.Many<CommentDTO> sink = userSinks
                 .computeIfAbsent(ideaId, key -> Sinks.many().multicast().onBackpressureBuffer());
         return sink.asFlux().doOnCancel(() -> userSinks.remove(ideaId));
     }
 
-    public Mono<CommentDTO> createComment(CommentDTO commentDTO, Long userId) {
+    public Mono<CommentDTO> createComment(CommentDTO commentDTO, String userId) {
         Comment comment = Comment.builder()
                 .ideaId(commentDTO.getIdeaId())
                 .text(commentDTO.getText())
-                .checkedBy(List.of(userId))
+                //.checkedBy(List.of(userId))
                 .createdAt(LocalDateTime.now())
                 .senderEmail(commentDTO.getSenderEmail())
                 .build();
@@ -56,10 +56,10 @@ public class CommentService {
     }
 
 
-    public Mono<Void> deleteComment(Long commentId) {
+    public Mono<Void> deleteComment(String commentId) {
         return template.delete(query(where("id").is(commentId)), Comment.class).then();
     }
-    public Mono<Void> checkCommentByUser(Long commentId, Long userId){
+    public Mono<Void> checkCommentByUser(String commentId, String userId){
         String query = "UPDATE comment SET checked_by = array_append(checked_by,:userId) WHERE id =:commentId";
         return template.getDatabaseClient().sql(query)
                 .bind("userId",userId)

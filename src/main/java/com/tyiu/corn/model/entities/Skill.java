@@ -17,12 +17,12 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table
 public class Skill {
     @Id
-    private Long id;
+    private String id;
     private LocalDateTime createdAt;
     private String name;
     private SkillType type;
     private Boolean confirmed;
-    private Long creatorId;
-    private Long updaterId;
-    private Long deleterId;
+    private String creatorId;
+    private String updaterId;
+    private String deleterId;
 }

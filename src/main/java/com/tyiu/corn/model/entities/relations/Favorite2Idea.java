@@ -10,6 +10,6 @@ import org.springframework.data.relational.core.mapping.Table;
 @Getter
 @Table("favorite_idea")
 public class Favorite2Idea {
-    private Long userId;
-    private Long ideaMarketId;
+    private String userId;
+    private String ideaMarketId;
 }

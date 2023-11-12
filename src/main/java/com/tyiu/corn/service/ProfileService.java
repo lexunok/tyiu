@@ -46,15 +46,15 @@ public class ProfileService {
         return template.getDatabaseClient().sql(query)
                 .bind("email", email)
                 .flatMap(p -> {
-                    ConcurrentHashMap<Long,ProfileSkillResponse> skills = new ConcurrentHashMap<>();
-                    ConcurrentHashMap<Long,ProfileIdeaResponse> ideas = new ConcurrentHashMap<>();
-                    ConcurrentHashMap<Long,ProfileProjectResponse> projects = new ConcurrentHashMap<>();
-                    ConcurrentHashMap<Long,ProfileDTO> profiles = new ConcurrentHashMap<>();
+                    ConcurrentHashMap<String,ProfileSkillResponse> skills = new ConcurrentHashMap<>();
+                    ConcurrentHashMap<String,ProfileIdeaResponse> ideas = new ConcurrentHashMap<>();
+                    ConcurrentHashMap<String,ProfileProjectResponse> projects = new ConcurrentHashMap<>();
+                    ConcurrentHashMap<String,ProfileDTO> profiles = new ConcurrentHashMap<>();
                     return p.map((row,rowMetadata) -> {
-                        Long userId = row.get("u_id",Long.class);
-                        Long ideaId = row.get("i_id",Long.class);
-                        Long skillId = row.get("s_id",Long.class);
-                        Long projectId = row.get("p_id",Long.class);
+                        String userId = row.get("u_id",String.class);
+                        String ideaId = row.get("i_id",String.class);
+                        String skillId = row.get("s_id",String.class);
+                        String projectId = row.get("p_id",String.class);
                         if (projectId!=null) {
                             projects.putIfAbsent(projectId,
                                     ProfileProjectResponse.builder()
@@ -111,7 +111,7 @@ public class ProfileService {
                 });
     }
 
-    public Flux<SkillDTO> saveSkills(Long userId, Flux<SkillDTO> skills) {
+    public Flux<SkillDTO> saveSkills(String userId, Flux<SkillDTO> skills) {
         template.delete(query(where("user_id").is(userId)), User2Skill.class).subscribe();
         return skills.map(s -> {
             template.insert(new User2Skill(userId,s.getId())).subscribe();

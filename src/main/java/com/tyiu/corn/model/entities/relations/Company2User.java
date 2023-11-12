@@ -9,7 +9,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table("company_user")
 public class Company2User {
 
-    private Long userId;
-    private Long companyId;
+    private String userId;
+    private String companyId;
 
 }

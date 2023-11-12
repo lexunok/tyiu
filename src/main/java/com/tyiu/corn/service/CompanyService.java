@@ -33,7 +33,7 @@ public class CompanyService {
     private final UserMapper userMapper;
     private final CompanyMapper companyMapper;
 
-    private Mono<CompanyDTO> getCompany(Long companyId) {
+    private Mono<CompanyDTO> getCompany(String companyId) {
         String query = "SELECT company.*, users.id AS user_id, users.email, users.first_name, users.last_name," +
                 "owner.id owner_id, owner.email owner_email, owner.first_name owner_first_name, owner.last_name owner_last_name " +
                 "FROM company " +
@@ -59,7 +59,7 @@ public class CompanyService {
     }
 
     @Cacheable
-    public Mono<CompanyDTO> getCompanyById(Long companyId){
+    public Mono<CompanyDTO> getCompanyById(String companyId){
         return getCompany(companyId);
     }
 
@@ -70,7 +70,7 @@ public class CompanyService {
     }
 
     @Cacheable
-    public Mono<CompanyDTO> getListStaff(Long id) {
+    public Mono<CompanyDTO> getListStaff(String id) {
         return template.selectOne(query(where("id").is(id)), Company.class)
                 .flatMap(c -> {
                 CompanyDTO companyDTO = mapper.map(c, CompanyDTO.class);
@@ -97,12 +97,12 @@ public class CompanyService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteCompany(Long id) {
+    public Mono<Void> deleteCompany(String id) {
         return template.delete(query(where("id").is(id)), Company.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<CompanyDTO> updateCompany(Long companyId, CompanyDTO companyDTO) {
+    public Mono<CompanyDTO> updateCompany(String companyId, CompanyDTO companyDTO) {
         return getCompany(companyId)
                 .flatMap(c -> {
                     companyDTO.setId(c.getId());

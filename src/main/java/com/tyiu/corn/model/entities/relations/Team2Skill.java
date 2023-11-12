@@ -9,7 +9,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "team_skill")
 public class Team2Skill {
 
-    private Long teamId;
-    private Long skillId;
+    private String teamId;
+    private String skillId;
 
 }

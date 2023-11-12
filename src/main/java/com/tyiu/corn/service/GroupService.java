@@ -37,7 +37,7 @@ public class GroupService {
                 .flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)));
     }
     @Cacheable
-    public Mono<GroupDTO> getGroupById(Long groupId) {
+    public Mono<GroupDTO> getGroupById(String groupId) {
         return getGroup(groupId);
     }
 
@@ -53,12 +53,12 @@ public class GroupService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteGroup(Long id) {
+    public Mono<Void> deleteGroup(String id) {
         return template.delete(query(where("id").is(id)), Group.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<GroupDTO> updateGroup(Long groupId, GroupDTO groupDTO) {
+    public Mono<GroupDTO> updateGroup(String groupId, GroupDTO groupDTO) {
         return getGroup(groupId)
                 .flatMap(g -> {
                     groupDTO.setId(g.getId());
@@ -73,7 +73,7 @@ public class GroupService {
                 });
     }
 
-    private Mono<GroupDTO> getGroup(Long groupId){
+    private Mono<GroupDTO> getGroup(String groupId){
         String query = "SELECT groups.*, users.id user_id, users.email, users.first_name, users.last_name " +
                 "FROM groups " +
                 "LEFT JOIN group_user ON groups.id = group_user.group_id " +

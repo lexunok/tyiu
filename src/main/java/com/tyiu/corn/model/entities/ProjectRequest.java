@@ -14,9 +14,9 @@ import java.time.LocalDate;
 @Table
 public class ProjectRequest {
     @Id
-    private Long id;
-    private Long projectId;
-    private Long userId;
+    private String id;
+    private String projectId;
+    private String userId;
     private String email;
     private String firstName;
     private String lastName;

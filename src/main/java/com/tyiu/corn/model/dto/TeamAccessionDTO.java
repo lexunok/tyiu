@@ -12,7 +12,7 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @NoArgsConstructor
 public class TeamAccessionDTO {
-    private Long id;
+    private String id;
     private LocalDate updateAt;
     private String text;
     private RequestType requestType; // тип заявки

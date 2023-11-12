@@ -25,7 +25,7 @@ public class GroupController {
     }
 
     @GetMapping("/{groupId}")
-    public Mono<GroupDTO> getGroupById(@PathVariable Long groupId) {
+    public Mono<GroupDTO> getGroupById(@PathVariable String groupId) {
         return groupService.getGroupById(groupId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
@@ -38,14 +38,14 @@ public class GroupController {
 
 
     @DeleteMapping("/delete/{groupId}")
-    public Mono<InfoResponse> deleteGroup(@PathVariable Long groupId) {
+    public Mono<InfoResponse> deleteGroup(@PathVariable String groupId) {
         return groupService.deleteGroup(groupId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
 
     @PutMapping("/update/{groupId}")
-    public Mono<GroupDTO> updateGroup(@PathVariable Long groupId, @RequestBody GroupDTO group) {
+    public Mono<GroupDTO> updateGroup(@PathVariable String groupId, @RequestBody GroupDTO group) {
         return groupService.updateGroup(groupId, group)
                 .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));
     }

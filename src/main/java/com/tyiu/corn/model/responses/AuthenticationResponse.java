@@ -9,7 +9,7 @@ import java.util.List;
 @Data
 @Builder
 public class AuthenticationResponse {
-    private Long id;
+    private String id;
     private String token;
     private String email;
     private String lastName;

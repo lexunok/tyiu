@@ -14,16 +14,16 @@ import java.time.LocalDate;
 @Table
 public class TeamMarketRequest {
     @Id
-    private Long id;
-    private Long ideaId;
-    private Long teamId;
+    private String id;
+    private String ideaId;
+    private String teamId;
     private Boolean accepted;
 
     private String name;
     private LocalDate updatedAt;
     private Boolean closed;
     private String description;
-    private Long ownerId;
-    private Long leaderId;
+    private String ownerId;
+    private String leaderId;
     private String letter;
 }

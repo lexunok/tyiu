@@ -18,27 +18,27 @@ public class CommentController {
     private final CommentService commentService;
 
     @MessageMapping("comment.{ideaId}.receive")
-    public Flux<CommentDTO> receiveNewComments(@DestinationVariable Long ideaId){
+    public Flux<CommentDTO> receiveNewComments(@DestinationVariable String ideaId){
         return commentService.getNewComments(ideaId);
     }
 
     @GetMapping("/all/{ideaId}")
-    public Flux<CommentDTO> getAllComments(@PathVariable Long ideaId){
+    public Flux<CommentDTO> getAllComments(@PathVariable String ideaId){
         return commentService.getAllComments(ideaId);
     }
 
     @PostMapping("/send")
     public Mono<CommentDTO> createComment(@RequestBody CommentDTO comment, Principal principal){
-        return commentService.createComment(comment, Long.valueOf(principal.getName()));
+        return commentService.createComment(comment, principal.getName());
     }
 
     @DeleteMapping("/delete/{commentId}")
-    public Mono<Void> deleteComment(@PathVariable Long commentId){
+    public Mono<Void> deleteComment(@PathVariable String commentId){
         return commentService.deleteComment(commentId);
     }
     @PutMapping("/check/{commentId}")
-    public Mono<Void> checkComment(@PathVariable Long commentId, Principal principal){
-        return commentService.checkCommentByUser(commentId, Long.valueOf(principal.getName()));
+    public Mono<Void> checkComment(@PathVariable String commentId, Principal principal){
+        return commentService.checkCommentByUser(commentId, principal.getName());
     }
 
 }

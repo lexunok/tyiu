@@ -102,7 +102,7 @@ class GroupControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(response4);
         assertEquals(group5.getName(), response4.getName());
-        Long id = response4.getId();
+        String id = response4.getId();
         group5 = GroupDTO.builder()
                 .name("title 2")
                 .users(List.of(userDTO))
@@ -134,7 +134,7 @@ class GroupControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(response6);
         assertEquals(group6.getName(), response6.getName());
-        Long id = response6.getId();
+        String id = response6.getId();
         webTestClient
                 .delete()
                 .uri("/api/v1/group/delete/{id}", id)
@@ -160,7 +160,7 @@ class GroupControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(addGroupResponse);
         assertEquals(group.getName(), addGroupResponse.getName());
-        Long id = addGroupResponse.getId();
+        String id = addGroupResponse.getId();
 
         GroupDTO responseGet = webTestClient
                 .get()

@@ -27,7 +27,7 @@ public class SkillControllerTest extends TestContainers {
 
     private String jwt;
 
-    private Long skillId;
+    private String skillId;
 
     @BeforeAll
     void setUp(){

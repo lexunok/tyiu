@@ -14,8 +14,8 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class IdeaMarketDTO {
-    private Long id;
-    private Long ideaId;
+    private String id;
+    private String ideaId;
     private Long position;
     private String name;
     private String initiator;

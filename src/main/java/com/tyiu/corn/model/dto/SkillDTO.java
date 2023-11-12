@@ -9,11 +9,11 @@ import lombok.*;
 @NoArgsConstructor
 @Builder
 public class SkillDTO {
-    private Long id;
+    private String id;
     private String name;
     private SkillType type;
     private Boolean confirmed;
-    private Long creatorId;
-    private Long updaterId;
-    private Long deleterId;
+    private String creatorId;
+    private String updaterId;
+    private String deleterId;
 }

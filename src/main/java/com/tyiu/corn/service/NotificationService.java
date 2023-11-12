@@ -22,12 +22,12 @@ public class NotificationService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
 
-    public Flux<NotificationDTO> getAllNotifications(Long userId) {
+    public Flux<NotificationDTO> getAllNotifications(String userId) {
         return template.select(query(where("user_id").is(userId)), Notification.class)
                 .flatMap(n -> Mono.just(mapper.map(n, NotificationDTO.class)));
     }
 
-    public Flux<NotificationDTO> getAllFavouriteNotifications(Long userId) {
+    public Flux<NotificationDTO> getAllFavouriteNotifications(String userId) {
         return template.select(query(where("user_id").is(userId)
                         .and(where("is_favourite").is(true))),
                         Notification.class)
@@ -50,25 +50,25 @@ public class NotificationService {
         });
     }
 
-    public Mono<Void> addNotificationToFavourite(Long notificationId) {
+    public Mono<Void> addNotificationToFavourite(String notificationId) {
         return template.update(query(where("id").is(notificationId)),
                 update("is_favourite", true),
                 Notification.class).then();
     }
 
-    public Mono<Void> removeNotificationFromFavourite(Long notificationId) {
+    public Mono<Void> removeNotificationFromFavourite(String notificationId) {
         return template.update(query(where("id").is(notificationId)),
                 update("is_favourite", false),
                 Notification.class).then();
     }
 
-    public Mono<Void> showNotification(Long notificationId) {
+    public Mono<Void> showNotification(String notificationId) {
         return template.update(query(where("id").is(notificationId)),
                 update("is_showed", true),
                 Notification.class).then();
     }
 
-    public Mono<Void> readNotification(Long notificationId) {
+    public Mono<Void> readNotification(String notificationId) {
         return template.update(query(where("id").is(notificationId)),
                 update("is_readed", true),
                 Notification.class).then();

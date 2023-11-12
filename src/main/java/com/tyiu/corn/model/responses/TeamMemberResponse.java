@@ -12,6 +12,5 @@ public class TeamMemberResponse {
     private String email;
     private String firstName;
     private String lastName;
-
     private List<SkillDTO> skills;
 }

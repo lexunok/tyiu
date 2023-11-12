@@ -40,7 +40,7 @@ public class SkillController {
 
     @GetMapping("/all-confirmed-or-creator")
     public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(Principal principal) {
-        return skillService.getAllConfirmedOrCreatorSkills(Long.valueOf(principal.getName()));
+        return skillService.getAllConfirmedOrCreatorSkills(principal.getName());
     }
 
     @GetMapping("/{skillType}")
@@ -51,35 +51,35 @@ public class SkillController {
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill, Principal principal) {
-        return skillService.addSkill(skill, Long.valueOf(principal.getName()))
+        return skillService.addSkill(skill, principal.getName())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not add!")));
     }
 
     @PostMapping("/add/no-confirmed")
     public Mono<SkillDTO> addNoConfirmedSkill(@RequestBody SkillDTO skill, Principal principal) {
-        return skillService.addNoConfirmedSkill(skill, Long.valueOf(principal.getName()))
+        return skillService.addNoConfirmedSkill(skill, principal.getName())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not add!")));
     }
 
     @PutMapping("/update/{skillId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable Long skillId, Principal principal) {
-        return skillService.updateSkill(skillDTO, skillId, Long.valueOf(principal.getName()))
+    public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable String skillId, Principal principal) {
+        return skillService.updateSkill(skillDTO, skillId, principal.getName())
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
     @PutMapping("/confirm/{skillId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public Mono<InfoResponse> confirmSkill(@PathVariable Long skillId, Principal principal) {
-        return skillService.confirmSkill(skillId, Long.valueOf(principal.getName()))
+    public Mono<InfoResponse> confirmSkill(@PathVariable String skillId, Principal principal) {
+        return skillService.confirmSkill(skillId, principal.getName())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Confirm is not success"));
     }
     
     @DeleteMapping("/delete/{skillId}")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public Mono<InfoResponse> deleteSkill(@PathVariable Long skillId) {
+    public Mono<InfoResponse> deleteSkill(@PathVariable String skillId) {
         return skillService.deleteSkill(skillId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));

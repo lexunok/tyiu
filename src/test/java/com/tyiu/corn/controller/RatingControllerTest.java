@@ -31,7 +31,7 @@ class RatingControllerTest extends TestContainers {
     private GroupDTO expertGroup;
     private GroupDTO projectGroup;
 
-    private Long ideaId;
+    private String ideaId;
 
     @BeforeAll
     void setUp() {

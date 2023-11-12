@@ -12,8 +12,8 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table("group_user")
 public class Group2User {
 
-    private Long userId;
-    private Long groupId;
+    private String userId;
+    private String groupId;
 
 
 }

@@ -21,22 +21,22 @@ public class RatingController {
     private final RatingService ratingService;
 
     @GetMapping("/all/{ideaId}")
-    public Flux<RatingDTO> getAllIdeasRatings(@PathVariable Long ideaId){
+    public Flux<RatingDTO> getAllIdeasRatings(@PathVariable String ideaId){
         return ratingService.getRatings(ideaId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not Found")));
     }
 
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAuthority('EXPERT')")
-    public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable Long ideaId, Principal principal){
-        return ratingService.getExpertRating(ideaId, Long.valueOf(principal.getName()))
+    public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable String ideaId, Principal principal){
+        return ratingService.getExpertRating(ideaId, principal.getName())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not Found")));
     }
 
     @PutMapping("/save")
     @PreAuthorize("hasAuthority('EXPERT')")
     public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO, Principal principal) {
-        return ratingService.saveRating(ratingDTO, Long.valueOf(principal.getName()))
+        return ratingService.saveRating(ratingDTO, principal.getName())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success saving!"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Not saved"));
     }
@@ -44,7 +44,7 @@ public class RatingController {
     @PutMapping("/confirm")
     @PreAuthorize("hasAuthority('EXPERT')")
     public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO, Principal principal) {
-        return ratingService.confirmRating(ratingDTO, Long.valueOf(principal.getName()))
+        return ratingService.confirmRating(ratingDTO, principal.getName())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming!"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Not confirmed"));
     }

@@ -14,7 +14,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Getter
 public class Comment {
     @Id
-    private Long id;
+    private String id;
     private String text;
     private String senderEmail;
     private List<Long> checkedBy;

@@ -36,7 +36,7 @@ public class IdeaService {
     private final ModelMapper mapper;
 
     @Cacheable
-    public Mono<IdeaDTO> getIdea(Long ideaId) {
+    public Mono<IdeaDTO> getIdea(String ideaId) {
         String query = "SELECT idea.*, u.email initiator_email, e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
                 " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
                 " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
@@ -56,13 +56,13 @@ public class IdeaService {
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
     @Cacheable
-    public Flux<IdeaDTO> getListIdeaByInitiator(Long initiatorId) {
+    public Flux<IdeaDTO> getListIdeaByInitiator(String initiatorId) {
         return template.select(query(where("initiator_id").is(initiatorId)),Idea.class)
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<IdeaDTO> saveIdeaToApproval(IdeaDTO ideaDTO, Long initiatorId) {
+    public Mono<IdeaDTO> saveIdeaToApproval(IdeaDTO ideaDTO, String initiatorId) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiatorId(initiatorId);
         idea.setStatus(StatusIdea.ON_APPROVAL);
@@ -101,7 +101,7 @@ public class IdeaService {
                 });
     }
     @CacheEvict(allEntries = true)
-    public Mono<IdeaDTO> saveIdeaInDraft(IdeaDTO ideaDTO, Long initiatorId) {
+    public Mono<IdeaDTO> saveIdeaInDraft(IdeaDTO ideaDTO, String initiatorId) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiatorId(initiatorId);
         idea.setStatus(StatusIdea.NEW);
@@ -140,18 +140,18 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteIdea(Long id) {
+    public Mono<Void> deleteIdea(String id) {
         return template.delete(query(where("id").is(id)), Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByInitiator (Long id){
+    public Mono<Void> updateStatusByInitiator (String id){
         return template.update(query(where("id").is(id)),
                 update("status", StatusIdea.ON_APPROVAL),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateIdeaByInitiator(Long id, IdeaDTO updatedIdea) {
+    public Mono<Void> updateIdeaByInitiator(String id, IdeaDTO updatedIdea) {
         return template.update(query(where("id").is(id)),
                 update("name", updatedIdea.getName())
                         .set("max_team_size", updatedIdea.getMaxTeamSize())
@@ -169,13 +169,13 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusIdea(Long id, StatusIdeaRequest newStatus){
+    public Mono<Void> updateStatusIdea(String id, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(id)),
                         update("status",newStatus.getStatus()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateIdeaByAdmin(Long id, IdeaDTO updatedIdea) {
+    public Mono<Void> updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
         return template.update(query(where("id").is(id)),
                 update("name", updatedIdea.getName())
                         .set("max_team_size", updatedIdea.getMaxTeamSize())
@@ -205,19 +205,19 @@ public class IdeaService {
                 template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
     }
 
-    public Mono<IdeaSkillRequest> getIdeaSkills(Long ideaId) {
+    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId) {
         String query = "SELECT skill.*, i.skill_id skill_id FROM idea_skill i " +
                 "LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId";
         return template.getDatabaseClient().sql(query)
                 .bind("ideaId", ideaId)
                 .map((row, rowMetadata) ->
                     SkillDTO.builder()
-                            .id(row.get("id",Long.class))
+                            .id(row.get("id",String.class))
                             .name(row.get("name",String.class))
                             .type(SkillType.valueOf(row.get("type",String.class)))
-                            .creatorId(row.get("creator_id",Long.class))
-                            .deleterId(row.get("deleter_id",Long.class))
-                            .updaterId(row.get("updater_id",Long.class))
+                            .creatorId(row.get("creator_id",String.class))
+                            .deleterId(row.get("deleter_id",String.class))
+                            .updaterId(row.get("updater_id",String.class))
                             .confirmed(row.get("confirmed",Boolean.class))
                             .build()
                 ).all().collectList()

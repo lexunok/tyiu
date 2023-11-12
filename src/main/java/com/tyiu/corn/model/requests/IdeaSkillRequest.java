@@ -9,6 +9,6 @@ import java.util.List;
 @Data
 @Builder
 public class IdeaSkillRequest {
-    private Long ideaId;
+    private String ideaId;
     private List<SkillDTO> skills;
 }

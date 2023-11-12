@@ -8,6 +8,6 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table("user_skill")
 @AllArgsConstructor
 public class User2Skill {
-    private Long userId;
-    private Long skillId;
+    private String userId;
+    private String skillId;
 }

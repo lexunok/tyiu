@@ -15,11 +15,11 @@ public class FilesStorageController {
     private final StorageService storage;
 
     @GetMapping("/idea/get/{ideaId}")
-    public Mono<Resource> getFileFromIdea(@PathVariable Long ideaId) {
+    public Mono<Resource> getFileFromIdea(@PathVariable String ideaId) {
         return storage.getFileIdea(ideaId);
     }
     @PostMapping("/idea/upload/{ideaId}")
-    public Mono<Resource> uploadFileToIdea(@PathVariable Long ideaId, @RequestPart("file") FilePart file) {
+    public Mono<Resource> uploadFileToIdea(@PathVariable String ideaId, @RequestPart("file") FilePart file) {
         return storage.uploadFileIdea(ideaId, file);
     }
 }

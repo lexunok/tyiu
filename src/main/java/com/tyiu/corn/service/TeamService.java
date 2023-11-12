@@ -33,7 +33,7 @@ import static org.springframework.data.relational.core.query.Update.update;
 public class TeamService {
     private final R2dbcEntityTemplate template;
 
-    public Mono<TeamDTO> getTeam(Long teamId) {
+    public Mono<TeamDTO> getTeam(String teamId) {
         TeamMapper teamMapper = new TeamMapper();
         String QUERY = "SELECT team.*, " +
                 "o.id o_id, o.email o_email, o.first_name o_first_name, o.last_name o_last_name, " +
@@ -70,7 +70,7 @@ public class TeamService {
                                 .membersCount(list.size())
                                 .build())));
     }
-    public Flux<TeamAccessionDTO> getAccessions(Long teamId) {
+    public Flux<TeamAccessionDTO> getAccessions(String teamId) {
         return template.select(TeamAccessionDTO.class)
                 .matching(query(where("teamId").is(teamId)))
                 .all();
@@ -80,7 +80,7 @@ public class TeamService {
                 .matching(query(where("targetEmail").is(targetEmail)))
                 .one();
     }
-    public Mono<TeamMemberDTO> getTeamProfile(Long userId) {
+    public Mono<TeamMemberDTO> getTeamProfile(String userId) {
         return template.select(User.class)
                 .matching(query(where("id").is(userId)))
                 .one()
@@ -125,7 +125,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> responseToRequest(Long teamId, Long userId) {
+    public Mono<Void> responseToRequest(String teamId, String userId) {
         return template.select(TeamAccession.class)
                 .matching(query(where("team_id").is(teamId).and("user_id").is(userId).and("accessionStage").is(AccessionStage.ACCEPTED)))
                 .one()
@@ -144,7 +144,7 @@ public class TeamService {
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Заявка не найдена")));
     }
 
-    private Mono<Void> updateSkills(Long teamId) {
+    private Mono<Void> updateSkills(String teamId) {
         return template.select(Team2Member.class)
                 .matching(query(where("team_id").is(teamId)))
                 .all()
@@ -171,19 +171,19 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> deleteTeam(Long id) {
+    public Mono<Void> deleteTeam(String id) {
         return template.delete(query(where("id").is(id)), Team.class).then();
     }
 
 
 
-    public Mono<Void> kickFromTeam(Long teamId, Long userId) {
+    public Mono<Void> kickFromTeam(String teamId, String userId) {
         return template.delete(query(where("team_id").is(teamId).and("member_id").is(userId)), Team2Member.class)
                 .then(updateSkills(teamId))
                 .then();
     }
 
-    public Mono<Void> updateTeam(Long id, TeamDTO teamDTO) {
+    public Mono<Void> updateTeam(String id, TeamDTO teamDTO) {
         return template.update(query(where("id").is(id)),
                 update("name", teamDTO.getName())
                         .set("description", teamDTO.getDescription())
@@ -211,7 +211,7 @@ public class TeamService {
                 .then();
     }
 
-    public Mono<Void> inviteUnregisteredUser(String email, Long teamId) {
+    public Mono<Void> inviteUnregisteredUser(String email, String teamId) {
         TeamAccession teamAccession = TeamAccession.builder()
                 .targetEmail(email)
                 .teamId(teamId)
@@ -226,13 +226,13 @@ public class TeamService {
                 .then();
     }
 
-    public Mono<Void> deleteAccession(Long accessionId) {
+    public Mono<Void> deleteAccession(String accessionId) {
         return template.delete(TeamAccessionDTO.class)
                 .matching(query(where("id").is(accessionId)))
                 .all()
                 .then();
     }
-    public Mono<Void> responseToInvitation(Long accessionId, TeamAccessionDTO teamAccessionDTO) {
+    public Mono<Void> responseToInvitation(String accessionId, TeamAccessionDTO teamAccessionDTO) {
         return template.selectOne(query(where("id").is(accessionId)), TeamAccessionDTO.class)
                 .flatMap(accession -> {
                     teamAccessionDTO.setTargetRegistered(true);

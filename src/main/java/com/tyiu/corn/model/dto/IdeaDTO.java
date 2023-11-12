@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class IdeaDTO {
-    private Long id;
+    private String id;
     private String initiator;
     private String name;
     private GroupDTO experts;

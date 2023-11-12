@@ -10,11 +10,11 @@ import java.util.function.BiFunction;
 
 public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
 
-    private final Map<Long, ProjectDTO> projectDTOMap = new LinkedHashMap<>();
+    private final Map<String, ProjectDTO> projectDTOMap = new LinkedHashMap<>();
 
     @Override
     public ProjectDTO apply(Row row, Object o) {
-        Long projectId = row.get("id", Long.class);
+        String projectId = row.get("id", String.class);
         ProjectDTO existingProject = projectDTOMap.get(projectId);
 
         if (existingProject == null) {
@@ -23,19 +23,19 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
                     .name(row.get("name", String.class))
                     .description(row.get("description", String.class))
                     .team(TeamDTO.builder()
-                            .id(row.get("t_id", Long.class))
+                            .id(row.get("t_id", String.class))
                             .name(row.get("t_name", String.class))
                             .description(row.get("t_description", String.class))
                             .closed(row.get("closed", Boolean.class))
                             .createdAt(row.get("created_at", LocalDate.class))
                             .owner(TeamMemberDTO.builder()
-                                    .userId(row.get("o_id", Long.class))
+                                    .userId(row.get("o_id", String.class))
                                     .email(row.get("o_email", String.class))
                                     .firstName(row.get("o_first_name", String.class))
                                     .lastName(row.get("o_last_name", String.class))
                                     .build())
                             .leader(TeamMemberDTO.builder()
-                                    .userId(row.get("l_id", Long.class))
+                                    .userId(row.get("l_id", String.class))
                                     .email(row.get("l_email", String.class))
                                     .firstName(row.get("l_first_name", String.class))
                                     .lastName(row.get("l_last_name", String.class))
@@ -48,7 +48,7 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
         }
 
         TeamMemberDTO member = TeamMemberDTO.builder()
-                .userId(row.get("m_id", Long.class))
+                .userId(row.get("m_id", String.class))
                 .email(row.get("m_email", String.class))
                 .firstName(row.get("m_first_name", String.class))
                 .lastName(row.get("m_last_name", String.class))
@@ -60,7 +60,7 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
         }
 
         SkillDTO skill = SkillDTO.builder()
-                .id(row.get("s_id", Long.class))
+                .id(row.get("s_id", String.class))
                 .name(row.get("s_name", String.class))
                 .type(SkillType.valueOf(row.get("type", String.class)))
                 .build();

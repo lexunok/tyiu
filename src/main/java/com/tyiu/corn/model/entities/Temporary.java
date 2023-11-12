@@ -18,7 +18,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table
 public class Temporary {
     @Id
-    private Long id;
+    private String id;
     private String url;
     private LocalDateTime dateExpired;
     private String email;

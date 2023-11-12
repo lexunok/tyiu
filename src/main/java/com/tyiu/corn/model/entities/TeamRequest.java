@@ -14,9 +14,9 @@ import java.time.LocalDate;
 @Table
 public class TeamRequest {
     @Id
-    private Long id;
-    private Long teamId;
-    private Long userId;
+    private String id;
+    private String teamId;
+    private String userId;
     private String email;
     private String firstName;
     private String lastName;

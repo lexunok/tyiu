@@ -19,7 +19,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Table(name = "groups")
 public class Group {
     @Id
-    private Long id;
+    private String id;
     private String name;
     private List<Role> roles;
 }
