@@ -263,7 +263,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertNotNull(createdTeam);
         assertEquals(teamDTO.getName(),createdTeam.getName());
         TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
-                .ideaId(ideaMarketId)
+                .ideaMarketId(ideaMarketId)
                 .teamId(createdTeam.getId())
                 .accepted(false)
                 .name(createdTeam.getName())

@@ -13,7 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 public class TeamMarketRequestDTO {
     private String id;
-    private String ideaId;
+    private String ideaMarketId;
     private String teamId;
     private Boolean accepted;
 

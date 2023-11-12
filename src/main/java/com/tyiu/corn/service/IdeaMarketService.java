@@ -81,7 +81,7 @@ public class IdeaMarketService {
                             .acceptedRequests(row.get("accepted_requests", Long.class))
                             .isFavorite(false)
                             .build();
-                    if (Objects.equals(row.get("idea_market_id", Long.class), ideaMarketDTO.getId()))
+                    if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
                     {
                         ideaMarketDTO.setIsFavorite(true);
                     }
@@ -134,7 +134,7 @@ public class IdeaMarketService {
                             .acceptedRequests(row.get("accepted_requests", Long.class))
                             .isFavorite(false)
                             .build();
-                    if (Objects.equals(row.get("idea_market_id", Long.class), ideaMarketDTO.getId()))
+                    if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
                     {
                         ideaMarketDTO.setIsFavorite(true);
                     }
@@ -173,9 +173,9 @@ public class IdeaMarketService {
     }
 
     public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
-        String query = "SELECT team_market_request.id, team_market_request.idea_id " +
+        String query = "SELECT team_market_request.id, team_market_request.idea_market_id " +
                 "FROM team_market_request " +
-                "WHERE team_market_request.idea_id = :ideaId";
+                "WHERE team_market_request.idea_market_id = :ideaId";
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
@@ -197,7 +197,7 @@ public class IdeaMarketService {
                             "LEFT JOIN users l ON team_market_request.leader_id = l.id " +
                             "LEFT JOIN users m ON team_member.member_id = m.id " +
                             "LEFT JOIN skill s ON team_skill.skill_id = s.id " +
-                            "WHERE team_market_request.idea_id = :ideaMarketId";
+                            "WHERE team_market_request.idea_market_id = :ideaMarketId";
                     TeamMarketMapper teamMarketMapper = new TeamMarketMapper();
                     return template.getDatabaseClient()
                             .sql(QUERY)
@@ -241,8 +241,8 @@ public class IdeaMarketService {
         teamMarketRequest.setLeaderId(teamMarketRequestDTO.getLeader().getUserId());
         return template.insert(teamMarketRequest).flatMap(r -> {
             teamMarketRequestDTO.setId(r.getId());
-            String id = r.getIdeaId();
-            return template.select(query(where("idea_id").is(id)),TeamMarketRequest.class).count().flatMap(c ->
+            String id = r.getIdeaMarketId();
+            return template.select(query(where("idea_market_id").is(id)),TeamMarketRequest.class).count().flatMap(c ->
                     template.update(query(where("id").is(id)),
                             update("requests", c),
                             IdeaMarket.class).thenReturn(teamMarketRequestDTO));
