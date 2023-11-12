@@ -346,14 +346,15 @@ ALTER TABLE team_member
 ADD CONSTRAINT team_fk FOREIGN KEY (team_id) REFERENCES team (id) ON DELETE CASCADE;
 
 
+ALTER TABLE team_market_request
+DROP COLUMN idea_id;
+
 ALTER TABLE idea
 ADD COLUMN uuid_id TEXT;
 
 UPDATE idea
 SET uuid_id = gen_random_uuid()::TEXT;
 
-ALTER TABLE team_market_request
-ADD COLUMN idea_uuid TEXT;
 ALTER TABLE rating
 ADD COLUMN idea_uuid TEXT;
 ALTER TABLE idea_skill
@@ -362,14 +363,6 @@ ALTER TABLE idea_market
 ADD COLUMN idea_uuid TEXT;
 ALTER TABLE comment
 ADD COLUMN idea_uuid TEXT;
-
-UPDATE team_market_request
-SET idea_uuid =
-(SELECT uuid_id FROM idea WHERE idea.id = team_market_request.idea_id);
-ALTER TABLE team_market_request
-DROP COLUMN idea_id;
-ALTER TABLE team_market_request
-RENAME COLUMN idea_uuid TO idea_id;
 
 UPDATE rating
 SET idea_uuid =
@@ -430,8 +423,6 @@ PRIMARY KEY (id);
 ALTER TABLE team_market_request
 ALTER COLUMN id SET DEFAULT gen_random_uuid()::TEXT;
 
-ALTER TABLE team_market_request
-ADD CONSTRAINT idea_fk FOREIGN KEY (idea_id) REFERENCES idea (id) ON DELETE CASCADE;
 ALTER TABLE team_market_request
 ADD CONSTRAINT team_fk FOREIGN KEY (team_id) REFERENCES team (id) ON DELETE CASCADE;
 ALTER TABLE team_market_request
@@ -635,6 +626,11 @@ ALTER COLUMN id SET DEFAULT gen_random_uuid()::TEXT;
 
 ALTER TABLE idea_market
 ADD CONSTRAINT idea_fk FOREIGN KEY (idea_id) REFERENCES idea (id) ON DELETE CASCADE;
+
+ALTER TABLE team_market_request
+ADD COLUMN idea_market_id TEXT;
+ALTER TABLE team_market_request
+ADD CONSTRAINT idea_market_fk FOREIGN KEY (idea_market_id) REFERENCES idea_market (id) ON DELETE CASCADE;
 
 
 ALTER TABLE groups
