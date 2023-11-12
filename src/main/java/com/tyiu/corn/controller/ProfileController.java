@@ -1,8 +1,7 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.model.dto.ProfileDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.UserDTO;
-import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileSkillResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import com.tyiu.corn.service.ProfileService;
@@ -23,18 +22,9 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @GetMapping("/ideas/get/{email}")
-    public Flux<ProfileIdeaResponse> getUserIdeas(@PathVariable String email) {
-        return profileService.getUserIdeas(email);
-    }
-
-    @GetMapping("/projects/get/{email}")
-    public Flux<ProfileProjectResponse> getUserProjects(@PathVariable String email) {
-        return profileService.getUserProjects(email);
-    }
 
     @GetMapping("/{email}")
-    public Mono<UserDTO> getUserProfile(@PathVariable String email) {
+    public Mono<ProfileDTO> getUserProfile(@PathVariable String email) {
         return profileService.getUserProfile(email);
     }
 
@@ -49,10 +39,7 @@ public class ProfileController {
                                          @RequestPart("file") FilePart file) {
         return profileService.uploadAvatar(principal.getName(), file);
     }
-    @GetMapping("/skills/get/{email}")
-    public Flux<ProfileSkillResponse> getUserSkills(@PathVariable String email) {
-        return profileService.getSkills(email);
-    }
+
     @PostMapping("/skills/save")
     public Flux<SkillDTO> saveUserSkills(Principal principal,
                                                      @RequestBody Flux<SkillDTO> skills) {
