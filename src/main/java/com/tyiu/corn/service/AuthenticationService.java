@@ -27,7 +27,7 @@ public class AuthenticationService {
     public Mono<AuthenticationResponse> login(LoginRequest request) {
         Mono<User> user = template
                 .selectOne(query(where("email").is(request.getEmail())),User.class)
-                .switchIfEmpty(Mono.error(new NotFoundException("User Not Registered!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Авторизация не удалась!")));
         return user.flatMap(u -> {
             if (passwordEncoder.matches(request.getPassword(), u.getPassword())){
                 String jwt = jwtCore.issueToken(String.valueOf(u.getId()), u.getRoles());
@@ -39,7 +39,7 @@ public class AuthenticationService {
                         .lastName(u.getLastName())
                         .roles(u.getRoles())
                         .build());
-            } else return Mono.error(new NotFoundException("Password is not correct!"));
+            } else return Mono.error(new NotFoundException("Авторизация не удалась!"));
         });
     }
 
@@ -73,10 +73,10 @@ public class AuthenticationService {
                         }
                         catch (Exception e){
                             template.delete(user).subscribe();
-                            return Mono.error(new NotFoundException("Registration is failed"));
+                            return Mono.error(new NotFoundException("Регистрация не удалась!"));
                         }
 
-                    } else return Mono.error(new NotFoundException("User is already exist"));
+                    } else return Mono.error(new NotFoundException("Регистрация не удалась!"));
                 }
         );
     }
