@@ -62,14 +62,12 @@ public class GroupService {
         return getGroup(groupId)
                 .flatMap(g -> {
                     groupDTO.setId(g.getId());
-                    List<UserDTO> newUsers = groupDTO.getUsers();
-                    if (!newUsers.equals(g.getUsers())) {
-                        template.delete(query(where("group_id").is(groupId)),Group2User.class).subscribe();
-                        Flux.fromIterable(newUsers).flatMap(u ->
-                                template.insert(new Group2User(u.getId(), groupId))
-                        );
-                    }
-                    return template.update(mapper.map(groupDTO, Group.class)).thenReturn(groupDTO);
+                    return template.delete(query(where("group_id").is(groupId)),Group2User.class)
+                            .thenReturn(groupDTO.getUsers())
+                            .map(list -> {
+                                list.forEach(u -> template.insert(new Group2User(u.getId(), groupId)).subscribe());
+                                return list;
+                            }).thenReturn(groupDTO);
                 });
     }
 
