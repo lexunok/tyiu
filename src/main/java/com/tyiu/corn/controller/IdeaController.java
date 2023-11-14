@@ -1,13 +1,16 @@
 package com.tyiu.corn.controller;
 
+import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
@@ -24,20 +27,32 @@ public class IdeaController {
     private final IdeaService ideaService;
 
     @GetMapping("/{ideaId}")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
     public Mono<IdeaDTO> getIdea(@PathVariable String ideaId) {
+        return ideaService.getIdea(ideaId);
+    }
+
+    @GetMapping("/initiator/{ideaId}")
+    public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .flatMap(idea -> {
+                    if (idea.getInitiator().equals(user.getEmail())) {
+                        return Mono.just(idea);
+                    } else {
+                        return Mono.error(new AccessException("Нет прав!"));
+                    }
+                });
     }
 
     @GetMapping("/all")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
     public Flux<IdeaDTO> showListIdea(){
         return ideaService.getListIdea();
     }
 
     @GetMapping("/initiator/all")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Flux<IdeaDTO> showListIdeaByInitiator(Principal principal){
-        return ideaService.getListIdeaByInitiator(principal.getName());
+    public Flux<IdeaDTO> showListIdeaByInitiator(@AuthenticationPrincipal User user){
+        return ideaService.getListIdeaByInitiator(user.getId());
     }
 
     @GetMapping("/skills/{ideaId}")

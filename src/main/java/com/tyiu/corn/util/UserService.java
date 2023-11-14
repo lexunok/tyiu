@@ -19,8 +19,8 @@ public class UserService implements ReactiveUserDetailsService {
     private final R2dbcEntityTemplate template;
 
     @Override
-    public Mono<UserDetails> findByUsername(String email) {
-        return template.selectOne(query(where("email").is(email)), User.class)
-                .map(CustomUserDetails::new);
+    public Mono<UserDetails> findByUsername(String id) {
+        return template.selectOne(query(where("id").is(id)), User.class)
+                .cast(UserDetails.class);
     }
 }

@@ -1,5 +1,7 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.config.exception.NotFoundException;
+import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Idea;
@@ -12,6 +14,7 @@ import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -30,6 +33,7 @@ import static org.springframework.data.relational.core.query.Update.update;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "ideas")
+@Slf4j
 public class IdeaService {
 
     private final R2dbcEntityTemplate template;
@@ -47,7 +51,8 @@ public class IdeaService {
                 .sql(query)
                 .bind("ideaId", ideaId)
                 .map(ideaMapper::apply)
-                .first();
+                .first()
+                .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
 
     @Cacheable
@@ -68,23 +73,45 @@ public class IdeaService {
         idea.setStatus(StatusIdea.ON_APPROVAL);
         idea.setCreatedAt(LocalDateTime.now());
         idea.setModifiedAt(LocalDateTime.now());
-        idea.setGroupExpertId(ideaDTO.getExperts().getId());
-        idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        //TODO: Добавить проверку на уровне бд
-        return Mono.just(ideaDTO.getId()!=null)
-                .flatMap(b -> {
-                    if (Boolean.TRUE.equals(b)) {
-                        return template.update(idea).flatMap(savedIdea -> {
+        return Mono.just(idea)
+                .flatMap(i ->template.getDatabaseClient()
+                        .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles)")
+                        .map((row, rowMetadata) -> row.get("id",String.class))
+                        .one()
+                        .map(g -> {
+                            i.setGroupExpertId(g);
+                            return i;
+                        }))
+                .flatMap(i -> template.getDatabaseClient()
+                        .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles)")
+                        .map((row, rowMetadata) -> row.get("id",String.class))
+                        .one()
+                        .map(g -> {
+                            i.setGroupProjectOfficeId(g);
+                            return i;
+                        }))
+                .flatMap(i -> {
+                    //TODO: Добавить проверку на уровне бд
+                    if (i.getId()!=null) {
+                        return template.update(i).flatMap(savedIdea -> {
                             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                            savedDTO.setExperts(ideaDTO.getExperts());
-                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            GroupDTO experts = new GroupDTO();
+                            experts.setId(savedIdea.getGroupExpertId());
+                            GroupDTO projectOffice = new GroupDTO();
+                            projectOffice.setId(savedIdea.getGroupProjectOfficeId());
+                            savedDTO.setExperts(experts);
+                            savedDTO.setProjectOffice(projectOffice);
                             return Mono.just(savedDTO);
                         });
                     } else {
-                        return template.insert(idea).flatMap(savedIdea -> {
+                        return template.insert(i).flatMap(savedIdea -> {
                             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                            savedDTO.setExperts(ideaDTO.getExperts());
-                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            GroupDTO experts = new GroupDTO();
+                            experts.setId(savedIdea.getGroupExpertId());
+                            GroupDTO projectOffice = new GroupDTO();
+                            projectOffice.setId(savedIdea.getGroupProjectOfficeId());
+                            savedDTO.setExperts(experts);
+                            savedDTO.setProjectOffice(projectOffice);
                             //TODO: сохранять рейтинг одним запросом
                             return template.select(query(where("group_id")
                                             .is(savedIdea.getGroupExpertId())), Group2User.class)
@@ -106,23 +133,45 @@ public class IdeaService {
         idea.setInitiatorId(initiatorId);
         idea.setStatus(StatusIdea.NEW);
         idea.setModifiedAt(LocalDateTime.now());
-        idea.setGroupExpertId(ideaDTO.getExperts().getId());
-        idea.setGroupProjectOfficeId(ideaDTO.getProjectOffice().getId());
-        //TODO: Добавить проверку на уровне бд
-        return Mono.just(ideaDTO.getId()!=null)
-                .flatMap(b -> {
-                    if (Boolean.TRUE.equals(b)) {
+        return Mono.just(idea)
+                .flatMap(i ->template.getDatabaseClient()
+                        .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles)")
+                        .map((row, rowMetadata) -> row.get("id",String.class))
+                        .one()
+                        .map(g -> {
+                            i.setGroupExpertId(g);
+                            return i;
+                        }))
+                .flatMap(i -> template.getDatabaseClient()
+                        .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles)")
+                        .map((row, rowMetadata) -> row.get("id",String.class))
+                        .one()
+                        .map(g -> {
+                            i.setGroupProjectOfficeId(g);
+                            return i;
+                        }))
+                .flatMap(i -> {
+                    //TODO: Добавить проверку на уровне бд
+                    if (i.getId()!=null) {
                         return template.update(idea).flatMap(savedIdea -> {
                             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                            savedDTO.setExperts(ideaDTO.getExperts());
-                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            GroupDTO experts = new GroupDTO();
+                            experts.setId(savedIdea.getGroupExpertId());
+                            GroupDTO projectOffice = new GroupDTO();
+                            projectOffice.setId(savedIdea.getGroupProjectOfficeId());
+                            savedDTO.setExperts(experts);
+                            savedDTO.setProjectOffice(projectOffice);
                             return Mono.just(savedDTO);
                         });
                     } else {
                         return template.insert(idea).flatMap(savedIdea -> {
                             IdeaDTO savedDTO = mapper.map(savedIdea, IdeaDTO.class);
-                            savedDTO.setExperts(ideaDTO.getExperts());
-                            savedDTO.setProjectOffice(ideaDTO.getProjectOffice());
+                            GroupDTO experts = new GroupDTO();
+                            experts.setId(savedIdea.getGroupExpertId());
+                            GroupDTO projectOffice = new GroupDTO();
+                            projectOffice.setId(savedIdea.getGroupProjectOfficeId());
+                            savedDTO.setExperts(experts);
+                            savedDTO.setProjectOffice(projectOffice);
                             //TODO: сохранять рейтинг одним запросом
                             return template.select(query(where("group_id")
                                             .is(savedIdea.getGroupExpertId())), Group2User.class)
@@ -176,21 +225,8 @@ public class IdeaService {
 
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByAdmin(String id, IdeaDTO updatedIdea) {
-        return template.update(query(where("id").is(id)),
-                update("name", updatedIdea.getName())
-                        .set("max_team_size", updatedIdea.getMaxTeamSize())
-                        .set("group_expert_id", updatedIdea.getExperts().getId())
-                        .set("problem", updatedIdea.getProblem())
-                        .set("solution", updatedIdea.getSolution())
-                        .set("result", updatedIdea.getResult())
-                        .set("customer", updatedIdea.getCustomer())
-                        .set("contact_person", updatedIdea.getContactPerson())
-                        .set("description", updatedIdea.getDescription())
-                        .set("min_team_size", updatedIdea.getMinTeamSize())
-                        .set("suitability", updatedIdea.getSuitability())
-                        .set("budget", updatedIdea.getBudget())
-                        .set("status", updatedIdea.getStatus())
-                        .set("rating", updatedIdea.getRating()), Idea.class).then();
+        updatedIdea.setId(id);
+        return template.update(mapper.map(updatedIdea,Idea.class)).then();
     }
 
     //TODO:сохранять одним запросом

@@ -13,10 +13,17 @@ import reactor.core.publisher.Mono;
 @Slf4j
 public class GlobalExceptionHandler {
     @ExceptionHandler
-    public Mono<ResponseEntity<ErrorResponse>> globalException(NotFoundException ex) {
+    public Mono<ResponseEntity<ErrorResponse>> notFoundException(NotFoundException ex) {
         log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity
                 .status(HttpStatus.BAD_REQUEST.value())
                 .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(),ex.getMessage())));
+    }
+    @ExceptionHandler
+    public Mono<ResponseEntity<ErrorResponse>> accessException(AccessException ex) {
+        log.error(ex.getMessage(), ex);
+        return Mono.just(ResponseEntity
+                .status(HttpStatus.FORBIDDEN.value())
+                .body(new ErrorResponse(HttpStatus.FORBIDDEN.value(),ex.getMessage())));
     }
 }
