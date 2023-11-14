@@ -29,38 +29,12 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     private String jwt;
     private UserDTO userDTO;
+    private GroupDTO groupExpert;
+    private GroupDTO groupProjectOffice;
+    private SkillDTO skill1;
+    private SkillDTO skill2;
 
     private IdeaMarketDTO createMarketIdea(){
-        GroupDTO experts = GroupDTO.builder()
-                .name("exp")
-                .users(List.of(userDTO))
-                .roles(List.of(Role.EXPERT))
-                .build();
-        GroupDTO groupExpert = webTestClient
-                .post()
-                .uri("/api/v1/group/create")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(experts), GroupDTO.class)
-                .exchange()
-                .expectBody(GroupDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(groupExpert);
-        assertEquals(experts.getName(), groupExpert.getName());
-        GroupDTO projectOffice = GroupDTO.builder()
-                .name("pro")
-                .users(List.of(userDTO))
-                .roles(List.of(Role.PROJECT_OFFICE))
-                .build();
-        GroupDTO groupProjectOffice = webTestClient
-                .post()
-                .uri("/api/v1/group/create")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(projectOffice), GroupDTO.class)
-                .exchange()
-                .expectBody(GroupDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(groupProjectOffice);
-        assertEquals(projectOffice.getName(), groupProjectOffice.getName());
         IdeaDTO ideaDTO1 = IdeaDTO.builder()
                 .initiator(userDTO.getEmail())
                 .name("idea1")
@@ -127,37 +101,9 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(idea2);
         assertEquals(ideaDTO2.getName(), idea2.getName());
-        SkillDTO skillDTO1 = SkillDTO.builder()
-                .name("skill1")
-                .type(SkillType.LANGUAGE)
-                .build();
-        SkillDTO addSkillResponse1 = webTestClient
-                .post()
-                .uri("/api/v1/skill/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(skillDTO1), SkillDTO.class)
-                .exchange()
-                .expectBody(SkillDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(addSkillResponse1);
-        assertEquals(skillDTO1.getName(), addSkillResponse1.getName());
-        SkillDTO skillDTO2 = SkillDTO.builder()
-                .name("skill2")
-                .type(SkillType.LANGUAGE)
-                .build();
-        SkillDTO addSkillResponse2 = webTestClient
-                .post()
-                .uri("/api/v1/skill/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(skillDTO2), SkillDTO.class)
-                .exchange()
-                .expectBody(SkillDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(addSkillResponse2);
-        assertEquals(skillDTO2.getName(), addSkillResponse2.getName());
         IdeaSkillRequest ideaSkillRequest1 = IdeaSkillRequest.builder()
                 .ideaId(createdIdea1.getId())
-                .skills(List.of(addSkillResponse1,addSkillResponse2))
+                .skills(List.of(skill1,skill2))
                 .build();
         InfoResponse skillRequest1 = webTestClient
                 .post()
@@ -171,7 +117,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertEquals("Success!", skillRequest1.getMessage());
         IdeaSkillRequest ideaSkillRequest2 = IdeaSkillRequest.builder()
                 .ideaId(createdIdea2.getId())
-                .skills(List.of(addSkillResponse1,addSkillResponse2))
+                .skills(List.of(skill1,skill2))
                 .build();
         InfoResponse skillRequest2 = webTestClient
                 .post()
@@ -211,32 +157,6 @@ public class IdeaMarketControllerTest extends TestContainers {
     }
 
     private TeamMarketRequestDTO createMarketTeamRequest(String ideaMarketId){
-        SkillDTO skillDTO1 = SkillDTO.builder()
-                .name("skill1")
-                .type(SkillType.LANGUAGE)
-                .build();
-        SkillDTO addSkillResponse1 = webTestClient
-                .post()
-                .uri("/api/v1/skill/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(skillDTO1), SkillDTO.class)
-                .exchange()
-                .expectBody(SkillDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(addSkillResponse1);
-        SkillDTO skillDTO2 = SkillDTO.builder()
-                .name("skill2")
-                .type(SkillType.LANGUAGE)
-                .build();
-        SkillDTO addSkillResponse2 = webTestClient
-                .post()
-                .uri("/api/v1/skill/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(skillDTO2), SkillDTO.class)
-                .exchange()
-                .expectBody(SkillDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(addSkillResponse2);
         TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
                 .userId(userDTO.getId())
                 .email(userDTO.getEmail())
@@ -250,7 +170,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .owner(teamMemberDTO)
                 .leader(teamMemberDTO)
                 .members(List.of(teamMemberDTO))
-                .skills(List.of(addSkillResponse1,addSkillResponse2))
+                .skills(List.of(skill1,skill2))
                 .build();
         TeamDTO createdTeam = webTestClient
                 .post()
@@ -272,7 +192,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .owner(teamMemberDTO)
                 .leader(teamMemberDTO)
                 .members(List.of(teamMemberDTO))
-                .skills(List.of(addSkillResponse1,addSkillResponse2))
+                .skills(List.of(skill1,skill2))
                 .letter("letter")
                 .build();
         TeamMarketRequestDTO createdTeamMarketRequest = webTestClient
@@ -286,6 +206,15 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertNotNull(createdTeamMarketRequest);
         assertEquals(teamMarketRequest.getName(),createdTeamMarketRequest.getName());
         return createdTeamMarketRequest;
+    }
+
+    private void makeFavorite(String ideaMarketId){
+        webTestClient
+                .post()
+                .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange();
+        assertEquals(true, getMarketIdea(ideaMarketId).getIsFavorite());
     }
 
     @BeforeAll
@@ -315,6 +244,65 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .firstName(response.getFirstName())
                 .roles(response.getRoles())
                 .build();
+
+        GroupDTO experts = GroupDTO.builder()
+                .name("exp")
+                .users(List.of(userDTO))
+                .roles(List.of(Role.EXPERT))
+                .build();
+        groupExpert = webTestClient
+                .post()
+                .uri("/api/v1/group/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(experts), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(groupExpert);
+        assertEquals(experts.getName(), groupExpert.getName());
+        GroupDTO projectOffice = GroupDTO.builder()
+                .name("pro")
+                .users(List.of(userDTO))
+                .roles(List.of(Role.PROJECT_OFFICE))
+                .build();
+        groupProjectOffice = webTestClient
+                .post()
+                .uri("/api/v1/group/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(projectOffice), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(groupProjectOffice);
+        assertEquals(projectOffice.getName(), groupProjectOffice.getName());
+        SkillDTO skillDTO1 = SkillDTO.builder()
+                .name("skill1")
+                .type(SkillType.LANGUAGE)
+                .build();
+        skill1 = webTestClient
+                .post()
+                .uri("/api/v1/skill/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(skillDTO1), SkillDTO.class)
+                .exchange()
+                .expectBody(SkillDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(skill1);
+        assertEquals(skillDTO1.getName(), skill1.getName());
+        SkillDTO skillDTO2 = SkillDTO.builder()
+                .name("skill2")
+                .type(SkillType.LANGUAGE)
+                .build();
+        skill2 = webTestClient
+                .post()
+                .uri("/api/v1/skill/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(skillDTO2), SkillDTO.class)
+                .exchange()
+                .expectBody(SkillDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(skill2);
+        assertEquals(skillDTO2.getName(), skill2.getName());
     }
 
     ///////////////////////
@@ -338,7 +326,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(marketIdeas);
         assertEquals(34, marketIdeas.size());
-        marketIdeas.forEach(i -> System.out.print(i.getRequests()));
     }
 
     @Test
@@ -355,7 +342,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(marketIdeas);
         assertEquals(38, marketIdeas.size());
-        marketIdeas.forEach(i -> System.out.print(i.getRequests()));
     }
 
     @Test
@@ -365,13 +351,16 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllFavoriteMarketIdeas() {
-        String ideaMarketId = createMarketIdea().getId();
-        webTestClient
-                .post()
-                .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
+        makeFavorite(createMarketIdea().getId());
+        List<IdeaMarketDTO> marketFavoriteIdeas = webTestClient
+                .get()
+                .uri("/api/v1/market/favorite")
                 .header("Authorization", "Bearer " + jwt)
-                .exchange();
-        assertEquals(true, getMarketIdea(ideaMarketId).getIsFavorite());
+                .exchange()
+                .expectBodyList(IdeaMarketDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(marketFavoriteIdeas);
+        assertEquals(2, marketFavoriteIdeas.size());
     }
 
     @Test
@@ -408,13 +397,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testMakeMarketIdeaFavorite() {
-        String ideaMarketId = createMarketIdea().getId();
-        webTestClient
-                .post()
-                .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
-                .header("Authorization", "Bearer " + jwt)
-                .exchange();
-        assertEquals(true, getMarketIdea(ideaMarketId).getIsFavorite());
+        makeFavorite(createMarketIdea().getId());
     }
 
     ///////////////////////////////////////////
@@ -450,12 +433,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testUnfavoriteIdea() {
         String ideaMarketId = createMarketIdea().getId();
-        webTestClient
-                .post()
-                .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
-                .header("Authorization", "Bearer " + jwt)
-                .exchange();
-        assertEquals(true, getMarketIdea(ideaMarketId).getIsFavorite());
+        makeFavorite(ideaMarketId);
         webTestClient
                 .delete()
                 .uri("/api/v1/market/unfavorite/{ideaMarketId}", ideaMarketId)
