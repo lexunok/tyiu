@@ -75,7 +75,7 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         return Mono.just(idea)
                 .flatMap(i ->template.getDatabaseClient()
-                        .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles)")
+                        .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles) LIMIT 1")
                         .map((row, rowMetadata) -> row.get("id",String.class))
                         .one()
                         .map(g -> {
@@ -83,7 +83,7 @@ public class IdeaService {
                             return i;
                         }))
                 .flatMap(i -> template.getDatabaseClient()
-                        .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles)")
+                        .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles) LIMIT 1")
                         .map((row, rowMetadata) -> row.get("id",String.class))
                         .one()
                         .map(g -> {
@@ -135,7 +135,7 @@ public class IdeaService {
         idea.setModifiedAt(LocalDateTime.now());
         return Mono.just(idea)
                 .flatMap(i ->template.getDatabaseClient()
-                        .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles)")
+                        .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles) LIMIT 1")
                         .map((row, rowMetadata) -> row.get("id",String.class))
                         .one()
                         .map(g -> {
@@ -143,7 +143,7 @@ public class IdeaService {
                             return i;
                         }))
                 .flatMap(i -> template.getDatabaseClient()
-                        .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles)")
+                        .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles) LIMIT 1")
                         .map((row, rowMetadata) -> row.get("id",String.class))
                         .one()
                         .map(g -> {
