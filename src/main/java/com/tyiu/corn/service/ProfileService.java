@@ -37,7 +37,7 @@ public class ProfileService {
     String path;
 
     public Mono<ProfileDTO> getUserProfile(String email) {
-        String query = "SELECT u.id u_id, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, " +
+        String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, " +
                 "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.description i_description," +
                 " p.id p_id, p.name p_name, p.description p_description" +
                 " FROM users u LEFT JOIN team ON team.id = u.id LEFT JOIN project p ON p.team_id = team.id " +

@@ -1,9 +1,11 @@
 package com.tyiu.corn.model.entities.mappers;
 
 import com.tyiu.corn.model.dto.ProfileDTO;
+import com.tyiu.corn.model.enums.Role;
 import io.r2dbc.spi.Row;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.function.BiFunction;
 @Component
 public class ProfileMapper implements BiFunction<Row,Object, ProfileDTO> {
@@ -14,6 +16,7 @@ public class ProfileMapper implements BiFunction<Row,Object, ProfileDTO> {
                 .email(row.get("u_email",String.class))
                 .lastName(row.get("u_last_name",String.class))
                 .firstName(row.get("u_first_name",String.class))
+                .roles(Arrays.stream(row.get("u_roles",String[].class)).map(Role::valueOf).toList())
                 .build();
     }
 }
