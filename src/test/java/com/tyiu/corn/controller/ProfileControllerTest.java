@@ -32,26 +32,8 @@ public class ProfileControllerTest extends TestContainers {
     private String jwt;
     private GroupDTO expertGroup;
     private GroupDTO projectGroup;
+    private SkillDTO skill;
     private ProfileDTO createProfile() {
-        SkillDTO skill = SkillDTO.builder()
-                .name("Java")
-                .type(SkillType.LANGUAGE)
-                .build();
-
-        SkillDTO responseAddSkill = webTestClient
-                .post()
-                .uri("/api/v1/skill/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(skill), SkillDTO.class)
-                .exchange()
-                .expectBody(SkillDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(responseAddSkill);
-
-        ProfileSkillResponse skills = ProfileSkillResponse.builder()
-                .name(responseAddSkill.getName())
-                .type(responseAddSkill.getType())
-                .build();
 
         IdeaDTO idea = IdeaDTO.builder()
                 .initiator(userDTO.getEmail())
@@ -82,6 +64,11 @@ public class ProfileControllerTest extends TestContainers {
                 .description(responseCreateIdea.getDescription())
                 .build();
 
+        ProfileSkillResponse skills = ProfileSkillResponse.builder()
+                .name(skill.getName())
+                .type(skill.getType())
+                .build();
+
         return ProfileDTO.builder()
                 .id(userDTO.getId())
                 .email(userDTO.getEmail())
@@ -95,6 +82,7 @@ public class ProfileControllerTest extends TestContainers {
 
     @BeforeAll
     public void setUp() {
+
         RegisterRequest request = new RegisterRequest(
                 "fakemailPROFILE", "2", "1", "fakepass",
                 List.of(Role.ADMIN,
@@ -150,10 +138,25 @@ public class ProfileControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(GroupDTO.class)
                 .returnResult().getResponseBody();
+
+        SkillDTO skillDTO = SkillDTO.builder()
+                .name("Java")
+                .type(SkillType.LANGUAGE)
+                .build();
+
+        skill = webTestClient
+                .post()
+                .uri("/api/v1/skill/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(skillDTO), SkillDTO.class)
+                .exchange()
+                .expectBody(SkillDTO.class)
+                .returnResult().getResponseBody();
     }
 
     @Test
     void testGetProfile() {
+
         ProfileDTO profile = createProfile();
         String email = profile.getEmail();
 
@@ -170,6 +173,7 @@ public class ProfileControllerTest extends TestContainers {
 
     @Test
     void testUploadAvatar() {
+
         ProfileDTO profile = createProfile();
 
         ProfileDTO responseUploadAvatar = webTestClient
@@ -185,6 +189,7 @@ public class ProfileControllerTest extends TestContainers {
 
     @Test
     void testGetAvatar() {
+
         ProfileDTO profile = createProfile();
         String email = profile.getEmail();
 
@@ -208,18 +213,16 @@ public class ProfileControllerTest extends TestContainers {
         assertEquals(profile.getEmail(), responseGetAvatar.getEmail());
     }
 
-//    @Test
-//    void testSaveSkills() {
-//        ProfileDTO profile = createProfile();
-//
-//        ProfileDTO responseSaveSkill = webTestClient
-//                .post()
-//                .uri("/api/v1/profile/skills/save")
-//                .header("Authorization", "Bearer " + jwt)
-//                .body(Mono.just(profile), ProfileDTO.class)
-//                .exchange()
-//                .expectBody(ProfileDTO.class)
-//                .returnResult().getResponseBody();
-//        assertNotNull(responseSaveSkill);
-//    }
+    @Test
+    void testSaveSkills() {
+
+        ProfileDTO responseSaveSkills = webTestClient
+                .post()
+                .uri("/api/v1/profile/skills/save")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(ProfileDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseSaveSkills);
+    }
 }
