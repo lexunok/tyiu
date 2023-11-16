@@ -38,13 +38,13 @@ public class CommentService {
         return sink.asFlux().doOnCancel(() -> userSinks.remove(ideaId));
     }
 
-    public Mono<CommentDTO> createComment(CommentDTO commentDTO, String userId) {
+    public Mono<CommentDTO> createComment(CommentDTO commentDTO, String senderEmail) {
         Comment comment = Comment.builder()
                 .ideaId(commentDTO.getIdeaId())
                 .text(commentDTO.getText())
-                //.checkedBy(List.of(userId))
+                .checkedBy(List.of(senderEmail))
                 .createdAt(LocalDateTime.now())
-                .senderEmail(commentDTO.getSenderEmail())
+                .senderEmail(senderEmail)
                 .build();
         Sinks.Many<CommentDTO> sink = userSinks.get(commentDTO.getIdeaId());
         return template.insert(comment).flatMap(c -> {
@@ -59,10 +59,10 @@ public class CommentService {
     public Mono<Void> deleteComment(String commentId) {
         return template.delete(query(where("id").is(commentId)), Comment.class).then();
     }
-    public Mono<Void> checkCommentByUser(String commentId, String userId){
-        String query = "UPDATE comment SET checked_by = array_append(checked_by,:userId) WHERE id =:commentId";
+    public Mono<Void> checkCommentByUser(String commentId, String userEmail){
+        String query = "UPDATE comment SET checked_by = array_append(checked_by,:userEmail) WHERE id =:commentId";
         return template.getDatabaseClient().sql(query)
-                .bind("userId",userId)
+                .bind("userEmail",userEmail)
                 .bind("commentId",commentId).then();
     }
 

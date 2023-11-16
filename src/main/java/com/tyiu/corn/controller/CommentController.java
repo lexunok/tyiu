@@ -1,10 +1,12 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.CommentDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.service.CommentService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.handler.annotation.DestinationVariable;
 import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.security.Principal;
 import reactor.core.publisher.Flux;
@@ -28,8 +30,8 @@ public class CommentController {
     }
 
     @PostMapping("/send")
-    public Mono<CommentDTO> createComment(@RequestBody CommentDTO comment, Principal principal){
-        return commentService.createComment(comment, principal.getName());
+    public Mono<CommentDTO> createComment(@RequestBody CommentDTO comment, @AuthenticationPrincipal User user){
+        return commentService.createComment(comment, user.getEmail());
     }
 
     @DeleteMapping("/delete/{commentId}")
@@ -37,8 +39,8 @@ public class CommentController {
         return commentService.deleteComment(commentId);
     }
     @PutMapping("/check/{commentId}")
-    public Mono<Void> checkComment(@PathVariable String commentId, Principal principal){
-        return commentService.checkCommentByUser(commentId, principal.getName());
+    public Mono<Void> checkComment(@PathVariable String commentId, @AuthenticationPrincipal User user){
+        return commentService.checkCommentByUser(commentId, user.getEmail());
     }
 
 }
