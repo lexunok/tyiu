@@ -4,16 +4,17 @@ import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.IdeaMarketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -30,24 +31,24 @@ public class IdeaMarketController {
     ///////////////////////
 
     @GetMapping("/all")
-    public Flux<IdeaMarketDTO> getAllMarketIdeas(Principal principal) {
-        return ideaMarketService.getAllMarketIdeas(principal.getName());
+    public Flux<IdeaMarketDTO> getAllMarketIdeas(@AuthenticationPrincipal User user) {
+        return ideaMarketService.getAllMarketIdeas(user.getId());
     }
 
     @GetMapping("/initiator/all")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(Principal principal) {
-        return ideaMarketService.getAllInitiatorMarketIdeas(principal.getName());
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user) {
+        return ideaMarketService.getAllInitiatorMarketIdeas(user.getId());
     }
 
     @GetMapping("/{ideaMarketId}")
-    public Mono<IdeaMarketDTO> getOneMarketIdea(Principal principal, @PathVariable String ideaMarketId) {
-        return ideaMarketService.getMarketIdea(principal.getName(), ideaMarketId);
+    public Mono<IdeaMarketDTO> getOneMarketIdea(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
+        return ideaMarketService.getMarketIdea(user.getId(), ideaMarketId);
     }
 
     @GetMapping("/favorite")
-    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(Principal principal) {
-        return ideaMarketService.getAllFavoriteMarketIdeas(principal.getName());
+    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(@AuthenticationPrincipal User user) {
+        return ideaMarketService.getAllFavoriteMarketIdeas(user.getId());
     }
 
     @GetMapping("/requests/{ideaMarketId}")
@@ -76,8 +77,8 @@ public class IdeaMarketController {
     }
 
     @PostMapping("/favorite/{ideaMarketId}")
-    public Mono<InfoResponse> makeMarketIdeaFavorite(Principal principal, @PathVariable String ideaMarketId) {
-        return ideaMarketService.makeMarketIdeaFavorite(principal.getName(), ideaMarketId)
+    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
+        return ideaMarketService.makeMarketIdeaFavorite(user.getId(), ideaMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Idea added to favorites"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to make the idea a favorite"));
     }
@@ -105,8 +106,8 @@ public class IdeaMarketController {
     }
 
     @DeleteMapping("/unfavorite/{ideaMarketId}")
-    public Mono<InfoResponse> deleteFavoriteMarketIdea(Principal principal, @PathVariable String ideaMarketId) {
-        return ideaMarketService.deleteMarketIdeaFromFavorite(principal.getName(), ideaMarketId)
+    public Mono<InfoResponse> deleteFavoriteMarketIdea(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
+        return ideaMarketService.deleteMarketIdeaFromFavorite(user.getId(), ideaMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Idea removed from favorites"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Couldn't delete an idea from favorites"));
     }

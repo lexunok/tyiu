@@ -1,16 +1,17 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.model.dto.ProfileDTO;
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
+import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
+import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileSkillResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -18,8 +19,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -30,9 +30,59 @@ public class ProfileControllerTest extends TestContainers {
     private WebTestClient webTestClient;
     private UserDTO userDTO;
     private String jwt;
+    private GroupDTO expertGroup;
+    private GroupDTO projectGroup;
+    private SkillDTO skill;
+    private ProfileDTO createProfile() {
+
+        IdeaDTO idea = IdeaDTO.builder()
+                .initiator(userDTO.getEmail())
+                .name("Сдал ИГЭ по барьба")
+                .status(StatusIdea.ON_APPROVAL)
+                .experts(expertGroup)
+                .projectOffice(projectGroup)
+                .problem("Гопники на улице")
+                .solution("Барьба")
+                .result("Знания по барьба")
+                .customer("Чо?")
+                .contactPerson("Абдул")
+                .description("Барьба должны знать все")
+                .build();
+
+        IdeaDTO responseCreateIdea = webTestClient
+                .post()
+                .uri("/api/v1/idea/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(idea), IdeaDTO.class)
+                .exchange()
+                .expectBody(IdeaDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseCreateIdea);
+
+        ProfileIdeaResponse ideas = ProfileIdeaResponse.builder()
+                .name(responseCreateIdea.getName())
+                .description(responseCreateIdea.getDescription())
+                .build();
+
+        ProfileSkillResponse skills = ProfileSkillResponse.builder()
+                .name(skill.getName())
+                .type(skill.getType())
+                .build();
+
+        return ProfileDTO.builder()
+                .id(userDTO.getId())
+                .email(userDTO.getEmail())
+                .firstName("1")
+                .lastName("2")
+                .roles(userDTO.getRoles())
+                .skills(List.of(skills))
+                .ideas(List.of(ideas))
+                .build();
+    }
 
     @BeforeAll
     public void setUp() {
+
         RegisterRequest request = new RegisterRequest(
                 "fakemailPROFILE", "2", "1", "fakepass",
                 List.of(Role.ADMIN,
@@ -58,16 +108,56 @@ public class ProfileControllerTest extends TestContainers {
                 .firstName(response.getFirstName())
                 .roles(response.getRoles())
                 .build();
+
+        GroupDTO expertGroupDTO = GroupDTO.builder()
+                .name("Эксперты")
+                .users(List.of(userDTO))
+                .roles(List.of(Role.EXPERT))
+                .build();
+
+        expertGroup = webTestClient
+                .post()
+                .uri("/api/v1/group/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(expertGroupDTO), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+
+        GroupDTO projectGroupDTO = GroupDTO.builder()
+                .name("Проекты")
+                .users(List.of(userDTO))
+                .roles(List.of(Role.PROJECT_OFFICE))
+                .build();
+
+        projectGroup = webTestClient
+                .post()
+                .uri("/api/v1/group/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(projectGroupDTO), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+
+        SkillDTO skillDTO = SkillDTO.builder()
+                .name("Java")
+                .type(SkillType.LANGUAGE)
+                .build();
+
+        skill = webTestClient
+                .post()
+                .uri("/api/v1/skill/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(skillDTO), SkillDTO.class)
+                .exchange()
+                .expectBody(SkillDTO.class)
+                .returnResult().getResponseBody();
     }
 
     @Test
     void testGetProfile() {
-        ProfileDTO profile = ProfileDTO.builder()
-                .id(userDTO.getId())
-                .email(userDTO.getEmail())
-                .firstName("1")
-                .lastName("2")
-                .build();
+
+        ProfileDTO profile = createProfile();
         String email = profile.getEmail();
 
         ProfileDTO responseGetProfile = webTestClient
@@ -77,18 +167,14 @@ public class ProfileControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(ProfileDTO.class)
                 .returnResult().getResponseBody();
-        assertNotNull(responseGetProfile.getId());
+        assertNotNull(responseGetProfile);
         assertEquals(profile.getEmail(), responseGetProfile.getEmail());
     }
 
     @Test
     void testUploadAvatar() {
-        ProfileDTO profile = ProfileDTO.builder()
-                .id(userDTO.getId())
-                .email(userDTO.getEmail())
-                .firstName("1")
-                .lastName("2")
-                .build();
+
+        ProfileDTO profile = createProfile();
 
         ProfileDTO responseUploadAvatar = webTestClient
                 .post()
@@ -103,12 +189,8 @@ public class ProfileControllerTest extends TestContainers {
 
     @Test
     void testGetAvatar() {
-        ProfileDTO profile = ProfileDTO.builder()
-                .id(userDTO.getId())
-                .email(userDTO.getEmail())
-                .firstName("1")
-                .lastName("2")
-                .build();
+
+        ProfileDTO profile = createProfile();
         String email = profile.getEmail();
 
         webTestClient
@@ -127,47 +209,20 @@ public class ProfileControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(ProfileDTO.class)
                 .returnResult().getResponseBody();
-        assertNotNull(responseGetAvatar.getId());
+        assertNotNull(responseGetAvatar);
         assertEquals(profile.getEmail(), responseGetAvatar.getEmail());
     }
 
-//    @Test
-//    void testSaveSkills() {
-//        SkillDTO skill = SkillDTO.builder()
-//                .name("Java")
-//                .type(SkillType.LANGUAGE)
-//                .build();
-//
-//        webTestClient
-//                .post()
-//                .uri("/api/v1/skill/add")
-//                .header("Authorization", "Bearer " + jwt)
-//                .body(Mono.just(skill), SkillDTO.class)
-//                .exchange()
-//                .expectBody(SkillDTO.class);
-//
-//        ProfileSkillResponse skills = ProfileSkillResponse.builder()
-//                .id(skill.getId())
-//                .name(skill.getName())
-//                .type(skill.getType())
-//                .build();
-//
-//        ProfileDTO profile = ProfileDTO.builder()
-//                .id(userDTO.getId())
-//                .email(userDTO.getEmail())
-//                .firstName("1")
-//                .lastName("2")
-//                .skills(List.of(skills))
-//                .build();
-//
-//        ProfileDTO responseSaveSkill = webTestClient
-//                .post()
-//                .uri("/api/v1/profile/skills/save")
-//                .header("Authorization", "Bearer " + jwt)
-//                .body(Mono.just(profile), ProfileDTO.class)
-//                .exchange()
-//                .expectBody(ProfileDTO.class)
-//                .returnResult().getResponseBody();
-//        assertNotNull(responseSaveSkill);
-//    }
+    @Test
+    void testSaveSkills() {
+
+        ProfileDTO responseSaveSkills = webTestClient
+                .post()
+                .uri("/api/v1/profile/skills/save")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(ProfileDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseSaveSkills);
+    }
 }

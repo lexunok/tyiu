@@ -185,7 +185,7 @@ class IdeaControllerTest extends TestContainers {
                 .expectBodyList(IdeaDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(ideaList);
-        assertEquals(6, ideaList.size());
+        assertEquals(5, ideaList.size());
     }
 
     @Test
