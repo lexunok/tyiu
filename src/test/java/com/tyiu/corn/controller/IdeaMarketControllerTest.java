@@ -36,7 +36,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     private IdeaMarketDTO createMarketIdea(){
         IdeaDTO ideaDTO1 = IdeaDTO.builder()
-                .initiator(userDTO.getEmail())
+                .initiatorEmail(userDTO.getEmail())
                 .name("idea1")
                 .status(StatusIdea.ON_APPROVAL)
                 .experts(groupExpert)
@@ -69,7 +69,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertNotNull(idea1);
         assertEquals(ideaDTO1.getName(), idea1.getName());
         IdeaDTO ideaDTO2 = IdeaDTO.builder()
-                .initiator(userDTO.getEmail())
+                .initiatorEmail(userDTO.getEmail())
                 .name("idea1")
                 .status(StatusIdea.ON_APPROVAL)
                 .experts(groupExpert)

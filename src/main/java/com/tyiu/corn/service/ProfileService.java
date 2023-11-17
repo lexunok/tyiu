@@ -41,7 +41,7 @@ public class ProfileService {
                 "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.description i_description," +
                 " p.id p_id, p.name p_name, p.description p_description" +
                 " FROM users u LEFT JOIN team ON team.id = u.id LEFT JOIN project p ON p.team_id = team.id " +
-                "LEFT JOIN idea i ON i.initiator_id = u.id LEFT JOIN user_skill us ON us.user_id = u.id " +
+                "LEFT JOIN idea i ON i.initiator_email = u.email LEFT JOIN user_skill us ON us.user_id = u.id " +
                 "LEFT JOIN skill s ON s.id = us.skill_id WHERE u.email = :email";
         return template.getDatabaseClient().sql(query)
                 .bind("email", email)

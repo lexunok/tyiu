@@ -37,7 +37,7 @@ public class IdeaController {
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId)
                 .flatMap(idea -> {
-                    if (idea.getInitiator().equals(user.getEmail())) {
+                    if (idea.getInitiatorEmail().equals(user.getEmail())) {
                         return Mono.just(idea);
                     } else {
                         return Mono.error(new AccessException("Нет прав!"));
@@ -51,11 +51,10 @@ public class IdeaController {
         return ideaService.getListIdea();
     }
 
-
     @GetMapping("/initiator/all")
     @PreAuthorize("hasAuthority('INITIATOR')")
     public Flux<IdeaDTO> showListIdeaByInitiator(@AuthenticationPrincipal User user){
-        return ideaService.getListIdeaByInitiator(user.getId());
+        return ideaService.getListIdeaByInitiator(user.getEmail());
     }
 
     @GetMapping("/skills/{ideaId}")
@@ -73,15 +72,15 @@ public class IdeaController {
 
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> saveIdea(@RequestBody IdeaDTO idea, Principal principal) {
-        return ideaService.saveIdeaToApproval(idea, principal.getName())
+    public Mono<IdeaDTO> saveIdea(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
+        return ideaService.saveIdeaToApproval(idea, user.getEmail())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/draft/add")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, Principal principal) {
-        return ideaService.saveIdeaInDraft(idea, principal.getName())
+    public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
+        return ideaService.saveIdeaInDraft(idea, user.getEmail())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 

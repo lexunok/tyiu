@@ -13,14 +13,14 @@ public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
     @Override
     public IdeaDTO apply(Row row, Object o) {
         GroupDTO experts = GroupDTO.builder()
-                .id(row.get("e_id", String.class))
-                .name(row.get("e_name", String.class)).build();
+                .id(row.get("experts_id", String.class))
+                .name(row.get("experts_name", String.class)).build();
         GroupDTO projectOffice = GroupDTO.builder()
-                .id(row.get("p_id", String.class))
-                .name(row.get("p_name", String.class)).build();
+                .id(row.get("project_office_id", String.class))
+                .name(row.get("project_office_name", String.class)).build();
         return IdeaDTO.builder()
                 .id(row.get("id", String.class))
-                .initiator(row.get("initiator_email", String.class))
+                .initiatorEmail(row.get("initiator_email", String.class))
                 .name(row.get("name", String.class))
                 .experts(experts)
                 .projectOffice(projectOffice)
