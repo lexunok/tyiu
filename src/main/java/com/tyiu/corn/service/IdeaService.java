@@ -220,7 +220,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusIdea(String id, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(id)),
-                        update("status",newStatus.getStatus()),Idea.class).then();
+                        update("status", newStatus.getStatus()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
@@ -236,9 +236,9 @@ public class IdeaService {
     }
 
     public Mono<Void> updateIdeaSkills(IdeaSkillRequest request) {
-        template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class).subscribe();
-        return Flux.fromIterable(request.getSkills()).flatMap(s ->
-                template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
+        return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
+                .flatMapMany(r -> Flux.fromIterable(request.getSkills())).flatMap(s ->
+                    template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
     }
 
     public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId) {

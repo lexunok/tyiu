@@ -33,6 +33,7 @@ public class IdeaController {
     }
 
     @GetMapping("/initiator/{ideaId}")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId)
                 .flatMap(idea -> {
@@ -50,7 +51,9 @@ public class IdeaController {
         return ideaService.getListIdea();
     }
 
+
     @GetMapping("/initiator/all")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Flux<IdeaDTO> showListIdeaByInitiator(@AuthenticationPrincipal User user){
         return ideaService.getListIdeaByInitiator(user.getId());
     }
@@ -91,7 +94,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/update/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<InfoResponse> updateIdeaByInitiator(@PathVariable String ideaId,
                                                     @RequestBody IdeaDTO updatedIdea) {
         return ideaService.updateIdeaByInitiator(ideaId, updatedIdea)
@@ -100,7 +103,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/send/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<InfoResponse> updateStatusByInitiator(@PathVariable String ideaId) {
         return ideaService.updateStatusByInitiator(ideaId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
@@ -108,7 +111,7 @@ public class IdeaController {
     }
 
     @PutMapping("/status/update/{ideaId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT')")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN') ")
     public Mono<InfoResponse> updateStatusIdea(@PathVariable String ideaId,
                                                               @RequestBody StatusIdeaRequest status){
         return ideaService.updateStatusIdea(ideaId, status)
