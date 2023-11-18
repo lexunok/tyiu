@@ -33,7 +33,7 @@ public class ProfileService {
 
     private final ProfileMapper mapper;
     private final R2dbcEntityTemplate template;
-    @Value("${file.path.avatar}")
+    @Value("${file.path}")
     String path;
 
     public Mono<ProfileDTO> getUserProfile(String email) {
@@ -89,7 +89,7 @@ public class ProfileService {
                     }).last();
     }
     public Mono<Resource> uploadAvatar(String userId,FilePart file){
-        Path basePath = Paths.get(path, userId + ".jpg");
+        Path basePath = Paths.get(path,  userId + "_avatar.jpg");
         file.transferTo(basePath).subscribe();
         try {
             Resource resource = new UrlResource(basePath.toUri());
@@ -101,7 +101,7 @@ public class ProfileService {
     public Mono<Resource> getAvatar(String email){
         return template.selectOne(query(where("email").is(email)), User.class)
                 .flatMap(u -> {
-                    Path basePath = Paths.get(path, u.getId() + ".jpg");
+                    Path basePath = Paths.get(path, u.getId() + "_avatar.jpg");
                     try {
                         Resource resource = new UrlResource(basePath.toUri());
                         return Mono.just(resource);

@@ -16,7 +16,6 @@ import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import java.security.Principal;
 
 
 @RestController
@@ -26,23 +25,21 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
+    //Готов
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> getIdea(@PathVariable String ideaId) {
+    public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId) {
         return ideaService.getIdea(ideaId);
     }
 
+    //Готов
     @GetMapping("/initiator/{ideaId}")
     @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId)
-                .flatMap(idea -> {
-                    if (idea.getInitiatorEmail().equals(user.getEmail())) {
-                        return Mono.just(idea);
-                    } else {
-                        return Mono.error(new AccessException("Нет прав!"));
-                    }
-                });
+                .filter(i -> i.getInitiatorEmail().equals(user.getEmail()))
+                .switchIfEmpty(Mono.error(new AccessException("Нет прав!")));
+
     }
 
     @GetMapping("/all")

@@ -6,9 +6,7 @@ logging:
 postgres:
   url: postgresql://localhost:5432/hits
 file:
-  path:
-    avatar: "./src/main/resources/files/avatars/"
-    idea: "./src/main/resources/files/ideas/"
+  path: "./src/main/resources/files/"
 spring:
   data:
     r2dbc:

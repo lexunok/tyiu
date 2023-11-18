@@ -37,19 +37,31 @@ import static org.springframework.data.relational.core.query.Update.update;
 public class IdeaService {
 
     private final R2dbcEntityTemplate template;
+    private final IdeaMapper ideaMapper;
     private final ModelMapper mapper;
 
+    //Готов
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId) {
         String query = "SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id" +
                 " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
                 " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
                 " WHERE idea.id =:ideaId";
-        IdeaMapper ideaMapper = new IdeaMapper();
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
-                .map(ideaMapper::apply)
+                .map((row, rowMetadata) -> {
+                    IdeaDTO idea = ideaMapper.apply(row,rowMetadata);
+                    idea.setProjectOffice(GroupDTO.builder()
+                                    .id(row.get("project_office_id", String.class))
+                                    .name(row.get("project_office_name",String.class))
+                            .build());
+                    idea.setExperts(GroupDTO.builder()
+                            .id(row.get("experts_id", String.class))
+                            .name(row.get("experts_name",String.class))
+                            .build());
+                    return idea;
+                })
                 .first()
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }

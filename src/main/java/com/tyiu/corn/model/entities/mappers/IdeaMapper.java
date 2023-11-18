@@ -1,29 +1,20 @@
 package com.tyiu.corn.model.entities.mappers;
 
-import com.tyiu.corn.model.dto.GroupDTO;
 import com.tyiu.corn.model.dto.IdeaDTO;
-import com.tyiu.corn.model.enums.ProjectType;
 import com.tyiu.corn.model.enums.StatusIdea;
 import io.r2dbc.spi.Row;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.function.BiFunction;
-
+@Component
 public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
     @Override
     public IdeaDTO apply(Row row, Object o) {
-        GroupDTO experts = GroupDTO.builder()
-                .id(row.get("experts_id", String.class))
-                .name(row.get("experts_name", String.class)).build();
-        GroupDTO projectOffice = GroupDTO.builder()
-                .id(row.get("project_office_id", String.class))
-                .name(row.get("project_office_name", String.class)).build();
         return IdeaDTO.builder()
                 .id(row.get("id", String.class))
                 .initiatorEmail(row.get("initiator_email", String.class))
                 .name(row.get("name", String.class))
-                .experts(experts)
-                .projectOffice(projectOffice)
                 .status(StatusIdea.valueOf(row.get("status", String.class)))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))
