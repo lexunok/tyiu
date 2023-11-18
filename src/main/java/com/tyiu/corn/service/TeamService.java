@@ -115,7 +115,7 @@ public class TeamService {
                                                     .createdAt(team.getCreatedAt())
                                                     .membersCount(teamMembers.size())
                                                     .members(teamMembers)
-                                                    .desiredSkills(team.getDesiredSkills())
+                                                    //.desiredSkills(team.getDesiredSkills())
                                                     .build();
                                         });
                             });

@@ -25,5 +25,5 @@ public class Team {
 
     private String ownerId;
     private String leaderId;
-    private List<SkillDTO> desiredSkills;
+    //private List<SkillDTO> desiredSkills;
 }
