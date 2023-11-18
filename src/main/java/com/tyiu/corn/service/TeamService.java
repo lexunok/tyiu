@@ -106,7 +106,7 @@ public class TeamService {
                                                             .email(user.getEmail())
                                                             .firstName(user.getFirstName())
                                                             .lastName(user.getLastName())
-                                                            .build();)
+                                                            .build())
                                                 .membersCount(memberList.size())
                                                 .desiredSkills(t.getDesiredSkills())
                                                 .build();
