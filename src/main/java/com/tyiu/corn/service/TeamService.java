@@ -87,35 +87,41 @@ public class TeamService {
 
     public Flux<TeamDTO> getTeams() {
         return template.select(Team.class).all()
-                .flatMap(t -> {
-                    return template.select(query(where("team_id").is(t.getId())), Team2Member.class)
+                .flatMap(team -> {
+                    return template.select(query(where("team_id").is(team.getId())), Team2Member.class)
                             .collectList()
-                            .map(memberList -> {
-                                return template.select(User.class)
-                                        .matching(query(where("id").is(userId)))
-                                        .one()
-                                        .map(user -> {
+                            .flatMap(memberList -> {
+                                Flux<User> usersFlux = Flux.fromIterable(memberList)
+                                        .flatMap(teamMember -> template.select(User.class)
+                                                .matching(query(where("id").is(teamMember.getMemberId())))
+                                                .one());
+                                return usersFlux.collectList()
+                                        .map(users -> {
+                                            List<TeamMemberDTO> teamMembers = new ArrayList<>();
+                                            for (User user : users) {
+                                                TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
+                                                        .userId(user.getId())
+                                                        .email(user.getEmail())
+                                                        .firstName(user.getFirstName())
+                                                        .lastName(user.getLastName())
+                                                        .build();
+                                                teamMembers.add(teamMemberDTO);
+                                            }
                                             return TeamDTO.builder()
-                                                .id(t.getId())
-                                                .name(t.getName())
-                                                .description(t.getDescription())
-                                                .closed(t.getClosed())
-                                                .createdAt(t.getCreatedAt())
-                                                .owner(TeamMemberDTO.builder()
-                                                            .userId(user.getId())
-                                                            .email(user.getEmail())
-                                                            .firstName(user.getFirstName())
-                                                            .lastName(user.getLastName())
-                                                            .build())
-                                                .membersCount(memberList.size())
-                                                .desiredSkills(t.getDesiredSkills())
-                                                .build();
+                                                    .id(team.getId())
+                                                    .name(team.getName())
+                                                    .description(team.getDescription())
+                                                    .closed(team.getClosed())
+                                                    .createdAt(team.getCreatedAt())
+                                                    .membersCount(teamMembers.size())
+                                                    .members(teamMembers)
+                                                    .desiredSkills(team.getDesiredSkills())
+                                                    .build();
                                         });
-                                
-                                
                             });
                 });
     }
+
 
 
     public Flux<TeamAccessionDTO> getAccessions(String teamId) {
