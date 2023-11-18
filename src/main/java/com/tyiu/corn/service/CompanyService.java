@@ -107,15 +107,12 @@ public class CompanyService {
                 .flatMap(c -> {
                     companyDTO.setId(c.getId());
                     companyDTO.setOwner(c.getOwner());
-                    List<UserDTO> newUsers = companyDTO.getUsers();
-
-                    if (!newUsers.equals(c.getUsers())) {
-                        template.delete(query(where("company_id").is(companyId)), Company2User.class).subscribe();
-                        Flux.fromIterable(newUsers).flatMap(u ->
-                                template.insert(new Company2User(u.getId(), companyId))
-                        );
-                    }
-                    return template.update(mapper.map(companyDTO, Company.class)).thenReturn(companyDTO);
+                    return template.delete(query(where("company_id").is(companyId)), Company2User.class)
+                            .thenReturn(companyDTO.getUsers())
+                            .map(list -> {
+                                list.forEach(u -> template.insert(new Company2User(u.getId(), companyId)).subscribe());
+                                return list;
+                            }).thenReturn(companyDTO);
                 });
     }
 }
