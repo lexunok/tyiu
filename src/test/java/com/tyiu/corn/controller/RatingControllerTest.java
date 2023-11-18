@@ -93,7 +93,7 @@ class RatingControllerTest extends TestContainers {
 //                .users(List.of(userDTO))
 //                .build();
         IdeaDTO idea = IdeaDTO.builder()
-                .initiator(userDTO.getEmail())
+                .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .name("Идея")

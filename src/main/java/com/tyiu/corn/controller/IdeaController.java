@@ -16,7 +16,6 @@ import com.tyiu.corn.service.IdeaService;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import java.security.Principal;
 
 
 @RestController
@@ -26,22 +25,21 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
+    //Готов
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> getIdea(@PathVariable String ideaId) {
+    public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId) {
         return ideaService.getIdea(ideaId);
     }
 
+    //Готов
     @GetMapping("/initiator/{ideaId}")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId)
-                .flatMap(idea -> {
-                    if (idea.getInitiator().equals(user.getEmail())) {
-                        return Mono.just(idea);
-                    } else {
-                        return Mono.error(new AccessException("Нет прав!"));
-                    }
-                });
+                .filter(i -> i.getInitiatorEmail().equals(user.getEmail()))
+                .switchIfEmpty(Mono.error(new AccessException("Нет прав!")));
+
     }
 
     @GetMapping("/all")
@@ -51,8 +49,9 @@ public class IdeaController {
     }
 
     @GetMapping("/initiator/all")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Flux<IdeaDTO> showListIdeaByInitiator(@AuthenticationPrincipal User user){
-        return ideaService.getListIdeaByInitiator(user.getId());
+        return ideaService.getListIdeaByInitiator(user.getEmail());
     }
 
     @GetMapping("/skills/{ideaId}")
@@ -70,15 +69,15 @@ public class IdeaController {
 
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> saveIdea(@RequestBody IdeaDTO idea, Principal principal) {
-        return ideaService.saveIdeaToApproval(idea, principal.getName())
+    public Mono<IdeaDTO> saveIdea(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
+        return ideaService.saveIdeaToApproval(idea, user.getEmail())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @PostMapping("/draft/add")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, Principal principal) {
-        return ideaService.saveIdeaInDraft(idea, principal.getName())
+    public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
+        return ideaService.saveIdeaInDraft(idea, user.getEmail())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
@@ -91,7 +90,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/update/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<InfoResponse> updateIdeaByInitiator(@PathVariable String ideaId,
                                                     @RequestBody IdeaDTO updatedIdea) {
         return ideaService.updateIdeaByInitiator(ideaId, updatedIdea)
@@ -100,7 +99,7 @@ public class IdeaController {
     }
 
     @PutMapping("/initiator/send/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<InfoResponse> updateStatusByInitiator(@PathVariable String ideaId) {
         return ideaService.updateStatusByInitiator(ideaId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success updating"))
@@ -108,7 +107,7 @@ public class IdeaController {
     }
 
     @PutMapping("/status/update/{ideaId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT')")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN') ")
     public Mono<InfoResponse> updateStatusIdea(@PathVariable String ideaId,
                                                               @RequestBody StatusIdeaRequest status){
         return ideaService.updateStatusIdea(ideaId, status)

@@ -15,7 +15,7 @@ import java.time.LocalDateTime;
 public class Idea {
     @Id
     private String id;
-    private String initiatorId;
+    private String initiatorEmail;
     private String name;
     private String groupExpertId;
     private String groupProjectOfficeId;

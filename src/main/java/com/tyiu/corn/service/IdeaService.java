@@ -37,20 +37,31 @@ import static org.springframework.data.relational.core.query.Update.update;
 public class IdeaService {
 
     private final R2dbcEntityTemplate template;
+    private final IdeaMapper ideaMapper;
     private final ModelMapper mapper;
 
+    //Готов
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId) {
-        String query = "SELECT idea.*, u.email initiator_email, e.name e_name, e.id e_id, p.name p_name, p.id p_id" +
+        String query = "SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id" +
                 " FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id" +
                 " LEFT JOIN groups p ON idea.group_project_office_id = p.id" +
-                " LEFT JOIN users u ON idea.initiator_id = u.id" +
                 " WHERE idea.id =:ideaId";
-        IdeaMapper ideaMapper = new IdeaMapper();
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
-                .map(ideaMapper::apply)
+                .map((row, rowMetadata) -> {
+                    IdeaDTO idea = ideaMapper.apply(row,rowMetadata);
+                    idea.setProjectOffice(GroupDTO.builder()
+                                    .id(row.get("project_office_id", String.class))
+                                    .name(row.get("project_office_name",String.class))
+                            .build());
+                    idea.setExperts(GroupDTO.builder()
+                            .id(row.get("experts_id", String.class))
+                            .name(row.get("experts_name",String.class))
+                            .build());
+                    return idea;
+                })
                 .first()
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
@@ -61,15 +72,15 @@ public class IdeaService {
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
     @Cacheable
-    public Flux<IdeaDTO> getListIdeaByInitiator(String initiatorId) {
-        return template.select(query(where("initiator_id").is(initiatorId)),Idea.class)
+    public Flux<IdeaDTO> getListIdeaByInitiator(String initiatorEmail) {
+        return template.select(query(where("initiator_email").is(initiatorEmail)),Idea.class)
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<IdeaDTO> saveIdeaToApproval(IdeaDTO ideaDTO, String initiatorId) {
+    public Mono<IdeaDTO> saveIdeaToApproval(IdeaDTO ideaDTO, String initiatorEmail) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
-        idea.setInitiatorId(initiatorId);
+        idea.setInitiatorEmail(initiatorEmail);
         idea.setStatus(StatusIdea.ON_APPROVAL);
         idea.setCreatedAt(LocalDateTime.now());
         idea.setModifiedAt(LocalDateTime.now());
@@ -128,9 +139,9 @@ public class IdeaService {
                 });
     }
     @CacheEvict(allEntries = true)
-    public Mono<IdeaDTO> saveIdeaInDraft(IdeaDTO ideaDTO, String initiatorId) {
+    public Mono<IdeaDTO> saveIdeaInDraft(IdeaDTO ideaDTO, String initiatorEmail) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
-        idea.setInitiatorId(initiatorId);
+        idea.setInitiatorEmail(initiatorEmail);
         idea.setStatus(StatusIdea.NEW);
         idea.setModifiedAt(LocalDateTime.now());
         return Mono.just(idea)
@@ -207,8 +218,6 @@ public class IdeaService {
                         .set("problem", updatedIdea.getProblem())
                         .set("solution", updatedIdea.getSolution())
                         .set("result", updatedIdea.getResult())
-                        .set("customer", updatedIdea.getCustomer())
-                        .set("contact_person", updatedIdea.getContactPerson())
                         .set("description", updatedIdea.getDescription())
                         .set("min_team_size", updatedIdea.getMinTeamSize())
                         .set("suitability", updatedIdea.getSuitability())
@@ -220,7 +229,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusIdea(String id, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(id)),
-                        update("status",newStatus.getStatus()),Idea.class).then();
+                        update("status", newStatus.getStatus()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
@@ -236,9 +245,9 @@ public class IdeaService {
     }
 
     public Mono<Void> updateIdeaSkills(IdeaSkillRequest request) {
-        template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class).subscribe();
-        return Flux.fromIterable(request.getSkills()).flatMap(s ->
-                template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
+        return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
+                .flatMapMany(r -> Flux.fromIterable(request.getSkills())).flatMap(s ->
+                    template.insert(new Idea2Skill(request.getIdeaId(),s.getId()))).then();
     }
 
     public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId) {

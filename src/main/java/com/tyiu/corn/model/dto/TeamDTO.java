@@ -12,13 +12,19 @@ import java.util.List;
 @NoArgsConstructor
 public class TeamDTO {
     private String id;
+
     private String name;
     private String description;
+
     private Boolean closed;
     private Integer membersCount;
     private LocalDate createdAt;
+
     private TeamMemberDTO owner;
     private TeamMemberDTO leader;
+
     private List<TeamMemberDTO> members;
     private List<SkillDTO> skills;
+    private List<SkillDTO> desiredSkills;
+
 }

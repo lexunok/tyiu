@@ -16,11 +16,11 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class StorageService {
 
-    @Value("${file.path.idea}")
+    @Value("${file.path}")
     String path;
 
     public Mono<Resource> uploadFileIdea(String ideaId,FilePart file){
-        Path basePath = Paths.get(path, ideaId + ".txt");
+        Path basePath = Paths.get(path, ideaId + "_idea.txt");
         file.transferTo(basePath).subscribe();
         try {
             Resource resource = new UrlResource(basePath.toUri());
@@ -30,7 +30,7 @@ public class StorageService {
         }
     }
     public Mono<Resource> getFileIdea(String ideaId){
-        Path basePath = Paths.get(path, ideaId + ".txt");
+        Path basePath = Paths.get(path, ideaId + "_idea.txt");
         try {
             Resource resource = new UrlResource(basePath.toUri());
             return Mono.just(resource);

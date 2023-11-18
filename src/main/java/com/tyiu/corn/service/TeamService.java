@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
+
 import java.util.List;
 import java.util.Objects;
 
@@ -32,6 +33,33 @@ import static org.springframework.data.relational.core.query.Update.update;
 @RequiredArgsConstructor
 public class TeamService {
     private final R2dbcEntityTemplate template;
+
+    private Mono<Void> updateSkills(String teamId) {
+        return template.select(Team2Member.class)
+                .matching(query(where("team_id").is(teamId)))
+                .all()
+                .collectList()
+                .flatMap(teamMembers -> {
+                    List<SkillDTO> updatedSkills = new ArrayList<>();
+                    for (Team2Member teamMember : teamMembers) {
+                        List<SkillDTO> memberSkills = (List<SkillDTO>) template.select(TeamMemberDTO.class)
+                                .matching(query(where("userId").is(teamMember.getMemberId())))
+                                .one()
+                                .map(TeamMemberDTO::getSkills);
+
+                        for (SkillDTO skill : memberSkills) {
+                            if (updatedSkills.stream().noneMatch(existingSkill -> Objects.equals(existingSkill.getId(), skill.getId()))) {
+                                updatedSkills.add(skill);
+                            }
+                        }
+                    }
+
+                    return template.update(Team.class)
+                            .matching(query(where("id").is(teamId)))
+                            .apply(update("skills", updatedSkills))
+                            .then();
+                });
+    }
 
     public Mono<TeamDTO> getTeam(String teamId) {
         TeamMapper teamMapper = new TeamMapper();
@@ -59,37 +87,66 @@ public class TeamService {
 
     public Flux<TeamDTO> getTeams() {
         return template.select(Team.class).all()
-                .flatMap(t -> template.select(query(where("team_id").is(t.getId())), Team2Member.class)
-                        .collectList()
-                        .flatMap(list -> Mono.just(TeamDTO.builder()
-                                .id(t.getId())
-                                .name(t.getName())
-                                .description(t.getDescription())
-                                .closed(t.getClosed())
-                                .createdAt(t.getCreatedAt())
-                                .membersCount(list.size())
-                                .build())));
+                .flatMap(team -> {
+                    return template.select(query(where("team_id").is(team.getId())), Team2Member.class)
+                            .collectList()
+                            .flatMap(memberList -> {
+                                Flux<User> usersFlux = Flux.fromIterable(memberList)
+                                        .flatMap(teamMember -> template.select(User.class)
+                                                .matching(query(where("id").is(teamMember.getMemberId())))
+                                                .one());
+                                return usersFlux.collectList()
+                                        .map(users -> {
+                                            List<TeamMemberDTO> teamMembers = new ArrayList<>();
+                                            for (User user : users) {
+                                                TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
+                                                        .userId(user.getId())
+                                                        .email(user.getEmail())
+                                                        .firstName(user.getFirstName())
+                                                        .lastName(user.getLastName())
+                                                        .build();
+                                                teamMembers.add(teamMemberDTO);
+                                            }
+                                            return TeamDTO.builder()
+                                                    .id(team.getId())
+                                                    .name(team.getName())
+                                                    .description(team.getDescription())
+                                                    .closed(team.getClosed())
+                                                    .createdAt(team.getCreatedAt())
+                                                    .membersCount(teamMembers.size())
+                                                    .members(teamMembers)
+                                                    //.desiredSkills(team.getDesiredSkills())
+                                                    .build();
+                                        });
+                            });
+                });
     }
+
+
+
     public Flux<TeamAccessionDTO> getAccessions(String teamId) {
         return template.select(TeamAccessionDTO.class)
                 .matching(query(where("teamId").is(teamId)))
                 .all();
     }
-    public Mono<TeamAccessionDTO> getAccessionByTargetEmail(String targetEmail) {
+    public Mono<TeamAccessionDTO> getAccessionByTargetId(String targetId) {
         return template.select(TeamAccessionDTO.class)
-                .matching(query(where("targetEmail").is(targetEmail)))
+                .matching(query(where("targetId").is(targetId)))
                 .one();
     }
     public Mono<TeamMemberDTO> getTeamProfile(String userId) {
         return template.select(User.class)
                 .matching(query(where("id").is(userId)))
                 .one()
-                .map(user -> TeamMemberDTO.builder()
-                        .userId(user.getId())
-                        .email(user.getEmail())
-                        .build());
+                .map(user -> {
+                    return TeamMemberDTO.builder()
+                            .userId(user.getId())
+                            .email(user.getEmail())
+                            .firstName(user.getFirstName())
+                            .lastName(user.getLastName())
+                            .build();
+                });
     }
-
     public Flux<TeamMemberDTO> getTeamProfiles() {
         return template.select(User.class)
                 .matching(query(where("registeredUser").is(true)))
@@ -97,6 +154,8 @@ public class TeamService {
                 .map(user -> TeamMemberDTO.builder()
                         .userId(user.getId())
                         .email(user.getEmail())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
                         .build());
     }
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
@@ -144,34 +203,9 @@ public class TeamService {
                 .switchIfEmpty(Mono.error(new IllegalArgumentException("Заявка не найдена")));
     }
 
-    private Mono<Void> updateSkills(String teamId) {
-        return template.select(Team2Member.class)
-                .matching(query(where("team_id").is(teamId)))
-                .all()
-                .collectList()
-                .flatMap(teamMembers -> {
-                    List<SkillDTO> updatedSkills = new ArrayList<>();
-                    for (Team2Member teamMember : teamMembers) {
-                        List<SkillDTO> memberSkills = (List<SkillDTO>) template.select(TeamMemberDTO.class)
-                                .matching(query(where("userId").is(teamMember.getMemberId())))
-                                .one()
-                                .map(TeamMemberDTO::getSkills);
+    
 
-                        for (SkillDTO skill : memberSkills) {
-                            if (updatedSkills.stream().noneMatch(existingSkill -> Objects.equals(existingSkill.getId(), skill.getId()))) {
-                                updatedSkills.add(skill);
-                            }
-                        }
-                    }
-
-                    return template.update(Team.class)
-                            .matching(query(where("id").is(teamId)))
-                            .apply(update("skills", updatedSkills))
-                            .then();
-                });
-    }
-
-    public Mono<Void> deleteTeam(String id) {
+    public Mono<Void> deleteTeam(Long id) {
         return template.delete(query(where("id").is(id)), Team.class).then();
     }
 
@@ -226,7 +260,7 @@ public class TeamService {
                 .then();
     }
 
-    public Mono<Void> deleteAccession(String accessionId) {
+    public Mono<Void> deleteAccession(Long accessionId) {
         return template.delete(TeamAccessionDTO.class)
                 .matching(query(where("id").is(accessionId)))
                 .all()
