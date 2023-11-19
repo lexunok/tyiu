@@ -2,13 +2,16 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.CompanyDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 
 @RestController
 @RequestMapping("/api/v1/company")
@@ -21,6 +24,11 @@ public class CompanyController {
     public Mono<CompanyDTO> getCompanyById(@PathVariable String companyId) {
         return companyService.getCompanyById(companyId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    }
+
+    @GetMapping("/owner")
+    public Flux<CompanyDTO> getOwnerCompanies(@AuthenticationPrincipal User user) {
+        return companyService.getOwnerCompanies(user.getId());
     }
 
     @GetMapping("/all")

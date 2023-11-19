@@ -67,31 +67,31 @@ public class CompanyControllerTest extends TestContainers{
                         Role.PROJECT_OFFICE,
                         Role.INITIATOR));
 
-        AuthenticationResponse response = webTestClient
+        AuthenticationResponse response2 = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
                 .body(Mono.just(request2), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
-        assertNotNull(response);
+        assertNotNull(response2);
 
-        jwt2 = response.getToken();
+        jwt2 = response2.getToken();
 
         owner = UserDTO.builder()
-                .id(response.getId())
-                .email(response.getEmail())
-                .lastName(response.getLastName())
-                .firstName(response.getFirstName())
-                .roles(response.getRoles())
+                .id(response1.getId())
+                .email(response1.getEmail())
+                .lastName(response1.getLastName())
+                .firstName(response1.getFirstName())
+                .roles(response1.getRoles())
                 .build();
 
         member = UserDTO.builder()
-                .id(response.getId())
-                .email(response.getEmail())
-                .lastName(response.getLastName())
-                .firstName(response.getFirstName())
-                .roles(response.getRoles())
+                .id(response2.getId())
+                .email(response2.getEmail())
+                .lastName(response2.getLastName())
+                .firstName(response2.getFirstName())
+                .roles(response2.getRoles())
                 .build();
     }
 
@@ -195,6 +195,46 @@ public class CompanyControllerTest extends TestContainers{
     }
 
     @Test
+    void testGetOwnerCompanies() {
+
+        CompanyDTO company1 = createCompany();
+
+        CompanyDTO responseCreateCompany1 = webTestClient
+                .post()
+                .uri("/api/v1/company/create")
+                .header("Authorization", "Bearer " + jwt1)
+                .body(Mono.just(company1), CompanyDTO.class)
+                .exchange()
+                .expectBody(CompanyDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseCreateCompany1);
+        assertEquals(company1.getName(), responseCreateCompany1.getName());
+
+        CompanyDTO company2 = createCompany();
+
+        CompanyDTO responseCreateCompany2 = webTestClient
+                .post()
+                .uri("/api/v1/company/create")
+                .header("Authorization", "Bearer " + jwt1)
+                .body(Mono.just(company2), CompanyDTO.class)
+                .exchange()
+                .expectBody(CompanyDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseCreateCompany2);
+        assertEquals(company2.getName(), responseCreateCompany2.getName());
+
+        List<CompanyDTO> listCompany = webTestClient
+                .get()
+                .uri("api/v1/company/owner")
+                .header("Authorization", "Bearer " + jwt2)
+                .exchange()
+                .expectBodyList(CompanyDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(listCompany);
+        assertEquals(0, listCompany.size());
+    }
+
+    @Test
     void testGetCompanyList() {
 
         CompanyDTO company1 = createCompany();
@@ -210,11 +250,7 @@ public class CompanyControllerTest extends TestContainers{
         assertNotNull(responseCreateCompany1);
         assertEquals(company1.getName(), responseCreateCompany1.getName());
 
-        CompanyDTO company2 = CompanyDTO.builder()
-                .name("company 2")
-                .users(List.of(member))
-                .owner(member)
-                .build();
+        CompanyDTO company2 = createCompany();
 
         CompanyDTO responseCreateCompany2 = webTestClient
                 .post()
