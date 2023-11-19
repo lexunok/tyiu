@@ -50,10 +50,8 @@ public class TeamService {
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "m.id as member_id, m.email as member_email, m.first_name as member_first_name, m.last_name as member_last_name, " +
-                "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
-                "ts.skill_id as team_skill_id, " +
-                "ds.id as desired_skill_id, ds.name as desired_skill_name, ds.type as desired_skill_type, " +
-                "tds.skill_id as desired_team_skill_id " +
+                "s.id as skill_id, s.name as skill_name, " +
+                "ts.skill_id as team_skill_id " +
                 "FROM team t " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
@@ -61,8 +59,6 @@ public class TeamService {
                 "LEFT JOIN users m ON tm.member_id = m.id " +
                 "LEFT JOIN team_skill ts ON tm.member_id = ts.team_id " +
                 "LEFT JOIN skill s ON ts.skill_id = s.id " +
-                "LEFT JOIN team_desired_skill tds ON tm.member_id = tds.team_id " +
-                "LEFT JOIN skill ds ON tds.skill_id = ds.id " +
                 "WHERE t.id = :teamId";
 
         TeamMapper teamMapper = new TeamMapper();
@@ -108,9 +104,11 @@ public class TeamService {
                 .description(teamDTO.getDescription())
                 .closed(teamDTO.getClosed())
                 .ownerId(teamDTO.getOwner().getId())
-                .leaderId(teamDTO.getLeader().getId())
+                .leaderId(teamDTO.getLeader() != null ? teamDTO.getLeader().getId() : null)
                 .createdAt(LocalDate.now())
                 .build();
+
+        
 
         return template.insert(team)
                 .flatMap(t -> {
@@ -121,8 +119,10 @@ public class TeamService {
                     teamDTO.getMembers().forEach(m ->
                             template.insert(new Team2Member(t.getId(), m.getId())).subscribe());
 
-                    teamDTO.getSkills().forEach(s ->
+                    if (teamDTO.getSkills() != null){
+                        teamDTO.getSkills().forEach(s ->
                             template.insert(new Team2Skill(t.getId(), s.getId())).subscribe());
+                    }
 
                     return Mono.just(teamDTO);
                 });
@@ -180,13 +180,18 @@ public class TeamService {
     ////////////////////////
 
     public Mono<Void> updateTeam(String id, TeamDTO teamDTO) {
-        return template.update(query(where("id").is(id)),
+        return template.delete(query(where("team_id").is(id)), Team2Member.class).thenReturn(teamDTO.getMembers()).map(list -> {
+            if (list != null) {
+                list.forEach(member -> template.insert(new Team2Member(id, member.getId())).subscribe());
+            }
+            return list;
+        }).then(template.update(query(where("id").is(id)),
                 update("name", teamDTO.getName())
                         .set("description", teamDTO.getDescription())
                         .set("closed", teamDTO.getClosed())
                         .set("owner_id", teamDTO.getOwner().getId())
-                        .set("leader_id", teamDTO.getLeader().getId()),
-                Team.class).then();
+                        .set("leader_id", teamDTO.getLeader() != null ? teamDTO.getLeader().getId() : null),
+                Team.class).then());
     }
 
 }

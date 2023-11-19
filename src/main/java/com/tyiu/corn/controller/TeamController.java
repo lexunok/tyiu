@@ -37,8 +37,8 @@ public class TeamController {
 
     @GetMapping("/all")
     public Flux<TeamDTO> getTeams() {
-        return teamService.getTeams()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return teamService.getTeams();
+                
     }
 
     @GetMapping("/invites")
