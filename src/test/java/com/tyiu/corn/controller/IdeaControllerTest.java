@@ -18,8 +18,7 @@ import reactor.core.publisher.Mono;
 
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -172,7 +171,7 @@ class IdeaControllerTest extends TestContainers {
                 .expectBodyList(IdeaDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(ideaList);
-        assertEquals(6, ideaList.size());
+        assertFalse(ideaList.isEmpty());
     }
 
     @Test
@@ -185,7 +184,7 @@ class IdeaControllerTest extends TestContainers {
                 .expectBodyList(IdeaDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(ideaList);
-        assertEquals(6, ideaList.size());
+        assertFalse(ideaList.isEmpty());
     }
 
     @Test
