@@ -46,13 +46,11 @@ public class CompanyService {
                 .sql(query)
                 .bind("companyId", companyId)
                 .flatMap(c -> {
-                    UserDTO owner = new UserDTO();
                     List<UserDTO> users = new ArrayList<>();
                     return c.map((row, rowMetadata) -> {
                         users.add(userMapper.apply(row,rowMetadata));
                         CompanyDTO companyDTO = companyMapper.apply(row,rowMetadata);
                         companyDTO.setUsers(users);
-                        companyDTO.setOwner(owner);
                         return companyDTO;
                     });
                 }).last();
@@ -87,13 +85,14 @@ public class CompanyService {
     public Mono<CompanyDTO> createCompany(CompanyDTO companyDTO) {
 
         Company company = mapper.map(companyDTO, Company.class);
+        company.setOwnerId(companyDTO.getOwner().getId());
 
         return template.insert(company).flatMap(c -> {
             companyDTO.setId(c.getId());
             return Flux.fromIterable(companyDTO.getUsers()).flatMap(u ->
                     template.insert(new Company2User(u.getId(), c.getId())
-                    )).then();
-        }).thenReturn(companyDTO);
+                    )).next().flatMap(co -> getCompany(companyDTO.getId()));
+        });
     }
 
     @CacheEvict(allEntries = true)
