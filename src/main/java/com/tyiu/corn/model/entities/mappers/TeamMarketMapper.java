@@ -2,7 +2,7 @@ package com.tyiu.corn.model.entities.mappers;
 
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
-import com.tyiu.corn.model.dto.TeamMemberDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.enums.SkillType;
 import io.r2dbc.spi.Row;
 
@@ -32,14 +32,14 @@ public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketReque
                     .updatedAt(row.get("updated_at", LocalDate.class))
                     .closed(row.get("closed", Boolean.class))
                     .description(row.get("description", String.class))
-                    .owner(TeamMemberDTO.builder()
-                            .userId(row.get("o_id", String.class))
+                    .owner(UserDTO.builder()
+                            .id(row.get("o_id", String.class))
                             .email(row.get("o_email", String.class))
                             .firstName(row.get("o_first_name", String.class))
                             .lastName(row.get("o_last_name", String.class))
                             .build())
-                    .leader(TeamMemberDTO.builder()
-                            .userId(row.get("l_id", String.class))
+                    .leader(UserDTO.builder()
+                            .id(row.get("l_id", String.class))
                             .email(row.get("l_email", String.class))
                             .firstName(row.get("l_first_name", String.class))
                             .lastName(row.get("l_last_name", String.class))
@@ -51,14 +51,14 @@ public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketReque
             teamMarketRequestDTOMap.put(teamMarketRequestId, existingTeamMarketRequest);
         }
 
-        TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
-                .userId(row.get("m_id", String.class))
+        UserDTO teamMemberDTO = UserDTO.builder()
+                .id(row.get("m_id", String.class))
                 .email(row.get("m_email", String.class))
                 .firstName(row.get("m_first_name", String.class))
                 .lastName(row.get("m_last_name", String.class))
                 .build();
 
-        if(existingTeamMarketRequest.getMembers().stream().noneMatch(user -> user.getUserId().equals(teamMemberDTO.getUserId()))) {
+        if(existingTeamMarketRequest.getMembers().stream().noneMatch(user -> user.getId().equals(teamMemberDTO.getId()))) {
             existingTeamMarketRequest.getMembers().add(teamMemberDTO);
         }
 
