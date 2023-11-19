@@ -43,7 +43,7 @@ public class CompanyControllerTest extends TestContainers{
     public void setUp() {
 
         RegisterRequest request1 = new RegisterRequest(
-                "fakemailOWNER", "fakename", "fakename", "fakepass",
+                "fakemailOWNER", "owner", "ownerov", "fakepass",
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
@@ -61,7 +61,7 @@ public class CompanyControllerTest extends TestContainers{
         jwt1 = response1.getToken();
 
         RegisterRequest request2 = new RegisterRequest(
-                "fakemailMEMBER", "fakename", "fakename", "fakepass",
+                "fakemailMEMBER", "member", "memberov", "fakepass",
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
@@ -127,9 +127,10 @@ public class CompanyControllerTest extends TestContainers{
                 .returnResult().getResponseBody();
         assertNotNull(responseCreateCompany);
         assertEquals(company.getName(), responseCreateCompany.getName());
+        assertEquals(1, company.getUsers().size());
 
         company = CompanyDTO.builder()
-                .name("company1Updated")
+                .name("companyAddUser")
                 .users(List.of(owner, member))
                 .owner(owner)
                 .build();
@@ -141,6 +142,41 @@ public class CompanyControllerTest extends TestContainers{
                 .body(Mono.just(company), CompanyDTO.class)
                 .exchange()
                 .expectStatus().isOk();
+        assertEquals("companyAddUser", company.getName());
+        assertEquals(2, company.getUsers().size());
+
+        company = CompanyDTO.builder()
+                .name("companyDeleteUser")
+                .users(List.of(owner))
+                .owner(owner)
+                .build();
+
+        webTestClient
+                .put()
+                .uri("/api/v1/company/update/{id}", responseCreateCompany.getId())
+                .header("Authorization", "Bearer " + jwt1)
+                .body(Mono.just(company), CompanyDTO.class)
+                .exchange()
+                .expectStatus().isOk();
+        assertEquals("companyDeleteUser", company.getName());
+        assertEquals(1, company.getUsers().size());
+
+        company = CompanyDTO.builder()
+                .name("companyChangeOwner")
+                .users(List.of(owner, member))
+                .owner(member)
+                .build();
+
+        webTestClient
+                .put()
+                .uri("/api/v1/company/update/{id}", responseCreateCompany.getId())
+                .header("Authorization", "Bearer " + jwt1)
+                .body(Mono.just(company), CompanyDTO.class)
+                .exchange()
+                .expectStatus().isOk();
+        assertEquals("companyChangeOwner", company.getName());
+        assertEquals(2, company.getUsers().size());
+        assertEquals(member, company.getOwner());
     }
 
     @Test
