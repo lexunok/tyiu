@@ -14,53 +14,64 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
 
     @Override
     public TeamDTO apply(Row row, Object o) {
-        String teamId = row.get("id", String.class);
+        String teamId = row.get("team_id", String.class);
         TeamDTO existingTeam = teamDTOMap.get(teamId);
 
         if (existingTeam == null) {
             existingTeam = TeamDTO.builder()
                     .id(teamId)
-                    .name(row.get("name", String.class))
-                    .description(row.get("description", String.class))
-                    .closed(row.get("closed", Boolean.class))
-                    .createdAt(row.get("created_at", LocalDate.class))
-                    .owner(TeamMemberDTO.builder()
-                            .userId(row.get("o_id", String.class))
-                            .email(row.get("o_email", String.class))
-                            .firstName(row.get("o_first_name", String.class))
-                            .lastName(row.get("o_last_name", String.class))
+                    .name(row.get("team_name", String.class))
+                    .description(row.get("team_description", String.class))
+                    .closed(row.get("team_closed", Boolean.class))
+                    .createdAt(row.get("team_created_at", LocalDate.class))
+                    .owner(UserDTO.builder()
+                            .id(row.get("owner_id", String.class))
+                            .email(row.get("owner_email", String.class))
+                            .firstName(row.get("owner_first_name", String.class))
+                            .lastName(row.get("owner_last_name", String.class))
                             .build())
-                    .leader(TeamMemberDTO.builder()
-                            .userId(row.get("l_id", String.class))
-                            .email(row.get("l_email", String.class))
-                            .firstName(row.get("l_first_name", String.class))
-                            .lastName(row.get("l_last_name", String.class))
+                    .leader(UserDTO.builder()
+                            .id(row.get("leader_id", String.class))
+                            .email(row.get("leader_email", String.class))
+                            .firstName(row.get("leader_first_name", String.class))
+                            .lastName(row.get("leader_last_name", String.class))
                             .build())
                     .members(new ArrayList<>())
                     .skills(new ArrayList<>())
+                    .desiredSkills(new ArrayList<>())
                     .build();
             teamDTOMap.put(teamId, existingTeam);
         }
 
-        TeamMemberDTO member = TeamMemberDTO.builder()
-                .userId(row.get("m_id", String.class))
-                .email(row.get("m_email", String.class))
-                .firstName(row.get("m_first_name", String.class))
-                .lastName(row.get("m_last_name", String.class))
+        UserDTO member = UserDTO.builder()
+                .id(row.get("member_id", String.class))
+                .email(row.get("member_email", String.class))
+                .firstName(row.get("member_first_name", String.class))
+                .lastName(row.get("member_last_name", String.class))
                 .build();
 
-        if(existingTeam.getMembers().stream().noneMatch(m -> m.getUserId().equals(member.getUserId()))) {
+        if(existingTeam.getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
             existingTeam.getMembers().add(member);
             existingTeam.setMembersCount(existingTeam.getMembers().size());
         }
 
         SkillDTO skill = SkillDTO.builder()
-                .id(row.get("s_id", String.class))
-                .name(row.get("s_name", String.class))
-                .type(SkillType.valueOf(row.get("type", String.class)))
+                .id(row.get("skill_id", String.class))
+                .name(row.get("skill_name", String.class))
+                .type(SkillType.valueOf(row.get("skill_type", String.class)))
                 .build();
 
         if(existingTeam.getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
+            existingTeam.getSkills().add(skill);
+        }
+
+        SkillDTO desiredSkill = SkillDTO.builder()
+                .id(row.get("desired_skill_id", String.class))
+                .name(row.get("desired_skill_name", String.class))
+                .type(SkillType.valueOf(row.get("desired_skill_type", String.class)))
+                .build();
+
+        if(existingTeam.getDesiredSkills().stream().noneMatch(s -> s.getId().equals(desiredSkill.getId()))) {
             existingTeam.getSkills().add(skill);
         }
 
