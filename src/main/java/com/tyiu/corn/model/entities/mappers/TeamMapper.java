@@ -30,51 +30,46 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
                             .firstName(row.get("owner_first_name", String.class))
                             .lastName(row.get("owner_last_name", String.class))
                             .build())
-                    .leader(UserDTO.builder()
-                            .id(row.get("leader_id", String.class))
-                            .email(row.get("leader_email", String.class))
-                            .firstName(row.get("leader_first_name", String.class))
-                            .lastName(row.get("leader_last_name", String.class))
-                            .build())
                     .members(new ArrayList<>())
                     .skills(new ArrayList<>())
                     .desiredSkills(new ArrayList<>())
                     .build();
+            
+            if (row.get("leader_id", String.class) != null) {
+                existingTeam.setLeader(UserDTO.builder()
+                            .id(row.get("leader_id", String.class))
+                            .email(row.get("leader_email", String.class))
+                            .firstName(row.get("leader_first_name", String.class))
+                            .lastName(row.get("leader_last_name", String.class))
+                            .build());
+            }
+
             teamDTOMap.put(teamId, existingTeam);
         }
 
-        UserDTO member = UserDTO.builder()
+        if (row.get("member_id", String.class) != null){
+            UserDTO member = UserDTO.builder()
                 .id(row.get("member_id", String.class))
                 .email(row.get("member_email", String.class))
                 .firstName(row.get("member_first_name", String.class))
                 .lastName(row.get("member_last_name", String.class))
                 .build();
-
-        if(existingTeam.getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
-            existingTeam.getMembers().add(member);
-            existingTeam.setMembersCount(existingTeam.getMembers().size());
+            if(existingTeam.getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
+                existingTeam.getMembers().add(member);
+                existingTeam.setMembersCount(existingTeam.getMembers().size());
+            }
         }
+
+        
 
         SkillDTO skill = SkillDTO.builder()
                 .id(row.get("skill_id", String.class))
                 .name(row.get("skill_name", String.class))
-                .type(SkillType.valueOf(row.get("skill_type", String.class)))
                 .build();
 
         if(existingTeam.getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
             existingTeam.getSkills().add(skill);
         }
-
-        SkillDTO desiredSkill = SkillDTO.builder()
-                .id(row.get("desired_skill_id", String.class))
-                .name(row.get("desired_skill_name", String.class))
-                .type(SkillType.valueOf(row.get("desired_skill_type", String.class)))
-                .build();
-
-        if(existingTeam.getDesiredSkills().stream().noneMatch(s -> s.getId().equals(desiredSkill.getId()))) {
-            existingTeam.getSkills().add(skill);
-        }
-
         return existingTeam;
     }
 }
