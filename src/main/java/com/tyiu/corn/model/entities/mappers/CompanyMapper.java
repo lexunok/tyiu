@@ -36,15 +36,18 @@ public class CompanyMapper implements BiFunction<Row, Object, CompanyDTO> {
             companyDTOMap.put(companyId, existingCompany);
         }
 
-        UserDTO member = UserDTO.builder()
-                .id(row.get("member_id", String.class))
-                .email(row.get("member_email", String.class))
-                .firstName(row.get("member_first_name", String.class))
-                .lastName(row.get("member_last_name", String.class))
-                .build();
+        String id =row.get("member_id", String.class);
+        if(id != null){
+            UserDTO member = UserDTO.builder()
+                    .id(id)
+                    .email(row.get("member_email", String.class))
+                    .firstName(row.get("member_first_name", String.class))
+                    .lastName(row.get("member_last_name", String.class))
+                    .build();
 
-        if(existingCompany.getUsers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
-            existingCompany.getUsers().add(member);
+            if(existingCompany.getUsers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
+                existingCompany.getUsers().add(member);
+            }
         }
 
         return existingCompany;
