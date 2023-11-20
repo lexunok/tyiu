@@ -95,17 +95,20 @@ public class CompanyService {
     }
 
     @Cacheable
-    public Mono<CompanyDTO> getListStaff(String id) {
-        return template.selectOne(query(where("id").is(id)), Company.class)
-                .flatMap(c -> {
-                CompanyDTO companyDTO = mapper.map(c, CompanyDTO.class);
-                return template.select(query(where("id").in(c.getId())), Company.class)
-                        .flatMap(u -> Flux.just(mapper.map(u, UserDTO.class))).collectList()
-                        .flatMap(list -> {
-                            companyDTO.setUsers(list);
-                            return Mono.just(companyDTO);
-                        });
-                }).switchIfEmpty(Mono.error(new NotFoundException("Not success!")));
+    public Flux<UserDTO> getListStaff(String id) {
+        String QUERY = "SELECT company_user.*, users.id, users.email, users.first_name, users.last_name " +
+                "FROM company_user " +
+                "LEFT JOIN users ON company_user.user_id = users.id " +
+                "WHERE company_user.company_id = :companyId";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("companyId",id)
+                .map((row, rowMetadata) -> UserDTO.builder()
+                        .id(row.get("id", String.class))
+                        .email(row.get("email", String.class))
+                        .firstName(row.get("first_name", String.class))
+                        .lastName(row.get("last_name", String.class))
+                        .build()).all();
     }
 
     @CacheEvict(allEntries = true)
