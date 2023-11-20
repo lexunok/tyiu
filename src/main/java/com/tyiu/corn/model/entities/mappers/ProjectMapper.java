@@ -28,14 +28,14 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
                             .description(row.get("t_description", String.class))
                             .closed(row.get("closed", Boolean.class))
                             .createdAt(row.get("created_at", LocalDate.class))
-                            .owner(TeamMemberDTO.builder()
-                                    .userId(row.get("o_id", String.class))
+                            .owner(UserDTO.builder()
+                                    .id(row.get("o_id", String.class))
                                     .email(row.get("o_email", String.class))
                                     .firstName(row.get("o_first_name", String.class))
                                     .lastName(row.get("o_last_name", String.class))
                                     .build())
-                            .leader(TeamMemberDTO.builder()
-                                    .userId(row.get("l_id", String.class))
+                            .leader(UserDTO.builder()
+                                    .id(row.get("l_id", String.class))
                                     .email(row.get("l_email", String.class))
                                     .firstName(row.get("l_first_name", String.class))
                                     .lastName(row.get("l_last_name", String.class))
@@ -47,14 +47,14 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
             projectDTOMap.put(projectId, existingProject);
         }
 
-        TeamMemberDTO member = TeamMemberDTO.builder()
-                .userId(row.get("m_id", String.class))
+        UserDTO member = UserDTO.builder()
+                .id(row.get("m_id", String.class))
                 .email(row.get("m_email", String.class))
                 .firstName(row.get("m_first_name", String.class))
                 .lastName(row.get("m_last_name", String.class))
                 .build();
 
-        if(existingProject.getTeam().getMembers().stream().noneMatch(m -> m.getUserId().equals(member.getUserId()))) {
+        if(existingProject.getTeam().getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
             existingProject.getTeam().getMembers().add(member);
             existingProject.setMembersCount(existingProject.getTeam().getMembers().size());
         }

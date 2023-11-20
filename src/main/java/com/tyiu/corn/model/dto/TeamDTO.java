@@ -20,10 +20,10 @@ public class TeamDTO {
     private Integer membersCount;
     private LocalDate createdAt;
 
-    private TeamMemberDTO owner;
-    private TeamMemberDTO leader;
+    private UserDTO owner;
+    private UserDTO leader;
 
-    private List<TeamMemberDTO> members;
+    private List<UserDTO> members;
     private List<SkillDTO> skills;
     private List<SkillDTO> desiredSkills;
 

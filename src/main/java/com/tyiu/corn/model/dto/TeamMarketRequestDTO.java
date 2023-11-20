@@ -21,9 +21,9 @@ public class TeamMarketRequestDTO {
     private LocalDate updatedAt;
     private Boolean closed;
     private String description;
-    private TeamMemberDTO owner;
-    private TeamMemberDTO leader;
-    private List<TeamMemberDTO> members;
+    private UserDTO owner;
+    private UserDTO leader;
+    private List<UserDTO> members;
     private List<SkillDTO> skills;
     private String letter;
 }

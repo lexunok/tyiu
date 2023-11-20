@@ -157,8 +157,8 @@ public class IdeaMarketControllerTest extends TestContainers {
     }
 
     private TeamMarketRequestDTO createMarketTeamRequest(String ideaMarketId){
-        TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
-                .userId(userDTO.getId())
+        UserDTO teamMemberDTO = UserDTO.builder()
+                .id(userDTO.getId())
                 .email(userDTO.getEmail())
                 .firstName(userDTO.getFirstName())
                 .lastName(userDTO.getLastName())

@@ -8,8 +8,6 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @Table(name = "team_skill")
 public class Team2Skill {
-
     private String teamId;
     private String skillId;
-
 }

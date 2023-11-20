@@ -2,13 +2,17 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.CompanyDTO;
+import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.corn.service.CompanyService;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 
 @RestController
 @RequestMapping("/api/v1/company")
@@ -23,15 +27,19 @@ public class CompanyController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
+    @GetMapping("/owner")
+    public Flux<CompanyDTO> getMemberListCompany(@AuthenticationPrincipal User user) {
+        return companyService.getMembersListCompany(user.getId());
+    }
+
     @GetMapping("/all")
     public Flux<CompanyDTO> getCompanyList() {
         return companyService.getListCompany();
     }
 
     @GetMapping("/staff/{companyId}")
-    public Mono<CompanyDTO> getCompanyStaff(@PathVariable String companyId) {
-        return companyService.getListStaff(companyId)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    public Flux<UserDTO> getCompanyStaff(@PathVariable String companyId) {
+        return companyService.getListStaff(companyId);
     }
 
     @PostMapping("/create")

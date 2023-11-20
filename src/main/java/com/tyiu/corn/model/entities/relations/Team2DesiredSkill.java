@@ -1,17 +1,13 @@
 package com.tyiu.corn.model.entities.relations;
 
 import lombok.AllArgsConstructor;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.relational.core.mapping.Table;
 
-@Getter
-@AllArgsConstructor
 @NoArgsConstructor
-@Table("company_user")
-public class Company2User {
-
-    private String userId;
-    private String companyId;
-
+@AllArgsConstructor
+@Table(name = "team_desired_skill")
+public class Team2DesiredSkill {
+    private String teamId;
+    private String skillId;
 }
