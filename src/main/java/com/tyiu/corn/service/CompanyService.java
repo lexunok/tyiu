@@ -63,8 +63,9 @@ public class CompanyService {
                         .sql("SELECT company.*, users.id user_id, users.email, users.first_name, users.last_name " +
                                 "FROM company " +
                                 "LEFT JOIN users ON company.owner_id = users.id " +
-                                "WHERE company.id IN (:id)")
+                                "WHERE company.id IN (:id) OR company.owner_id = :userId")
                         .bind("id", id)
+                        .bind("userId", userId)
                         .map((row, rowMetadata) -> CompanyDTO.builder()
                                 .id(row.get("id", String.class))
                                 .name(row.get("name", String.class))
