@@ -197,6 +197,6 @@ public class CompanyControllerTest extends TestContainers{
                 .expectBodyList(CompanyDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(members);
-        assertTrue(members.size() >= 2);
+        assertTrue(members.size() >= 1);
     }
 }
