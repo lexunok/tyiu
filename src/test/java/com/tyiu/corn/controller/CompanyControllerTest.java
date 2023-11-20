@@ -51,7 +51,7 @@ public class CompanyControllerTest extends TestContainers{
         return responseCreateCompany;
     }
 
-    private CompanyDTO getCompany(String id, String name){
+    private CompanyDTO getCompany(String id){
         CompanyDTO responseGetCompany = webTestClient
                 .get()
                 .uri("/api/v1/company/{id}", id)
@@ -60,7 +60,7 @@ public class CompanyControllerTest extends TestContainers{
                 .expectBody(CompanyDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(responseGetCompany);
-        assertEquals(name, responseGetCompany.getName());
+        assertEquals("company", responseGetCompany.getName());
         return responseGetCompany;
     }
 
@@ -94,6 +94,16 @@ public class CompanyControllerTest extends TestContainers{
         return response;
     }
 
+    private UserDTO userBuild(String id, String email, String lastname, String firstname, List<Role> roles){
+        return UserDTO.builder()
+                .id(id)
+                .email(email)
+                .lastName(lastname)
+                .firstName(firstname)
+                .roles(roles)
+                .build();
+    }
+
     private void updateCompany(String id, String name, List<UserDTO> users, UserDTO owner){
         CompanyDTO updateCompany = CompanyDTO.builder()
                 .id(id)
@@ -116,28 +126,12 @@ public class CompanyControllerTest extends TestContainers{
 
     @BeforeAll
     public void setUp() {
-
         AuthenticationResponse response1 = register("company.test@gmail.com", "company", "test", "company-test");
         jwt1 = response1.getToken();
-
         AuthenticationResponse response2 = register("test.company@gmail.com", "test", "company", "test-company");
         jwt2 = response2.getToken();
-
-        owner = UserDTO.builder()
-                .id(response1.getId())
-                .email(response1.getEmail())
-                .lastName(response1.getLastName())
-                .firstName(response1.getFirstName())
-                .roles(response1.getRoles())
-                .build();
-
-        member = UserDTO.builder()
-                .id(response2.getId())
-                .email(response2.getEmail())
-                .lastName(response2.getLastName())
-                .firstName(response2.getFirstName())
-                .roles(response2.getRoles())
-                .build();
+        owner = userBuild(response1.getId(),response1.getEmail(),response1.getLastName(),response1.getFirstName(),response1.getRoles());
+        member = userBuild(response2.getId(),response2.getEmail(),response2.getLastName(),response2.getFirstName(),response2.getRoles());
     }
 
     @Test
@@ -148,13 +142,11 @@ public class CompanyControllerTest extends TestContainers{
     @Test
     void testUpdateCompany() {
         String id = createCompany("company",List.of(member),owner).getId();
-        assertTrue(1 <= getCompany(id, "company").getUsers().size());
-
+        assertTrue(1 <= getCompany(id).getUsers().size());
         updateCompany(id,"companyAddUser",List.of(owner, member),owner);
-        assertTrue(2 <= getCompany(id, "company").getUsers().size());
-
+        assertTrue(2 <= getCompany(id).getUsers().size());
         updateCompany(id,"companyDeleteUser",List.of(member),owner);
-        assertTrue(1 <= getCompany(id, "company").getUsers().size());
+        assertTrue(1 <= getCompany(id).getUsers().size());
     }
 
     @Test
@@ -169,7 +161,7 @@ public class CompanyControllerTest extends TestContainers{
 
     @Test
     void testGetCompanyById() {
-        getCompany(createCompany("company",List.of(member),owner).getId(), "company");
+        getCompany(createCompany("company",List.of(member),owner).getId());
     }
 
     @Test

@@ -1,6 +1,5 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.CompanyDTO;
 import com.tyiu.corn.model.entities.mappers.CompanyMapper;
 import com.tyiu.corn.model.entities.relations.Company2User;
@@ -54,26 +53,25 @@ public class CompanyService {
     }
 
     public Flux<CompanyDTO> getMembersListCompany(String userId) {
-        return template.select(query(where("user_id").is(userId)), Company2User.class)
-                .map(Company2User::getCompanyId)
-                .collectList()
-                .flatMapMany(id -> template.getDatabaseClient()
-                        .sql("SELECT company.*, users.id user_id, users.email, users.first_name, users.last_name " +
-                                "FROM company " +
-                                "LEFT JOIN users ON company.owner_id = users.id " +
-                                "WHERE company.id IN (:id) OR company.owner_id = :userId")
-                        .bind("id", id)
-                        .bind("userId", userId)
-                        .map((row, rowMetadata) -> CompanyDTO.builder()
-                                .id(row.get("id", String.class))
-                                .name(row.get("name", String.class))
-                                .owner(UserDTO.builder()
-                                        .id(row.get("user_id", String.class))
-                                        .firstName(row.get("first_name", String.class))
-                                        .lastName(row.get("last_name", String.class))
-                                        .email(row.get("email", String.class))
-                                        .build())
-                                .build()).all());
+        String QUERY = "SELECT company_user.company_id, company.*, users.id user_id, users.email, users.first_name, users.last_name " +
+                "FROM company_user " +
+                "LEFT JOIN company ON company.id = company_user.company_id " +
+                "LEFT JOIN users ON users.id = company.owner_id " +
+                "WHERE company_user.user_id = :userId OR company.owner_id = :userId";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId",userId)
+                .map((row, rowMetadata) -> CompanyDTO.builder()
+                        .id(row.get("id", String.class))
+                        .name(row.get("name", String.class))
+                        .owner(UserDTO.builder()
+                                .id(row.get("user_id", String.class))
+                                .firstName(row.get("first_name", String.class))
+                                .lastName(row.get("last_name", String.class))
+                                .email(row.get("email", String.class))
+                                .build())
+                        .build())
+                .all();
     }
 
     @Cacheable
