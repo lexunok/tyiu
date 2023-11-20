@@ -16,6 +16,7 @@ import com.tyiu.corn.model.entities.Company;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -54,23 +55,26 @@ public class CompanyService {
     }
 
     @Cacheable
-    public Flux<CompanyDTO> getOwnerCompanies(String userId) {
-        return template.getDatabaseClient()
-                .sql("SELECT company.*, users.id user_id, users.email, users.first_name, users.last_name " +
-                        "FROM company " +
-                        "LEFT JOIN users ON company.owner_id = users.id " +
-                        "WHERE company.owner_id = :userId")
-                .bind("userId", userId)
-                .map((row, rowMetadata) -> CompanyDTO.builder()
-                        .id(row.get("id", String.class))
-                        .name(row.get("name", String.class))
-                        .owner(UserDTO.builder()
-                                .id(row.get("user_id", String.class))
-                                .firstName(row.get("first_name", String.class))
-                                .lastName(row.get("last_name", String.class))
-                                .email(row.get("email", String.class))
-                                .build())
-                        .build()).all();
+    public Flux<CompanyDTO> getMembersListCompany(String userId) {
+        return template.select(query(where("user_id").is(userId)), Company2User.class)
+                .map(Company2User::getCompanyId)
+                .collectList()
+                .flatMapMany(id -> template.getDatabaseClient()
+                        .sql("SELECT company.*, users.id user_id, users.email, users.first_name, users.last_name " +
+                                "FROM company " +
+                                "LEFT JOIN users ON company.owner_id = users.id " +
+                                "WHERE company.id IN (:id)")
+                        .bind("id", id)
+                        .map((row, rowMetadata) -> CompanyDTO.builder()
+                                .id(row.get("id", String.class))
+                                .name(row.get("name", String.class))
+                                .owner(UserDTO.builder()
+                                        .id(row.get("user_id", String.class))
+                                        .firstName(row.get("first_name", String.class))
+                                        .lastName(row.get("last_name", String.class))
+                                        .email(row.get("email", String.class))
+                                        .build())
+                                .build()).all());
     }
 
     @Cacheable
@@ -137,5 +141,30 @@ public class CompanyService {
                                 return list;
                             }).thenReturn(companyDTO);
                 });
+//        return template.delete(query(where("company_id").is(companyId)), Company2User.class).thenReturn(companyDTO.getUsers())
+//                .map(list -> {
+//                    if (list != null) {
+//                        list.forEach(u -> template.insert(new Company2User(companyId, u.getId())).subscribe());
+//                    }
+//                    return list;
+//        }).then(template.update(query(where("id").is(companyId)),
+//                update("name", companyDTO.getName())
+//                        .set("owner_id", companyDTO.getOwner().getId()),
+//                Company.class).then());
+
+//        return getCompany(companyId)
+//                .flatMap(c -> {
+//                    companyDTO.setId(c.getId());
+//                    companyDTO.setOwner(c.getOwner());
+//                    return template.delete(query(where("company_id").is(companyId)), Company2User.class)
+//                            .thenReturn(companyDTO.getUsers())
+//                            .map(list -> {
+//                                list.forEach(u -> template.insert(new Company2User(u.getId(), companyId)).subscribe());
+//                                return list;
+//                            }).then(template.update(query(where("id").is(companyId)),
+//                                    update("name", companyDTO.getName())
+//                                            .set("owner_id", companyDTO.getOwner().getId()),
+//                                    Company.class));
+//                }).then();
     }
 }

@@ -1,9 +1,11 @@
 package com.tyiu.corn.model.entities.relations;
 
 import lombok.AllArgsConstructor;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.relational.core.mapping.Table;
 
+@Getter
 @AllArgsConstructor
 @NoArgsConstructor
 @Table("company_user")

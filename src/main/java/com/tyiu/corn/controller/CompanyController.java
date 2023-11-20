@@ -27,8 +27,8 @@ public class CompanyController {
     }
 
     @GetMapping("/owner")
-    public Flux<CompanyDTO> getOwnerCompanies(@AuthenticationPrincipal User user) {
-        return companyService.getOwnerCompanies(user.getId());
+    public Flux<CompanyDTO> getMemberListCompany(@AuthenticationPrincipal User user) {
+        return companyService.getMembersListCompany(user.getId());
     }
 
     @GetMapping("/all")
