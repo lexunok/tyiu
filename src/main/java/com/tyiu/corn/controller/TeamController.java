@@ -112,7 +112,7 @@ public class TeamController {
     ////////////////////////
 
     @PutMapping("/update/{teamId}")
-    public Mono<Void> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
+    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
         return teamService.updateTeam(teamId, team);
     }
 }

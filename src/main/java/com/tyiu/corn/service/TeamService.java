@@ -8,6 +8,7 @@ import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Team2Member;
 import com.tyiu.corn.model.entities.relations.Team2Skill;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -17,13 +18,13 @@ import java.time.LocalDate;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-import static org.springframework.data.relational.core.query.Update.update;
 
 
 @Service
 @RequiredArgsConstructor
 public class TeamService {
     private final R2dbcEntityTemplate template;
+    private final ModelMapper mapper;
 
     private Mono<Void> updateSkills(String teamId){
         String QUERY = "SELECT team_member.*, user_skill.* " +
@@ -107,9 +108,6 @@ public class TeamService {
                 .leaderId(teamDTO.getLeader() != null ? teamDTO.getLeader().getId() : null)
                 .createdAt(LocalDate.now())
                 .build();
-
-        
-
         return template.insert(team)
                 .flatMap(t -> {
                     teamDTO.setId(t.getId());
@@ -179,19 +177,18 @@ public class TeamService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<Void> updateTeam(String id, TeamDTO teamDTO) {
-        return template.delete(query(where("team_id").is(id)), Team2Member.class).thenReturn(teamDTO.getMembers()).map(list -> {
-            if (list != null) {
-                list.forEach(member -> template.insert(new Team2Member(id, member.getId())).subscribe());
-            }
-            return list;
-        }).then(template.update(query(where("id").is(id)),
-                update("name", teamDTO.getName())
-                        .set("description", teamDTO.getDescription())
-                        .set("closed", teamDTO.getClosed())
-                        .set("owner_id", teamDTO.getOwner().getId())
-                        .set("leader_id", teamDTO.getLeader() != null ? teamDTO.getLeader().getId() : null),
-                Team.class).then());
+    public Mono<TeamDTO> updateTeam(String id, TeamDTO teamDTO) {
+        Team team = mapper.map(teamDTO,Team.class);
+        team.setId(id);
+        team.setOwnerId(teamDTO.getOwner().getId());
+        team.setLeaderId(teamDTO.getLeader().getId());
+        return template.update(team)
+                .flatMap(t ->
+                        template.delete(query(where("team_id").is(id)), Team2Member.class)
+                                .thenReturn(teamDTO.getMembers()).mapNotNull(list -> {
+                                        list.forEach(member -> template.insert(new Team2Member(id, member.getId())).subscribe());
+                                        return list;
+                })).then(updateSkills(id)).thenReturn(teamDTO);
     }
 
 }
