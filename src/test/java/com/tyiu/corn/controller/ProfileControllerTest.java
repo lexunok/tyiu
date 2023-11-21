@@ -7,7 +7,6 @@ import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
-import com.tyiu.corn.model.responses.ProfileSkillResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -64,7 +63,7 @@ public class ProfileControllerTest extends TestContainers {
                 .description(responseCreateIdea.getDescription())
                 .build();
 
-        ProfileSkillResponse skills = ProfileSkillResponse.builder()
+        SkillDTO skills = SkillDTO.builder()
                 .name(skill.getName())
                 .type(skill.getType())
                 .build();

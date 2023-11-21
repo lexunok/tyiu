@@ -8,7 +8,6 @@ import com.tyiu.corn.model.entities.relations.User2Skill;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
-import com.tyiu.corn.model.responses.ProfileSkillResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
@@ -38,7 +37,7 @@ public class ProfileService {
 
     public Mono<ProfileDTO> getUserProfile(String email) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, " +
-                "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.description i_description," +
+                "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.description i_description, i.status i_status," +
                 " p.id p_id, p.name p_name, p.description p_description" +
                 " FROM users u LEFT JOIN team ON team.id = u.id LEFT JOIN project p ON p.team_id = team.id " +
                 "LEFT JOIN idea i ON i.initiator_email = u.email LEFT JOIN user_skill us ON us.user_id = u.id " +
@@ -46,7 +45,7 @@ public class ProfileService {
         return template.getDatabaseClient().sql(query)
                 .bind("email", email)
                 .flatMap(p -> {
-                    ConcurrentHashMap<String,ProfileSkillResponse> skills = new ConcurrentHashMap<>();
+                    ConcurrentHashMap<String,SkillDTO> skills = new ConcurrentHashMap<>();
                     ConcurrentHashMap<String,ProfileIdeaResponse> ideas = new ConcurrentHashMap<>();
                     ConcurrentHashMap<String,ProfileProjectResponse> projects = new ConcurrentHashMap<>();
                     ConcurrentHashMap<String,ProfileDTO> profiles = new ConcurrentHashMap<>();
@@ -73,7 +72,7 @@ public class ProfileService {
                         }
                         if (skillId!=null) {
                             skills.putIfAbsent(skillId,
-                                    ProfileSkillResponse.builder()
+                                    SkillDTO.builder()
                                             .id(skillId)
                                             .name(row.get("s_name",String.class))
                                             .type(SkillType.valueOf(row.get("s_type",String.class)))

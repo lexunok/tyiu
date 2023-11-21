@@ -2,8 +2,6 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.ProfileDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.responses.ProfileSkillResponse;
-import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import com.tyiu.corn.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
