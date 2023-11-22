@@ -9,6 +9,7 @@ import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
@@ -28,6 +29,7 @@ import static org.springframework.data.relational.core.query.Query.query;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ProfileService {
 
     private final ProfileMapper mapper;
@@ -88,10 +90,15 @@ public class ProfileService {
                     }).last();
     }
     public Mono<Resource> uploadAvatar(String userId,FilePart file){
+        log.info("hello");
         Path basePath = Paths.get(path,  userId + "_avatar.jpg");
-        file.transferTo(basePath).subscribe();
+        log.info(basePath.toString());
+        file.transferTo(basePath).log().subscribe();
+        log.info("ok");
         try {
+            log.info("here");
             Resource resource = new UrlResource(basePath.toUri());
+            log.info(resource.getFilename());
             return Mono.just(resource);
         } catch (Exception e) {
             return Mono.empty();
