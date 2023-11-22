@@ -47,9 +47,11 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
             teamDTOMap.put(teamId, existingTeam);
         }
 
-        if (row.get("member_id", String.class) != null){
+        String memberId = row.get("member_id", String.class);
+
+        if (memberId != null){
             UserDTO member = UserDTO.builder()
-                .id(row.get("member_id", String.class))
+                .id(memberId)
                 .email(row.get("member_email", String.class))
                 .firstName(row.get("member_first_name", String.class))
                 .lastName(row.get("member_last_name", String.class))
@@ -60,15 +62,17 @@ public class TeamMapper implements BiFunction<Row, Object, TeamDTO> {
             }
         }
 
-        
+        String skillId = row.get("skill_id", String.class);
 
-        SkillDTO skill = SkillDTO.builder()
-                .id(row.get("skill_id", String.class))
-                .name(row.get("skill_name", String.class))
-                .build();
+        if (skillId != null){
+            SkillDTO skill = SkillDTO.builder()
+                    .id(skillId)
+                    .name(row.get("skill_name", String.class))
+                    .build();
 
-        if(existingTeam.getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
-            existingTeam.getSkills().add(skill);
+            if(existingTeam.getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
+                existingTeam.getSkills().add(skill);
+            }
         }
         return existingTeam;
     }
