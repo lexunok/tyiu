@@ -22,8 +22,7 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
         String ideaMarketId = row.get("id", String.class);
         IdeaMarketDTO existingIdeaMarket = ideaMarketDTOMap.get(ideaMarketId);
 
-        if (existingIdeaMarket == null)
-        {
+        if (existingIdeaMarket == null) {
             existingIdeaMarket = IdeaMarketDTO.builder()
                     .id(ideaMarketId)
                     .ideaId(row.get("idea_id", String.class))
@@ -38,24 +37,32 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .requests(row.get("requests", Long.class))
                     .acceptedRequests(row.get("accepted_requests", Long.class))
                     .isFavorite(false)
+                    .startDate(row.get("start_date", LocalDate.class))
+                    .finishDate(row.get("finish_date", LocalDate.class))
                     .build();
             ideaMarketDTOMap.put(ideaMarketId, existingIdeaMarket);
         }
 
-        SkillDTO skillDTO = SkillDTO.builder()
-                .id(row.get("s_id", String.class))
-                .name(row.get("s_name", String.class))
-                .type(SkillType.valueOf(row.get("type", String.class)))
-                .build();
 
-        if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketId))
-        {
+        if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketId)) {
             existingIdeaMarket.setIsFavorite(true);
         }
 
-        if(existingIdeaMarket.getStack().stream().noneMatch(skill -> skill.getId().equals(skillDTO.getId()))) {
-            existingIdeaMarket.getStack().add(skillDTO);
+        String skillId = row.get("s_id", String.class);
+        if (skillId != null) {
+            SkillDTO skillDTO = SkillDTO.builder()
+                    .id(skillId)
+                    .name(row.get("s_name", String.class))
+                    .type(SkillType.valueOf(row.get("type", String.class)))
+                    .build();
+
+
+            if (existingIdeaMarket.getStack().stream().noneMatch(skill -> skill.getId().equals(skillDTO.getId()))) {
+                existingIdeaMarket.getStack().add(skillDTO);
+            }
         }
+
+
 
         return existingIdeaMarket;
     }

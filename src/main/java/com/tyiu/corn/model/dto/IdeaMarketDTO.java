@@ -27,4 +27,6 @@ public class IdeaMarketDTO {
     private Long requests;
     private Long acceptedRequests;
     private Boolean isFavorite;
+    private LocalDate startDate;
+    private LocalDate finishDate;
 }

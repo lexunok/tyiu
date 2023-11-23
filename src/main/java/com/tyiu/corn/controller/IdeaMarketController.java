@@ -5,6 +5,7 @@ import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.IdeaMarketService;
 import lombok.RequiredArgsConstructor;
@@ -65,7 +66,7 @@ public class IdeaMarketController {
 
     @PostMapping("/send")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> createMarketIdea(@RequestBody List<IdeaDTO> ideaDTOList) {
+    public Flux<IdeaMarketDTO> createMarketIdea(@RequestBody List<IdeaMarketRequest> ideaDTOList) {
         return ideaMarketService.sendIdeaOnMarket(ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Failed to send the idea to the market")));
     }
