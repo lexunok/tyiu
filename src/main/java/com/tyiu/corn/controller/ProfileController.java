@@ -2,11 +2,13 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.ProfileDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,9 +35,9 @@ public class ProfileController {
     }
 
     @PostMapping("/avatar/upload")
-    public Mono<Resource> uploadAvatar(Principal principal,
+    public Mono<Resource> uploadAvatar(@AuthenticationPrincipal User user,
                                          @RequestPart("file") FilePart file) {
-        return profileService.uploadAvatar(principal.getName(), file);
+        return profileService.uploadAvatar(user.getId(), file);
     }
 
     @PostMapping("/skills/save")

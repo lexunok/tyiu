@@ -6,7 +6,7 @@ logging:
 postgres:
   url: postgresql://postgres:5432/hits
 file:
-  path: "/data/spring/"
+  path: "/data/spring"
 spring:
   data:
     r2dbc:
