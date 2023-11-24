@@ -7,6 +7,7 @@ import com.tyiu.corn.model.enums.SkillType;
 import io.r2dbc.spi.Row;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -31,7 +32,7 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .initiator(row.get("initiator", String.class))
                     .description(row.get("description", String.class))
                     .stack(new ArrayList<>())
-                    .createdAt(row.get("created_at", LocalDate.class))
+                    .createdAt(row.get("created_at", LocalDateTime.class))
                     .maxTeamSize(row.get("max_team_size", Short.class))
                     .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                     .requests(row.get("requests", Long.class))

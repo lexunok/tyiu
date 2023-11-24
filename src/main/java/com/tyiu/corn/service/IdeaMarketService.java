@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -75,7 +76,7 @@ public class IdeaMarketService {
                             .initiator(row.get("initiator", String.class))
                             .description(row.get("description", String.class))
                             .stack(new ArrayList<>())
-                            .createdAt(row.get("created_at", LocalDate.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
                             .maxTeamSize(row.get("max_team_size", Short.class))
                             .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                             .requests(row.get("requests", Long.class))
@@ -130,7 +131,7 @@ public class IdeaMarketService {
                             .initiator(row.get("initiator", String.class))
                             .description(row.get("description", String.class))
                             .stack(new ArrayList<>())
-                            .createdAt(row.get("created_at", LocalDate.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
                             .maxTeamSize(row.get("max_team_size", Short.class))
                             .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                             .requests(row.get("requests", Long.class))
