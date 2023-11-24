@@ -228,7 +228,7 @@ public class IdeaMarketService {
                                 .ideaId(ideaDTO.getId())
                                 .position(1L)
                                 .name(ideaDTO.getName())
-                                .initiator(ideaDTO.getInitiatorEmail())
+                                .initiator(ideaDTO.getInitiator())
                                 .description(ideaDTO.getDescription())
                                 .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
                                 .maxTeamSize(ideaDTO.getMaxTeamSize())
