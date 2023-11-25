@@ -29,7 +29,6 @@ import static org.springframework.data.relational.core.query.Query.query;
 
 @Service
 @RequiredArgsConstructor
-@Slf4j
 public class ProfileService {
 
     private final ProfileMapper mapper;
@@ -90,15 +89,10 @@ public class ProfileService {
                     }).last();
     }
     public Mono<Resource> uploadAvatar(String userId,FilePart file){
-        log.info("hello");
         Path basePath = Paths.get(path,  userId + "_avatar.jpg");
-        log.info(basePath.toString());
         file.transferTo(basePath).log().subscribe();
-        log.info("ok");
         try {
-            log.info("here");
             Resource resource = new UrlResource(basePath.toUri());
-            log.info(resource.getFilename());
             return Mono.just(resource);
         } catch (Exception e) {
             return Mono.empty();
