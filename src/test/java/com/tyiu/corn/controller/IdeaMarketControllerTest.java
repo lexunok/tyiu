@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.enums.*;
+import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -9,11 +10,14 @@ import com.tyiu.corn.model.responses.InfoResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,6 +31,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Autowired
     private WebTestClient webTestClient;
 
+    private ModelMapper mapper;
     private String jwt;
     private UserDTO userDTO;
     private GroupDTO groupExpert;
@@ -129,11 +134,42 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(skillRequest2);
         assertEquals("Success!", skillRequest2.getMessage());
+
+        IdeaMarketRequest ideaMarket1 = IdeaMarketRequest.builder()
+                .initiator(userDTO.getEmail())
+                .name("idea1")
+                .id(idea1.getId())
+                .createdAt(idea1.getCreatedAt())
+                .problem("Отсутствия готовых решений задач")
+                .solution("Форум, где студенты могут оставить свои решения")
+                .result("Удобная онлайн платформа")
+                .customer("Студенты")
+                .description("Для студентов!")
+                .maxTeamSize((short) 5)
+                .startDate(LocalDate.now())
+                .finishDate(LocalDate.now())
+                .build();
+
+        IdeaMarketRequest ideaMarket2 = IdeaMarketRequest.builder()
+                .initiator(userDTO.getEmail())
+                .id(idea2.getId())
+                .name("idea1")
+                .createdAt(idea2.getCreatedAt())
+                .problem("Отсутствия готовых решений задач")
+                .solution("Форум, где студенты могут оставить свои решения")
+                .result("Удобная онлайн платформа")
+                .customer("Студенты")
+                .description("Для студентов!")
+                .maxTeamSize((short) 5)
+                .startDate(LocalDate.now())
+                .finishDate(LocalDate.now())
+                .build();
+
         List<IdeaMarketDTO> createdMarketIdea = webTestClient
                 .post()
                 .uri("/api/v1/market/send")
                 .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(List.of(idea1, idea2)), IdeaDTO.class)
+                .body(Mono.just(List.of(ideaMarket1, ideaMarket2)), IdeaMarketRequest.class)
                 .exchange()
                 .expectBodyList(IdeaMarketDTO.class)
                 .returnResult().getResponseBody();

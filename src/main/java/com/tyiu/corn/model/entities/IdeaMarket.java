@@ -26,4 +26,6 @@ public class IdeaMarket {
     private IdeaMarketStatusType status;
     private Long requests;
     private Long acceptedRequests;
+    private LocalDate startDate;
+    private LocalDate finishDate;
 }

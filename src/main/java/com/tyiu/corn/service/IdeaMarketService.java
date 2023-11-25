@@ -11,6 +11,7 @@ import com.tyiu.corn.model.entities.mappers.TeamMarketMapper;
 import com.tyiu.corn.model.entities.relations.Favorite2Idea;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.SkillType;
+import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -19,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -74,11 +76,13 @@ public class IdeaMarketService {
                             .initiator(row.get("initiator", String.class))
                             .description(row.get("description", String.class))
                             .stack(new ArrayList<>())
-                            .createdAt(row.get("created_at", LocalDate.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
                             .maxTeamSize(row.get("max_team_size", Short.class))
                             .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                             .requests(row.get("requests", Long.class))
                             .acceptedRequests(row.get("accepted_requests", Long.class))
+                            .startDate(row.get("start_date", LocalDate.class))
+                            .finishDate(row.get("finish_date", LocalDate.class))
                             .isFavorite(false)
                             .build();
                     if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
@@ -127,11 +131,13 @@ public class IdeaMarketService {
                             .initiator(row.get("initiator", String.class))
                             .description(row.get("description", String.class))
                             .stack(new ArrayList<>())
-                            .createdAt(row.get("created_at", LocalDate.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
                             .maxTeamSize(row.get("max_team_size", Short.class))
                             .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                             .requests(row.get("requests", Long.class))
                             .acceptedRequests(row.get("accepted_requests", Long.class))
+                            .startDate(row.get("start_date", LocalDate.class))
+                            .finishDate(row.get("finish_date", LocalDate.class))
                             .isFavorite(false)
                             .build();
                     if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
@@ -216,19 +222,21 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Flux<IdeaMarketDTO> sendIdeaOnMarket(List<IdeaDTO> ideaDTOList) {
+    public Flux<IdeaMarketDTO> sendIdeaOnMarket(List<IdeaMarketRequest> ideaDTOList) {
         return Flux.fromIterable(ideaDTOList)
                 .flatMap(ideaDTO -> template.insert(IdeaMarket.builder()
                                 .ideaId(ideaDTO.getId())
                                 .position(1L)
                                 .name(ideaDTO.getName())
-                                .initiator(ideaDTO.getInitiatorEmail())
+                                .initiator(ideaDTO.getInitiator())
                                 .description(ideaDTO.getDescription())
                                 .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
                                 .maxTeamSize(ideaDTO.getMaxTeamSize())
                                 .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
                                 .requests(0L)
                                 .acceptedRequests(0L)
+                                .startDate(ideaDTO.getStartDate())
+                                .finishDate(ideaDTO.getFinishDate())
                                 .build())
                         .map(i -> mapper.map(i, IdeaMarketDTO.class))
                 );

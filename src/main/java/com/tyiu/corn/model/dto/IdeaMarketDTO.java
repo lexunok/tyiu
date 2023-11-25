@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Builder
@@ -21,10 +22,12 @@ public class IdeaMarketDTO {
     private String initiator;
     private String description;
     private List<SkillDTO> stack;
-    private LocalDate createdAt;
+    private LocalDateTime createdAt;
     private Short maxTeamSize;
     private IdeaMarketStatusType status;
     private Long requests;
     private Long acceptedRequests;
     private Boolean isFavorite;
+    private LocalDate startDate;
+    private LocalDate finishDate;
 }
