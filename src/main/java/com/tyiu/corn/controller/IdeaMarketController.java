@@ -37,7 +37,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/initiator/all")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user) {
         return ideaMarketService.getAllInitiatorMarketIdeas(user.getId());
     }
@@ -65,7 +65,7 @@ public class IdeaMarketController {
     //////////////////////////////
 
     @PostMapping("/send")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> createMarketIdea(@RequestBody List<IdeaMarketRequest> ideaDTOList) {
         return ideaMarketService.sendIdeaOnMarket(ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Failed to send the idea to the market")));
@@ -92,7 +92,7 @@ public class IdeaMarketController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/idea/{ideaMarketId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> deleteMarketIdea(@PathVariable String ideaMarketId) {
         return ideaMarketService.deleteMarketIdea(ideaMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success deleting"))
@@ -121,7 +121,7 @@ public class IdeaMarketController {
     ////////////////////////
 
     @PutMapping("/accept/{teamMarketId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> acceptTeam(@PathVariable String teamMarketId) {
         return ideaMarketService.acceptTeam(teamMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "The team is accepted into the idea"))

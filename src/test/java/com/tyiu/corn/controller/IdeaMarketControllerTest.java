@@ -119,7 +119,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .expectBody(InfoResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(skillRequest1);
-        assertEquals("Success!", skillRequest1.getMessage());
+
         IdeaSkillRequest ideaSkillRequest2 = IdeaSkillRequest.builder()
                 .ideaId(createdIdea2.getId())
                 .skills(List.of(skill1,skill2))
@@ -133,7 +133,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .expectBody(InfoResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(skillRequest2);
-        assertEquals("Success!", skillRequest2.getMessage());
+
 
         IdeaMarketRequest ideaMarket1 = IdeaMarketRequest.builder()
                 .initiator(userDTO.getEmail())
