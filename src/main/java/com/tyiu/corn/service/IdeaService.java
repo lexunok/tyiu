@@ -17,11 +17,13 @@ import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
@@ -35,8 +37,9 @@ import static org.springframework.data.relational.core.query.Update.update;
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "ideas")
+@Slf4j
 public class IdeaService {
-
+    private final DatabaseClient client;
     private final R2dbcEntityTemplate template;
     private final IdeaMapper ideaMapper;
     private final ModelMapper mapper;
@@ -130,16 +133,17 @@ public class IdeaService {
                             return template.select(query(where("group_id")
                                             .is(savedIdea.getGroupExpertId())), Group2User.class).collectList()
                                     .flatMap(list ->
-                                        template.getDatabaseClient().inConnection(connection -> {
+                                        client.inConnection(connection -> {
                                             Batch batch = connection.createBatch();
                                             list.forEach(u -> batch.add(
                                                     String.format(
-                                                            "INSERT INTO rating (expert_id, confirmed, idea_id) VALUES (%s, FALSE, %s)",
+                                                            "INSERT INTO rating (expert_id, confirmed, idea_id) VALUES ('%s', FALSE, '%s');",
                                                             u.getUserId(), savedIdea.getId()
                                                     ))
                                             );
                                             return Mono.from(batch.execute());
-                                        })).thenReturn(savedDTO);
+                                        }).then())
+                                    .thenReturn(savedDTO);
                         });
                     }
                 });
@@ -194,7 +198,7 @@ public class IdeaService {
             return template.getDatabaseClient().inConnection(connection -> {
                 Batch batch = connection.createBatch();
                 request.getSkills().forEach(s -> batch.add(
-                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES (%s, %s)",
+                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
                                 request.getIdeaId(),s.getId())
                 ));
                 return Mono.from(batch.execute());
@@ -207,11 +211,11 @@ public class IdeaService {
                         return template.getDatabaseClient().inConnection(connection -> {
                             Batch batch = connection.createBatch();
                             request.getSkills().forEach(s -> batch.add(
-                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES (%s, %s)",
+                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
                                             request.getIdeaId(),s.getId())
                             ));
                             return Mono.from(batch.execute());
-                        });
+                        }).then();
                     }
                     return Mono.error(new AccessException("Нет Прав!"));
                 }).then();
@@ -224,12 +228,12 @@ public class IdeaService {
                             template.getDatabaseClient().inConnection(connection -> {
                                 Batch batch = connection.createBatch();
                                 request.getSkills().forEach(s -> batch.add(
-                                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES (%s, %s)",
+                                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
                                                 request.getIdeaId(),s.getId())
                                 ));
                                 return Mono.from(batch.execute());
-                            })
-                    ).then();
+                            }).then()
+                    );
         }
         return template.exists(query(where("initiator_email").is(user.getEmail())
                 .and("id").is(request.getIdeaId())),Idea.class)
@@ -240,12 +244,12 @@ public class IdeaService {
                                         template.getDatabaseClient().inConnection(connection -> {
                                             Batch batch = connection.createBatch();
                                             request.getSkills().forEach(s -> batch.add(
-                                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES (%s, %s)",
+                                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
                                                             request.getIdeaId(),s.getId())
                                             ));
                                             return Mono.from(batch.execute());
-                                        })
-                                ).then();
+                                        }).then()
+                                );
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
