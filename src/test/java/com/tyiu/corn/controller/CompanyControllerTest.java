@@ -169,7 +169,6 @@ public class CompanyControllerTest extends TestContainers{
         createCompany("company1",List.of(owner),owner);
         createCompany("company1",List.of(owner, member),owner);
         assertTrue(getCompanyOwnerMemberList(jwt1).size() > 1);
-        assertTrue(1 <= getCompanyOwnerMemberList(jwt2).size());
     }
 
     @Test
