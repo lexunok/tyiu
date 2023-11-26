@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.model.email.requests.InvitationEmailRequest;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -11,8 +12,6 @@ import org.thymeleaf.context.Context;
 import org.thymeleaf.spring6.SpringTemplateEngine;
 import reactor.core.publisher.Mono;
 
-import java.io.IOException;
-
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -21,19 +20,26 @@ public class EmailService {
     private final SpringTemplateEngine springTemplateEngine;
     private final JavaMailSender javaMailSender;
 
-//    Пример использования
-//    public Mono<Void> sendHTMLMailInvitation(String subject, String to, Invitation invitation) throws MessagingException, IOException {
-//        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
-//        MimeMessageHelper helper = new MimeMessageHelper(mimeMessage);
-//        helper.setSubject(subject);
-//        helper.setTo(to);
-//        helper.setText(getInvitationEmailContent(), true);
-//        javaMailSender.send(mimeMessage);
-//        return Mono.empty();
-//    }
-//
-//    Создать HTML в папки src/main/resources/templates и написать его название
-//    private String getInvitationEmailContent() {
-//        return springTemplateEngine.process("invitation.html", new Context());
-//    }
+    public Mono<Void> sendMailInvitation(InvitationEmailRequest invitationEmailRequest){
+        MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+        return Mono.just(new MimeMessageHelper(mimeMessage))
+                .flatMap(h -> getInvitationContext(invitationEmailRequest).flatMap(html -> {
+                try {
+                    h.setSubject("Уведомление от портала HITS");
+                    h.setTo(invitationEmailRequest.getTo());
+                    h.setText(html,true);
+                    javaMailSender.send(mimeMessage);
+                    return Mono.empty();
+                } catch (MessagingException e) {
+                    throw new RuntimeException(e);
+                }
+                }));
+    }
+
+    private Mono<String> getInvitationContext(InvitationEmailRequest invitation){
+        return Mono.just(new Context()).flatMap(context -> {
+            context.setVariable("invitation", invitation);
+            return Mono.just(springTemplateEngine.process("invitation.html", context));
+        });
+    }
 }
