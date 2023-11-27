@@ -11,7 +11,9 @@ import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 import org.springframework.core.io.UrlResource;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.codec.multipart.FilePart;
@@ -28,11 +30,13 @@ import static org.springframework.data.relational.core.query.Query.query;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ProfileService {
 
     private final ProfileMapper mapper;
     private final R2dbcEntityTemplate template;
+    private final ResourceLoader loader;
     @Value("${file.path}")
     String path;
 
@@ -88,25 +92,24 @@ public class ProfileService {
                         });
                     }).last();
     }
-    public Mono<Resource> uploadAvatar(String userId,FilePart file){
-        Path basePath = Paths.get(path,  userId + "_avatar.jpg");
-        file.transferTo(basePath).log().subscribe();
+    public Resource uploadAvatar(String userId,FilePart file){
+        Path basePath = Paths.get(path, userId + "_avatar.jpg");
+        file.transferTo(basePath).subscribe();
         try {
-            Resource resource = new UrlResource(basePath.toUri());
-            return Mono.just(resource);
+            return new FileSystemResource(basePath);
+
         } catch (Exception e) {
-            return Mono.empty();
+            return null;
         }
     }
     public Mono<Resource> getAvatar(String email){
-        return template.selectOne(query(where("email").is(email)), User.class)
-                .flatMap(u -> {
+        return template.selectOne(query(where("email").is(email)),User.class)
+                .map(u -> {
                     Path basePath = Paths.get(path, u.getId() + "_avatar.jpg");
                     try {
-                        Resource resource = new UrlResource(basePath.toUri());
-                        return Mono.just(resource);
+                        return new FileSystemResource(basePath);
                     } catch (Exception e) {
-                        return Mono.empty();
+                        return null;
                     }
                 });
     }

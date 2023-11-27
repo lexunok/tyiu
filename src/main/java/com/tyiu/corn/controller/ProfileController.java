@@ -8,6 +8,7 @@ import com.tyiu.corn.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -30,15 +31,22 @@ public class ProfileController {
     }
 
 
-    @GetMapping(value = "/avatar/get/{email}", produces = MediaType.IMAGE_JPEG_VALUE)
-    public Mono<Resource> getAvatar(@PathVariable String email) {
-        return profileService.getAvatar(email);
+    @GetMapping("/avatar/get/{email}")
+    public Mono<ResponseEntity<Resource>> getAvatar(@PathVariable String email) {
+        return profileService.getAvatar(email)
+                .map(avatar -> ResponseEntity
+                        .ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(avatar));
     }
 
-    @PostMapping(value = "/avatar/upload", produces = MediaType.IMAGE_JPEG_VALUE)
-    public Mono<Resource> uploadAvatar(@AuthenticationPrincipal User user,
+    @PostMapping("/avatar/upload")
+    public Mono<ResponseEntity<Resource>> uploadAvatar(@AuthenticationPrincipal User user,
                                          @RequestPart("file") FilePart file) {
-        return profileService.uploadAvatar(user.getId(), file);
+        return Mono.just(ResponseEntity
+                        .ok()
+                        .contentType(MediaType.IMAGE_JPEG)
+                        .body(profileService.uploadAvatar(user.getId(),file)));
     }
 
     @PostMapping("/skills/save")
