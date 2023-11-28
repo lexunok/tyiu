@@ -1,6 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.*;
 import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
@@ -43,7 +44,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         IdeaDTO ideaDTO1 = IdeaDTO.builder()
                 .initiatorEmail(userDTO.getEmail())
                 .name("idea1")
-                .status(StatusIdea.ON_APPROVAL)
+                .status(Idea.Status.ON_APPROVAL)
                 .experts(groupExpert)
                 .projectOffice(groupProjectOffice)
                 .problem("Отсутствия готовых решений задач")
@@ -76,7 +77,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         IdeaDTO ideaDTO2 = IdeaDTO.builder()
                 .initiatorEmail(userDTO.getEmail())
                 .name("idea1")
-                .status(StatusIdea.ON_APPROVAL)
+                .status(Idea.Status.ON_APPROVAL)
                 .experts(groupExpert)
                 .projectOffice(groupProjectOffice)
                 .problem("Отсутствия готовых решений задач")

@@ -1,0 +1,3 @@
+ALTER TABLE idea
+ADD COLUMN checked_by TEXT[],
+ADD COLUMN is_active BOOLEAN;

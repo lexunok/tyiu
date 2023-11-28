@@ -12,7 +12,6 @@ import com.tyiu.corn.model.entities.relations.Group2User;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import io.r2dbc.spi.Batch;
@@ -23,7 +22,6 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
@@ -39,10 +37,17 @@ import static org.springframework.data.relational.core.query.Update.update;
 @CacheConfig(cacheNames = "ideas")
 @Slf4j
 public class IdeaService {
-    private final DatabaseClient client;
+
     private final R2dbcEntityTemplate template;
     private final IdeaMapper ideaMapper;
     private final ModelMapper mapper;
+
+    public Mono<Void> checkIdea(String ideaId, String userEmail){
+        String query = "UPDATE idea SET checked_by = array_append(checked_by,:userEmail) WHERE id =:ideaId";
+        return template.getDatabaseClient().sql(query)
+                .bind("userEmail", userEmail)
+                .bind("ideaId", ideaId).then();
+    }
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId) {
@@ -83,7 +88,7 @@ public class IdeaService {
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation() {
-        return template.select(query(where("status").is(StatusIdea.ON_CONFIRMATION)),Idea.class)
+        return template.select(query(where("status").is(Idea.Status.ON_CONFIRMATION)),Idea.class)
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
@@ -91,6 +96,7 @@ public class IdeaService {
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiatorEmail) {
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiatorEmail(initiatorEmail);
+        idea.setIsActive(true);
         idea.setRating(0.0);
         idea.setModifiedAt(LocalDateTime.now());
         return Mono.just(idea)
@@ -133,7 +139,7 @@ public class IdeaService {
                             return template.select(query(where("group_id")
                                             .is(savedIdea.getGroupExpertId())), Group2User.class).collectList()
                                     .flatMap(list ->
-                                        client.inConnection(connection -> {
+                                        template.getDatabaseClient().inConnection(connection -> {
                                             Batch batch = connection.createBatch();
                                             list.forEach(u -> batch.add(
                                                     String.format(
@@ -162,7 +168,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByInitiator (String ideaId, String initiatorEmail){
         return template.update(query(where("id").is(ideaId).and(where("initiator_email").is(initiatorEmail))),
-                update("status", StatusIdea.ON_APPROVAL),Idea.class).then();
+                update("status", Idea.Status.ON_APPROVAL),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)

@@ -1,8 +1,8 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.Role;
-import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import org.junit.jupiter.api.BeforeAll;
@@ -97,7 +97,7 @@ class RatingControllerTest extends TestContainers {
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .name("Идея")
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
 //                .company(company)
                 .build();
 

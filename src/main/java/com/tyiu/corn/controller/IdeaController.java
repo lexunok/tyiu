@@ -3,8 +3,8 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.IdeaDTO;
 
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.User;
-import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
@@ -26,6 +26,11 @@ import java.time.LocalDateTime;
 public class IdeaController {
     
     private final IdeaService ideaService;
+
+    @PutMapping("/check/{ideaId}")
+    public Mono<Void> checkIdea(@PathVariable String ideaId, @AuthenticationPrincipal User user){
+        return ideaService.checkIdea(ideaId, user.getEmail());
+    }
 
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
@@ -62,14 +67,14 @@ public class IdeaController {
 
     @PostMapping("/add")
     public Mono<IdeaDTO> saveIdeaToApproval(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
-        idea.setStatus(StatusIdea.ON_APPROVAL);
+        idea.setStatus(Idea.Status.ON_APPROVAL);
         idea.setCreatedAt(LocalDateTime.now());
         return ideaService.saveIdea(idea, user.getEmail());
     }
 
     @PostMapping("/draft/add")
     public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
-        idea.setStatus(StatusIdea.NEW);
+        idea.setStatus(Idea.Status.NEW);
         return ideaService.saveIdea(idea, user.getEmail());
     }
 

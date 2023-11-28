@@ -1,6 +1,6 @@
 package com.tyiu.corn.model.responses;
 
-import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.model.entities.Idea;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -14,5 +14,5 @@ public class ProfileIdeaResponse {
     private String id;
     private String name;
     private String description;
-    private StatusIdea status;
+    private Idea.Status status;
 }

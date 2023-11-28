@@ -1,12 +1,14 @@
 package com.tyiu.corn.model.dto;
 
-import com.tyiu.corn.model.enums.StatusIdea;
+import com.tyiu.corn.model.entities.Idea;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Builder
 @Data
@@ -18,9 +20,12 @@ public class IdeaDTO {
     private String name;
     private GroupDTO experts;
     private GroupDTO projectOffice;
-    private StatusIdea status;
+    @Builder.Default
+    private List<String> checkedBy = new ArrayList<>();
+    private Idea.Status status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
+    private Boolean isActive;
     private String problem;
     private String solution;
     private String result;

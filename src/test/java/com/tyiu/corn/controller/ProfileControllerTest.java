@@ -1,9 +1,9 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
@@ -37,7 +37,7 @@ public class ProfileControllerTest extends TestContainers {
         IdeaDTO idea = IdeaDTO.builder()
                 .initiatorEmail(userDTO.getEmail())
                 .name("Сдал ИГЭ по барьба")
-                .status(StatusIdea.ON_APPROVAL)
+                .status(Idea.Status.ON_APPROVAL)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .problem("Гопники на улице")

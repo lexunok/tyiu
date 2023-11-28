@@ -1,24 +1,18 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.Role;
-import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.codec.cbor.Jackson2CborDecoder;
-import org.springframework.http.codec.cbor.Jackson2CborEncoder;
 import org.springframework.messaging.rsocket.RSocketRequester;
-import org.springframework.messaging.rsocket.RSocketStrategies;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.test.StepVerifier;
 
 import java.util.List;
 
@@ -100,7 +94,7 @@ public class CommentControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .initiatorEmail(userDTO.getEmail())
                 .name("ГДЗ онлайн")
-                .status(StatusIdea.ON_APPROVAL)
+                .status(Idea.Status.ON_APPROVAL)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .problem("Отсутствия готовых решений задач")
@@ -135,7 +129,7 @@ public class CommentControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .initiatorEmail(userDTO.getEmail())
                 .name("ГДЗ онлайн 2")
-                .status(StatusIdea.ON_APPROVAL)
+                .status(Idea.Status.ON_APPROVAL)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .problem("Отсутствия готовых решений задач")

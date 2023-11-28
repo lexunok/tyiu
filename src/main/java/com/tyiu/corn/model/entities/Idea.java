@@ -1,10 +1,11 @@
 package com.tyiu.corn.model.entities;
 
-import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Setter
 @Getter
@@ -19,9 +20,12 @@ public class Idea {
     private String name;
     private String groupExpertId;
     private String groupProjectOfficeId;
-    private StatusIdea status;
+    @Builder.Default
+    private List<String> checkedBy = new ArrayList<>();
+    private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
+    private Boolean isActive;
     private String problem;
     private String solution;
     private String result;
@@ -34,4 +38,14 @@ public class Idea {
     private Short minTeamSize;
     private Double preAssessment;
     private Double rating;
+
+    public enum Status {
+        ON_EDITING,
+        ON_APPROVAL,
+        ON_CONFIRMATION,
+        NEW,
+        CONFIRMED
+    }
+
+
 }

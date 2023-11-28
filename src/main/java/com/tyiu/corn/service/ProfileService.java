@@ -71,6 +71,7 @@ public class ProfileService {
                             ideas.putIfAbsent(ideaId,
                                     ProfileIdeaResponse.builder()
                                             .id(ideaId)
+                                            .status(Idea.Status.valueOf(row.get("i_status",String.class)))
                                             .name(row.get("i_name",String.class))
                                             .description(row.get("i_description",String.class))
                                             .build());

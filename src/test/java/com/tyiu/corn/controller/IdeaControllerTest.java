@@ -1,9 +1,9 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.enums.StatusIdea;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
@@ -95,7 +95,7 @@ class IdeaControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .initiatorEmail(userDTO.getEmail())
                 .name("ГДЗ онлайн")
-                .status(StatusIdea.ON_APPROVAL)
+                .status(Idea.Status.ON_APPROVAL)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .problem("Отсутствия готовых решений задач")
@@ -126,7 +126,7 @@ class IdeaControllerTest extends TestContainers {
                 .name("ГДЗ онлайн 2")
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")
@@ -276,7 +276,7 @@ class IdeaControllerTest extends TestContainers {
                 .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")
@@ -329,7 +329,7 @@ class IdeaControllerTest extends TestContainers {
                 .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")
@@ -375,7 +375,7 @@ class IdeaControllerTest extends TestContainers {
                 .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")
@@ -421,7 +421,7 @@ class IdeaControllerTest extends TestContainers {
                 .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")
@@ -455,7 +455,7 @@ class IdeaControllerTest extends TestContainers {
                 .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")
@@ -475,7 +475,7 @@ class IdeaControllerTest extends TestContainers {
         assertNotNull(ideaAddResponse);
 
         StatusIdeaRequest statusIdeaRequest = new StatusIdeaRequest();
-        statusIdeaRequest.setStatus(StatusIdea.ON_CONFIRMATION);
+        statusIdeaRequest.setStatus(Idea.Status.ON_CONFIRMATION);
 
         webTestClient
                 .put()
@@ -494,7 +494,7 @@ class IdeaControllerTest extends TestContainers {
                 .initiatorEmail(userDTO.getEmail())
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
-                .status(StatusIdea.NEW)
+                .status(Idea.Status.NEW)
                 .problem("Отсутствия готовых решений задач")
                 .solution("Форум, где студенты могут оставить свои решения")
                 .result("Удобная онлайн платформа")

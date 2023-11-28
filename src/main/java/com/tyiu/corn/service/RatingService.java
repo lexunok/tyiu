@@ -3,7 +3,6 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
-import com.tyiu.corn.model.enums.StatusIdea;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
@@ -54,7 +53,7 @@ public class RatingService {
                                     Double rating = number / list.size();
                                     return template.update(query(where("id").is(ratingDTO.getIdeaId())),
                                             update("rating", rating)
-                                                    .set("status", StatusIdea.CONFIRMED), Idea.class).then();
+                                                    .set("status", Idea.Status.CONFIRMED), Idea.class).then();
                                 }
                                 return Mono.empty();
                             })
