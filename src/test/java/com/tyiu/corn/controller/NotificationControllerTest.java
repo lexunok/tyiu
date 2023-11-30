@@ -109,7 +109,7 @@ public class NotificationControllerTest extends TestContainers {
 
         unshownNotifications.forEach(currentNotification -> {
             if (currentNotification.getId().equals(notification.getId()))
-                assertTrue(currentNotification.isShowed());
+                assertTrue(currentNotification.getIsShowed());
         });
     }
 
@@ -136,7 +136,7 @@ public class NotificationControllerTest extends TestContainers {
 
         unreadedNotifications.forEach(currentNotification -> {
             if (currentNotification.getId().equals(notification.getId()))
-                assertTrue(currentNotification.isReaded());
+                assertTrue(currentNotification.getIsReaded());
         });
     }
 
@@ -163,7 +163,7 @@ public class NotificationControllerTest extends TestContainers {
 
         favouriteNotifications.forEach(currentNotification -> {
             if (currentNotification.getId().equals(notification.getId()))
-                assertTrue(currentNotification.isFavourite());
+                assertTrue(currentNotification.getIsFavourite());
         });
 
         webTestClient
@@ -183,7 +183,7 @@ public class NotificationControllerTest extends TestContainers {
 
         notFavouriteNotifications.forEach(currentNotification -> {
             if (currentNotification.getId().equals(notification.getId()))
-                assertFalse(currentNotification.isFavourite());
+                assertFalse(currentNotification.getIsFavourite());
         });
     }
 
