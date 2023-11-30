@@ -55,8 +55,8 @@ public class IdeaController {
 
     @GetMapping("/all/on-confirmation")
     @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('ADMIN')")
-    public Flux<IdeaDTO> showListIdeaOnConfirmation(){
-        return ideaService.getListIdeaOnConfirmation();
+    public Flux<IdeaDTO> showListIdeaOnConfirmation(@AuthenticationPrincipal User user){
+        return ideaService.getListIdeaOnConfirmation(user.getId());
     }
 
     @GetMapping("/initiator/all")

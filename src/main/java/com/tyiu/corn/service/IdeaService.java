@@ -87,9 +87,14 @@ public class IdeaService {
                 .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
     }
 
-    public Flux<IdeaDTO> getListIdeaOnConfirmation() {
-        return template.select(query(where("status").is(Idea.Status.ON_CONFIRMATION)),Idea.class)
-                .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
+    public Flux<IdeaDTO> getListIdeaOnConfirmation(String expertId) {
+        String query = """
+                SELECT r.idea_id, idea.* FROM rating r JOIN idea ON idea.id = r.idea_id AND idea.status =:status WHERE expert_id =:expertId
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("status", Idea.Status.ON_CONFIRMATION)
+                .bind("expertId", expertId)
+                .map(ideaMapper::apply).all();
     }
 
     @CacheEvict(allEntries = true)
