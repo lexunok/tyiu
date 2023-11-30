@@ -42,10 +42,10 @@ public class NotificationService {
             notificationDTO.setTitle(n.getTitle());
             notificationDTO.setMessage(n.getMessage());
             notificationDTO.setUserId(n.getUserId());
-            notificationDTO.setShowed(n.isShowed());
-            notificationDTO.setReaded(n.isReaded());
-            notificationDTO.setFavourite(n.isFavourite());
-            notificationDTO.setCreatedAt(LocalDateTime.now());
+            notificationDTO.setIsShowed(n.getIsShowed());
+            notificationDTO.setIsReaded(n.getIsReaded());
+            notificationDTO.setIsFavourite(n.getIsFavourite());
+            notificationDTO.setCreatedAt(n.getCreatedAt());
             return Mono.just(notificationDTO);
         });
     }
