@@ -18,8 +18,8 @@ public class Notification {
     private String userId;
     private String title;
     private String message;
-    private boolean isShowed;
-    private boolean isReaded;
-    private boolean isFavourite;
+    private Boolean isShowed;
+    private Boolean isReaded;
+    private Boolean isFavourite;
     private LocalDateTime createdAt;
 }

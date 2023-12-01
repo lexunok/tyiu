@@ -42,10 +42,10 @@ public class NotificationService {
             notificationDTO.setTitle(n.getTitle());
             notificationDTO.setMessage(n.getMessage());
             notificationDTO.setUserId(n.getUserId());
-            notificationDTO.setShowed(n.isShowed());
-            notificationDTO.setReaded(n.isReaded());
-            notificationDTO.setFavourite(n.isFavourite());
-            notificationDTO.setCreatedAt(LocalDateTime.now());
+            notificationDTO.setIsShowed(n.getIsShowed());
+            notificationDTO.setIsReaded(n.getIsReaded());
+            notificationDTO.setIsFavourite(n.getIsFavourite());
+            notificationDTO.setCreatedAt(n.getCreatedAt());
             return Mono.just(notificationDTO);
         });
     }
@@ -62,9 +62,17 @@ public class NotificationService {
                 Notification.class).then();
     }
 
+    public Mono<Void> readAllNotifications(String userId) {
+        return template.update(query(where("user_id").is(userId)
+                                .and(where("is_readed").is(false))),
+                        update("is_readed", true),
+                        Notification.class).then();
+    }
+
     public Mono<Void> addNotificationToFavourite(String notificationId) {
         return template.update(query(where("id").is(notificationId)),
-                update("is_favourite", true),
+                update("is_favourite", true)
+                        .set("is_readed", true),
                 Notification.class).then();
     }
 

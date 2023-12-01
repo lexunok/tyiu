@@ -43,6 +43,11 @@ public class NotificationController {
         return notificationService.readNotification(notificationId);
     }
 
+    @PutMapping("/read/all")
+    public Mono<Void> readAllNotifications(@AuthenticationPrincipal User user) {
+        return notificationService.readAllNotifications(user.getId());
+    }
+
     @PutMapping("/favourite/{notificationId}")
     public Mono<Void> addNotificationToFavourite(@PathVariable String notificationId) {
         return notificationService.addNotificationToFavourite(notificationId);
