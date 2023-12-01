@@ -10,7 +10,7 @@ import java.util.*;
 public class TeamMapper {
     private final Map<String, TeamDTO> teamDTOMap = new LinkedHashMap<>();
 
-    public TeamDTO row(Row row, Object o) {
+    public TeamDTO apply(Row row, Object o) {
         String teamId = row.get("team_id", String.class);
         TeamDTO existingTeam = teamDTOMap.get(teamId);
 
@@ -54,4 +54,6 @@ public class TeamMapper {
 
         return existingTeam;
     }
+
+
 }

@@ -226,7 +226,7 @@ public class TeamService {
 
         TeamMapper teamMapper = new TeamMapper();
 
-        return template.getDatabaseClient()
+        return (Mono<TeamDTO>) template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId", teamId)
                 .map(teamMapper::apply)
