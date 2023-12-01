@@ -38,6 +38,8 @@ jobs:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
       SERVICE_USERNAME: ${{ secrets.SERVICE_USERNAME }}
       SERVICE_PASSWORD: ${{ secrets.SERVICE_PASSWORD }}
+      MAIL_LOGIN: ${{ secrets.MAIL_LOGIN }}
+      MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

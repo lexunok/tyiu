@@ -141,6 +141,33 @@ public class NotificationControllerTest extends TestContainers {
     }
 
     @Test
+    void testReadAllNotifications() {
+
+        NotificationDTO notification1 = createNotification();
+        NotificationDTO notification2 = createNotification();
+
+        webTestClient
+                .put()
+                .uri("/api/v1/notification/read/all")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange();
+
+        List<NotificationDTO> unreadedNotifications = webTestClient
+                .get()
+                .uri("/api/v1/notification/all")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBodyList(NotificationDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(unreadedNotifications);
+
+        unreadedNotifications.forEach(currentNotification -> {
+            if (currentNotification.getId().equals(notification1.getId()) && currentNotification.getId().equals(notification2.getId()))
+                assertTrue(currentNotification.getIsReaded());
+        });
+    }
+
+    @Test
     void testAddAndRemoveNotificationFromFavourite() {
 
         NotificationDTO notification = createNotification();
@@ -162,8 +189,10 @@ public class NotificationControllerTest extends TestContainers {
         assertNotNull(favouriteNotifications);
 
         favouriteNotifications.forEach(currentNotification -> {
-            if (currentNotification.getId().equals(notification.getId()))
+            if (currentNotification.getId().equals(notification.getId())) {
                 assertTrue(currentNotification.getIsFavourite());
+                assertTrue(currentNotification.getIsReaded());
+            }
         });
 
         webTestClient
@@ -182,8 +211,11 @@ public class NotificationControllerTest extends TestContainers {
         assertNotNull(notFavouriteNotifications);
 
         notFavouriteNotifications.forEach(currentNotification -> {
-            if (currentNotification.getId().equals(notification.getId()))
+            if (currentNotification.getId().equals(notification.getId())) {
                 assertFalse(currentNotification.getIsFavourite());
+                assertTrue(currentNotification.getIsReaded());
+            }
+
         });
     }
 
