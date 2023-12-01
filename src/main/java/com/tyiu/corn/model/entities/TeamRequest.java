@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.entities;
 
+import com.tyiu.corn.model.enums.RequestStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -21,4 +22,5 @@ public class TeamRequest {
     private String firstName;
     private String lastName;
     private LocalDate createdAt;
+    private RequestStatus status;
 }

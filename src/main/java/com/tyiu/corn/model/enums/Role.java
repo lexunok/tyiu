@@ -4,5 +4,7 @@ public enum Role {
     INITIATOR,
     EXPERT,
     PROJECT_OFFICE,
-    ADMIN
+    ADMIN,
+    MEMBER,
+    LEADER
 }
