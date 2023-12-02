@@ -31,8 +31,32 @@ public class NotificationControllerTest extends TestContainers {
 
         NotificationDTO notification = NotificationDTO.builder()
                 .userId(userDTO.getId())
-                .title("title")
-                .message("message")
+                .title("Добро пожаловать")
+                .message("Вас пригласили в команду!")
+                .link("api/v1/team/send-invite/123")
+                .isShowed(false)
+                .isReaded(false)
+                .isFavourite(false)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        return webTestClient
+                .post()
+                .uri("/api/v1/notification/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(notification), NotificationDTO.class)
+                .exchange()
+                .expectBody(NotificationDTO.class)
+                .returnResult().getResponseBody();
+    }
+
+    private NotificationDTO createAnotherNotification() {
+
+        NotificationDTO notification = NotificationDTO.builder()
+                .userId(userDTO.getId())
+                .title("Нам не по пути")
+                .message("Вы были кикнуты из команды :(")
+                .link("api/v1/team/kick/456")
                 .isShowed(false)
                 .isReaded(false)
                 .isFavourite(false)
@@ -83,14 +107,18 @@ public class NotificationControllerTest extends TestContainers {
     void testCreateNotification() {
 
         NotificationDTO notification = createNotification();
-        assertEquals("title", notification.getTitle());
+        assertEquals("Добро пожаловать", notification.getTitle());
+        assertEquals("Вас пригласили в команду!", notification.getMessage());
+        assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification.getLink());
     }
 
     @Test
     void testShowNotification() {
 
         NotificationDTO notification = createNotification();
-        assertEquals("title", notification.getTitle());
+        assertEquals("Добро пожаловать", notification.getTitle());
+        assertEquals("Вас пригласили в команду!", notification.getMessage());
+        assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification.getLink());
 
         webTestClient
                 .put()
@@ -117,7 +145,9 @@ public class NotificationControllerTest extends TestContainers {
     void testReadNotification() {
 
         NotificationDTO notification = createNotification();
-        assertEquals("title", notification.getTitle());
+        assertEquals("Добро пожаловать", notification.getTitle());
+        assertEquals("Вас пригласили в команду!", notification.getMessage());
+        assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification.getLink());
 
         webTestClient
                 .put()
@@ -144,7 +174,14 @@ public class NotificationControllerTest extends TestContainers {
     void testReadAllNotifications() {
 
         NotificationDTO notification1 = createNotification();
-        NotificationDTO notification2 = createNotification();
+        assertEquals("Добро пожаловать", notification1.getTitle());
+        assertEquals("Вас пригласили в команду!", notification1.getMessage());
+        assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification1.getLink());
+
+        NotificationDTO notification2 = createAnotherNotification();
+        assertEquals("Нам не по пути", notification2.getTitle());
+        assertEquals("Вы были кикнуты из команды :(", notification2.getMessage());
+        assertEquals("https://hits.tyuiu.ru/api/v1/team/kick/456", notification2.getLink());
 
         webTestClient
                 .put()
@@ -162,7 +199,10 @@ public class NotificationControllerTest extends TestContainers {
         assertNotNull(unreadedNotifications);
 
         unreadedNotifications.forEach(currentNotification -> {
-            if (currentNotification.getId().equals(notification1.getId()) && currentNotification.getId().equals(notification2.getId()))
+            if (currentNotification.getId().equals(notification1.getId()))
+                assertTrue(currentNotification.getIsReaded());
+
+            if (currentNotification.getId().equals(notification2.getId()))
                 assertTrue(currentNotification.getIsReaded());
         });
     }
@@ -171,7 +211,9 @@ public class NotificationControllerTest extends TestContainers {
     void testAddAndRemoveNotificationFromFavourite() {
 
         NotificationDTO notification = createNotification();
-        assertEquals("title", notification.getTitle());
+        assertEquals("Добро пожаловать", notification.getTitle());
+        assertEquals("Вас пригласили в команду!", notification.getMessage());
+        assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification.getLink());
 
         webTestClient
                 .put()
@@ -215,15 +257,19 @@ public class NotificationControllerTest extends TestContainers {
                 assertFalse(currentNotification.getIsFavourite());
                 assertTrue(currentNotification.getIsReaded());
             }
-
         });
     }
 
     @Test
     void testGetAllNotifications() {
 
-        createNotification();
-        createNotification();
+        NotificationDTO notification1 = createNotification();
+        assertEquals("Добро пожаловать", notification1.getTitle());
+        assertEquals("Вас пригласили в команду!", notification1.getMessage());
+
+        NotificationDTO notification2 = createAnotherNotification();
+        assertEquals("Нам не по пути", notification2.getTitle());
+        assertEquals("Вы были кикнуты из команды :(", notification2.getMessage());
 
         List<NotificationDTO> allNotifications = webTestClient
                 .get()
@@ -234,37 +280,55 @@ public class NotificationControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(allNotifications);
         assertTrue(allNotifications.size() > 1);
+
+        allNotifications.forEach(currentNotification -> {
+            if (currentNotification.getId().equals(notification1.getId()))
+                assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification1.getLink());
+
+            if (currentNotification.getId().equals(notification2.getId()))
+                assertEquals("https://hits.tyuiu.ru/api/v1/team/kick/456", notification2.getLink());
+        });
     }
 
     @Test
     void testGetAllFavouriteNotifications() {
 
         NotificationDTO notification1 = createNotification();
-        assertEquals("title", notification1.getTitle());
+        assertEquals("Добро пожаловать", notification1.getTitle());
+        assertEquals("Вас пригласили в команду!", notification1.getMessage());
 
         webTestClient
                 .put()
-                .uri("/api/v1/notification/read/{id}", notification1.getId())
+                .uri("/api/v1/notification/favourite/{id}", notification1.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange();
 
-        NotificationDTO notification2 = createNotification();
-        assertEquals("title", notification2.getTitle());
+        NotificationDTO notification2 = createAnotherNotification();
+        assertEquals("Нам не по пути", notification2.getTitle());
+        assertEquals("Вы были кикнуты из команды :(", notification2.getMessage());
 
         webTestClient
                 .put()
-                .uri("/api/v1/notification/read/{id}", notification2.getId())
+                .uri("/api/v1/notification/favourite/{id}", notification2.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange();
 
         List<NotificationDTO> allFavouriteNotifications = webTestClient
                 .get()
-                .uri("/api/v1/notification/all")
+                .uri("/api/v1/notification/favourite")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(NotificationDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(allFavouriteNotifications);
         assertTrue(allFavouriteNotifications.size() > 1);
+
+        allFavouriteNotifications.forEach(currentNotification -> {
+            if (currentNotification.getId().equals(notification1.getId()))
+                assertEquals("https://hits.tyuiu.ru/api/v1/team/send-invite/123", notification1.getLink());
+
+            if (currentNotification.getId().equals(notification2.getId()))
+                assertEquals("https://hits.tyuiu.ru/api/v1/team/kick/456", notification2.getLink());
+        });
     }
 }

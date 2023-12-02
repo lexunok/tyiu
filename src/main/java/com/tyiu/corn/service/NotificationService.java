@@ -21,17 +21,26 @@ public class NotificationService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
+    private final String path = "https://hits.tyuiu.ru/";
 
     public Flux<NotificationDTO> getAllNotifications(String userId) {
         return template.select(query(where("user_id").is(userId)), Notification.class)
-                .flatMap(n -> Mono.just(mapper.map(n, NotificationDTO.class)));
+                .flatMap(n -> Mono.just(mapper.map(n, NotificationDTO.class))
+                        .flatMap(notificationDTO -> {
+                            notificationDTO.setLink(path + n.getLink());
+                            return Mono.just(notificationDTO);
+                        }));
     }
 
     public Flux<NotificationDTO> getAllFavouriteNotifications(String userId) {
         return template.select(query(where("user_id").is(userId)
                         .and(where("is_favourite").is(true))),
                         Notification.class)
-                .flatMap(n -> Mono.just(mapper.map(n, NotificationDTO.class)));
+                .flatMap(n -> Mono.just(mapper.map(n, NotificationDTO.class))
+                        .flatMap(notificationDTO -> {
+                            notificationDTO.setLink(path + n.getLink());
+                            return Mono.just(notificationDTO);
+                        }));
     }
 
     public Mono<NotificationDTO> createNotification(NotificationDTO notificationDTO) {
@@ -42,6 +51,7 @@ public class NotificationService {
             notificationDTO.setTitle(n.getTitle());
             notificationDTO.setMessage(n.getMessage());
             notificationDTO.setUserId(n.getUserId());
+            notificationDTO.setLink(path + n.getLink());
             notificationDTO.setIsShowed(n.getIsShowed());
             notificationDTO.setIsReaded(n.getIsReaded());
             notificationDTO.setIsFavourite(n.getIsFavourite());
