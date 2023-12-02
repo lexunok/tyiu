@@ -173,18 +173,18 @@ public class TeamService {
                 .map(row -> row.get("skill_id", String.class))
                 .all();
     }
-    public Mono<Void> updateTeamSkills(String teamId, List<String> totalSkills) {
+    public Mono<Void> updateTeamSkills(String teamId, List<SkillDTO> totalSkills) {
         return template.delete(query(where("team_id").is(teamId)), Team2Skill.class)
                 .thenMany(Flux.fromIterable(totalSkills)
-                        .map(skillId -> new Team2Skill(teamId, skillId))
-                        .collectList()
+                        .map(skillDTO -> new Team2Skill(teamId, skillDTO.getId()))
                         .flatMap(template::insert)
                 )
                 .then();
     }
-    public Mono<Void> createTeamSkills(String teamId, List<String> skillIds) {
+
+    public Mono<Void> createTeamSkills(String teamId, List<SkillDTO> skillIds) {
         return Flux.fromIterable(skillIds)
-                .flatMap(skillId -> template.insert(new Team2Skill(teamId, skillId)))
+                .flatMap(skillDTO -> template.insert(new Team2Skill(teamId, skillDTO.getId())))
                 .then();
     }
 
@@ -303,31 +303,26 @@ public class TeamService {
 
 
 
-    public Mono<Void> sendInviteToUser(String teamId, String userId, User userInviter) {
+    /*public Mono<Void> sendInviteToUser(String teamId, List<UserDTO> users, User userInviter) {
         return template.selectOne(query(where("id").is(teamId)), Team.class)
-                .flatMap(t -> template.insert(TeamInvitation.builder()
-                                .receiverId(userId)
-                                .teamId(teamId)
-                                .teamName(t.getName())
-                                .createdAt(LocalDate.now())
-                                .build())
-                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(userId, userInviter, t.getName())
-                        )
-                );
-    }
-
-    public Mono<Void> sendInvitesToUsers(String teamId, List<String> userIds, User userInviter) {
-        return template.selectOne(query(where("id").is(teamId)), Team.class)
-                .flatMap(t -> Flux.fromIterable(userIds)
-                        .flatMap(userId -> template.insert(TeamInvitation.builder()
-                                        .receiverId(userId)
+                .flatMap(t -> Flux.fromIterable(users)
+                        .flatMap(user -> template.insert(TeamInvitation.builder()
+                                        .userId(user.getId())
                                         .teamId(teamId)
-                                        .teamName(t.getName())
-                                        .createdAt(LocalDate.now())
                                         .build())
-                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(userId, userInviter,
-                                        t.getName())
-                                )
+                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, t.getName()))
+                        ).then()
+                );
+    }*/
+
+    public Mono<Void> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
+        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                .flatMap(t -> Flux.fromIterable(users)
+                        .flatMap(user -> template.insert(TeamInvitation.builder()
+                                        .userId(user.getId())
+                                        .teamId(teamId)
+                                        .build())
+                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, t.getName()))
                         ).then()
                 );
     }

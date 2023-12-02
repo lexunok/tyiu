@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 
 import com.tyiu.corn.config.exception.NotFoundException;
+import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMemberDTO;
 import com.tyiu.corn.model.dto.UserDTO;
@@ -44,12 +45,12 @@ public class TeamController {
     }
 
     @PostMapping("/skills/update/{teamId}")
-    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody List<String> totalSkills) {
+    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody List<SkillDTO> totalSkills) {
         return teamService.updateTeamSkills(teamId, totalSkills);
     }
 
     @PostMapping("/skills/create/{teamId}")
-    public Mono<Void> createTeamSkills(@PathVariable String teamId, @RequestBody List<String> skillIds) {
+    public Mono<Void> createTeamSkills(@PathVariable String teamId, @RequestBody List<SkillDTO> skillIds) {
         return teamService.createTeamSkills(teamId, skillIds);
     }
 
@@ -100,15 +101,14 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
-    @PostMapping("/send-invite/{teamId}")
-    public Mono<Void> sendInvite(@PathVariable String teamId, @PathVariable String userId, User userInviter){
-        return teamService.sendInviteToUser(teamId, userId, userInviter)
+    /*@PostMapping("/send-invite/{teamId}")
+    public Mono<Void> sendInvite(@PathVariable String teamId, @PathVariable List<UserDTO> users, User userInviter){
+        return teamService.sendInviteToUser(teamId, users, userInviter)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
-    }
-
+    }*/
     @PostMapping("/send-invites/{teamId}")
-    public Mono<Void> sendInvites(@PathVariable String teamId, @PathVariable List<String> userIds, User userInviter){
-        return teamService.sendInvitesToUsers(teamId, userIds, userInviter)
+    public Mono<Void> sendInvites(@PathVariable String teamId, @PathVariable List<UserDTO> users, User userInviter){
+        return teamService.sendInvitesToUsers(teamId, users, userInviter)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
