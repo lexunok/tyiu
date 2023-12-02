@@ -207,7 +207,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .owner(teamMemberDTO)
                 .leader(teamMemberDTO)
                 .members(List.of(teamMemberDTO))
-                .skills(List.of(skill1,skill2))
                 .build();
         TeamDTO createdTeam = webTestClient
                 .post()
