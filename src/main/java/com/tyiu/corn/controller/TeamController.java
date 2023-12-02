@@ -107,7 +107,7 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }*/
     @PostMapping("/send-invites/{teamId}")
-    public Mono<Void> sendInvites(@PathVariable String teamId, @PathVariable List<UserDTO> users, User userInviter){
+    public Mono<Void> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, User userInviter){
         return teamService.sendInvitesToUsers(teamId, users, userInviter)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
