@@ -130,7 +130,7 @@ public class IdeaController {
 
     @GetMapping("/skills/{ideaId}")
     public Mono<IdeaSkillRequest> getIdeaSkills(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
-        return ideaService.getIdeaSkills(ideaId, user.getEmail());
+        return ideaService.getIdeaSkills(ideaId, user);
     }
 
     @PostMapping("/skills/add")

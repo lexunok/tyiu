@@ -18,6 +18,7 @@ public class Notification {
     private String userId;
     private String title;
     private String message;
+    private String link;
     private Boolean isShowed;
     private Boolean isReaded;
     private Boolean isFavourite;

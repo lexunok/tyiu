@@ -266,7 +266,7 @@ public class IdeaService {
                 });
     }
 
-    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, String initiatorEmail) {
+    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, User user) {
         String query = """
                 SELECT skill.*, i.skill_id skill_id FROM idea_skill i
                 LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId""";
@@ -281,10 +281,10 @@ public class IdeaService {
                             .build()
                 ).all().collectList()
                 .flatMap(list ->
-                    template.exists(query(where("initiator_email").is(initiatorEmail)
+                    template.exists(query(where("initiator_email").is(user.getEmail())
                             .and("id").is(ideaId)),Idea.class)
                                     .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists)) {
+                                        if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
                                             return  Mono.just(IdeaSkillRequest.builder()
                                                     .skills(list)
                                                     .ideaId(ideaId)
