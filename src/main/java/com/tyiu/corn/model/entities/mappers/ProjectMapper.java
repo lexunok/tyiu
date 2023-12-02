@@ -41,7 +41,6 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
                                     .lastName(row.get("l_last_name", String.class))
                                     .build())
                             .members(new ArrayList<>())
-                            .skills(new ArrayList<>())
                             .build())
                     .build();
             projectDTOMap.put(projectId, existingProject);
@@ -65,9 +64,6 @@ public class ProjectMapper implements BiFunction<Row, Object, ProjectDTO> {
                 .type(SkillType.valueOf(row.get("type", String.class)))
                 .build();
 
-        if(existingProject.getTeam().getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
-            existingProject.getTeam().getSkills().add(skill);
-        }
 
         return existingProject;
     }
