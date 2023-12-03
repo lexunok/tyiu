@@ -1,12 +1,12 @@
+
+
 package com.tyiu.corn.model.entities.mappers;
 
 import com.tyiu.corn.model.dto.*;
 import io.r2dbc.spi.Row;
-
+import com.tyiu.corn.model.dto.TeamDTO;
 import java.time.LocalDate;
 import java.util.*;
-
-
 public class TeamMapper {
     private final Map<String, TeamDTO> teamDTOMap = new LinkedHashMap<>();
 
@@ -26,7 +26,7 @@ public class TeamMapper {
             existingTeam.setLeader(UserDTO.builder().id(row.get("leader_id", String.class)).build());
 
             existingTeam.setMembers(new ArrayList<>());
-            existingTeam.setTotalSkills(new ArrayList<>());
+            existingTeam.setSkills(new ArrayList<>());
 
             teamDTOMap.put(teamId, existingTeam);
         }
@@ -49,11 +49,11 @@ public class TeamMapper {
         String skillId = row.get("skill_id", String.class);
 
         if (skillId != null) {
-            existingTeam.getTotalSkills().add(skillId);
+            SkillDTO skillDTO = new SkillDTO();
+            skillDTO.setId(skillId);
+            existingTeam.getSkills().add(skillDTO);
         }
 
         return existingTeam;
     }
-
-
 }

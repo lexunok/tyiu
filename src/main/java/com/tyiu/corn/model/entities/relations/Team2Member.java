@@ -12,5 +12,4 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Team2Member {
     private String teamId;
     private String memberId;
-
 }
