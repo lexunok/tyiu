@@ -321,6 +321,10 @@ public class TeamService {
         return template.select(query(where("team_id").is(teamId)), TeamRequest.class);
     }
 
+    public Flux<TeamInvitation> getInvitationByTeam(String teamId){
+        return template.select(query(where("team_id").is(teamId)), TeamInvitation.class);
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

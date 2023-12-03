@@ -88,6 +88,11 @@ public class TeamController {
         return teamService.getTeamRequests(teamId);
     }
 
+    @GetMapping("/invitations/{teamId}")
+    public Flux<TeamInvitation> getInvitationByTeam(@PathVariable String teamId) {
+        return teamService.getInvitationByTeam(teamId);
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
