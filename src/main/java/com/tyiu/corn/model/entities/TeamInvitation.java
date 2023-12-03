@@ -20,8 +20,7 @@ public class TeamInvitation {
     private String teamId;
     private String userId;
     private RequestStatus status;
-    //private List<Skill> skills;
     private String firstName;
     private String lastName;
-
+    private String email;
 }
