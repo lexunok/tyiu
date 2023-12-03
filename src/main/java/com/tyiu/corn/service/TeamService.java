@@ -46,10 +46,10 @@ public class TeamService {
                 });
     }
 
-    public Mono<TeamRequest> sendTeamRequest(String teamId, String userId, User user) {
+    public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
         return template.insert(TeamRequest.builder()
                 .teamId(teamId)
-                .userId(userId)
+                .userId(user.getId())
                 .email(user.getEmail())
                 .firstName(user.getFirstName())
                 .lastName(user.getLastName())

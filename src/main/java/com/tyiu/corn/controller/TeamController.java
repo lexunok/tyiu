@@ -35,8 +35,8 @@ public class TeamController {
     }
 
     @PostMapping("/request/send/{teamId}/{userId}")
-    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @PathVariable String userId, @RequestBody User user) {
-        return teamService.sendTeamRequest(teamId, userId, user)
+    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.sendTeamRequest(teamId, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
     @GetMapping("/skills/{teamId}")
@@ -150,8 +150,8 @@ public class TeamController {
     }
 
     @DeleteMapping("/kick/{teamId}")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation) {
-        return teamService.kickFromTeam(teamId, invitation.getId());
+    public Mono<Void> kickFromTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.kickFromTeam(teamId, user.getId());
     }
 
     ////////////////////////
