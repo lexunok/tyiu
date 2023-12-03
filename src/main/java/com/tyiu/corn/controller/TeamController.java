@@ -112,15 +112,13 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }*/
     @PostMapping("/send-invites/{teamId}")
-    public Mono<InfoResponse> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, @AuthenticationPrincipal User user){
-        return teamService.sendInvitesToUsers(teamId, users, user)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Success inviting"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Invite is not successful"));
+    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, @AuthenticationPrincipal User user){
+        return teamService.sendInvitesToUsers(teamId, users, user);
     }
 
     @PostMapping("/invite/{teamId}")
-    public Mono<InfoResponse> inviteInTeam(@PathVariable String teamId, @RequestBody AuthenticationResponse invitation) {
-        return teamService.inviteInTeam(teamId, invitation.getId())
+    public Mono<InfoResponse> inviteInTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.inviteInTeam(teamId, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success inviting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Invite is not successful"));
     }

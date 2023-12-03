@@ -391,7 +391,9 @@ public class TeamService {
                 );
     }*/
 
-    public Mono<Void> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
+    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
+
+        /*
         return template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(t -> Flux.fromIterable(users)
                         .flatMap(user -> template.insert(TeamInvitation.builder()
@@ -404,7 +406,17 @@ public class TeamService {
                                         .build())
 //                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, t.getName()))
                         ).then()
-                );
+                ); */
+        return Flux.fromIterable(users)
+                    .flatMap(user -> template.insert(
+                            TeamInvitation.builder()
+                                    .userId(user.getId())
+                                    .teamId(teamId)
+                                    .email(user.getEmail())
+                                    .firstName(user.getFirstName())
+                                    .lastName(user.getLastName())
+                                    .status(RequestStatus.NEW)
+                                    .build()));
     }
 
     public Mono<Void> inviteInTeam(String teamId, String userId){
