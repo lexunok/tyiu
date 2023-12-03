@@ -1,0 +1,2 @@
+ALTER TABLE team_invitation
+ADD COLUMN email TEXT NOT NULL;

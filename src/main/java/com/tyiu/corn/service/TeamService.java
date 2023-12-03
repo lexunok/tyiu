@@ -23,6 +23,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -164,18 +165,46 @@ public class TeamService {
                 .all();
     }
 
-    public Flux<String> getTeamSkills(String teamId) {
-        String QUERY = "SELECT skill_id FROM team_skill WHERE team_id = :teamId";
+    public Mono<TeamDTO> getTeamSkills(String teamId) {
+        String queryTeamSkills = "SELECT skill_id FROM team_skill WHERE team_id = :teamId";
+        String queryWantedSkills = "SELECT wanted_skill_id FROM team_wanted_skill WHERE team_id = :teamId";
 
         return template.getDatabaseClient()
-                .sql(QUERY)
+                .sql(queryTeamSkills)
                 .bind("teamId", teamId)
                 .map(row -> row.get("skill_id", String.class))
-                .all();
+                .all()
+                .collectList()
+                .flatMap(teamSkills -> {
+                    TeamDTO teamDTO = new TeamDTO();
+                    teamDTO.setId(teamId);
+                    List<SkillDTO> skills = teamSkills.stream()
+                            .map(skillId -> SkillDTO.builder().id(skillId).build())
+                            .collect(Collectors.toList());
+                    teamDTO.setSkills(skills);
+
+                    return template.getDatabaseClient()
+                            .sql(queryWantedSkills)
+                            .bind("teamId", teamId)
+                            .map(row -> row.get("wanted_skill_id", String.class))
+                            .all()
+                            .collectList()
+                            .flatMap(wantedSkills -> {
+                                List<SkillDTO> wantedSkillsList = wantedSkills.stream()
+                                        .map(wantedSkillId -> SkillDTO.builder().id(wantedSkillId).build())
+                                        .collect(Collectors.toList());
+                                teamDTO.setWantedSkills(wantedSkillsList);
+                                return Mono.just(teamDTO);
+                            });
+                });
     }
-    public Mono<Void> updateTeamSkills(String teamId, List<SkillDTO> totalSkills) {
+    public Mono<Void> updateTeamSkills(String teamId, List<SkillDTO> skills, List<SkillDTO> wantedSkills) {
         return template.delete(query(where("team_id").is(teamId)), Team2Skill.class)
-                .thenMany(Flux.fromIterable(totalSkills)
+                .thenMany(Flux.fromIterable(skills)
+                        .map(skillDTO -> new Team2Skill(teamId, skillDTO.getId()))
+                        .flatMap(template::insert)
+                )
+                .thenMany(Flux.fromIterable(wantedSkills)
                         .map(skillDTO -> new Team2Skill(teamId, skillDTO.getId()))
                         .flatMap(template::insert)
                 )
@@ -226,7 +255,7 @@ public class TeamService {
 
         TeamMapper teamMapper = new TeamMapper();
 
-        return (Mono<TeamDTO>) template.getDatabaseClient()
+        return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId", teamId)
                 .map(teamMapper::apply)
@@ -238,20 +267,25 @@ public class TeamService {
 
     public Flux<TeamDTO> getTeams() {
         return template.select(Team.class).all()
-                .flatMap(t -> template.select(query(where("team_id").is(t.getId())), Team2Member.class)
-                        .collectList()
-                        .flatMap(list -> template.select(query(where("id").in(t.getLeaderId(), t.getOwnerId())), UserDTO.class)
-                                .collectList()
-                                .flatMap(users -> Mono.just(TeamDTO.builder()
-                                        .id(t.getId())
-                                        .name(t.getName())
-                                        .description(t.getDescription())
-                                        .closed(t.getClosed())
-                                        .createdAt(t.getCreatedAt())
-                                        .membersCount(list.size())
-                                        .leader(users.stream().filter(u -> u.getId().equals(t.getLeaderId())).findFirst().orElse(null))
-                                        .owner(users.stream().filter(u -> u.getId().equals(t.getOwnerId())).findFirst().orElse(null))
-                                        .build()))));
+                .flatMap(t -> {
+                    if (t.getLeaderId() == null || t.getOwnerId() == null) {
+                        return Mono.empty();
+                    }
+                    return template.select(query(where("team_id").is(t.getId())), Team2Member.class)
+                            .collectList()
+                            .flatMap(list -> template.select(query(where("id").in(t.getLeaderId(), t.getOwnerId())), UserDTO.class)
+                                    .collectList()
+                                    .flatMap(users -> Mono.just(TeamDTO.builder()
+                                            .id(t.getId())
+                                            .name(t.getName())
+                                            .description(t.getDescription())
+                                            .closed(t.getClosed())
+                                            .createdAt(t.getCreatedAt())
+                                            .membersCount(list.size())
+                                            .leader(users.stream().filter(u -> u.getId().equals(t.getLeaderId())).findFirst().orElse(null))
+                                            .owner(users.stream().filter(u -> u.getId().equals(t.getOwnerId())).findFirst().orElse(null))
+                                            .build())));
+                });
     }
 
     public Flux<TeamInvitation> getInvitations(String userId) {
@@ -292,9 +326,9 @@ public class TeamService {
                                 template.insert(new Team2Member(t.getId(), memberDTO.getId())).subscribe());
                     }
 
-                    if (teamDTO.getTotalSkills() != null) {
-                        teamDTO.getTotalSkills().forEach(skillId ->
-                                template.insert(new Team2Skill(t.getId(), skillId)).subscribe());
+                    if (teamDTO.getSkills() != null) {
+                        teamDTO.getSkills().forEach(skillDTO ->
+                                template.insert(new Team2Skill(t.getId(), skillDTO.getId())).subscribe());
                     }
 
                     return Mono.just(teamDTO);

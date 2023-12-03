@@ -24,6 +24,7 @@ public class TeamDTO {
     private UserDTO leader;
 
     private List<UserDTO> members;
-    private List<String> totalSkills;
+    private List<SkillDTO> skills;
+    private List<SkillDTO> wantedSkills;
 
 }

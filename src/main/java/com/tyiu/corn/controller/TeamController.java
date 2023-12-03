@@ -40,13 +40,13 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
     @GetMapping("/skills/{teamId}")
-    public Flux<String> getTeamSkills(@PathVariable String teamId) {
+    public Mono<TeamDTO> getTeamSkills(@PathVariable String teamId) {
         return teamService.getTeamSkills(teamId);
     }
 
     @PostMapping("/skills/update/{teamId}")
-    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody List<SkillDTO> totalSkills) {
-        return teamService.updateTeamSkills(teamId, totalSkills);
+    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody List<SkillDTO> totalSkills, @RequestBody List<SkillDTO> wantedSkills) {
+        return teamService.updateTeamSkills(teamId, totalSkills, wantedSkills);
     }
 
     @PostMapping("/skills/create/{teamId}")
