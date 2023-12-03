@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS team_invitation (
     last_name TEXT NOT NULL,
     status TEXT,
     team_id TEXT REFERENCES team (id),
-    user_id TEXT REFERENCES user (id),
+    user_id TEXT REFERENCES users (id)
 );
 
