@@ -149,9 +149,9 @@ public class TeamController {
         return teamService.deleteRequest(requestId);
     }
 
-    @DeleteMapping("/kick/{teamId}")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.kickFromTeam(teamId, user.getId());
+    @DeleteMapping("/kick/{teamId}/{userId}")
+    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId) {
+        return teamService.kickFromTeam(teamId, userId);
     }
 
     ////////////////////////
