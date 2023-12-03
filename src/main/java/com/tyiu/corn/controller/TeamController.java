@@ -107,9 +107,10 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }*/
     @PostMapping("/send-invites/{teamId}")
-    public Mono<Void> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, User userInviter){
-        return teamService.sendInvitesToUsers(teamId, users, userInviter)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    public Mono<InfoResponse> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, @AuthenticationPrincipal User user){
+        return teamService.sendInvitesToUsers(teamId, users, user)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Success inviting"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Invite is not successful"));
     }
 
     @PostMapping("/invite/{teamId}")

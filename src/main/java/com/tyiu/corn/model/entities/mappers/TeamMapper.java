@@ -1,12 +1,12 @@
-
-
 package com.tyiu.corn.model.entities.mappers;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.enums.SkillType;
 import io.r2dbc.spi.Row;
 import com.tyiu.corn.model.dto.TeamDTO;
 import java.time.LocalDate;
 import java.util.*;
+
 public class TeamMapper {
     private final Map<String, TeamDTO> teamDTOMap = new LinkedHashMap<>();
 
@@ -15,18 +15,31 @@ public class TeamMapper {
         TeamDTO existingTeam = teamDTOMap.get(teamId);
 
         if (existingTeam == null) {
-            existingTeam = new TeamDTO();
-            existingTeam.setId(teamId);
-            existingTeam.setName(row.get("team_name", String.class));
-            existingTeam.setDescription(row.get("team_description", String.class));
-            existingTeam.setClosed(row.get("team_closed", Boolean.class));
-            existingTeam.setCreatedAt(row.get("team_created_at", LocalDate.class));
+            existingTeam = TeamDTO.builder()
+                    .id(teamId)
+                    .name(row.get("team_name", String.class))
+                    .description(row.get("team_description", String.class))
+                    .closed(row.get("team_closed", Boolean.class))
+                    .createdAt(row.get("team_created_at", LocalDate.class))
+                    .owner(UserDTO.builder()
+                            .id(row.get("owner_id", String.class))
+                            .email(row.get("owner_email", String.class))
+                            .firstName(row.get("owner_first_name", String.class))
+                            .lastName(row.get("owner_last_name", String.class))
+                            .build())
+                    .members(new ArrayList<>())
+                    .skills(new ArrayList<>())
+                    .wantedSkills(new ArrayList<>())
+                    .build();
 
-            existingTeam.setOwner(UserDTO.builder().id(row.get("owner_id", String.class)).build());
-            existingTeam.setLeader(UserDTO.builder().id(row.get("leader_id", String.class)).build());
-
-            existingTeam.setMembers(new ArrayList<>());
-            existingTeam.setSkills(new ArrayList<>());
+            if (row.get("leader_id", String.class) != null) {
+                existingTeam.setLeader(UserDTO.builder()
+                        .id(row.get("leader_id", String.class))
+                        .email(row.get("leader_email", String.class))
+                        .firstName(row.get("leader_first_name", String.class))
+                        .lastName(row.get("leader_last_name", String.class))
+                        .build());
+            }
 
             teamDTOMap.put(teamId, existingTeam);
         }
@@ -34,13 +47,14 @@ public class TeamMapper {
         String memberId = row.get("member_id", String.class);
 
         if (memberId != null) {
-            UserDTO member = new UserDTO();
-            member.setId(memberId);
-            member.setEmail(row.get("member_email", String.class));
-            member.setFirstName(row.get("member_first_name", String.class));
-            member.setLastName(row.get("member_last_name", String.class));
+            UserDTO member = UserDTO.builder()
+                    .id(memberId)
+                    .email(row.get("member_email", String.class))
+                    .firstName(row.get("member_first_name", String.class))
+                    .lastName(row.get("member_last_name", String.class))
+                    .build();
 
-            if (existingTeam.getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
+            if(existingTeam.getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
                 existingTeam.getMembers().add(member);
                 existingTeam.setMembersCount(existingTeam.getMembers().size());
             }
@@ -49,9 +63,29 @@ public class TeamMapper {
         String skillId = row.get("skill_id", String.class);
 
         if (skillId != null) {
-            SkillDTO skillDTO = new SkillDTO();
-            skillDTO.setId(skillId);
-            existingTeam.getSkills().add(skillDTO);
+            SkillDTO skill = SkillDTO.builder()
+                    .id(skillId)
+                    .name(row.get("skill_name", String.class))
+                    .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                    .build();
+
+            if(existingTeam.getSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
+                existingTeam.getSkills().add(skill);
+            }
+        }
+
+        String wantedSkillId = row.get("wanted_skill_id", String.class);
+
+        if (wantedSkillId != null) {
+            SkillDTO skill = SkillDTO.builder()
+                    .id(wantedSkillId)
+                    .name(row.get("wanted_skill_name", String.class))
+                    .type(SkillType.valueOf(row.get("wanted_skill_type", String.class)))
+                    .build();
+
+            if(existingTeam.getWantedSkills().stream().noneMatch(s -> s.getId().equals(skill.getId()))) {
+                existingTeam.getWantedSkills().add(skill);
+            }
         }
 
         return existingTeam;
