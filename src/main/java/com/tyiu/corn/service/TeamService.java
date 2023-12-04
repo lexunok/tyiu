@@ -224,7 +224,7 @@ public class TeamService {
         String QUERY = "SELECT user_skill.*, team_member.* " +
                 "FROM team_member " +
                 "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
-                "WHERE team_member.team_id = :teamId";
+                "WHERE team_member.team_id = :teamId AND user_skill.user_id IS NOT NULL";
         return template.delete(query(where("team_id").is(teamId)), Team2Skill.class)
                 .then(template.getDatabaseClient()
                         .sql(QUERY)
