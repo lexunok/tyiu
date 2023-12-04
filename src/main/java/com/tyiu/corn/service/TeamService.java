@@ -220,7 +220,7 @@ public class TeamService {
     }
 
     public Mono<Void> updateSkills(String teamId){
-        String QUERY = "SELECT team_member.*, user_skill.* " +
+        String QUERY = "SELECT DISTINCT user_skill.skill_id, user_skill.user_id, team_member.* " +
                 "FROM team_member " +
                 "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
                 "WHERE team_member.team_id = :teamId";
@@ -230,7 +230,6 @@ public class TeamService {
                         .bind("teamId", teamId)
                         .map((row, rowMetadata) -> row.get("skill_id", String.class))
                         .all()
-                        .distinct()
                         .collectList()
                         .flatMap(skills -> {
                             if (skills != null) {
