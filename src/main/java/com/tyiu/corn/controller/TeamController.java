@@ -116,9 +116,9 @@ public class TeamController {
         return teamService.sendInvitesToUsers(teamId, users, user);
     }
 
-    @PostMapping("/invite/{teamId}")
-    public Mono<TeamMemberDTO> inviteInTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.addTeamMember(teamId, user.getId());
+    @PostMapping("/invite/{teamId}/{userId}")
+    public Mono<TeamMemberDTO> inviteInTeam(@PathVariable String teamId, @PathVariable String userId) {
+        return teamService.addTeamMember(teamId, userId);
     }
 
     ///////////////////////////////////////////

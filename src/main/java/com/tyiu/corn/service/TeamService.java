@@ -233,7 +233,7 @@ public class TeamService {
                         .distinct()
                         .collectList()
                         .flatMap(skills -> {
-                            if (!skills.isEmpty()) {
+                            if (skills != null) {
                                 skills.forEach(s -> template.insert(new Team2Skill(teamId, s)).subscribe());
                             }
                             return Mono.empty();
