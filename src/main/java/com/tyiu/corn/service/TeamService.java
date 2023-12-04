@@ -22,6 +22,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -228,12 +229,7 @@ public class TeamService {
                 .then(template.getDatabaseClient()
                         .sql(QUERY)
                         .bind("teamId", teamId)
-                        .map((row, rowMetadata) -> {
-                            if (row.get("skill_id", String.class) != null){
-                                return row.get("skill_id", String.class);
-                            }
-                            return null;
-                        })
+                        .map((row, rowMetadata) -> Objects.requireNonNull(row.get("skill_id", String.class)))
                         .all()
                         .distinct()
                         .flatMap(skill -> template.insert(new Team2Skill(teamId, skill))).then());
