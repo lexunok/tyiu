@@ -93,6 +93,11 @@ public class TeamController {
         return teamService.getInvitationByTeam(teamId);
     }
 
+    @GetMapping("/users")
+    public Flux<TeamMemberDTO>getAllUsersWithSkills(){
+        return teamService.getAllUsersWithSkills();
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

@@ -11,6 +11,7 @@ import com.tyiu.corn.model.entities.relations.Team2Member;
 import com.tyiu.corn.model.entities.relations.Team2Skill;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.SkillType;
+import com.tyiu.corn.model.responses.TeamMemberResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -23,6 +24,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -234,7 +236,38 @@ public class TeamService {
                         .distinct()
                         .flatMap(skill -> template.insert(new Team2Skill(teamId, skill))).then());
     }
-
+    public Flux<TeamMemberDTO> getAllUsersWithSkills(){
+        String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
+                "s.id AS skill_id, s.name AS skill_name, s.type AS skill_type " +
+                "FROM users u " +
+                "LEFT JOIN user_skill us ON u.id = us.user_id " +
+                "LEFT JOIN skill s ON us.skill_id = s.id";
+        return template.getDatabaseClient()
+                .sql(query)
+                .flatMap(users -> {
+                    ConcurrentHashMap<String, TeamMemberDTO> map = new ConcurrentHashMap<>();
+                    users.map((row, rowMetadata) -> {
+                        String userId = row.get("user_id", String.class);
+                        map.putIfAbsent(userId, TeamMemberDTO.builder()
+                                .firstName(row.get("first_name", String.class))
+                                .lastName(row.get("last_name", String.class))
+                                .userId(userId)
+                                .email(row.get("email", String.class))
+                                .skills(new ArrayList<>())
+                                .build());
+                        map.computeIfPresent(userId, (key, member) -> {
+                            member.getSkills().add(SkillDTO.builder()
+                                    .name(row.get("skill_name", String.class))
+                                    .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                    .id(row.get("skill_id", String.class))
+                                    .build());
+                            return member;
+                        });
+                        return Mono.empty();
+                    });
+                    return Flux.fromIterable(map.values());
+                });
+    }
     public Mono<TeamDTO> getTeam(String teamId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
