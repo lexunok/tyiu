@@ -264,7 +264,8 @@ public class TeamService {
                             return member;
                         });
                     })
-                .all();
+                .all()
+                .flatMap(event -> Flux.fromIterable(map.values()));
 
     }
     public Mono<TeamDTO> getTeam(String teamId) {
