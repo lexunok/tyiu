@@ -442,12 +442,16 @@ public class TeamService {
                                         .firstName(row.get("first_name", String.class))
                                         .lastName(row.get("last_name", String.class))
                                         .build();
-                                skills.add(SkillDTO.builder()
-                                        .id(row.get("skill_id", String.class))
-                                        .name(row.get("skill_name", String.class))
-                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
-                                        .build());
-                                teamMemberDTO.setSkills(skills);
+
+                                String skillId = row.get("skill_id", String.class);
+                                if (skillId != null) {
+                                    skills.add(SkillDTO.builder()
+                                            .id(skillId)
+                                            .name(row.get("skill_name", String.class))
+                                            .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                            .build());
+                                    teamMemberDTO.setSkills(skills);
+                                }
                                 return teamMemberDTO;
                             });
                         }).last());
