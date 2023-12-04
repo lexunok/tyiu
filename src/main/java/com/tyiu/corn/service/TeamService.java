@@ -431,7 +431,7 @@ public class TeamService {
 
         return template.insert(new Team2Member(teamId, userId))
                 .then(template.delete(query(where("team_id").is(teamId)
-                        .and("receiver_id").is(userId)),TeamInvitation.class))
+                        .and("user_id").is(userId)), TeamInvitation.class))
                 .then(template.delete(query(where("team_id").is(teamId)
                         .and("user_id").is(userId)), TeamRequest.class))
                 .then(updateSkills(teamId))
