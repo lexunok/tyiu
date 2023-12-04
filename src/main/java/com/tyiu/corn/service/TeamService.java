@@ -242,11 +242,11 @@ public class TeamService {
                 "FROM users u " +
                 "LEFT JOIN user_skill us ON u.id = us.user_id " +
                 "LEFT JOIN skill s ON us.skill_id = s.id";
+        ConcurrentHashMap<String, TeamMemberDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
                 .sql(query)
-                .flatMap(users -> {
-                    ConcurrentHashMap<String, TeamMemberDTO> map = new ConcurrentHashMap<>();
-                    users.map((row, rowMetadata) -> {
+                .map(
+                   (row, rowMetadata) -> {
                         String userId = row.get("user_id", String.class);
                         map.putIfAbsent(userId, TeamMemberDTO.builder()
                                 .firstName(row.get("first_name", String.class))
@@ -255,7 +255,7 @@ public class TeamService {
                                 .email(row.get("email", String.class))
                                 .skills(new ArrayList<>())
                                 .build());
-                        map.computeIfPresent(userId, (key, member) -> {
+                        return map.computeIfPresent(userId, (key, member) -> {
                             member.getSkills().add(SkillDTO.builder()
                                     .name(row.get("skill_name", String.class))
                                     .type(SkillType.valueOf(row.get("skill_type", String.class)))
@@ -263,10 +263,9 @@ public class TeamService {
                                     .build());
                             return member;
                         });
-                        return Mono.empty();
-                    });
-                    return Flux.fromIterable(map.values());
-                });
+                    })
+                .all();
+
     }
     public Mono<TeamDTO> getTeam(String teamId) {
         String QUERY = "SELECT " +
