@@ -117,10 +117,8 @@ public class TeamController {
     }
 
     @PostMapping("/invite/{teamId}")
-    public Mono<InfoResponse> inviteInTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.inviteInTeam(teamId, user.getId())
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Success inviting"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Invite is not successful"));
+    public Mono<TeamMemberDTO> inviteInTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.addTeamMember(teamId, user.getId());
     }
 
     ///////////////////////////////////////////

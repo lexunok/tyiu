@@ -1,9 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
-import com.tyiu.corn.model.dto.TeamMemberDTO;
-import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.email.requests.InvitationEmailRequest;
 import com.tyiu.corn.model.entities.Team;
 import com.tyiu.corn.model.entities.TeamInvitation;
@@ -13,6 +10,7 @@ import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Team2Member;
 import com.tyiu.corn.model.entities.relations.Team2Skill;
 import com.tyiu.corn.model.enums.RequestStatus;
+import com.tyiu.corn.model.enums.SkillType;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -235,7 +233,9 @@ public class TeamService {
                         .distinct()
                         .collectList()
                         .flatMap(skills -> {
-                            skills.forEach(s -> template.insert(new Team2Skill(teamId, s)).subscribe());
+                            if (!skills.isEmpty()) {
+                                skills.forEach(s -> template.insert(new Team2Skill(teamId, s)).subscribe());
+                            }
                             return Mono.empty();
                         }));
     }
@@ -419,14 +419,43 @@ public class TeamService {
                                     .build()));
     }
 
-    public Mono<Void> inviteInTeam(String teamId, String userId){
+
+    public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId){
+        String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
+                "s.id as skill_id, s.name as skill_name, s.type as skill_type " +
+                "FROM users u " +
+                "LEFT JOIN user_skill us ON u.id = us.user_id " +
+                "LEFT JOIN skill s ON us.skill_id = s.id " +
+                "WHERE u.id = :userId";
+
+
         return template.insert(new Team2Member(teamId, userId))
-                .then(template.delete(query(where("teamI_id").is(teamId)
+                .then(template.delete(query(where("team_id").is(teamId)
                         .and("receiver_id").is(userId)),TeamInvitation.class))
-                .then(template.delete(query(where("teamI_id").is(teamId)
+                .then(template.delete(query(where("team_id").is(teamId)
                         .and("user_id").is(userId)), TeamRequest.class))
                 .then(updateSkills(teamId))
-                .then();
+                .then(template.getDatabaseClient()
+                        .sql(query)
+                        .bind("userId", userId)
+                        .flatMap(t -> {
+                            List<SkillDTO> skills = new ArrayList<>();
+                            return t.map((row, rowMetadata) -> {
+                                TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
+                                        .userId(userId)
+                                        .email(row.get("email", String.class))
+                                        .firstName(row.get("first_name", String.class))
+                                        .lastName(row.get("last_name", String.class))
+                                        .build();
+                                skills.add(SkillDTO.builder()
+                                        .id(row.get("skill_id", String.class))
+                                        .name(row.get("skill_name", String.class))
+                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                        .build());
+                                teamMemberDTO.setSkills(skills);
+                                return teamMemberDTO;
+                            });
+                        }).last());
     }
 
     ///////////////////////////////////////////
