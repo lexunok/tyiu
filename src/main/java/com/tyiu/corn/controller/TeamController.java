@@ -2,10 +2,7 @@ package com.tyiu.corn.controller;
 
 
 import com.tyiu.corn.config.exception.NotFoundException;
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
-import com.tyiu.corn.model.dto.TeamMemberDTO;
-import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.entities.TeamInvitation;
 import com.tyiu.corn.model.entities.TeamRequest;
 import com.tyiu.corn.model.entities.User;
@@ -33,7 +30,11 @@ public class TeamController {
         return teamService.updateTeamRequestStatus(requestId, newStatus)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
-
+    @PutMapping("/invitation/{invitationId}/update/{newStatus}")
+    public Flux<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId, @PathVariable RequestStatus newStatus) {
+        return teamService.updateTeamInvitationStatus(invitationId, newStatus)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    }
     @PostMapping("/request/send/{teamId}/{userId}")
     public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
         return teamService.sendTeamRequest(teamId, user)
