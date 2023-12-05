@@ -41,6 +41,25 @@ public class TeamService {
     private final EmailService emailService;
     private final String path = "https://hits.tyuiu.ru/";
 
+    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
+        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
+                        .flatMap(u -> {
+
+                            String message = String.format("Вас пригласили в команду \"%s\". " +
+                                    "Перейдите по ссылке, чтобы ответить на приглашение", t.getName());
+
+                            return Mono.just(InvitationEmailRequest.builder()
+                                    .to(u.getEmail())
+                                    .from("Вас пригласил: " + userInviter.getFirstName() + " " + userInviter.getLastName())
+                                    .title("Приглашение в команду")
+                                    .message(message)
+                                    .link(path + "team/invitations")
+                                    .build());
+                        })
+                        .flatMap(emailService::sendMailInvitation));
+    }
+
     public Flux<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus) {
         return template.select(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
@@ -65,21 +84,6 @@ public class TeamService {
                 .createdAt(LocalDate.now())
                 .status(RequestStatus.NEW)
                 .build());
-    }
-
-    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamName) {
-
-        String message = String.format("Вас пригласили в команду \"%s\". Перейдите по ссылке, чтобы ответить на приглашение", teamName);
-
-        return template.selectOne(query(where("id").is(userId)), User.class)
-                .flatMap(u -> Mono.just(InvitationEmailRequest.builder()
-                        .to(u.getEmail())
-                        .from(userInviter.getFirstName() + " " + userInviter.getLastName())
-                        .title("Приглашение в команду")
-                        .message(message)
-                        .link(path + "team/invitations")
-                        .build()))
-                .flatMap(emailService::sendMailInvitation);
     }
 
     /*public Flux<TeamDTO> getTeamsByVacancies(List<String> selectedSkills) {
@@ -428,21 +432,6 @@ public class TeamService {
     }*/
 
     public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
-
-        /*
-        return template.selectOne(query(where("id").is(teamId)), Team.class)
-                .flatMap(t -> Flux.fromIterable(users)
-                        .flatMap(user -> template.insert(TeamInvitation.builder()
-                                        .userId(user.getId())
-                                        .teamId(teamId)
-                                        .email(user.getEmail())
-                                        .firstName(user.getFirstName())
-                                        .lastName(user.getLastName())
-                                        .status(RequestStatus.NEW)
-                                        .build())
-//                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, t.getName()))
-                        ).then()
-                ); */
         return Flux.fromIterable(users)
                 .flatMap(user -> template.insert(
                         TeamInvitation.builder()
@@ -452,9 +441,11 @@ public class TeamService {
                                 .firstName(user.getFirstName())
                                 .lastName(user.getLastName())
                                 .status(RequestStatus.NEW)
-                                .build()));
+                                .build())
+                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, teamId)
+                                .thenReturn(teamInvitation))
+                );
     }
-
 
     public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId){
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
