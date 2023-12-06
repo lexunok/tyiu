@@ -157,11 +157,11 @@ public class ProfileControllerTest extends TestContainers {
     void testGetProfile() {
 
         ProfileDTO profile = createProfile();
-        String email = profile.getEmail();
+        String userId = profile.getId();
 
         ProfileDTO responseGetProfile = webTestClient
                 .get()
-                .uri("/api/v1/profile/{email}", email)
+                .uri("/api/v1/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)
@@ -190,7 +190,7 @@ public class ProfileControllerTest extends TestContainers {
     void testGetAvatar() {
 
         ProfileDTO profile = createProfile();
-        String email = profile.getEmail();
+        String userId = profile.getId();
 
         webTestClient
                 .post()
@@ -203,7 +203,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO responseGetAvatar = webTestClient
                 .get()
-                .uri("/api/v1/profile/{email}", email)
+                .uri("/api/v1/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)
