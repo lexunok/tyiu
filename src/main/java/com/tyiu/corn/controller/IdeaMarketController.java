@@ -76,13 +76,6 @@ public class IdeaMarketController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Failed to declare a team in the idea")));
     }
 
-    @PostMapping("/favorite/{ideaMarketId}")
-    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
-        return ideaMarketService.makeMarketIdeaFavorite(user.getId(), ideaMarketId)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Idea added to favorites"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to make the idea a favorite"));
-    }
-
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -118,6 +111,13 @@ public class IdeaMarketController {
     // / ___// /_/ /  / /
     ///_/    \____/  /_/
     ////////////////////////
+
+    @PutMapping("/favorite/{ideaMarketId}")
+    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
+        return ideaMarketService.makeMarketIdeaFavorite(user.getId(), ideaMarketId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Idea added to favorites"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to make the idea a favorite"));
+    }
 
     @PutMapping("/accept/{teamMarketId}/{status}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")

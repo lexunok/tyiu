@@ -237,7 +237,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     private void makeFavorite(String ideaMarketId){
         webTestClient
-                .post()
+                .put()
                 .uri("/api/v1/market/favorite/{ideaMarketId}", ideaMarketId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange();
@@ -366,11 +366,6 @@ public class IdeaMarketControllerTest extends TestContainers {
         createMarketTeamRequest(createMarketIdea().getId());
     }
 
-    @Test
-    void testMakeMarketIdeaFavorite() {
-        makeFavorite(createMarketIdea().getId());
-    }
-
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -404,6 +399,11 @@ public class IdeaMarketControllerTest extends TestContainers {
     // / ___// /_/ /  / /
     ///_/    \____/  /_/
     ////////////////////////
+
+    @Test
+    void testMakeMarketIdeaFavorite() {
+        makeFavorite(createMarketIdea().getId());
+    }
 
     @Test
     void testAcceptTeam() {

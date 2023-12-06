@@ -281,10 +281,6 @@ public class IdeaMarketService {
         });
     }
 
-    public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
-        return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
-    }
-
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -311,6 +307,10 @@ public class IdeaMarketService {
     // / ___// /_/ /  / /
     ///_/    \____/  /_/
     ////////////////////////
+
+    public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
+        return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
+    }
 
     public Mono<Void> acceptTeam(String teamMarketId, Boolean status){
         return template.update(query(where("id").is(teamMarketId)),
