@@ -42,7 +42,7 @@ public class IdeaMarketService {
                 "LEFT JOIN idea_skill ON idea_skill.idea_id = idea_market.idea_id " +
                 "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
                 "LEFT JOIN skill ON idea_skill.skill_id = skill.id " +
-                "LEFT JOIN users ON users.id = idea_market.initiator " +
+                "LEFT JOIN users ON users.id = idea_market.initiator_id " +
                 "WHERE idea_market.id = :ideaMarketId";
         IdeaMarketMapper ideaMarketMapper = new IdeaMarketMapper();
         return template.getDatabaseClient()
@@ -68,7 +68,7 @@ public class IdeaMarketService {
                         "favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
                         "FROM idea_market " +
                         "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
-                        "LEFT JOIN users ON users.id = idea_market.initiator")
+                        "LEFT JOIN users ON users.id = idea_market.initiator_id")
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> {
                     IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
@@ -128,8 +128,8 @@ public class IdeaMarketService {
                         "favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
                         "FROM idea_market " +
                         "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
-                        "LEFT JOIN users ON users.id = idea_market.initiator " +
-                        "WHERE idea_market.initiator = :userId")
+                        "LEFT JOIN users ON users.id = idea_market.initiator_id " +
+                        "WHERE idea_market.initiator_id = :userId")
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> {
                     IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
@@ -252,9 +252,9 @@ public class IdeaMarketService {
                             .startDate(ideaDTO.getStartDate())
                             .finishDate(ideaDTO.getFinishDate())
                             .build();
-                    return template.select(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
+                    return template.selectOne(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
                             .flatMap(u -> {
-                                ideaMarket.setInitiator(u.getId());
+                                ideaMarket.setInitiatorId(u.getId());
                                 return Mono.empty();
                             })
                             .then(template.insert(ideaMarket)
@@ -264,7 +264,7 @@ public class IdeaMarketService {
     }
 
     public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO){
-        teamMarketRequestDTO.setUpdatedAt(LocalDate.now());
+        teamMarketRequestDTO.setCreatedAt(LocalDate.now());
         TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
         teamMarketRequest.setOwnerId(teamMarketRequestDTO.getOwner().getId());
         teamMarketRequest.setLeaderId(teamMarketRequestDTO.getLeader().getId());
@@ -309,9 +309,9 @@ public class IdeaMarketService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<Void> acceptTeam(String teamMarketId){
+    public Mono<Void> acceptTeam(String teamMarketId, Boolean status){
         return template.update(query(where("id").is(teamMarketId)),
-                update("accepted", true),
+                update("accepted", status),
                 TeamMarketRequest.class).then();
     }
 }

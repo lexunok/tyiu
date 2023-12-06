@@ -17,7 +17,7 @@ public class IdeaMarket {
     @Id
     private String id;
     private String ideaId;
-    private String initiator;
+    private String initiatorId;
     private Long position;
     private String name;
     private String description;

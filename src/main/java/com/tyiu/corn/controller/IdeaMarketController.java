@@ -1,7 +1,6 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
-import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.model.entities.User;
@@ -120,10 +119,10 @@ public class IdeaMarketController {
     ///_/    \____/  /_/
     ////////////////////////
 
-    @PutMapping("/accept/{teamMarketId}")
+    @PutMapping("/accept/{teamMarketId}/{status}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> acceptTeam(@PathVariable String teamMarketId) {
-        return ideaMarketService.acceptTeam(teamMarketId)
+    public Mono<InfoResponse> acceptTeam(@PathVariable String teamMarketId, @PathVariable Boolean status) {
+        return ideaMarketService.acceptTeam(teamMarketId, status)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "The team is accepted into the idea"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Error when approving an idea"));
     }

@@ -20,7 +20,7 @@ public class TeamMarketRequest {
     private Boolean accepted;
 
     private String name;
-    private LocalDate updatedAt;
+    private LocalDate createdAt;
     private Boolean closed;
     private String description;
     private String ownerId;

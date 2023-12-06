@@ -18,11 +18,12 @@ public class TeamMarketRequestDTO {
     private Boolean accepted;
 
     private String name;
-    private LocalDate updatedAt;
+    private LocalDate createdAt;
     private Boolean closed;
     private String description;
     private UserDTO owner;
     private UserDTO leader;
+    private Short membersCount;
     private List<UserDTO> members;
     private List<SkillDTO> skills;
     private String letter;

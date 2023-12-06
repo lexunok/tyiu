@@ -409,7 +409,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     void testAcceptTeam() {
         webTestClient
                 .put()
-                .uri("/api/v1/market/accept/{teamMarketId}",
+                .uri("/api/v1/market/accept/{teamMarketId}/true",
                         createMarketTeamRequest(createMarketIdea().getId()).getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
