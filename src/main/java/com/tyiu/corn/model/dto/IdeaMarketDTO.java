@@ -17,9 +17,9 @@ import java.util.List;
 public class IdeaMarketDTO {
     private String id;
     private String ideaId;
+    private UserDTO initiator;
     private Long position;
     private String name;
-    private String initiator;
     private String description;
     private List<SkillDTO> stack;
     private LocalDateTime createdAt;

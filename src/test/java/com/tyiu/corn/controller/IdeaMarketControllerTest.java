@@ -60,7 +60,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     private IdeaMarketRequest buildIdeaMarket(IdeaDTO ideaDTO){
         return IdeaMarketRequest.builder()
-                .initiator(ideaDTO.getInitiatorEmail())
+                .initiatorEmail(ideaDTO.getInitiatorEmail())
                 .name(ideaDTO.getName())
                 .id(ideaDTO.getId())
                 .createdAt(ideaDTO.getCreatedAt())

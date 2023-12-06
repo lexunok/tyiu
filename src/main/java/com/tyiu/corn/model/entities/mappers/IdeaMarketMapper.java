@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities.mappers;
 
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.SkillType;
 import io.r2dbc.spi.Row;
@@ -29,7 +30,12 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .ideaId(row.get("idea_id", String.class))
                     .position(row.get("position", Long.class))
                     .name(row.get("name", String.class))
-                    .initiator(row.get("initiator", String.class))
+                    .initiator(UserDTO.builder()
+                            .id(row.get("u_id", String.class))
+                            .email(row.get("u_e", String.class))
+                            .firstName(row.get("u_fn", String.class))
+                            .lastName(row.get("u_ln", String.class))
+                            .build())
                     .description(row.get("description", String.class))
                     .stack(new ArrayList<>())
                     .createdAt(row.get("created_at", LocalDateTime.class))
