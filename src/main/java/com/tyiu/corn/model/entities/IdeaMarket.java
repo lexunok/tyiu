@@ -18,11 +18,14 @@ public class IdeaMarket {
     private String id;
     private String ideaId;
     private String initiatorId;
-    private Long position;
-    private String name;
-    private String description;
     private LocalDate createdAt;
+    private String name;
+    private String problem;
+    private String description;
+    private String solution;
+    private String result;
     private Short maxTeamSize;
+    private String customer;
     private IdeaMarketStatusType status;
     private Long requests;
     private Long acceptedRequests;
