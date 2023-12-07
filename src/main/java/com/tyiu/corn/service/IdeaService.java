@@ -173,7 +173,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByInitiator (String ideaId, String initiatorEmail){
         return template.update(query(where("id").is(ideaId).and(where("initiator_email").is(initiatorEmail))),
-                update("status", Idea.Status.ON_APPROVAL),Idea.class).then();
+                update("status", Idea.Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
@@ -195,12 +195,14 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusIdea(String ideaId, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(ideaId)),
-                        update("status", newStatus.getStatus()),Idea.class).then();
+                        update("status", newStatus.getStatus())
+                                .set("modified_at", LocalDateTime.now()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByAdmin(String ideaId, IdeaDTO updatedIdea) {
         updatedIdea.setId(ideaId);
+        updatedIdea.setModifiedAt(LocalDateTime.now());
         return template.update(mapper.map(updatedIdea,Idea.class)).then();
     }
 
@@ -243,8 +245,10 @@ public class IdeaService {
                                                 request.getIdeaId(),s.getId())
                                 ));
                                 return Mono.from(batch.execute());
-                            }).then()
-                    );
+                            })
+                    ).then(template.update(query(where("id").is(request.getIdeaId())),
+                            update("modified_at",LocalDateTime.now()), Idea.class))
+                    .then();
         }
         return template.exists(query(where("initiator_email").is(user.getEmail())
                 .and("id").is(request.getIdeaId())),Idea.class)
@@ -260,7 +264,9 @@ public class IdeaService {
                                             ));
                                             return Mono.from(batch.execute());
                                         }).then()
-                                );
+                                ).then(template.update(query(where("id").is(request.getIdeaId())),
+                                        update("modified_at",LocalDateTime.now()), Idea.class))
+                                .then();
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
