@@ -312,7 +312,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(34, getMarketIdeaList("/api/v1/market/all").size());
+        assertEquals(17, getMarketIdeaList("/api/v1/market/all").size());
     }
 
     @Test
@@ -320,7 +320,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(38, getMarketIdeaList("/api/v1/market/initiator/all").size());
+        assertEquals(19, getMarketIdeaList("/api/v1/market/initiator/all").size());
     }
 
     @Test

@@ -13,6 +13,7 @@ import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -22,6 +23,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -55,6 +57,55 @@ public class IdeaMarketService {
                 .map(i -> i.get(0));
     }
 
+    private Flux<IdeaMarketDTO> getListMarketIdea(String QUERY, String userId){
+        ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId",userId)
+                .map((row, rowMetadata) -> {
+                    String id = row.get("id", String.class);
+                    String skillId = row.get("skill_id", String.class);
+                    IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
+                            .id(id)
+                            .ideaId(row.get("idea_id", String.class))
+                            .position(row.get("row_number", Long.class))
+                            .name(row.get("name", String.class))
+                            .initiator(UserDTO.builder()
+                                    .id(row.get("u_id", String.class))
+                                    .email(row.get("u_e", String.class))
+                                    .firstName(row.get("u_fn", String.class))
+                                    .lastName(row.get("u_ln", String.class))
+                                    .build())
+                            .description(row.get("description", String.class))
+                            .stack(new ArrayList<>())
+                            .createdAt(row.get("created_at", LocalDate.class))
+                            .maxTeamSize(row.get("max_team_size", Short.class))
+                            .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
+                            .requests(row.get("requests", Long.class))
+                            .acceptedRequests(row.get("accepted_requests", Long.class))
+                            .startDate(row.get("start_date", LocalDate.class))
+                            .finishDate(row.get("finish_date", LocalDate.class))
+                            .isFavorite(false)
+                            .build();
+                    if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
+                    {
+                        ideaMarketDTO.setIsFavorite(true);
+                    }
+                    IdeaMarketDTO idea = map.getOrDefault(id, ideaMarketDTO);
+                    if (skillId != null){
+                        SkillDTO skill = SkillDTO.builder()
+                                .name(row.get("skill_name", String.class))
+                                .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                .id(skillId)
+                                .build();
+                        ideaMarketDTO.getStack().add(skill);
+                    }
+                    map.put(id,idea);
+                    return idea;
+                })
+                .all().thenMany(Flux.fromIterable(map.values()));
+    }
+
     ///////////////////////
     //  _____   ____ ______
     // / ___/  / __//_  __/
@@ -63,124 +114,32 @@ public class IdeaMarketService {
     ///////////////////////
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
-        return template.getDatabaseClient()
-                .sql("SELECT idea_market.*, users.id u_id, users.first_name u_fn, users.last_name u_ln, users.email u_e, " +
-                        "favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
-                        "FROM idea_market " +
-                        "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
-                        "LEFT JOIN users ON users.id = idea_market.initiator_id")
-                .bind("userId",userId)
-                .map((row, rowMetadata) -> {
-                    IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
-                            .id(row.get("id", String.class))
-                            .ideaId(row.get("idea_id", String.class))
-                            .position(row.get("row_number", Long.class))
-                            .name(row.get("name", String.class))
-                            .initiator(UserDTO.builder()
-                                    .id(row.get("u_id", String.class))
-                                    .email(row.get("u_e", String.class))
-                                    .firstName(row.get("u_fn", String.class))
-                                    .lastName(row.get("u_ln", String.class))
-                                    .build())
-                            .description(row.get("description", String.class))
-                            .stack(new ArrayList<>())
-                            .createdAt(row.get("created_at", LocalDate.class))
-                            .maxTeamSize(row.get("max_team_size", Short.class))
-                            .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
-                            .requests(row.get("requests", Long.class))
-                            .acceptedRequests(row.get("accepted_requests", Long.class))
-                            .startDate(row.get("start_date", LocalDate.class))
-                            .finishDate(row.get("finish_date", LocalDate.class))
-                            .isFavorite(false)
-                            .build();
-                    if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
-                    {
-                        ideaMarketDTO.setIsFavorite(true);
-                    }
-                    return ideaMarketDTO;
-                })
-                .all()
-                .flatMap(idea -> template.getDatabaseClient()
-                        .sql("SELECT skill.* " +
-                            "FROM skill " +
-                            "LEFT JOIN idea_skill ON idea_skill.idea_id = :ideaMarketId " +
-                            "WHERE skill.id = idea_skill.skill_id")
-                        .bind("ideaMarketId", idea.getIdeaId())
-                        .map((row, rowMetadata) -> {
-                            SkillDTO skillDTO = SkillDTO.builder()
-                                    .id(row.get("id", String.class))
-                                    .name(row.get("name", String.class))
-                                    .type(SkillType.valueOf(row.get("type", String.class)))
-                                    .build();
-                            if(idea.getStack().stream().noneMatch(skill -> skill.getId().equals(skillDTO.getId()))) {
-                                idea.getStack().add(skillDTO);
-                            }
-                            return idea;
-                        })
-                        .all()
-                        .collectList()
-                        .map(i -> i.get(0)));
+        String QUERY = "SELECT idea_market.*, " +
+                "users.id u_id, users.first_name u_fn, users.last_name u_ln, users.email u_e, " +
+                "skill.id skill_id, skill.name skill_name, skill.type skill_type, " +
+                "favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
+                "FROM idea_market " +
+                "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
+                "LEFT JOIN idea_skill ON idea_skill.idea_id = idea_market.idea_id " +
+                "LEFT JOIN skill ON skill.id = idea_skill.skill_id " +
+                "LEFT JOIN users ON users.id = idea_market.initiator_id " +
+                "ORDER BY idea_market.id";
+        return getListMarketIdea(QUERY, userId);
     }
 
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId){
-        return template.getDatabaseClient()
-                .sql("SELECT idea_market.*, users.id u_id, users.first_name u_fn, users.last_name u_ln, users.email u_e, " +
-                        "favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
-                        "FROM idea_market " +
-                        "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
-                        "LEFT JOIN users ON users.id = idea_market.initiator_id " +
-                        "WHERE idea_market.initiator_id = :userId")
-                .bind("userId",userId)
-                .map((row, rowMetadata) -> {
-                    IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
-                            .id(row.get("id", String.class))
-                            .ideaId(row.get("idea_id", String.class))
-                            .position(row.get("row_number", Long.class))
-                            .name(row.get("name", String.class))
-                            .initiator(UserDTO.builder()
-                                    .id(row.get("u_id", String.class))
-                                    .email(row.get("u_e", String.class))
-                                    .firstName(row.get("u_fn", String.class))
-                                    .lastName(row.get("u_ln", String.class))
-                                    .build())
-                            .description(row.get("description", String.class))
-                            .stack(new ArrayList<>())
-                            .createdAt(row.get("created_at", LocalDate.class))
-                            .maxTeamSize(row.get("max_team_size", Short.class))
-                            .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
-                            .requests(row.get("requests", Long.class))
-                            .acceptedRequests(row.get("accepted_requests", Long.class))
-                            .startDate(row.get("start_date", LocalDate.class))
-                            .finishDate(row.get("finish_date", LocalDate.class))
-                            .isFavorite(false)
-                            .build();
-                    if (Objects.equals(row.get("idea_market_id", String.class), ideaMarketDTO.getId()))
-                    {
-                        ideaMarketDTO.setIsFavorite(true);
-                    }
-                    return ideaMarketDTO;
-                })
-                .all()
-                .flatMap(idea -> template.getDatabaseClient()
-                        .sql("SELECT skill.* " +
-                                "FROM skill " +
-                                "LEFT JOIN idea_skill ON idea_skill.idea_id = :ideaMarketId " +
-                                "WHERE skill.id = idea_skill.skill_id")
-                        .bind("ideaMarketId", idea.getIdeaId())
-                        .map((row, rowMetadata) -> {
-                            SkillDTO skillDTO = SkillDTO.builder()
-                                    .id(row.get("id", String.class))
-                                    .name(row.get("name", String.class))
-                                    .type(SkillType.valueOf(row.get("type", String.class)))
-                                    .build();
-                            if(idea.getStack().stream().noneMatch(skill -> skill.getId().equals(skillDTO.getId()))) {
-                                idea.getStack().add(skillDTO);
-                            }
-                            return idea;
-                        })
-                        .all()
-                        .collectList()
-                        .map(i -> i.get(0)));
+        String QUERY = "SELECT idea_market.*, " +
+                "users.id u_id, users.first_name u_fn, users.last_name u_ln, users.email u_e, " +
+                "skill.id skill_id, skill.name skill_name, skill.type skill_type, " +
+                "favorite_idea.*, ROW_NUMBER () OVER (ORDER BY idea_market.requests DESC) " +
+                "FROM idea_market " +
+                "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
+                "LEFT JOIN idea_skill ON idea_skill.idea_id = idea_market.idea_id " +
+                "LEFT JOIN skill ON skill.id = idea_skill.skill_id " +
+                "LEFT JOIN users ON users.id = idea_market.initiator_id " +
+                "WHERE idea_market.initiator_id = :userId " +
+                "ORDER BY idea_market.id";
+        return getListMarketIdea(QUERY, userId);
     }
 
     public Mono<IdeaMarketDTO> getMarketIdea(String userId, String ideaMarketId){
@@ -199,10 +158,7 @@ public class IdeaMarketService {
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
-                .map((row, rowMetadata) ->
-                        IdeaMarketDTO.builder()
-                                .id(row.get("id",String.class))
-                                .build())
+                .map((row, rowMetadata) -> row.get("id",String.class))
                 .all()
                 .flatMap(id -> {
                     String QUERY = "SELECT team_market_request.*, " +
@@ -217,11 +173,11 @@ public class IdeaMarketService {
                             "LEFT JOIN users l ON team_market_request.leader_id = l.id " +
                             "LEFT JOIN users m ON team_member.member_id = m.id " +
                             "LEFT JOIN skill s ON team_skill.skill_id = s.id " +
-                            "WHERE team_market_request.idea_market_id = :ideaMarketId";
+                            "WHERE team_market_request.id = :id";
                     TeamMarketMapper teamMarketMapper = new TeamMarketMapper();
                     return template.getDatabaseClient()
                             .sql(QUERY)
-                            .bind("ideaMarketId",id.getId())
+                            .bind("id",id)
                             .map(teamMarketMapper::apply)
                             .all()
                             .collectList()
