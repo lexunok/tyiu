@@ -105,7 +105,6 @@ public class IdeaService {
         idea.setInitiatorEmail(initiatorEmail);
         idea.setIsActive(true);
         idea.setRating(0.0);
-        idea.setModifiedAt(LocalDateTime.now());
         return Mono.just(idea)
                 .flatMap(i -> template.getDatabaseClient()
                         .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles) ORDER BY id LIMIT 1")
@@ -136,11 +135,13 @@ public class IdeaService {
                                         .and(where("id").is(i.getId()))),Idea.class)
                                 .flatMap(isExist -> {
                                     if (Boolean.TRUE.equals(isExist)) {
+                                        i.setModifiedAt(LocalDateTime.now());
                                         return template.update(i).thenReturn(savedDTO);
                                     }
                                     else return Mono.error(new AccessException("Нет Прав!"));
                                 });
                     } else {
+                        i.setCreatedAt(LocalDateTime.now());
                         return template.insert(i).flatMap(savedIdea -> {
                             savedDTO.setId(savedIdea.getId());
                             return template.select(query(where("group_id")

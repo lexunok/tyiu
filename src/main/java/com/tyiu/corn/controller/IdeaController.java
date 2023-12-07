@@ -68,7 +68,6 @@ public class IdeaController {
     @PostMapping("/add")
     public Mono<IdeaDTO> saveIdeaToApproval(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
         idea.setStatus(Idea.Status.ON_APPROVAL);
-        idea.setCreatedAt(LocalDateTime.now());
         return ideaService.saveIdea(idea, user.getEmail());
     }
 
