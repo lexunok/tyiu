@@ -253,31 +253,32 @@ public class TeamService {
                 "s.id AS skill_id, s.name AS skill_name, s.type AS skill_type " +
                 "FROM users u " +
                 "LEFT JOIN user_skill us ON u.id = us.user_id " +
-                "LEFT JOIN skill s ON us.skill_id = s.id";
+                "LEFT JOIN skill s ON us.skill_id = s.id ORDER BY u.id";
         ConcurrentHashMap<String, TeamMemberDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
                 .sql(query)
-                .map(
-                        (row, rowMetadata) -> {
+                .map((row, rowMetadata) -> {
                             String userId = row.get("user_id", String.class);
-                            map.putIfAbsent(userId, TeamMemberDTO.builder()
+                            String skillId = row.get("skill_id", String.class);
+                            TeamMemberDTO member = map.getOrDefault(userId,TeamMemberDTO.builder()
                                     .firstName(row.get("first_name", String.class))
                                     .lastName(row.get("last_name", String.class))
                                     .userId(userId)
                                     .email(row.get("email", String.class))
                                     .skills(new ArrayList<>())
                                     .build());
-                            return map.computeIfPresent(userId, (key, member) -> {
-                                member.getSkills().add(SkillDTO.builder()
+                            if (skillId!=null) {
+                                SkillDTO skill = SkillDTO.builder()
                                         .name(row.get("skill_name", String.class))
                                         .type(SkillType.valueOf(row.get("skill_type", String.class)))
                                         .id(row.get("skill_id", String.class))
-                                        .build());
-                                return member;
-                            });
+                                        .build();
+                                member.getSkills().add(skill);
+                            }
+                            map.put(userId,member);
+                            return member;
                         })
-                .all()
-                .flatMap(event -> Flux.fromIterable(map.values()));
+                .all().thenMany(Flux.fromIterable(map.values()));
 
     }
     public Mono<TeamDTO> getTeam(String teamId) {
