@@ -66,7 +66,7 @@ public class TeamController {
     }
 
     @GetMapping("/users")
-    public Flux<TeamMemberDTO>getAllUsersWithSkills(){
+    public Flux<TeamMemberDTO> getAllUsersWithSkills(){
         return teamService.getAllUsersWithSkills();
     }
 
@@ -172,9 +172,15 @@ public class TeamController {
         return teamService.updateTeamRequestStatus(requestId, newStatus)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
+
     @PutMapping("/invitation/{invitationId}/update/{newStatus}")
     public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId, @PathVariable RequestStatus newStatus) {
         return teamService.updateTeamInvitationStatus(invitationId, newStatus)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    }
+
+    @PutMapping("/change/leader/{teamId}/{userId}")
+    public Mono<Void> changeLeader(@PathVariable String teamId, @PathVariable String userId){
+        return teamService.changeTeamLeader(teamId, userId);
     }
 }

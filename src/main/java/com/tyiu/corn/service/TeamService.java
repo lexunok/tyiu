@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
@@ -223,7 +224,7 @@ public class TeamService {
                         SkillDTO skill = SkillDTO.builder()
                                 .name(row.get("skill_name", String.class))
                                 .type(SkillType.valueOf(row.get("skill_type", String.class)))
-                                .id(row.get("skill_id", String.class))
+                                .id(skillId)
                                 .build();
                         member.getSkills().add(skill);
                     }
@@ -594,5 +595,11 @@ public class TeamService {
                     invitation.setStatus(newStatus);
                     return template.update(invitation).thenReturn(invitation);
                 });
+    }
+
+    public Mono<Void> changeTeamLeader(String teamId, String userId){
+        return template.update(query(where("id").is(teamId)),
+                update("leader_id", userId),
+                Team.class).then();
     }
 }
