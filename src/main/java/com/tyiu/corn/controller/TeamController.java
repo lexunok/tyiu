@@ -13,6 +13,7 @@ import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.TeamService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
@@ -83,6 +84,7 @@ public class TeamController {
     //////////////////////////////
 
     @PostMapping("/add")
+    @PreAuthorize("hasAuthority('TEAM_OWNER')")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
         return teamService.addTeam(team)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
@@ -127,8 +129,9 @@ public class TeamController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{teamId}")
-    public Mono<InfoResponse> deleteTeam(@PathVariable String teamId) {
-        return teamService.deleteTeam(teamId)
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    public Mono<InfoResponse> deleteTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.deleteTeam(teamId, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
     }
@@ -158,6 +161,7 @@ public class TeamController {
     ////////////////////////
 
     @PutMapping("/update/{teamId}")
+    @PreAuthorize("hasAuthority('TEAM_OWNER')")
     public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
         return teamService.updateTeam(teamId, team);
     }
@@ -180,6 +184,7 @@ public class TeamController {
     }
 
     @PutMapping("/change/leader/{teamId}/{userId}")
+    @PreAuthorize("hasAuthority('TEAM_OWNER')")
     public Mono<Void> changeLeader(@PathVariable String teamId, @PathVariable String userId){
         return teamService.changeTeamLeader(teamId, userId);
     }

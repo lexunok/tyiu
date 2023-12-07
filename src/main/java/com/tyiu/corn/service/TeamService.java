@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMemberDTO;
@@ -131,7 +132,6 @@ public class TeamService {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .map((row, rowMetadata) -> {
-
                     TeamDTO teamDTO = TeamDTO.builder()
                             .id(row.get("team_id", String.class))
                             .name(row.get("team_name", String.class))
@@ -146,7 +146,6 @@ public class TeamService {
                                     .lastName(row.get("owner_last_name", String.class))
                                     .build())
                             .build();
-
                     String leaderId = row.get("leader_id", String.class);
                     if (leaderId != null) {
                         teamDTO.setLeader(UserDTO.builder()
@@ -156,9 +155,7 @@ public class TeamService {
                                 .lastName(row.get("leader_last_name", String.class))
                                 .build());
                     }
-
                     return teamDTO;
-
                 }).all();
     }
 
@@ -346,7 +343,8 @@ public class TeamService {
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
+                "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id ";
@@ -365,7 +363,6 @@ public class TeamService {
                 .sql(QUERY)
                 .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
                 .map((row, rowMetadata) -> {
-
                     TeamDTO teamDTO = TeamDTO.builder()
                             .id(row.get("team_id", String.class))
                             .name(row.get("team_name", String.class))
@@ -401,7 +398,8 @@ public class TeamService {
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count," +
+                "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
@@ -526,6 +524,11 @@ public class TeamService {
                         }).last());
     }
 
+    public Mono<SkillDTO> getSkillsByUser(List<UserDTO> users){
+        List<String> skills = users.stream().map(UserDTO::getId).toList();
+        return null;
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -533,8 +536,14 @@ public class TeamService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteTeam(String id) {
-        return template.delete(query(where("id").is(id)), Team.class).then();
+    public Mono<Void> deleteTeam(String id, String userId) {
+        return template.exists(query(where("owner_id").is(userId)), Team.class)
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists)){
+                        return template.delete(query(where("id").is(id)), Team.class);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                }).then();
     }
 
     public Mono<Void> deleteInvite(String id) {
