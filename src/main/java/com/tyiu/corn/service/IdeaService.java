@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -103,7 +105,6 @@ public class IdeaService {
         idea.setInitiatorEmail(initiatorEmail);
         idea.setIsActive(true);
         idea.setRating(0.0);
-        idea.setModifiedAt(LocalDateTime.now());
         return Mono.just(idea)
                 .flatMap(i -> template.getDatabaseClient()
                         .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles) ORDER BY id LIMIT 1")
@@ -134,11 +135,13 @@ public class IdeaService {
                                         .and(where("id").is(i.getId()))),Idea.class)
                                 .flatMap(isExist -> {
                                     if (Boolean.TRUE.equals(isExist)) {
+                                        i.setModifiedAt(LocalDateTime.now());
                                         return template.update(i).thenReturn(savedDTO);
                                     }
                                     else return Mono.error(new AccessException("Нет Прав!"));
                                 });
                     } else {
+                        i.setCreatedAt(LocalDateTime.now());
                         return template.insert(i).flatMap(savedIdea -> {
                             savedDTO.setId(savedIdea.getId());
                             return template.select(query(where("group_id")
@@ -173,7 +176,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByInitiator (String ideaId, String initiatorEmail){
         return template.update(query(where("id").is(ideaId).and(where("initiator_email").is(initiatorEmail))),
-                update("status", Idea.Status.ON_APPROVAL),Idea.class).then();
+                update("status", Idea.Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
@@ -195,12 +198,14 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusIdea(String ideaId, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(ideaId)),
-                        update("status", newStatus.getStatus()),Idea.class).then();
+                        update("status", newStatus.getStatus())
+                                .set("modified_at", LocalDateTime.now()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByAdmin(String ideaId, IdeaDTO updatedIdea) {
         updatedIdea.setId(ideaId);
+        updatedIdea.setModifiedAt(LocalDateTime.now());
         return template.update(mapper.map(updatedIdea,Idea.class)).then();
     }
 
@@ -243,8 +248,10 @@ public class IdeaService {
                                                 request.getIdeaId(),s.getId())
                                 ));
                                 return Mono.from(batch.execute());
-                            }).then()
-                    );
+                            })
+                    ).then(template.update(query(where("id").is(request.getIdeaId())),
+                            update("modified_at",LocalDateTime.now()), Idea.class))
+                    .then();
         }
         return template.exists(query(where("initiator_email").is(user.getEmail())
                 .and("id").is(request.getIdeaId())),Idea.class)
@@ -260,7 +267,9 @@ public class IdeaService {
                                             ));
                                             return Mono.from(batch.execute());
                                         }).then()
-                                );
+                                ).then(template.update(query(where("id").is(request.getIdeaId())),
+                                        update("modified_at",LocalDateTime.now()), Idea.class))
+                                .then();
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
@@ -284,7 +293,8 @@ public class IdeaService {
                     template.exists(query(where("initiator_email").is(user.getEmail())
                             .and("id").is(ideaId)),Idea.class)
                                     .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                                        if (Boolean.TRUE.equals(isExists) ||
+                                                new HashSet<>(user.getRoles()).containsAll(List.of(Role.ADMIN,Role.EXPERT,Role.PROJECT_OFFICE))) {
                                             return  Mono.just(IdeaSkillRequest.builder()
                                                     .skills(list)
                                                     .ideaId(ideaId)

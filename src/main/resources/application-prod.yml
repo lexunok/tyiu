@@ -35,18 +35,16 @@ spring:
       transport: websocket
       mapping-path: /rs
   mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_LOGIN}
-    password: ${MAIL_PASSWORD}
+    host: smtp.tsogu.ru
+    port: 25
     properties:
       mail:
         debug: true
         smtp:
-          auth: true
+          auth: false
           starttls:
-            enable: true
+            enable: false
 server:
-  port: 3000
+  port: 80
 jwt:
   secret: ${JWT_SECRET}
