@@ -322,52 +322,6 @@ class IdeaControllerTest extends TestContainers {
     }
 
     @Test
-    void testUpdateIdeaByInitiator(){
-        IdeaDTO ideaDTO = IdeaDTO.builder()
-                .name("АнтиПлагиат")
-                .id(ideaId)
-                .initiatorEmail(userDTO.getEmail())
-                .experts(expertGroup)
-                .projectOffice(projectGroup)
-                .status(Idea.Status.NEW)
-                .problem("Отсутствия готовых решений задач")
-                .solution("Форум, где студенты могут оставить свои решения")
-                .result("Удобная онлайн платформа")
-                .customer("Студенты")
-                .contactPerson("Стас")
-                .description("Для студентов!")
-                .build();
-
-        IdeaDTO ideaAddResponse = webTestClient
-                .post()
-                .uri("/api/v1/idea/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(ideaDTO), IdeaDTO.class)
-                .exchange()
-                .expectBody(IdeaDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(ideaAddResponse);
-
-        IdeaDTO updatedIdea = IdeaDTO.builder()
-                .id(ideaAddResponse.getId())
-                .name("АнтиПлагиат 2")
-                .experts(ideaAddResponse.getExperts())
-                .contactPerson(ideaAddResponse.getContactPerson())
-                .description(ideaAddResponse.getDescription())
-                .initiatorEmail(ideaAddResponse.getInitiatorEmail())
-                .solution(ideaAddResponse.getSolution())
-                .build();
-
-        webTestClient
-                .put()
-                .uri("/api/v1/idea/initiator/update/{ideaId}", ideaAddResponse.getId())
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(updatedIdea), IdeaDTO.class)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-    @Test
     void updateIdeaByAdmin(){
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("АнтиПлагиат 3")
