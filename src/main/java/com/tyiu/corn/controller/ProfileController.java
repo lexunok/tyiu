@@ -25,15 +25,15 @@ public class ProfileController {
     private final ProfileService profileService;
 
 
-    @GetMapping("/{email}")
-    public Mono<ProfileDTO> getUserProfile(@PathVariable String email) {
-        return profileService.getUserProfile(email);
+    @GetMapping("/{userId}")
+    public Mono<ProfileDTO> getUserProfile(@PathVariable String userId) {
+        return profileService.getUserProfile(userId);
     }
 
 
-    @GetMapping("/avatar/get/{email}")
-    public Mono<ResponseEntity<Resource>> getAvatar(@PathVariable String email) {
-        return profileService.getAvatar(email)
+    @GetMapping("/avatar/get/{userId}")
+    public Mono<ResponseEntity<Resource>> getAvatar(@PathVariable String userId) {
+        return profileService.getAvatar(userId)
                 .map(avatar -> ResponseEntity
                         .ok()
                         .contentType(MediaType.IMAGE_JPEG)

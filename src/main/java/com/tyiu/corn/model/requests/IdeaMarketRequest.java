@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 @Builder
 public class IdeaMarketRequest {
     private String id;
-    private String initiator;
+    private String initiatorEmail;
     private LocalDateTime createdAt;
     private String name;
     private String problem;

@@ -2,6 +2,7 @@ package com.tyiu.corn.model.entities.mappers;
 
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.SkillType;
 import io.r2dbc.spi.Row;
@@ -27,12 +28,20 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
             existingIdeaMarket = IdeaMarketDTO.builder()
                     .id(ideaMarketId)
                     .ideaId(row.get("idea_id", String.class))
-                    .position(row.get("position", Long.class))
                     .name(row.get("name", String.class))
-                    .initiator(row.get("initiator", String.class))
+                    .initiator(UserDTO.builder()
+                            .id(row.get("u_id", String.class))
+                            .email(row.get("u_e", String.class))
+                            .firstName(row.get("u_fn", String.class))
+                            .lastName(row.get("u_ln", String.class))
+                            .build())
                     .description(row.get("description", String.class))
+                    .problem(row.get("problem", String.class))
+                    .result(row.get("result", String.class))
+                    .customer(row.get("customer", String.class))
+                    .solution(row.get("solution", String.class))
                     .stack(new ArrayList<>())
-                    .createdAt(row.get("created_at", LocalDateTime.class))
+                    .createdAt(row.get("created_at", LocalDate.class))
                     .maxTeamSize(row.get("max_team_size", Short.class))
                     .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                     .requests(row.get("requests", Long.class))

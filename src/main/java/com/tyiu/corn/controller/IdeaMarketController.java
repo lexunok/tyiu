@@ -1,7 +1,6 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
-import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.model.entities.User;
@@ -77,13 +76,6 @@ public class IdeaMarketController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Failed to declare a team in the idea")));
     }
 
-    @PostMapping("/favorite/{ideaMarketId}")
-    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
-        return ideaMarketService.makeMarketIdeaFavorite(user.getId(), ideaMarketId)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Idea added to favorites"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to make the idea a favorite"));
-    }
-
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -120,10 +112,17 @@ public class IdeaMarketController {
     ///_/    \____/  /_/
     ////////////////////////
 
-    @PutMapping("/accept/{teamMarketId}")
+    @PutMapping("/favorite/{ideaMarketId}")
+    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
+        return ideaMarketService.makeMarketIdeaFavorite(user.getId(), ideaMarketId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Idea added to favorites"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Failed to make the idea a favorite"));
+    }
+
+    @PutMapping("/accept/{teamMarketId}/{status}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> acceptTeam(@PathVariable String teamMarketId) {
-        return ideaMarketService.acceptTeam(teamMarketId)
+    public Mono<InfoResponse> acceptTeam(@PathVariable String teamMarketId, @PathVariable Boolean status) {
+        return ideaMarketService.acceptTeam(teamMarketId, status)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "The team is accepted into the idea"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Error when approving an idea"));
     }

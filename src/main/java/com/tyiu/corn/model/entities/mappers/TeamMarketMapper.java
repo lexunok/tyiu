@@ -29,7 +29,7 @@ public class TeamMarketMapper implements BiFunction<Row, Object, TeamMarketReque
                     .teamId(row.get("team_id", String.class))
                     .accepted(row.get("accepted", Boolean.class))
                     .name(row.get("name", String.class))
-                    .updatedAt(row.get("updated_at", LocalDate.class))
+                    .createdAt(row.get("created_at", LocalDate.class))
                     .closed(row.get("closed", Boolean.class))
                     .description(row.get("description", String.class))
                     .owner(UserDTO.builder()

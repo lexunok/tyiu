@@ -17,12 +17,15 @@ public class IdeaMarket {
     @Id
     private String id;
     private String ideaId;
-    private Long position;
-    private String name;
-    private String initiator;
-    private String description;
+    private String initiatorId;
     private LocalDate createdAt;
+    private String name;
+    private String problem;
+    private String description;
+    private String solution;
+    private String result;
     private Short maxTeamSize;
+    private String customer;
     private IdeaMarketStatusType status;
     private Long requests;
     private Long acceptedRequests;

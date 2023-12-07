@@ -40,22 +40,21 @@ public class ProfileService {
     @Value("${file.path}")
     String path;
 
-    public Mono<ProfileDTO> getUserProfile(String email) {
+    public Mono<ProfileDTO> getUserProfile(String userId) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, " +
                 "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.description i_description, i.status i_status," +
                 " p.id p_id, p.name p_name, p.description p_description" +
                 " FROM users u LEFT JOIN team ON team.id = u.id LEFT JOIN project p ON p.team_id = team.id " +
                 "LEFT JOIN idea i ON i.initiator_email = u.email LEFT JOIN user_skill us ON us.user_id = u.id " +
-                "LEFT JOIN skill s ON s.id = us.skill_id WHERE u.email = :email";
+                "LEFT JOIN skill s ON s.id = us.skill_id WHERE u.id = :userId";
         return template.getDatabaseClient().sql(query)
-                .bind("email", email)
+                .bind("userId", userId)
                 .flatMap(p -> {
                     ConcurrentHashMap<String,SkillDTO> skills = new ConcurrentHashMap<>();
                     ConcurrentHashMap<String,ProfileIdeaResponse> ideas = new ConcurrentHashMap<>();
                     ConcurrentHashMap<String,ProfileProjectResponse> projects = new ConcurrentHashMap<>();
                     ConcurrentHashMap<String,ProfileDTO> profiles = new ConcurrentHashMap<>();
                     return p.map((row,rowMetadata) -> {
-                        String userId = row.get("u_id",String.class);
                         String ideaId = row.get("i_id",String.class);
                         String skillId = row.get("s_id",String.class);
                         String projectId = row.get("p_id",String.class);
@@ -103,16 +102,13 @@ public class ProfileService {
             return null;
         }
     }
-    public Mono<Resource> getAvatar(String email){
-        return template.selectOne(query(where("email").is(email)),User.class)
-                .map(u -> {
-                    Path basePath = Paths.get(path, u.getId() + "_avatar.jpg");
-                    try {
-                        return new FileSystemResource(basePath);
-                    } catch (Exception e) {
-                        return null;
-                    }
-                });
+    public Mono<Resource> getAvatar(String userId){
+        Path basePath = Paths.get(path, userId + "_avatar.jpg");
+        try {
+            return Mono.just(new FileSystemResource(basePath));
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     public Flux<SkillDTO> saveSkills(String userId, Flux<SkillDTO> skills) {

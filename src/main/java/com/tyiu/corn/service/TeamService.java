@@ -1,6 +1,9 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.dto.SkillDTO;
+import com.tyiu.corn.model.dto.TeamDTO;
+import com.tyiu.corn.model.dto.TeamMemberDTO;
+import com.tyiu.corn.model.dto.UserDTO;
 import com.tyiu.corn.model.email.requests.InvitationEmailRequest;
 import com.tyiu.corn.model.entities.Team;
 import com.tyiu.corn.model.entities.TeamInvitation;
@@ -11,7 +14,6 @@ import com.tyiu.corn.model.entities.relations.Team2Member;
 import com.tyiu.corn.model.entities.relations.Team2Skill;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.responses.TeamMemberResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -39,6 +41,25 @@ public class TeamService {
     private final EmailService emailService;
     private final String path = "https://hits.tyuiu.ru/";
 
+    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
+        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
+                        .flatMap(u -> {
+
+                            String message = String.format("Вас пригласили в команду \"%s\". " +
+                                    "Перейдите по ссылке, чтобы ответить на приглашение", t.getName());
+
+                            return Mono.just(InvitationEmailRequest.builder()
+                                    .to(u.getEmail())
+                                    .from("Вас пригласил: " + userInviter.getFirstName() + " " + userInviter.getLastName())
+                                    .title("Приглашение в команду")
+                                    .message(message)
+                                    .link(path + "team/invitations")
+                                    .build());
+                        })
+                        .flatMap(emailService::sendMailInvitation));
+    }
+
     public Flux<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus) {
         return template.select(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
@@ -46,7 +67,13 @@ public class TeamService {
                     return template.update(request);
                 });
     }
-
+    public Flux<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus) {
+        return template.select(query(where("id").is(invitationId)), TeamInvitation.class)
+                .flatMap(invitation -> {
+                    invitation.setStatus(newStatus);
+                    return template.update(invitation);
+                });
+    }
     public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
         return template.insert(TeamRequest.builder()
                 .teamId(teamId)
@@ -57,21 +84,6 @@ public class TeamService {
                 .createdAt(LocalDate.now())
                 .status(RequestStatus.NEW)
                 .build());
-    }
-
-    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamName) {
-
-        String message = String.format("Вас пригласили в команду \"%s\". Перейдите по ссылке, чтобы ответить на приглашение", teamName);
-
-        return template.selectOne(query(where("id").is(userId)), User.class)
-                .flatMap(u -> Mono.just(InvitationEmailRequest.builder()
-                        .to(u.getEmail())
-                        .from(userInviter.getFirstName() + " " + userInviter.getLastName())
-                        .title("Приглашение в команду")
-                        .message(message)
-                        .link(path + "team/invitations")
-                        .build()))
-                .flatMap(emailService::sendMailInvitation);
     }
 
     /*public Flux<TeamDTO> getTeamsByVacancies(List<String> selectedSkills) {
@@ -246,24 +258,24 @@ public class TeamService {
         return template.getDatabaseClient()
                 .sql(query)
                 .map(
-                   (row, rowMetadata) -> {
-                        String userId = row.get("user_id", String.class);
-                        map.putIfAbsent(userId, TeamMemberDTO.builder()
-                                .firstName(row.get("first_name", String.class))
-                                .lastName(row.get("last_name", String.class))
-                                .userId(userId)
-                                .email(row.get("email", String.class))
-                                .skills(new ArrayList<>())
-                                .build());
-                        return map.computeIfPresent(userId, (key, member) -> {
-                            member.getSkills().add(SkillDTO.builder()
-                                    .name(row.get("skill_name", String.class))
-                                    .type(SkillType.valueOf(row.get("skill_type", String.class)))
-                                    .id(row.get("skill_id", String.class))
+                        (row, rowMetadata) -> {
+                            String userId = row.get("user_id", String.class);
+                            map.putIfAbsent(userId, TeamMemberDTO.builder()
+                                    .firstName(row.get("first_name", String.class))
+                                    .lastName(row.get("last_name", String.class))
+                                    .userId(userId)
+                                    .email(row.get("email", String.class))
+                                    .skills(new ArrayList<>())
                                     .build());
-                            return member;
-                        });
-                    })
+                            return map.computeIfPresent(userId, (key, member) -> {
+                                member.getSkills().add(SkillDTO.builder()
+                                        .name(row.get("skill_name", String.class))
+                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                        .id(row.get("skill_id", String.class))
+                                        .build());
+                                return member;
+                            });
+                        })
                 .all()
                 .flatMap(event -> Flux.fromIterable(map.values()));
 
@@ -337,7 +349,7 @@ public class TeamService {
                                 .build());
                     }
 
-                   return teamDTO;
+                    return teamDTO;
 
                 }).all();
     }
@@ -380,17 +392,17 @@ public class TeamService {
                     teamDTO.setCreatedAt(team.getCreatedAt());
 
                     return template.getDatabaseClient().inConnection(connection -> {
-                        Batch batch = connection.createBatch();
-                        teamDTO.getMembers().forEach(u -> batch.add(
-                                String.format(
-                                        "INSERT INTO team_member (team_id, member_id) VALUES ('%s', '%s');",
-                                        t.getId(), u.getId()
-                                ))
-                        );
+                                Batch batch = connection.createBatch();
+                                teamDTO.getMembers().forEach(u -> batch.add(
+                                        String.format(
+                                                "INSERT INTO team_member (team_id, member_id) VALUES ('%s', '%s');",
+                                                t.getId(), u.getId()
+                                        ))
+                                );
 
-                        return Mono.from(batch.execute());
+                                return Mono.from(batch.execute());
 
-                    })
+                            })
                             .then(updateSkills(t.getId()))
                             .then(template.getDatabaseClient().inConnection(connection -> {
                                 Batch batch = connection.createBatch();
@@ -420,33 +432,20 @@ public class TeamService {
     }*/
 
     public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
-
-        /*
-        return template.selectOne(query(where("id").is(teamId)), Team.class)
-                .flatMap(t -> Flux.fromIterable(users)
-                        .flatMap(user -> template.insert(TeamInvitation.builder()
-                                        .userId(user.getId())
-                                        .teamId(teamId)
-                                        .email(user.getEmail())
-                                        .firstName(user.getFirstName())
-                                        .lastName(user.getLastName())
-                                        .status(RequestStatus.NEW)
-                                        .build())
-//                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, t.getName()))
-                        ).then()
-                ); */
         return Flux.fromIterable(users)
-                    .flatMap(user -> template.insert(
-                            TeamInvitation.builder()
-                                    .userId(user.getId())
-                                    .teamId(teamId)
-                                    .email(user.getEmail())
-                                    .firstName(user.getFirstName())
-                                    .lastName(user.getLastName())
-                                    .status(RequestStatus.NEW)
-                                    .build()));
+                .flatMap(user -> template.insert(
+                        TeamInvitation.builder()
+                                .userId(user.getId())
+                                .teamId(teamId)
+                                .email(user.getEmail())
+                                .firstName(user.getFirstName())
+                                .lastName(user.getLastName())
+                                .status(RequestStatus.NEW)
+                                .build())
+                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, teamId)
+                                .thenReturn(teamInvitation))
+                );
     }
-
 
     public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId){
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
@@ -540,5 +539,4 @@ public class TeamService {
                                     return list;
                                 })).then(updateSkills(id)).thenReturn(teamDTO);
     }
-
 }
