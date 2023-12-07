@@ -339,7 +339,7 @@ public class TeamService {
     }
 
     public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role) {
-        String QUERY = "SELECT " +
+        String QUERY = "SELECT DISTINCT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
@@ -394,7 +394,7 @@ public class TeamService {
     }
 
     public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills) {
-        String QUERY = "SELECT " +
+        String QUERY = "SELECT DISTINCT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
