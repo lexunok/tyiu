@@ -27,6 +27,8 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -290,7 +292,8 @@ public class IdeaService {
                     template.exists(query(where("initiator_email").is(user.getEmail())
                             .and("id").is(ideaId)),Idea.class)
                                     .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                                        if (Boolean.TRUE.equals(isExists) ||
+                                                new HashSet<>(user.getRoles()).containsAll(List.of(Role.ADMIN,Role.EXPERT,Role.PROJECT_OFFICE))) {
                                             return  Mono.just(IdeaSkillRequest.builder()
                                                     .skills(list)
                                                     .ideaId(ideaId)
