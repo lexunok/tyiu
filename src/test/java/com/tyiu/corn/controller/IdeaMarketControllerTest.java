@@ -272,7 +272,8 @@ public class IdeaMarketControllerTest extends TestContainers {
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
-                        Role.INITIATOR));
+                        Role.INITIATOR,
+                        Role.TEAM_OWNER));
 
         AuthenticationResponse response = webTestClient
                 .post()
@@ -312,7 +313,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(17, getMarketIdeaList("/api/v1/market/all").size());
+        assertEquals(34, getMarketIdeaList("/api/v1/market/all").size());
     }
 
     @Test
@@ -320,7 +321,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(19, getMarketIdeaList("/api/v1/market/initiator/all").size());
+        assertEquals(38, getMarketIdeaList("/api/v1/market/initiator/all").size());
     }
 
     @Test
