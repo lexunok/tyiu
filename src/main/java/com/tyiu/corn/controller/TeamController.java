@@ -7,6 +7,7 @@ import com.tyiu.corn.model.entities.TeamInvitation;
 import com.tyiu.corn.model.entities.TeamRequest;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.RequestStatus;
+import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.TeamService;
@@ -25,40 +26,6 @@ import java.util.List;
 public class TeamController {
 
     private final TeamService teamService;
-    @PutMapping("/request/{requestId}/update/{newStatus}")
-    public Flux<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId, @PathVariable RequestStatus newStatus) {
-        return teamService.updateTeamRequestStatus(requestId, newStatus)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
-    }
-    @PutMapping("/invitation/{invitationId}/update/{newStatus}")
-    public Flux<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId, @PathVariable RequestStatus newStatus) {
-        return teamService.updateTeamInvitationStatus(invitationId, newStatus)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
-    }
-    @PostMapping("/request/send/{teamId}/{userId}")
-    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.sendTeamRequest(teamId, user)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
-    }
-    @GetMapping("/skills/{teamId}")
-    public Mono<TeamDTO> getTeamSkills(@PathVariable String teamId) {
-        return teamService.getTeamSkills(teamId);
-    }
-
-    @PostMapping("/skills/update/{teamId}")
-    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody List<SkillDTO> totalSkills, @RequestBody List<SkillDTO> wantedSkills) {
-        return teamService.updateTeamSkills(teamId, totalSkills, wantedSkills);
-    }
-
-    @PostMapping("/skills/create/{teamId}")
-    public Mono<Void> createTeamSkills(@PathVariable String teamId, @RequestBody List<SkillDTO> skillIds) {
-        return teamService.createTeamSkills(teamId, skillIds);
-    }
-
-    @GetMapping("/users/{teamId}")
-    public Flux<TeamMemberDTO> getUsersInTeamWithSkills(@PathVariable String teamId) {
-        return teamService.getUsersInTeamWithSkills(teamId);
-    }
 
     ///////////////////////
     //  _____   ____ ______
@@ -76,7 +43,11 @@ public class TeamController {
     @GetMapping("/all")
     public Flux<TeamDTO> getTeams() {
         return teamService.getTeams();
+    }
 
+    @GetMapping("/users/{teamId}")
+    public Flux<TeamMemberDTO> getUsersInTeamWithSkills(@PathVariable String teamId) {
+        return teamService.getUsersInTeamWithSkills(teamId);
     }
 
     @GetMapping("/invites")
@@ -99,6 +70,11 @@ public class TeamController {
         return teamService.getAllUsersWithSkills();
     }
 
+//    @GetMapping("/skills/{teamId}")
+//    public Mono<TeamDTO> getTeamSkills(@PathVariable String teamId) {
+//        return teamService.getTeamSkills(teamId);
+//    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -109,6 +85,22 @@ public class TeamController {
     @PostMapping("/add")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
         return teamService.addTeam(team)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    }
+
+    @PostMapping("/skill-filter/{role}")
+    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role){
+        return teamService.getTeamsBySkills(checkedSkills, role);
+    }
+
+    @PostMapping("/vacancy-filter")
+    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills){
+        return teamService.getTeamsByVacancies(checkedSkills);
+    }
+
+    @PostMapping("/request/send/{teamId}")
+    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.sendTeamRequest(teamId, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
@@ -168,5 +160,21 @@ public class TeamController {
     @PutMapping("/update/{teamId}")
     public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
         return teamService.updateTeam(teamId, team);
+    }
+
+    @PutMapping("/skills/update/{teamId}")
+    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody Flux<SkillDTO> wantedSkills) {
+        return teamService.updateTeamSkills(teamId, wantedSkills);
+    }
+
+    @PutMapping("/request/{requestId}/update/{newStatus}")
+    public Mono<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId, @PathVariable RequestStatus newStatus) {
+        return teamService.updateTeamRequestStatus(requestId, newStatus)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+    }
+    @PutMapping("/invitation/{invitationId}/update/{newStatus}")
+    public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId, @PathVariable RequestStatus newStatus) {
+        return teamService.updateTeamInvitationStatus(invitationId, newStatus)
+                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 }
