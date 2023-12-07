@@ -84,15 +84,6 @@ public class IdeaController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Идея не удалена"));
     }
 
-    @PutMapping("/initiator/update/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR')")
-    public Mono<InfoResponse> updateIdeaByInitiator(@PathVariable String ideaId,
-                                                    @RequestBody IdeaDTO updatedIdea,
-                                                    @AuthenticationPrincipal User user) {
-        return ideaService.updateIdeaByInitiator(ideaId, updatedIdea, user.getEmail())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное обновление идеи"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Обновление идеи не удалось"));
-    }
 
     @PutMapping("/initiator/send/{ideaId}")
     @PreAuthorize("hasAuthority('INITIATOR')")

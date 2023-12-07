@@ -180,22 +180,6 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateIdeaByInitiator(String ideaId, IdeaDTO updatedIdea, String initiatorEmail) {
-        return template.update(query(where("id").is(ideaId).and("initiator_email").is(initiatorEmail)),
-                update("name", updatedIdea.getName())
-                        .set("max_team_size", updatedIdea.getMaxTeamSize())
-                        .set("problem", updatedIdea.getProblem())
-                        .set("solution", updatedIdea.getSolution())
-                        .set("result", updatedIdea.getResult())
-                        .set("description", updatedIdea.getDescription())
-                        .set("min_team_size", updatedIdea.getMinTeamSize())
-                        .set("suitability", updatedIdea.getSuitability())
-                        .set("budget", updatedIdea.getBudget())
-                        .set("pre_assessment", updatedIdea.getPreAssessment())
-                        .set("modified_at", LocalDateTime.now()), Idea.class).then();
-    }
-
-    @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusIdea(String ideaId, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(ideaId)),
                         update("status", newStatus.getStatus())
