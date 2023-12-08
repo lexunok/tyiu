@@ -1,6 +1,6 @@
 package com.tyiu.corn.controller
 
-import com.tyiu.corn.model.entities.CommentDTO
+import com.tyiu.corn.model.CommentDTO
 import com.tyiu.corn.model.entities.User
 import com.tyiu.corn.service.CommentService
 import kotlinx.coroutines.flow.Flow

@@ -1,9 +1,9 @@
 package com.tyiu.corn.service
 
-import com.tyiu.corn.model.entities.Comment
-import com.tyiu.corn.model.entities.CommentDTO
-import com.tyiu.corn.model.entities.CommentRepository
-import com.tyiu.corn.model.entities.toDTO
+import com.tyiu.corn.model.Comment
+import com.tyiu.corn.model.CommentDTO
+import com.tyiu.corn.model.CommentRepository
+import com.tyiu.corn.model.toDTO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map

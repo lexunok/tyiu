@@ -1,4 +1,4 @@
-package com.tyiu.corn.model.entities
+package com.tyiu.corn.model
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
@@ -30,16 +30,7 @@ data class CommentDTO (
         val ideaId: String? = null,
 )
 
-fun Comment.toDTO():CommentDTO = CommentDTO(
-        id = id,
-        ideaId = ideaId,
-        text = text,
-        checkedBy = checkedBy,
-        createdAt = createdAt,
-        senderEmail = senderEmail
-)
-
-fun CommentDTO.toModel():Comment = Comment(
+fun Comment.toDTO(): CommentDTO = CommentDTO(
         id = id,
         ideaId = ideaId,
         text = text,
