@@ -36,7 +36,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/initiator/all")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user) {
         return ideaMarketService.getAllInitiatorMarketIdeas(user.getId());
     }
@@ -120,7 +120,7 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/accept/{teamMarketId}/{status}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> acceptTeam(@PathVariable String teamMarketId, @PathVariable Boolean status) {
         return ideaMarketService.acceptTeam(teamMarketId, status)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "The team is accepted into the idea"))
