@@ -20,15 +20,14 @@ class CommentController (private val commentService: CommentService) {
     fun getAllComments(@PathVariable ideaId: String): Flow<CommentDTO> = commentService.getAllComments(ideaId)
 
     @PostMapping("/send")
-    suspend fun createComment(@RequestBody comment: CommentDTO, @AuthenticationPrincipal user: User): CommentDTO {
-        return commentService.createComment(comment, user.email)
-    }
+    suspend fun createComment(@RequestBody comment: CommentDTO, @AuthenticationPrincipal user: User): CommentDTO =
+            commentService.createComment(comment, user.email)
+
 
     @DeleteMapping("/delete/{commentId}")
     suspend fun deleteComment(@PathVariable commentId: String) = commentService.deleteComment(commentId)
 
-//    @PutMapping("/check/{commentId}")
-//    suspend fun checkComment(@PathVariable commentId: String?, @AuthenticationPrincipal user: User): Mono<Void> {
-//        return commentService!!.checkCommentByUser(commentId, user.email)
-//    }
+    @PutMapping("/check/{commentId}")
+    suspend fun checkComment(@PathVariable commentId: String, @AuthenticationPrincipal user: User) =
+            commentService.checkCommentByUser(commentId, user.email)
 }
