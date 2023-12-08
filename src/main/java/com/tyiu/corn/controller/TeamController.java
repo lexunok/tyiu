@@ -46,6 +46,11 @@ public class TeamController {
         return teamService.getTeams();
     }
 
+    @GetMapping("/owner/all")
+    public Flux<TeamDTO> getTeams(@AuthenticationPrincipal User user) {
+        return teamService.getOwnerTeams(user.getId());
+    }
+
     @GetMapping("/users/{teamId}")
     public Flux<TeamMemberDTO> getUsersInTeamWithSkills(@PathVariable String teamId) {
         return teamService.getUsersInTeamWithSkills(teamId);
