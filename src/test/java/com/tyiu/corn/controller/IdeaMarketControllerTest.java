@@ -120,6 +120,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         IdeaMarketDTO ideaMarketDTO = createdMarketIdea.get(0);
         assertNotNull(ideaMarketDTO);
         assertTrue(Objects.equals(ideaMarketDTO.getName(), ideaDTO1.getName()) || Objects.equals(ideaMarketDTO.getName(), ideaDTO2.getName()));
+        assertSame(getIdea(ideaMarketDTO.getIdeaId(), ideaMarketDTO.getName()).getStatus(), Idea.Status.ON_MARKET);
         return ideaMarketDTO;
     }
 

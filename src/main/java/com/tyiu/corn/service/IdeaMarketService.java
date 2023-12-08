@@ -1,6 +1,7 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.*;
+import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.IdeaMarket;
 import com.tyiu.corn.model.entities.TeamMarketRequest;
 import com.tyiu.corn.model.entities.User;
@@ -257,6 +258,9 @@ public class IdeaMarketService {
                                         ideaMarket.setInitiatorId(u.getId());
                                         return Mono.empty();
                                     })
+                                    .then(template.update(query(where("id").is(ideaDTO.getId())),
+                                            update("status", Idea.Status.ON_MARKET),
+                                            Idea.class))
                                     .then(template.insert(ideaMarket)
                                             .map(i -> mapper.map(i, IdeaMarketDTO.class)));
                         }
