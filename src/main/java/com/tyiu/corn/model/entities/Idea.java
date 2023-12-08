@@ -44,7 +44,8 @@ public class Idea {
         ON_APPROVAL,
         ON_CONFIRMATION,
         NEW,
-        CONFIRMED
+        CONFIRMED,
+        ON_MARKET
     }
 
 

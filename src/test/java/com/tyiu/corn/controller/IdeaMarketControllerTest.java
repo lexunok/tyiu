@@ -120,6 +120,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         IdeaMarketDTO ideaMarketDTO = createdMarketIdea.get(0);
         assertNotNull(ideaMarketDTO);
         assertTrue(Objects.equals(ideaMarketDTO.getName(), ideaDTO1.getName()) || Objects.equals(ideaMarketDTO.getName(), ideaDTO2.getName()));
+        assertSame(getIdea(ideaMarketDTO.getIdeaId(), ideaMarketDTO.getName()).getStatus(), Idea.Status.ON_MARKET);
         return ideaMarketDTO;
     }
 
@@ -272,7 +273,8 @@ public class IdeaMarketControllerTest extends TestContainers {
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
-                        Role.INITIATOR));
+                        Role.INITIATOR,
+                        Role.TEAM_OWNER));
 
         AuthenticationResponse response = webTestClient
                 .post()
@@ -312,7 +314,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(17, getMarketIdeaList("/api/v1/market/all").size());
+        assertEquals(34, getMarketIdeaList("/api/v1/market/all").size());
     }
 
     @Test
@@ -320,7 +322,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(19, getMarketIdeaList("/api/v1/market/initiator/all").size());
+        assertEquals(38, getMarketIdeaList("/api/v1/market/initiator/all").size());
     }
 
     @Test

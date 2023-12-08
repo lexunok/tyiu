@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMemberDTO;
@@ -16,12 +17,11 @@ import com.tyiu.corn.model.entities.relations.Team2WantedSkill;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.responses.TeamSkillsResponse;
 import io.r2dbc.spi.Batch;
+import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -31,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -78,6 +77,56 @@ public class TeamService {
                                     .build());
                         })
                         .flatMap(emailService::sendMailInvitation));
+    }
+
+    private Flux<SkillDTO> getSkillsByList(List<String> skills){
+        String QUERY = "SELECT user_skill.*, skill.id, skill.name, skill.type " +
+                "FROM user_skill " +
+                "LEFT JOIN skill ON skill.id = user_skill.skill_id " +
+                "WHERE user_skill.user_id IN (:skills)";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("skills", skills)
+                .map((row, rowMetadata) -> SkillDTO.builder()
+                        .id(row.get("id", String.class))
+                        .name(row.get("name", String.class))
+                        .type(SkillType.valueOf(row.get("type", String.class)))
+                        .build())
+                .all();
+    }
+
+    private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills){
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
+                .map((row, rowMetadata) -> buildTeamDTO(row)).all().distinct();
+    }
+
+    private TeamDTO buildTeamDTO(Row row){
+        TeamDTO teamDTO = TeamDTO.builder()
+                .id(row.get("team_id", String.class))
+                .name(row.get("team_name", String.class))
+                .description(row.get("team_description", String.class))
+                .closed(row.get("team_closed", Boolean.class))
+                .membersCount(row.get("member_count", Integer.class))
+                .createdAt(row.get("team_created_at", LocalDate.class))
+                .owner(UserDTO.builder()
+                        .id(row.get("owner_id", String.class))
+                        .email(row.get("owner_email", String.class))
+                        .firstName(row.get("owner_first_name", String.class))
+                        .lastName(row.get("owner_last_name", String.class))
+                        .build())
+                .build();
+        String leaderId = row.get("leader_id", String.class);
+        if (leaderId != null) {
+            teamDTO.setLeader(UserDTO.builder()
+                    .id(leaderId)
+                    .email(row.get("leader_email", String.class))
+                    .firstName(row.get("leader_first_name", String.class))
+                    .lastName(row.get("leader_last_name", String.class))
+                    .build());
+        }
+        return teamDTO;
     }
 
     ///////////////////////
@@ -130,36 +179,24 @@ public class TeamService {
 
         return template.getDatabaseClient()
                 .sql(QUERY)
-                .map((row, rowMetadata) -> {
+                .map((row, rowMetadata) -> buildTeamDTO(row)).all();
+    }
 
-                    TeamDTO teamDTO = TeamDTO.builder()
-                            .id(row.get("team_id", String.class))
-                            .name(row.get("team_name", String.class))
-                            .description(row.get("team_description", String.class))
-                            .closed(row.get("team_closed", Boolean.class))
-                            .membersCount(row.get("member_count", Integer.class))
-                            .createdAt(row.get("team_created_at", LocalDate.class))
-                            .owner(UserDTO.builder()
-                                    .id(row.get("owner_id", String.class))
-                                    .email(row.get("owner_email", String.class))
-                                    .firstName(row.get("owner_first_name", String.class))
-                                    .lastName(row.get("owner_last_name", String.class))
-                                    .build())
-                            .build();
+    public Flux<TeamDTO> getOwnerTeams(String ownerId) {
+        String QUERY = "SELECT " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
+                "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
+                "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "FROM team t " +
+                "LEFT JOIN users o ON t.owner_id = o.id " +
+                "LEFT JOIN users l ON t.leader_id = l.id " +
+                "WHERE t.owner_id = :ownerId";
 
-                    String leaderId = row.get("leader_id", String.class);
-                    if (leaderId != null) {
-                        teamDTO.setLeader(UserDTO.builder()
-                                .id(leaderId)
-                                .email(row.get("leader_email", String.class))
-                                .firstName(row.get("leader_first_name", String.class))
-                                .lastName(row.get("leader_last_name", String.class))
-                                .build());
-                    }
-
-                    return teamDTO;
-
-                }).all();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("ownerId",ownerId)
+                .map((row, rowMetadata) -> buildTeamDTO(row)).all();
     }
 
     public Flux<TeamMemberDTO> getUsersInTeamWithSkills(String teamId) {
@@ -346,7 +383,8 @@ public class TeamService {
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
+                "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id ";
@@ -361,39 +399,7 @@ public class TeamService {
                     "WHERE team_skill.skill_id IN (:skills) OR team_wanted_skill.skill_id IN (:skills)";
         }
 
-        return template.getDatabaseClient()
-                .sql(QUERY)
-                .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
-                .map((row, rowMetadata) -> {
-
-                    TeamDTO teamDTO = TeamDTO.builder()
-                            .id(row.get("team_id", String.class))
-                            .name(row.get("team_name", String.class))
-                            .description(row.get("team_description", String.class))
-                            .closed(row.get("team_closed", Boolean.class))
-                            .membersCount(row.get("member_count", Integer.class))
-                            .createdAt(row.get("team_created_at", LocalDate.class))
-                            .owner(UserDTO.builder()
-                                    .id(row.get("owner_id", String.class))
-                                    .email(row.get("owner_email", String.class))
-                                    .firstName(row.get("owner_first_name", String.class))
-                                    .lastName(row.get("owner_last_name", String.class))
-                                    .build())
-                            .build();
-
-                    String leaderId = row.get("leader_id", String.class);
-                    if (leaderId != null) {
-                        teamDTO.setLeader(UserDTO.builder()
-                                .id(leaderId)
-                                .email(row.get("leader_email", String.class))
-                                .firstName(row.get("leader_first_name", String.class))
-                                .lastName(row.get("leader_last_name", String.class))
-                                .build());
-                    }
-
-                    return teamDTO;
-
-                }).all();
+        return getFilteredTeam(QUERY, selectedSkills);
     }
 
     public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills) {
@@ -401,47 +407,15 @@ public class TeamService {
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count," +
+                "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
                 "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
                 "LEFT JOIN team_wanted_skill ON team_wanted_skill.team_id = t.id " +
                 "WHERE team_wanted_skill.skill_id IN (:skills) AND team_skill.skill_id NOT IN (:skills)";
-
-        return template.getDatabaseClient()
-                .sql(QUERY)
-                .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
-                .map((row, rowMetadata) -> {
-
-                    TeamDTO teamDTO = TeamDTO.builder()
-                            .id(row.get("team_id", String.class))
-                            .name(row.get("team_name", String.class))
-                            .description(row.get("team_description", String.class))
-                            .closed(row.get("team_closed", Boolean.class))
-                            .membersCount(row.get("member_count", Integer.class))
-                            .createdAt(row.get("team_created_at", LocalDate.class))
-                            .owner(UserDTO.builder()
-                                    .id(row.get("owner_id", String.class))
-                                    .email(row.get("owner_email", String.class))
-                                    .firstName(row.get("owner_first_name", String.class))
-                                    .lastName(row.get("owner_last_name", String.class))
-                                    .build())
-                            .build();
-
-                    String leaderId = row.get("leader_id", String.class);
-                    if (leaderId != null) {
-                        teamDTO.setLeader(UserDTO.builder()
-                                .id(leaderId)
-                                .email(row.get("leader_email", String.class))
-                                .firstName(row.get("leader_first_name", String.class))
-                                .lastName(row.get("leader_last_name", String.class))
-                                .build());
-                    }
-
-                    return teamDTO;
-
-                }).all();
+        return getFilteredTeam(QUERY, selectedSkills);
     }
 
     /*public Mono<Void> sendInviteToUser(String teamId, List<UserDTO> users, User userInviter) {
@@ -456,18 +430,18 @@ public class TeamService {
                 );
     }*/
 
-    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
+    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<TeamMemberDTO> users, User userInviter) {
         return Flux.fromIterable(users)
                 .flatMap(user -> template.insert(
                         TeamInvitation.builder()
-                                .userId(user.getId())
+                                .userId(user.getUserId())
                                 .teamId(teamId)
                                 .email(user.getEmail())
                                 .firstName(user.getFirstName())
                                 .lastName(user.getLastName())
                                 .status(RequestStatus.NEW)
                                 .build())
-                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, teamId)
+                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
                                 .thenReturn(teamInvitation))
                 );
     }
@@ -526,6 +500,18 @@ public class TeamService {
                         }).last());
     }
 
+    public Flux<SkillDTO> getSkillsByUsers(List<UserDTO> users){
+        return getSkillsByList(users.stream().map(UserDTO::getId).toList());
+    }
+
+    public Flux<SkillDTO> getSkillsByInvitations(List<TeamInvitation> users){
+        return getSkillsByList(users.stream().map(TeamInvitation::getUserId).toList());
+    }
+
+    public Flux<SkillDTO> getSkillsByRequests(List<TeamRequest> users){
+        return getSkillsByList(users.stream().map(TeamRequest::getUserId).toList());
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -533,8 +519,14 @@ public class TeamService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteTeam(String id) {
-        return template.delete(query(where("id").is(id)), Team.class).then();
+    public Mono<Void> deleteTeam(String id, String userId) {
+        return template.exists(query(where("owner_id").is(userId)), Team.class)
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists)){
+                        return template.delete(query(where("id").is(id)), Team.class);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                }).then();
     }
 
     public Mono<Void> deleteInvite(String id) {
