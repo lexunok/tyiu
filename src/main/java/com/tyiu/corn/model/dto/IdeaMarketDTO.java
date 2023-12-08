@@ -29,8 +29,8 @@ public class IdeaMarketDTO {
     private Long position;
     private List<SkillDTO> stack;
     private IdeaMarketStatusType status;
-    private Long requests;
-    private Long acceptedRequests;
+    private Integer requests;
+    private Integer acceptedRequests;
     private Boolean isFavorite;
     private LocalDate startDate;
     private LocalDate finishDate;

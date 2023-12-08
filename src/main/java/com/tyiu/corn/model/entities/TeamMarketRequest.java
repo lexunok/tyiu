@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.entities;
 
+import com.tyiu.corn.model.enums.RequestStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -17,13 +18,8 @@ public class TeamMarketRequest {
     private String id;
     private String ideaMarketId;
     private String teamId;
-    private Boolean accepted;
 
     private String name;
-    private LocalDate createdAt;
-    private Boolean closed;
-    private String description;
-    private String ownerId;
-    private String leaderId;
+    private RequestStatus status;
     private String letter;
 }

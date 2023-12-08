@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.dto;
 
+import com.tyiu.corn.model.enums.RequestStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -15,16 +16,10 @@ public class TeamMarketRequestDTO {
     private String id;
     private String ideaMarketId;
     private String teamId;
-    private Boolean accepted;
 
     private String name;
-    private LocalDate createdAt;
-    private Boolean closed;
-    private String description;
-    private UserDTO owner;
-    private UserDTO leader;
-    private Short membersCount;
-    private List<UserDTO> members;
-    private List<SkillDTO> skills;
+    private RequestStatus status;
     private String letter;
+    private Integer membersCount;
+    private List<SkillDTO> skills;
 }

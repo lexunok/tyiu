@@ -14,6 +14,7 @@ import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
@@ -132,7 +133,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .owner(userDTO)
                 .leader(userDTO)
                 .members(List.of(userDTO))
-                .wantedSkills(List.of(skill1))
+                .wantedSkills(List.of(skill1, skill2))
                 .build();
         TeamDTO createdTeam = webTestClient
                 .post()
@@ -147,14 +148,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
                 .ideaMarketId(ideaMarketId)
                 .teamId(createdTeam.getId())
-                .accepted(false)
                 .name(createdTeam.getName())
-                .closed(createdTeam.getClosed())
-                .description(createdTeam.getDescription())
-                .owner(userDTO)
-                .leader(userDTO)
-                .members(List.of(userDTO))
-                .skills(List.of(skill1,skill2))
                 .letter("letter")
                 .build();
         TeamMarketRequestDTO createdTeamMarketRequest = webTestClient
@@ -233,6 +227,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .expectBodyList(IdeaMarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(marketIdeas);
+        assertTrue(marketIdeas.get(0).getStack().size() >= 2);
         return marketIdeas;
     }
 
@@ -300,6 +295,14 @@ public class IdeaMarketControllerTest extends TestContainers {
 
         skill1 = createSkill(buildSkill("skill1"));
         skill2 = createSkill(buildSkill("skill2"));
+
+        webTestClient
+                .post()
+                .uri("/api/v1/profile/skills/save")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Flux.just(skill1, skill2), SkillDTO.class)
+                .exchange()
+                .expectStatus().isOk();
     }
 
     ///////////////////////
@@ -314,7 +317,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(34, getMarketIdeaList("/api/v1/market/all").size());
+        assertEquals(17, getMarketIdeaList("/api/v1/market/all").size());
     }
 
     @Test
@@ -322,12 +325,15 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertEquals(38, getMarketIdeaList("/api/v1/market/initiator/all").size());
+        assertEquals(19, getMarketIdeaList("/api/v1/market/initiator/all").size());
     }
 
     @Test
     void testGetMarketIdea() {
-        getMarketIdea(createMarketIdea().getId());
+        String ideaMarketId = createMarketIdea().getId();
+        createMarketTeamRequest(ideaMarketId);
+        assertEquals(getMarketIdea(ideaMarketId).getRequests(), 1);
+        assertEquals(getMarketIdea(ideaMarketId).getAcceptedRequests(), 0);
     }
 
     @Test
@@ -342,13 +348,14 @@ public class IdeaMarketControllerTest extends TestContainers {
         createMarketTeamRequest(ideaMarketId);
         List<TeamMarketRequestDTO> marketTeamsRequests =  webTestClient
                 .get()
-                .uri("/api/v1/market/requests/", ideaMarketId)
+                .uri("/api/v1/market/requests/{ideaMarketId}", ideaMarketId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(TeamMarketRequestDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(marketTeamsRequests);
         assertEquals(1, marketTeamsRequests.size());
+        assertTrue(marketTeamsRequests.get(0).getSkills().size() >= 2);
     }
 
     //////////////////////////////
@@ -411,8 +418,8 @@ public class IdeaMarketControllerTest extends TestContainers {
     void testAcceptTeam() {
         webTestClient
                 .put()
-                .uri("/api/v1/market/accept/{teamMarketId}/true",
-                        createMarketTeamRequest(createMarketIdea().getId()).getId())
+                .uri("/api/v1/market/accept/{teamMarketId}/{status}",
+                        createMarketTeamRequest(createMarketIdea().getId()).getId(), RequestStatus.ACCEPTED)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();

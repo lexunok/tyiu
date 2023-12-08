@@ -143,7 +143,8 @@ public class TeamService {
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "m.id as member_id, m.email as member_email, m.first_name as member_first_name, m.last_name as member_last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
-                "ws.id as wanted_skill_id, ws.name as wanted_skill_name, ws.type as wanted_skill_type " +
+                "ws.id as wanted_skill_id, ws.name as wanted_skill_name, ws.type as wanted_skill_type," +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
                 "FROM team t " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +

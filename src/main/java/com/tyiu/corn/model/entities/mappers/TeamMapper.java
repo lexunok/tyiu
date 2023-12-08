@@ -21,6 +21,7 @@ public class TeamMapper {
                     .description(row.get("team_description", String.class))
                     .closed(row.get("team_closed", Boolean.class))
                     .createdAt(row.get("team_created_at", LocalDate.class))
+                    .membersCount(row.get("member_count", Integer.class))
                     .owner(UserDTO.builder()
                             .id(row.get("owner_id", String.class))
                             .email(row.get("owner_email", String.class))
@@ -56,7 +57,6 @@ public class TeamMapper {
 
             if(existingTeam.getMembers().stream().noneMatch(m -> m.getId().equals(member.getId()))) {
                 existingTeam.getMembers().add(member);
-                existingTeam.setMembersCount(existingTeam.getMembers().size());
             }
         }
 
