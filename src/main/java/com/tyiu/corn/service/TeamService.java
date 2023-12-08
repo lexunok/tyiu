@@ -17,13 +17,11 @@ import com.tyiu.corn.model.entities.relations.Team2WantedSkill;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.responses.TeamSkillsResponse;
 import io.r2dbc.spi.Batch;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.data.relational.core.query.Query;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -33,7 +31,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -433,18 +430,18 @@ public class TeamService {
                 );
     }*/
 
-    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<UserDTO> users, User userInviter) {
+    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<TeamMemberDTO> users, User userInviter) {
         return Flux.fromIterable(users)
                 .flatMap(user -> template.insert(
                         TeamInvitation.builder()
-                                .userId(user.getId())
+                                .userId(user.getUserId())
                                 .teamId(teamId)
                                 .email(user.getEmail())
                                 .firstName(user.getFirstName())
                                 .lastName(user.getLastName())
                                 .status(RequestStatus.NEW)
                                 .build())
-                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, teamId)
+                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
                                 .thenReturn(teamInvitation))
                 );
     }

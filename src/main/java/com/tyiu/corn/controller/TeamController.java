@@ -8,7 +8,6 @@ import com.tyiu.corn.model.entities.TeamRequest;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.Role;
-import com.tyiu.corn.model.responses.AuthenticationResponse;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.TeamService;
 import lombok.RequiredArgsConstructor;
@@ -120,7 +119,7 @@ public class TeamController {
     }*/
     @PostMapping("/send-invites/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, @AuthenticationPrincipal User user){
+    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<TeamMemberDTO> users, @AuthenticationPrincipal User user){
         return teamService.sendInvitesToUsers(teamId, users, user);
     }
 
