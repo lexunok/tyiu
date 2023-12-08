@@ -27,6 +27,10 @@ public class User implements UserDetails {
     private List<Role> roles;
     private String password;
 
+    public String getEmail() {
+        return email;
+    }
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
         return roles.stream().map(r -> new SimpleGrantedAuthority(r.name())).toList();

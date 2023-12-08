@@ -1,46 +1,34 @@
-package com.tyiu.corn.controller;
+package com.tyiu.corn.controller
 
-import com.tyiu.corn.model.dto.CommentDTO;
-import com.tyiu.corn.model.entities.User;
-import com.tyiu.corn.service.CommentService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.messaging.handler.annotation.DestinationVariable;
-import org.springframework.messaging.handler.annotation.MessageMapping;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import java.security.Principal;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
+import com.tyiu.corn.model.entities.CommentDTO
+import com.tyiu.corn.model.entities.User
+import com.tyiu.corn.service.CommentService
+import kotlinx.coroutines.flow.Flow
+import org.springframework.messaging.handler.annotation.DestinationVariable
+import org.springframework.messaging.handler.annotation.MessageMapping
+import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.web.bind.annotation.*
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/api/v1/comment")
-public class CommentController {
-
-    private final CommentService commentService;
+class CommentController (private val commentService: CommentService) {
 
     @MessageMapping("comment.{ideaId}.receive")
-    public Flux<CommentDTO> receiveNewComments(@DestinationVariable String ideaId){
-        return commentService.getNewComments(ideaId);
-    }
+    fun receiveNewComments(@DestinationVariable ideaId: String): Flow<CommentDTO> = commentService.getNewComments(ideaId)
 
     @GetMapping("/all/{ideaId}")
-    public Flux<CommentDTO> getAllComments(@PathVariable String ideaId){
-        return commentService.getAllComments(ideaId);
-    }
+    fun getAllComments(@PathVariable ideaId: String): Flow<CommentDTO> = commentService.getAllComments(ideaId)
 
     @PostMapping("/send")
-    public Mono<CommentDTO> createComment(@RequestBody CommentDTO comment, @AuthenticationPrincipal User user){
-        return commentService.createComment(comment, user.getEmail());
+    suspend fun createComment(@RequestBody comment: CommentDTO, @AuthenticationPrincipal user: User): CommentDTO {
+        return commentService.createComment(comment, user.email)
     }
 
     @DeleteMapping("/delete/{commentId}")
-    public Mono<Void> deleteComment(@PathVariable String commentId){
-        return commentService.deleteComment(commentId);
-    }
-    @PutMapping("/check/{commentId}")
-    public Mono<Void> checkComment(@PathVariable String commentId, @AuthenticationPrincipal User user){
-        return commentService.checkCommentByUser(commentId, user.getEmail());
-    }
+    suspend fun deleteComment(@PathVariable commentId: String) = commentService.deleteComment(commentId)
 
+//    @PutMapping("/check/{commentId}")
+//    suspend fun checkComment(@PathVariable commentId: String?, @AuthenticationPrincipal user: User): Mono<Void> {
+//        return commentService!!.checkCommentByUser(commentId, user.email)
+//    }
 }

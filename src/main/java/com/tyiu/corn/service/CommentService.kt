@@ -1,69 +1,40 @@
-package com.tyiu.corn.service;
+package com.tyiu.corn.service
 
-import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import com.tyiu.corn.model.entities.Comment;
-import com.tyiu.corn.model.dto.CommentDTO;
-import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.publisher.Sinks;
-
-import static org.springframework.data.relational.core.query.Criteria.where;
-import static org.springframework.data.relational.core.query.Query.query;
-
+import com.tyiu.corn.model.entities.Comment
+import com.tyiu.corn.model.entities.CommentDTO
+import com.tyiu.corn.model.entities.CommentRepository
+import com.tyiu.corn.model.entities.toDTO
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.map
+import org.springframework.stereotype.Service
 
 @Service
-@RequiredArgsConstructor
-public class CommentService {
+class CommentService(private val repository: CommentRepository) {
 
-    private final R2dbcEntityTemplate template;
-    private final Map<String, Sinks.Many<CommentDTO>> userSinks = new ConcurrentHashMap<>();
-    private final ModelMapper mapper;
+    val sender: MutableSharedFlow<Comment> = MutableSharedFlow()
 
-    public Flux<CommentDTO> getAllComments(String ideaId) {
-        return template.select(query(where("idea_id").is(ideaId)), Comment.class)
-                .flatMap(c -> Flux.just(mapper.map(c,CommentDTO.class)));
+    fun getNewComments(ideaId: String): Flow<CommentDTO> = sender.map {c -> c.toDTO() }
+
+    fun getAllComments(ideaId: String): Flow<CommentDTO> = repository.findAllByIdeaId(ideaId).map { c -> c.toDTO()}
+
+    suspend fun createComment(commentDTO: CommentDTO, senderEmail: String): CommentDTO {
+        val comment = Comment(
+                ideaId = commentDTO.ideaId,
+                text = commentDTO.text,
+                senderEmail = senderEmail,
+                checkedBy = listOf(senderEmail),
+        )
+        sender.tryEmit(comment)
+        return repository.save(comment).toDTO()
     }
 
-    public Flux<CommentDTO> getNewComments(String ideaId) {
-        Sinks.Many<CommentDTO> sink = userSinks
-                .computeIfAbsent(ideaId, key -> Sinks.many().multicast().onBackpressureBuffer());
-        return sink.asFlux().doOnCancel(() -> userSinks.remove(ideaId));
-    }
+    suspend fun deleteComment(commentId: String) = repository.deleteById(commentId)
 
-    public Mono<CommentDTO> createComment(CommentDTO commentDTO, String senderEmail) {
-        Comment comment = Comment.builder()
-                .ideaId(commentDTO.getIdeaId())
-                .text(commentDTO.getText())
-                .checkedBy(List.of(senderEmail))
-                .createdAt(LocalDateTime.now())
-                .senderEmail(senderEmail)
-                .build();
-        Sinks.Many<CommentDTO> sink = userSinks.get(commentDTO.getIdeaId());
-        return template.insert(comment).flatMap(c -> {
-            if (sink!=null){
-                sink.tryEmitNext(mapper.map(c,CommentDTO.class));
-            }
-            return Mono.just(mapper.map(c,CommentDTO.class));
-        });
-    }
-
-
-    public Mono<Void> deleteComment(String commentId) {
-        return template.delete(query(where("id").is(commentId)), Comment.class).then();
-    }
-    public Mono<Void> checkCommentByUser(String commentId, String userEmail){
-        String query = "UPDATE comment SET checked_by = array_append(checked_by,:userEmail) WHERE id =:commentId";
-        return template.getDatabaseClient().sql(query)
-                .bind("userEmail",userEmail)
-                .bind("commentId",commentId).then();
-    }
-
+//    suspend fun checkCommentByUser(commentId: String, userEmail: String){
+//        val query = "UPDATE comment SET checked_by = array_append(checked_by,:userEmail) WHERE id =:commentId"
+//        return template!!.databaseClient.sql(query)
+//                .bind("userEmail", userEmail)
+//                .bind("commentId", commentId).then()
+//    }
 }
