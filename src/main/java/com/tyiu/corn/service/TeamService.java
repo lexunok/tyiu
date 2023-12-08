@@ -97,6 +97,41 @@ public class TeamService {
                 .all();
     }
 
+    private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills){
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
+                .map((row, rowMetadata) -> {
+                    TeamDTO teamDTO = TeamDTO.builder()
+                            .id(row.get("team_id", String.class))
+                            .name(row.get("team_name", String.class))
+                            .description(row.get("team_description", String.class))
+                            .closed(row.get("team_closed", Boolean.class))
+                            .membersCount(row.get("member_count", Integer.class))
+                            .createdAt(row.get("team_created_at", LocalDate.class))
+                            .owner(UserDTO.builder()
+                                    .id(row.get("owner_id", String.class))
+                                    .email(row.get("owner_email", String.class))
+                                    .firstName(row.get("owner_first_name", String.class))
+                                    .lastName(row.get("owner_last_name", String.class))
+                                    .build())
+                            .build();
+
+                    String leaderId = row.get("leader_id", String.class);
+                    if (leaderId != null) {
+                        teamDTO.setLeader(UserDTO.builder()
+                                .id(leaderId)
+                                .email(row.get("leader_email", String.class))
+                                .firstName(row.get("leader_first_name", String.class))
+                                .lastName(row.get("leader_last_name", String.class))
+                                .build());
+                    }
+
+                    return teamDTO;
+
+                }).all().distinct();
+    }
+
     ///////////////////////
     //  _____   ____ ______
     // / ___/  / __//_  __/
@@ -375,38 +410,7 @@ public class TeamService {
                     "WHERE team_skill.skill_id IN (:skills) OR team_wanted_skill.skill_id IN (:skills)";
         }
 
-        return template.getDatabaseClient()
-                .sql(QUERY)
-                .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
-                .map((row, rowMetadata) -> {
-                    TeamDTO teamDTO = TeamDTO.builder()
-                            .id(row.get("team_id", String.class))
-                            .name(row.get("team_name", String.class))
-                            .description(row.get("team_description", String.class))
-                            .closed(row.get("team_closed", Boolean.class))
-                            .membersCount(row.get("member_count", Integer.class))
-                            .createdAt(row.get("team_created_at", LocalDate.class))
-                            .owner(UserDTO.builder()
-                                    .id(row.get("owner_id", String.class))
-                                    .email(row.get("owner_email", String.class))
-                                    .firstName(row.get("owner_first_name", String.class))
-                                    .lastName(row.get("owner_last_name", String.class))
-                                    .build())
-                            .build();
-
-                    String leaderId = row.get("leader_id", String.class);
-                    if (leaderId != null) {
-                        teamDTO.setLeader(UserDTO.builder()
-                                .id(leaderId)
-                                .email(row.get("leader_email", String.class))
-                                .firstName(row.get("leader_first_name", String.class))
-                                .lastName(row.get("leader_last_name", String.class))
-                                .build());
-                    }
-
-                    return teamDTO;
-
-                }).all().distinct();
+        return getFilteredTeam(QUERY, selectedSkills);
     }
 
     public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills) {
@@ -422,40 +426,7 @@ public class TeamService {
                 "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
                 "LEFT JOIN team_wanted_skill ON team_wanted_skill.team_id = t.id " +
                 "WHERE team_wanted_skill.skill_id IN (:skills) AND team_skill.skill_id NOT IN (:skills)";
-
-        return template.getDatabaseClient()
-                .sql(QUERY)
-                .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
-                .map((row, rowMetadata) -> {
-
-                    TeamDTO teamDTO = TeamDTO.builder()
-                            .id(row.get("team_id", String.class))
-                            .name(row.get("team_name", String.class))
-                            .description(row.get("team_description", String.class))
-                            .closed(row.get("team_closed", Boolean.class))
-                            .membersCount(row.get("member_count", Integer.class))
-                            .createdAt(row.get("team_created_at", LocalDate.class))
-                            .owner(UserDTO.builder()
-                                    .id(row.get("owner_id", String.class))
-                                    .email(row.get("owner_email", String.class))
-                                    .firstName(row.get("owner_first_name", String.class))
-                                    .lastName(row.get("owner_last_name", String.class))
-                                    .build())
-                            .build();
-
-                    String leaderId = row.get("leader_id", String.class);
-                    if (leaderId != null) {
-                        teamDTO.setLeader(UserDTO.builder()
-                                .id(leaderId)
-                                .email(row.get("leader_email", String.class))
-                                .firstName(row.get("leader_first_name", String.class))
-                                .lastName(row.get("leader_last_name", String.class))
-                                .build());
-                    }
-
-                    return teamDTO;
-
-                }).all().distinct();
+        return getFilteredTeam(QUERY, selectedSkills);
     }
 
     /*public Mono<Void> sendInviteToUser(String teamId, List<UserDTO> users, User userInviter) {

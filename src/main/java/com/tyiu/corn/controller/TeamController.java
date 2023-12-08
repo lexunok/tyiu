@@ -38,7 +38,7 @@ public class TeamController {
     @GetMapping("/{teamId}")
     public Mono<TeamDTO> getTeam(@PathVariable String teamId){
         return teamService.getTeam(teamId)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Не удалось загрузить команду")));
     }
 
     @GetMapping("/all")
@@ -53,8 +53,7 @@ public class TeamController {
 
     @GetMapping("/invites")
     public Flux<TeamInvitation> getInvitation(@AuthenticationPrincipal User user) {
-        return teamService.getInvitations(user.getId())
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+        return teamService.getInvitations(user.getId());
     }
     @GetMapping("/requests/{teamId}")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
@@ -87,23 +86,26 @@ public class TeamController {
     @PreAuthorize("hasAuthority('TEAM_OWNER')")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
         return teamService.addTeam(team)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при создании команды")));
     }
 
     @PostMapping("/skill-filter/{role}")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role){
         return teamService.getTeamsBySkills(checkedSkills, role);
     }
 
     @PostMapping("/vacancy-filter")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills){
         return teamService.getTeamsByVacancies(checkedSkills);
     }
 
     @PostMapping("/request/send/{teamId}")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('ADMIN')")
     public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
         return teamService.sendTeamRequest(teamId, user)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
 
     /*@PostMapping("/send-invite/{teamId}")
@@ -112,6 +114,7 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }*/
     @PostMapping("/send-invites/{teamId}")
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<UserDTO> users, @AuthenticationPrincipal User user){
         return teamService.sendInvitesToUsers(teamId, users, user);
     }
@@ -147,20 +150,22 @@ public class TeamController {
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> deleteTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
         return teamService.deleteTeam(teamId, user.getId())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
     }
 
     @DeleteMapping("/delete/invite/{inviteId}")
     public Mono<InfoResponse> deleteInvite(@PathVariable String inviteId) {
         return teamService.deleteInvite(inviteId)
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
     }
 
     @DeleteMapping("/delete/request/{requestId}")
-    public Mono<Void> deleteRequest(@PathVariable String requestId) {
-        return teamService.deleteRequest(requestId);
+    public Mono<InfoResponse> deleteRequest(@PathVariable String requestId) {
+        return teamService.deleteRequest(requestId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
     }
 
     @DeleteMapping("/kick/{teamId}/{userId}")
@@ -176,31 +181,36 @@ public class TeamController {
     ////////////////////////
 
     @PutMapping("/update/{teamId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER')")
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
-        return teamService.updateTeam(teamId, team);
+        return teamService.updateTeam(teamId, team)
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при обновлении команды")));
     }
 
     @PutMapping("/skills/update/{teamId}")
-    public Mono<Void> updateTeamSkills(@PathVariable String teamId, @RequestBody Flux<SkillDTO> wantedSkills) {
-        return teamService.updateTeamSkills(teamId, wantedSkills);
+    public Mono<InfoResponse> updateTeamSkills(@PathVariable String teamId, @RequestBody Flux<SkillDTO> wantedSkills) {
+        return teamService.updateTeamSkills(teamId, wantedSkills)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Компетенции успешно изменены"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить компетенции"));
     }
 
     @PutMapping("/request/{requestId}/update/{newStatus}")
     public Mono<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId, @PathVariable RequestStatus newStatus) {
         return teamService.updateTeamRequestStatus(requestId, newStatus)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/invitation/{invitationId}/update/{newStatus}")
     public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId, @PathVariable RequestStatus newStatus) {
         return teamService.updateTeamInvitationStatus(invitationId, newStatus)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/change/leader/{teamId}/{userId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER')")
-    public Mono<Void> changeLeader(@PathVariable String teamId, @PathVariable String userId){
-        return teamService.changeTeamLeader(teamId, userId);
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    public Mono<InfoResponse> changeLeader(@PathVariable String teamId, @PathVariable String userId){
+        return teamService.changeTeamLeader(teamId, userId)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное изменение лидера"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось назначить лидера"));
     }
 }
