@@ -8,10 +8,6 @@ postgres:
 file:
   path: "/data/spring"
 spring:
-  data:
-    r2dbc:
-      repositories:
-        enabled: false
   r2dbc:
     pool:
       enabled: true
