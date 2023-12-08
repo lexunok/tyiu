@@ -121,6 +121,21 @@ public class TeamController {
         return teamService.addTeamMember(teamId, userId);
     }
 
+    @PostMapping("/skills/users")
+    public Flux<SkillDTO> getSkillsByUsers(@RequestBody List<UserDTO> users){
+        return teamService.getSkillsByUsers(users);
+    }
+
+    @PostMapping("/skills/invitations")
+    public Flux<SkillDTO> getSkillsByInvitations(@RequestBody List<TeamInvitation> users){
+        return teamService.getSkillsByInvitations(users);
+    }
+
+    @PostMapping("/skills/requests")
+    public Flux<SkillDTO> getSkillsByRequests(@RequestBody List<TeamRequest> users){
+        return teamService.getSkillsByRequests(users);
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/

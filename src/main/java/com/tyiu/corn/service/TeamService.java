@@ -81,6 +81,22 @@ public class TeamService {
                         .flatMap(emailService::sendMailInvitation));
     }
 
+    private Flux<SkillDTO> getSkillsByList(List<String> skills){
+        String QUERY = "SELECT user_skill.*, skill.id, skill.name, skill.type " +
+                "FROM user_skill " +
+                "LEFT JOIN skill ON skill.id = user_skill.skill_id " +
+                "WHERE user_skill.user_id IN (:skills)";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("skills", skills)
+                .map((row, rowMetadata) -> SkillDTO.builder()
+                        .id(row.get("id", String.class))
+                        .name(row.get("name", String.class))
+                        .type(SkillType.valueOf(row.get("type", String.class)))
+                        .build())
+                .all();
+    }
+
     ///////////////////////
     //  _____   ____ ______
     // / ___/  / __//_  __/
@@ -524,9 +540,16 @@ public class TeamService {
                         }).last());
     }
 
-    public Mono<SkillDTO> getSkillsByUser(List<UserDTO> users){
-        List<String> skills = users.stream().map(UserDTO::getId).toList();
-        return null;
+    public Flux<SkillDTO> getSkillsByUsers(List<UserDTO> users){
+        return getSkillsByList(users.stream().map(UserDTO::getId).toList());
+    }
+
+    public Flux<SkillDTO> getSkillsByInvitations(List<TeamInvitation> users){
+        return getSkillsByList(users.stream().map(TeamInvitation::getUserId).toList());
+    }
+
+    public Flux<SkillDTO> getSkillsByRequests(List<TeamRequest> users){
+        return getSkillsByList(users.stream().map(TeamRequest::getUserId).toList());
     }
 
     ///////////////////////////////////////////
