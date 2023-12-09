@@ -39,6 +39,7 @@ public class IdeaMarketService {
     private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
         String QUERY = "SELECT im.*, " +
                 "u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
+                "l.id AS l_id, l.first_name AS l_fn, l.last_name AS l_ln, l.email AS l_e, " +
                 "si.id AS si_id, si.name AS si_name, si.type AS si_type, " +
                 "st.id AS st_id, st.name AS st_name, st.type AS st_type, " +
                 "fi.*, " +
@@ -54,6 +55,7 @@ public class IdeaMarketService {
                 "LEFT JOIN skill si ON si.id = ids.skill_id " +
                 "LEFT JOIN skill st ON st.id = ts.skill_id " +
                 "LEFT JOIN users u ON u.id = im.initiator_id " +
+                "LEFT JOIN users l ON l.id = t.leader_id " +
                 "WHERE im.id = :ideaMarketId";
         IdeaMarketMapper ideaMarketMapper = new IdeaMarketMapper();
         return template.getDatabaseClient()

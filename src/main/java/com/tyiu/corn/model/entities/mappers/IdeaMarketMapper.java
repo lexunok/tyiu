@@ -58,6 +58,12 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .id(teamId)
                     .name(row.get("t_name", String.class))
                     .membersCount(row.get("member_count", Integer.class))
+                    .leader(UserDTO.builder()
+                            .id(row.get("l_id", String.class))
+                            .email(row.get("l_e", String.class))
+                            .firstName(row.get("l_fn", String.class))
+                            .lastName(row.get("l_ln", String.class))
+                            .build())
                     .skills(new ArrayList<>())
                     .build();
             existingIdeaMarket.setTeam(teamDTO);
