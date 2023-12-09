@@ -53,7 +53,7 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
         }
 
         String teamId = row.get("t_id", String.class);
-        if (teamId != null){
+        if (teamId != null && existingIdeaMarket.getTeam() == null){
             TeamDTO teamDTO = TeamDTO.builder()
                     .id(teamId)
                     .name(row.get("t_name", String.class))

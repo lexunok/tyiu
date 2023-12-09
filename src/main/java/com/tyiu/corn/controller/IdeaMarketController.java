@@ -2,6 +2,7 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
+import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
@@ -133,7 +134,7 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
-    public Mono<Void> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
+    public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
         return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
     }
 

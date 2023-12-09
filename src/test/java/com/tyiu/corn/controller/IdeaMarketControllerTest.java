@@ -324,10 +324,26 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllMarketIdeas() {
-        String ideaId = createMarketIdea().getId();
-        createMarketTeamRequest(ideaId);
-        createMarketTeamRequest(ideaId);
-        assertTrue(getMarketIdeaList("/api/v1/market/all").size() >= 2);
+        String ideaId1 = createMarketIdea().getId();
+//        String ideaId2 = createMarketIdea().getId();
+//        String ideaId3 = createMarketIdea().getId();
+//        String ideaId4 = createMarketIdea().getId();
+//        String ideaId5 = createMarketIdea().getId();
+        createMarketTeamRequest(ideaId1);
+        createMarketTeamRequest(ideaId1);
+//        createMarketTeamRequest(ideaId2);
+//        createMarketTeamRequest(ideaId3);
+//        createMarketTeamRequest(ideaId3);
+//        createMarketTeamRequest(ideaId3);
+//        createMarketTeamRequest(ideaId4);
+//        createMarketTeamRequest(ideaId4);
+//        createMarketTeamRequest(ideaId5);
+//        createMarketTeamRequest(ideaId5);
+//        createMarketTeamRequest(ideaId5);
+//        createMarketTeamRequest(ideaId5);
+        List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList("/api/v1/market/all");
+        assertTrue(ideaMarketDTOList.size() >= 2);
+        //System.out.print(ideaMarketDTOList.get(0).getPosition());
     }
 
     @Test
@@ -449,13 +465,16 @@ public class IdeaMarketControllerTest extends TestContainers {
         IdeaMarketDTO ideaMarketDTO = createMarketIdea();
         assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam());
         String teamId = createMarketTeamRequest(ideaMarketDTO.getId()).getTeamId();
-        webTestClient
+        TeamDTO teamDTO = webTestClient
                 .put()
                 .uri("/api/v1/market/accept/request/{ideaMarketId}/{teamId}",
                         ideaMarketDTO.getId(), teamId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
-                .expectStatus().isOk();
+                .expectBody(TeamDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(teamDTO.getId());
+        assertTrue(teamDTO.getSkills().size() >= 2);
         IdeaMarketDTO ideaMarketDTO1 = getMarketIdea(ideaMarketDTO.getId());
         assertNotNull(ideaMarketDTO1.getTeam().getId());
         assertNotNull(ideaMarketDTO1.getTeam().getSkills().get(0).getId());
@@ -476,6 +495,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         IdeaMarketDTO ideaMarketDTO1 = getMarketIdea(ideaMarketDTO.getId());
         assertNotNull(ideaMarketDTO1.getTeam().getId());
         assertNotNull(ideaMarketDTO1.getTeam().getSkills().get(0).getId());
+        assertTrue(ideaMarketDTO1.getTeam().getSkills().size() >= 2);
         webTestClient
                 .put()
                 .uri("/api/v1/market/reset/team/{ideaMarketId}",
