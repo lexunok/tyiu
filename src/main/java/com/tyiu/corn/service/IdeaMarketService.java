@@ -37,17 +37,24 @@ public class IdeaMarketService {
     private final ModelMapper mapper;
 
     private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
-        String QUERY = "SELECT idea_market.*, " +
-                "users.id u_id, users.first_name u_fn, users.last_name u_ln, users.email u_e, " +
-                "skill.id s_id, skill.name s_name, skill.type, favorite_idea.*, " +
-                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = idea_market.id) as request_count, " +
-                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = idea_market.id AND status = 'ACCEPTED') as accepted_request_count " +
-                "FROM idea_market " +
-                "LEFT JOIN idea_skill ON idea_skill.idea_id = idea_market.idea_id " +
-                "LEFT JOIN favorite_idea ON favorite_idea.user_id = :userId " +
-                "LEFT JOIN skill ON idea_skill.skill_id = skill.id " +
-                "LEFT JOIN users ON users.id = idea_market.initiator_id " +
-                "WHERE idea_market.id = :ideaMarketId";
+        String QUERY = "SELECT im.*, " +
+                "u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
+                "si.id AS si_id, si.name AS si_name, si.type AS si_type, " +
+                "st.id AS st_id, st.name AS st_name, st.type AS st_type, " +
+                "fi.*, " +
+                "t.id AS t_id, t.name AS t_name, " +
+                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count, " +
+                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) AS member_count " +
+                "FROM idea_market im " +
+                "LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im.id " +
+                "LEFT JOIN team t ON t.id = im.team_id " +
+                "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
+                "LEFT JOIN team_skill ts ON ts.team_id = t.id " +
+                "LEFT JOIN skill si ON si.id = ids.skill_id " +
+                "LEFT JOIN skill st ON st.id = ts.skill_id " +
+                "LEFT JOIN users u ON u.id = im.initiator_id " +
+                "WHERE im.id = :ideaMarketId";
         IdeaMarketMapper ideaMarketMapper = new IdeaMarketMapper();
         return template.getDatabaseClient()
                 .sql(QUERY)
@@ -272,9 +279,26 @@ public class IdeaMarketService {
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
     }
 
-    public Mono<Void> acceptTeam(String teamMarketId, RequestStatus status){
+    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType){
+        return template.update(query(where("id").is(ideaMarketId)),
+                update("status", statusType),
+                IdeaMarket.class).then();
+    }
+
+    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status){
         return template.update(query(where("id").is(teamMarketId)),
                 update("status", status),
                 TeamMarketRequest.class).then();
+    }
+
+    public Mono<Void> setAcceptedTeam(String ideaMarketId, String teamId){
+        return template.update(query(where("id").is(ideaMarketId)),
+                update("team_id", teamId),
+                IdeaMarket.class).then();
+    }
+    public Mono<Void> resetAcceptedTeam(String ideaMarketId){
+        return template.update(query(where("id").is(ideaMarketId)),
+                update("team_id", null),
+                IdeaMarket.class).then();
     }
 }
