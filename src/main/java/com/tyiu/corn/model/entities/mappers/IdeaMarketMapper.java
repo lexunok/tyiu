@@ -19,7 +19,6 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
 
     private final Map<String, IdeaMarketDTO> ideaMarketDTOMap = new LinkedHashMap<>();
 
-    //@Override
     public IdeaMarketDTO apply(Row row, Object o) {
         String ideaMarketId = row.get("id", String.class);
         IdeaMarketDTO existingIdeaMarket = ideaMarketDTOMap.get(ideaMarketId);
@@ -29,12 +28,6 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .id(ideaMarketId)
                     .ideaId(row.get("idea_id", String.class))
                     .name(row.get("name", String.class))
-                    .team(TeamDTO.builder()
-                            .id(row.get("t_id", String.class))
-                            .name(row.get("t_name", String.class))
-                            .membersCount(row.get("member_count", Integer.class))
-                            .skills(new ArrayList<>())
-                            .build())
                     .initiator(UserDTO.builder()
                             .id(row.get("u_id", String.class))
                             .email(row.get("u_e", String.class))
@@ -57,6 +50,17 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .finishDate(row.get("finish_date", LocalDate.class))
                     .build();
             ideaMarketDTOMap.put(ideaMarketId, existingIdeaMarket);
+        }
+
+        String teamId = row.get("t_id", String.class);
+        if (teamId != null){
+            TeamDTO teamDTO = TeamDTO.builder()
+                    .id(teamId)
+                    .name(row.get("t_name", String.class))
+                    .membersCount(row.get("member_count", Integer.class))
+                    .skills(new ArrayList<>())
+                    .build();
+            existingIdeaMarket.setTeam(teamDTO);
         }
 
         String ideaSkillId = row.get("si_id", String.class);

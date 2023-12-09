@@ -447,7 +447,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testSetAcceptedTeam() {
         IdeaMarketDTO ideaMarketDTO = createMarketIdea();
-        assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam().getId());
+        assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam());
         String teamId = createMarketTeamRequest(ideaMarketDTO.getId()).getTeamId();
         webTestClient
                 .put()
@@ -464,7 +464,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testResetAcceptedTeam() {
         IdeaMarketDTO ideaMarketDTO = createMarketIdea();
-        assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam().getId());
+        assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam());
         String teamId = createMarketTeamRequest(ideaMarketDTO.getId()).getTeamId();
         webTestClient
                 .put()
@@ -483,6 +483,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
-        assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam().getId());
+        assertNull(getMarketIdea(ideaMarketDTO.getId()).getTeam());
     }
 }
