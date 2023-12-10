@@ -2,8 +2,10 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
+import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
 import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
@@ -121,9 +123,23 @@ public class IdeaMarketController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось добавить идею в избранные"));
     }
 
-    @PutMapping("/accept/{teamMarketId}/{status}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<Void> acceptTeam(@PathVariable String teamMarketId, @PathVariable RequestStatus status) {
-        return ideaMarketService.acceptTeam(teamMarketId, status);
+    @PutMapping("/idea-status/{ideaMarketId}/{status}")
+    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status) {
+        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status);
+    }
+
+    @PutMapping("/change-status/request/{teamMarketId}/{status}")
+    public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status) {
+        return ideaMarketService.changeRequestStatus(teamMarketId, status);
+    }
+
+    @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
+    public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
+        return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
+    }
+
+    @PutMapping("/reset/team/{ideaMarketId}")
+    public Mono<Void> resetAcceptedTeam(@PathVariable String ideaMarketId) {
+        return ideaMarketService.resetAcceptedTeam(ideaMarketId);
     }
 }

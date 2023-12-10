@@ -18,6 +18,7 @@ public class IdeaMarketDTO {
     private String id;
     private String ideaId;
     private UserDTO initiator;
+    private TeamDTO team;
     private LocalDate createdAt;
     private String name;
     private String problem;
