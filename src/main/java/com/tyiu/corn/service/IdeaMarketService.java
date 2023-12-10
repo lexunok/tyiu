@@ -14,6 +14,7 @@ import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
@@ -32,6 +33,7 @@ import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class IdeaMarketService {
 
     private final R2dbcEntityTemplate template;
@@ -228,16 +230,18 @@ public class IdeaMarketService {
                                     .startDate(ideaDTO.getStartDate())
                                     .finishDate(ideaDTO.getFinishDate())
                                     .build();
+                            log.info(ideaMarket.toString());
                             return template.selectOne(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
                                     .flatMap(u -> {
+                                        log.info(u.getId());
                                         ideaMarket.setInitiatorId(u.getId());
                                         return Mono.empty();
                                     })
                                     .then(template.update(query(where("id").is(ideaDTO.getId())),
                                             update("status", Idea.Status.ON_MARKET),
-                                            Idea.class))
+                                            Idea.class)).log()
                                     .then(template.insert(ideaMarket)
-                                            .map(i -> mapper.map(i, IdeaMarketDTO.class)));
+                                            .map(i -> mapper.map(i, IdeaMarketDTO.class))).log();
                         }
                 );
     }
