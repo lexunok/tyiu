@@ -17,6 +17,7 @@ public class TeamDTO {
     private String description;
 
     private Boolean closed;
+    private Boolean hasActiveProject;
     private Integer membersCount;
     private LocalDate createdAt;
 

@@ -106,6 +106,7 @@ public class TeamService {
                 .name(row.get("team_name", String.class))
                 .description(row.get("team_description", String.class))
                 .closed(row.get("team_closed", Boolean.class))
+                .hasActiveProject(row.get("team_has_active_project", Boolean.class))
                 .membersCount(row.get("member_count", Integer.class))
                 .createdAt(row.get("team_created_at", LocalDate.class))
                 .owner(UserDTO.builder()
@@ -136,7 +137,7 @@ public class TeamService {
 
     public Mono<TeamDTO> getTeam(String teamId) {
         String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "m.id as member_id, m.email as member_email, m.first_name as member_first_name, m.last_name as member_last_name, " +
@@ -168,7 +169,7 @@ public class TeamService {
 
     public Flux<TeamDTO> getTeams() {
         String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
@@ -183,7 +184,7 @@ public class TeamService {
 
     public Flux<TeamDTO> getOwnerTeams(String ownerId) {
         String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
@@ -335,6 +336,7 @@ public class TeamService {
                 .name(teamDTO.getName())
                 .description(teamDTO.getDescription())
                 .closed(teamDTO.getClosed())
+                .hasActiveProject(false)
                 .ownerId(teamDTO.getOwner().getId())
                 .createdAt(LocalDate.now())
                 .build();
@@ -379,7 +381,7 @@ public class TeamService {
 
     public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role) {
         String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
@@ -403,7 +405,7 @@ public class TeamService {
 
     public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills) {
         String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count," +
