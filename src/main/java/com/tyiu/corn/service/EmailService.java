@@ -26,6 +26,7 @@ public class EmailService {
                 .flatMap(h -> getInvitationContext(invitationEmailRequest).flatMap(html -> {
                 try {
                     h.setSubject("Уведомление от портала HITS");
+                    h.setFrom("HITS@mail.tyuiu.ru");
                     h.setTo(invitationEmailRequest.getTo());
                     h.setText(html,true);
                     javaMailSender.send(mimeMessage);
