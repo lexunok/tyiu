@@ -87,7 +87,7 @@ public class TeamController {
     //////////////////////////////
 
     @PostMapping("/add")
-    @PreAuthorize("hasAuthority('TEAM_OWNER')")
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
         return teamService.addTeam(team)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при создании команды")));

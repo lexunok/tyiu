@@ -64,10 +64,8 @@ public class TeamService {
         return template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
                         .flatMap(u -> {
-
                             String message = String.format("Вас пригласили в команду \"%s\". " +
                                     "Перейдите по ссылке, чтобы ответить на приглашение", t.getName());
-
                             return Mono.just(InvitationEmailRequest.builder()
                                     .to(u.getEmail())
                                     .from("Вас пригласил: " + userInviter.getFirstName() + " " + userInviter.getLastName())
