@@ -20,6 +20,7 @@ public class TeamMapper {
                     .name(row.get("team_name", String.class))
                     .description(row.get("team_description", String.class))
                     .closed(row.get("team_closed", Boolean.class))
+                    .hasActiveProject(row.get("team_has_active_project", Boolean.class))
                     .createdAt(row.get("team_created_at", LocalDate.class))
                     .membersCount(row.get("member_count", Integer.class))
                     .owner(UserDTO.builder()

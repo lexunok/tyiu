@@ -1,12 +1,8 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.model.dto.*;
-import com.tyiu.corn.model.entities.Idea;
-import com.tyiu.corn.model.entities.IdeaMarket;
-import com.tyiu.corn.model.entities.TeamMarketRequest;
-import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.IdeaMarketMapper;
-import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Favorite2Idea;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.RequestStatus;
@@ -17,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -106,6 +103,13 @@ public class IdeaMarketService {
         }
         map.put(ideaMarketId, ideaMarketDTO);
         return ideaMarketDTO;
+    }
+
+    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Yekaterinburg")
+    public void checkFinalDate(){
+        template.update(query(where("finish_date").is(LocalDate.now())),
+                update("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
+                IdeaMarket.class).subscribe();
     }
 
     ///////////////////////
@@ -311,8 +315,12 @@ public class IdeaMarketService {
                 "WHERE t.id = :teamId";
         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
         return template.update(query(where("id").is(ideaMarketId)),
-                update("team_id", teamId),
-                IdeaMarket.class).then(template.getDatabaseClient()
+                        update("team_id", teamId),
+                        IdeaMarket.class)
+                .then(template.update(query(where("id").is(teamId)),
+                        update("has_active_project", true),
+                        Team.class))
+                .then(template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId", teamId)
                 .map((row, rowMetadata) -> {
@@ -343,8 +351,14 @@ public class IdeaMarketService {
                 .collectList().map(i -> i.get(0)));
     }
     public Mono<Void> resetAcceptedTeam(String ideaMarketId){
-        return template.update(query(where("id").is(ideaMarketId)),
-                update("team_id", null),
-                IdeaMarket.class).then();
+        return template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
+                .flatMap(i -> {
+                    String teamId = i.getTeamId();
+                    i.setTeamId(null);
+                    return template.update(query(where("id").is(teamId)),
+                            update("has_active_project", false),
+                            Team.class)
+                            .then(template.update(i));
+                }).then();
     }
 }

@@ -18,6 +18,7 @@ public class Team {
     private String name;
     private String description;
     private Boolean closed;
+    private Boolean hasActiveProject;
     private LocalDate createdAt;
     private String ownerId;
     private String leaderId;
