@@ -22,7 +22,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/market")
+@RequestMapping("/api/v1/market/idea")
 public class IdeaMarketController {
     private final IdeaMarketService ideaMarketService;
 
@@ -67,14 +67,15 @@ public class IdeaMarketController {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    @PostMapping("/send")
+    @PostMapping("/send/{marketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> createMarketIdea(@RequestBody List<IdeaMarketRequest> ideaDTOList) {
-        return ideaMarketService.sendIdeaOnMarket(ideaDTOList)
+    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody List<IdeaMarketRequest> ideaDTOList) {
+        return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить идею на биржу")));
     }
 
     @PostMapping("/declare")
+    @PreAuthorize("hasAuthority('TEAM_MEMBER') || hasAuthority('ADMIN')")
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
         return ideaMarketService.declareTeam(teamMarketRequestDTO)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось заявить команду")));
@@ -136,10 +137,5 @@ public class IdeaMarketController {
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
     public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
         return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
-    }
-
-    @PutMapping("/reset/team/{ideaMarketId}")
-    public Mono<Void> resetAcceptedTeam(@PathVariable String ideaMarketId) {
-        return ideaMarketService.resetAcceptedTeam(ideaMarketId);
     }
 }

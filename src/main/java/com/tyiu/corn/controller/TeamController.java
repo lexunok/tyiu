@@ -35,18 +35,18 @@ public class TeamController {
     ///////////////////////
 
     @GetMapping("/{teamId}")
-    public Mono<TeamDTO> getTeam(@PathVariable String teamId){
-        return teamService.getTeam(teamId)
+    public Mono<TeamDTO> getTeam(@PathVariable String teamId, @AuthenticationPrincipal User user){
+        return teamService.getTeam(teamId, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось загрузить команду")));
     }
 
     @GetMapping("/all")
-    public Flux<TeamDTO> getTeams() {
-        return teamService.getTeams();
+    public Flux<TeamDTO> getTeams(@AuthenticationPrincipal User user) {
+        return teamService.getTeams(user.getId());
     }
 
     @GetMapping("/owner/all")
-    public Flux<TeamDTO> getTeams(@AuthenticationPrincipal User user) {
+    public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal User user) {
         return teamService.getOwnerTeams(user.getId());
     }
 
@@ -95,14 +95,14 @@ public class TeamController {
 
     @PostMapping("/skill-filter/{role}")
     @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role){
-        return teamService.getTeamsBySkills(checkedSkills, role);
+    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal User user){
+        return teamService.getTeamsBySkills(checkedSkills, role, user.getId());
     }
 
     @PostMapping("/vacancy-filter")
     @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills){
-        return teamService.getTeamsByVacancies(checkedSkills);
+    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal User user){
+        return teamService.getTeamsByVacancies(checkedSkills, user.getId());
     }
 
     @PostMapping("/request/send/{teamId}")

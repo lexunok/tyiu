@@ -19,6 +19,7 @@ public class IdeaMarket {
     private String ideaId;
     private String initiatorId;
     private String teamId;
+    private String marketId;
     private LocalDate createdAt;
     private String name;
     private String problem;

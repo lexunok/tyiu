@@ -12,6 +12,7 @@ import com.tyiu.corn.model.entities.TeamRequest;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Team2Member;
+import com.tyiu.corn.model.entities.relations.Team2Refused;
 import com.tyiu.corn.model.entities.relations.Team2Skill;
 import com.tyiu.corn.model.entities.relations.Team2WantedSkill;
 import com.tyiu.corn.model.enums.RequestStatus;
@@ -93,16 +94,18 @@ public class TeamService {
                 .all();
     }
 
-    private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills){
+    private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills, String userId){
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
+                .bind("userId", userId)
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all().distinct();
     }
 
     private TeamDTO buildTeamDTO(Row row){
+        String teamId = row.get("team_id", String.class);
         TeamDTO teamDTO = TeamDTO.builder()
-                .id(row.get("team_id", String.class))
+                .id(teamId)
                 .name(row.get("team_name", String.class))
                 .description(row.get("team_description", String.class))
                 .closed(row.get("team_closed", Boolean.class))
@@ -115,6 +118,7 @@ public class TeamService {
                         .firstName(row.get("owner_first_name", String.class))
                         .lastName(row.get("owner_last_name", String.class))
                         .build())
+                .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId))
                 .build();
         String leaderId = row.get("leader_id", String.class);
         if (leaderId != null) {
@@ -128,6 +132,15 @@ public class TeamService {
         return teamDTO;
     }
 
+    private Mono<Void> annul(String userId){
+        return template.update(query(where("user_id").is(userId)),
+                        update("status", RequestStatus.ANNULLED),
+                        TeamRequest.class)
+                .then(template.update(query(where("user_id").is(userId)),
+                        update("status", RequestStatus.ANNULLED),
+                        TeamInvitation.class)).then();
+    }
+
     ///////////////////////
     //  _____   ____ ______
     // / ___/  / __//_  __/
@@ -135,9 +148,10 @@ public class TeamService {
     //\___/  /___/  /_/
     ///////////////////////
 
-    public Mono<TeamDTO> getTeam(String teamId) {
+    public Mono<TeamDTO> getTeam(String teamId, String userId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
+                "tr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "m.id as member_id, m.email as member_email, m.first_name as member_first_name, m.last_name as member_last_name, " +
@@ -145,6 +159,7 @@ public class TeamService {
                 "ws.id as wanted_skill_id, ws.name as wanted_skill_name, ws.type as wanted_skill_type," +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
                 "FROM team t " +
+                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
                 "LEFT JOIN team_member tm ON t.id = tm.team_id " +
@@ -160,6 +175,7 @@ public class TeamService {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId", teamId)
+                .bind("userId",userId)
                 .map(teamMapper::apply)
                 .all()
                 .collectList()
@@ -167,35 +183,40 @@ public class TeamService {
     }
 
 
-    public Flux<TeamDTO> getTeams() {
+    public Flux<TeamDTO> getTeams(String userId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
+                "tr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
                 "FROM team t " +
+                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id";
 
         return template.getDatabaseClient()
                 .sql(QUERY)
+                .bind("userId", userId)
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all();
     }
 
     public Flux<TeamDTO> getOwnerTeams(String ownerId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
+                "tr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
                 "FROM team t " +
+                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "WHERE t.owner_id = :ownerId";
+                "WHERE t.owner_id = :userId";
 
         return template.getDatabaseClient()
                 .sql(QUERY)
-                .bind("ownerId",ownerId)
+                .bind("userId", ownerId)
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all();
     }
 
@@ -379,20 +400,21 @@ public class TeamService {
                 });
     }
 
-    public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role) {
+    public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role, String userId) {
         String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project " +
+                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
+                "tr.team_id as refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
                 "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
+                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id ";
         if (role == Role.INITIATOR)
         {
-            QUERY = QUERY + "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
-                    "WHERE team_skill.skill_id IN (:skills)";
+            QUERY = QUERY + "INNER JOIN team_skill ON team_skill.team_id = t.id AND team_skill.skill_id IN (:skills)";
         }
         else {
             QUERY = QUERY + "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
@@ -400,23 +422,25 @@ public class TeamService {
                     "WHERE team_skill.skill_id IN (:skills) OR team_wanted_skill.skill_id IN (:skills)";
         }
 
-        return getFilteredTeam(QUERY, selectedSkills);
+        return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills) {
+    public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills, String userId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
+                "tr.team_id as refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count," +
                 "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
+                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
                 "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
                 "LEFT JOIN team_wanted_skill ON team_wanted_skill.team_id = t.id " +
                 "WHERE team_wanted_skill.skill_id IN (:skills) AND team_skill.skill_id NOT IN (:skills)";
-        return getFilteredTeam(QUERY, selectedSkills);
+        return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
     /*public Mono<Void> sendInviteToUser(String teamId, List<UserDTO> users, User userInviter) {
@@ -469,10 +493,6 @@ public class TeamService {
 
 
         return template.insert(new Team2Member(teamId, userId))
-                .then(template.delete(query(where("team_id").is(teamId)
-                        .and("user_id").is(userId)), TeamInvitation.class))
-                .then(template.delete(query(where("team_id").is(teamId)
-                        .and("user_id").is(userId)), TeamRequest.class))
                 .then(updateSkills(teamId))
                 .then(template.getDatabaseClient()
                         .sql(query)
@@ -540,7 +560,10 @@ public class TeamService {
 
     public Mono<Void> kickFromTeam(String teamId, String userId){
         return template.delete(query(where("team_id").is(teamId)
-                .and("member_id").is(userId)),Team2Member.class).then(updateSkills(teamId)).then();
+                        .and("member_id").is(userId)),Team2Member.class)
+                .then(updateSkills(teamId))
+                .then(template.insert(new Team2Refused(teamId, userId)))
+                .then();
     }
 
     ////////////////////////
@@ -575,24 +598,40 @@ public class TeamService {
                 .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
     }
 
-    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus) {
-        return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
-                .flatMap(request -> {
-                    request.setStatus(newStatus);
-                    return template.update(request).thenReturn(request);
-                });
-    }
-    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus) {
-        return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
-                .flatMap(invitation -> {
-                    invitation.setStatus(newStatus);
-                    return template.update(invitation).thenReturn(invitation);
-                });
-    }
-
     public Mono<Void> changeTeamLeader(String teamId, String userId){
         return template.update(query(where("id").is(teamId)),
                 update("leader_id", userId),
                 Team.class).then();
+    }
+
+    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus) {
+        return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
+                .flatMap(invitation -> {
+                    invitation.setStatus(newStatus);
+                    if (newStatus.equals(RequestStatus.ACCEPTED)){
+                        return annul(invitation.getUserId())
+                                .then(template.update(invitation))
+                                .thenReturn(invitation);
+                    }
+                    return template.update(invitation).thenReturn(invitation);
+                });
+    }
+
+    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus){
+        return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
+                .flatMap(request -> {
+                    request.setStatus(newStatus);
+                    if (newStatus.equals(RequestStatus.CANCELED)){
+                        return template.insert(new Team2Refused(request.getTeamId(), request.getUserId()))
+                                .then(template.update(request))
+                                .thenReturn(request);
+                    }
+                    else if (newStatus.equals(RequestStatus.ACCEPTED)){
+                        return annul(request.getUserId())
+                                .then(template.update(request))
+                                .thenReturn(request);
+                    }
+                    return template.update(request).thenReturn(request);
+                });
     }
 }

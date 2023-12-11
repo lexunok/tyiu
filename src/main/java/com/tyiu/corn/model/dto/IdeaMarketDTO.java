@@ -19,6 +19,7 @@ public class IdeaMarketDTO {
     private String ideaId;
     private UserDTO initiator;
     private TeamDTO team;
+    private String marketId;
     private LocalDate createdAt;
     private String name;
     private String problem;
@@ -33,6 +34,7 @@ public class IdeaMarketDTO {
     private Integer requests;
     private Integer acceptedRequests;
     private Boolean isFavorite;
+    private Boolean isRefused;
     private LocalDate startDate;
     private LocalDate finishDate;
 }

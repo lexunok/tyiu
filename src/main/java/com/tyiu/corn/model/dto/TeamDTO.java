@@ -18,6 +18,7 @@ public class TeamDTO {
 
     private Boolean closed;
     private Boolean hasActiveProject;
+    private Boolean isRefused;
     private Integer membersCount;
     private LocalDate createdAt;
 

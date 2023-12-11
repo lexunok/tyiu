@@ -4,6 +4,7 @@ import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.IdeaMarketMapper;
 import com.tyiu.corn.model.entities.relations.Favorite2Idea;
+import com.tyiu.corn.model.entities.relations.IdeaMarket2Refused;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.SkillType;
@@ -106,7 +107,7 @@ public class IdeaMarketService {
     }
 
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Yekaterinburg")
-    public void checkFinalDate(){
+    private void checkFinalDate(){
         template.update(query(where("finish_date").is(LocalDate.now())),
                 update("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
                 IdeaMarket.class).subscribe();
@@ -122,15 +123,18 @@ public class IdeaMarketService {
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
         String QUERY = "SELECT im.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
                 "fi.*, " +
+                "m.id AS m_id, m.status AS m_status," +
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
                 "ROW_NUMBER () OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number " +
                 "FROM idea_market im " +
+                "LEFT JOIN market m ON m.id = im.market_id " +
                 "LEFT JOIN favorite_idea fi ON fi.user_id = :userId " +
                 "LEFT JOIN users u ON u.id = im.initiator_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
                 "LEFT JOIN skill s ON s.id = ids.skill_id " +
+                "WHERE m.status = 'ACTIVE' " +
                 "ORDER BY im.id";
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
@@ -143,16 +147,19 @@ public class IdeaMarketService {
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId){
         String QUERY = "SELECT im.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
                 "fi.*, " +
+                "m.id AS m_id, m.status AS m_status," +
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
                 "ROW_NUMBER () OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number " +
                 "FROM idea_market im " +
+                "LEFT JOIN market m ON m.id = im.market_id " +
                 "LEFT JOIN favorite_idea fi ON fi.user_id = :userId " +
                 "LEFT JOIN users u ON u.id = im.initiator_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
                 "LEFT JOIN skill s ON s.id = ids.skill_id " +
                 "WHERE im.initiator_id = :userId " +
+                "WHERE m.status = 'ACTIVE' " +
                 "ORDER BY im.id";
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
@@ -217,11 +224,12 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Flux<IdeaMarketDTO> sendIdeaOnMarket(List<IdeaMarketRequest> ideaDTOList) {
+    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, List<IdeaMarketRequest> ideaDTOList) {
         return Flux.fromIterable(ideaDTOList)
                 .flatMap(ideaDTO -> {
                             IdeaMarket ideaMarket = IdeaMarket.builder()
                                     .ideaId(ideaDTO.getId())
+                                    .marketId(marketId)
                                     .name(ideaDTO.getName())
                                     .description(ideaDTO.getDescription())
                                     .problem(ideaDTO.getProblem())
@@ -297,9 +305,23 @@ public class IdeaMarketService {
     }
 
     public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status){
-        return template.update(query(where("id").is(teamMarketId)),
-                update("status", status),
-                TeamMarketRequest.class).then();
+        return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
+                .flatMap(r -> {
+                    r.setStatus(status);
+                    if (status.equals(RequestStatus.CANCELED)){
+                        return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
+                                .then(template.update(r))
+                                .then();
+                    }
+                    else if (status.equals(RequestStatus.ACCEPTED)) {
+                        return template.update(query(where("id").is(teamMarketId)),
+                                update("status", RequestStatus.ANNULLED),
+                                TeamMarketRequest.class)
+                                .then(template.update(r))
+                                .then();
+                    }
+                    return template.update(r).then();
+                });
     }
 
     public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId){
@@ -315,7 +337,8 @@ public class IdeaMarketService {
                 "WHERE t.id = :teamId";
         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
         return template.update(query(where("id").is(ideaMarketId)),
-                        update("team_id", teamId),
+                        update("team_id", teamId)
+                                .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
                         IdeaMarket.class)
                 .then(template.update(query(where("id").is(teamId)),
                         update("has_active_project", true),
@@ -349,16 +372,5 @@ public class IdeaMarketService {
                 })
                 .all().thenMany(Flux.fromIterable(map.values()))
                 .collectList().map(i -> i.get(0)));
-    }
-    public Mono<Void> resetAcceptedTeam(String ideaMarketId){
-        return template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
-                .flatMap(i -> {
-                    String teamId = i.getTeamId();
-                    i.setTeamId(null);
-                    return template.update(query(where("id").is(teamId)),
-                            update("has_active_project", false),
-                            Team.class)
-                            .then(template.update(i));
-                }).then();
     }
 }
