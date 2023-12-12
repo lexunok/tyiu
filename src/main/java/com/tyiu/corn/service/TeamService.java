@@ -201,15 +201,15 @@ public class TeamService {
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all();
     }
 
-    public Flux<TeamDTO> getOwnerTeams(String ownerId) {
+    public Flux<TeamDTO> getOwnerTeams(String ownerId, String ideaMarketId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
-                "tr.team_id AS refused_team_id, " +
+                "imr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
                 "FROM team t " +
-                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
+                "LEFT JOIN idea_market_refused imr ON imr.team_id = t.id AND imr.idea_market_id = :ideaMarketId  " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
                 "WHERE t.owner_id = :userId";
@@ -217,6 +217,7 @@ public class TeamService {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId", ownerId)
+                .bind("ideaMarketId", ideaMarketId)
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all();
     }
 

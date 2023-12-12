@@ -20,6 +20,7 @@ import reactor.core.publisher.Mono;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -301,11 +302,11 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .expectStatus().isOk();
     }
 
-    private void changeRequestStatus(String teamMarketId){
+    private void changeRequestStatus(String teamMarketId, RequestStatus requestStatus){
         webTestClient
                 .put()
                 .uri(path + "/change-status/request/{teamMarketId}/{status}",
-                        teamMarketId, RequestStatus.ACCEPTED)
+                        teamMarketId, requestStatus)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
@@ -421,7 +422,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaMarketId = createMarketIdea().getId();
         createMarketTeamRequest(ideaMarketId);
         createMarketTeamRequest(ideaMarketId);
-        changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId());
+        changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.ACCEPTED);
         IdeaMarketDTO ideaMarketDTO = getMarketIdea(ideaMarketId);
         assertEquals(ideaMarketDTO.getRequests(), 3);
         assertEquals(ideaMarketDTO.getAcceptedRequests(), 1);
@@ -463,7 +464,24 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testCreateTeamMarketRequest() {
-        createMarketTeamRequest(createMarketIdea().getId());
+        String ideaMarketId = createMarketIdea().getId();
+        changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.CANCELED);
+        changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.ACCEPTED);
+        List<TeamDTO> teamDTOS = webTestClient
+                .get()
+                .uri("/api/v1/team/owner/all/{ideaMarketId}", ideaMarketId)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBodyList(TeamDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(teamDTOS);
+        AtomicBoolean check = new AtomicBoolean(false);
+        teamDTOS.stream().map(TeamDTO::getIsRefused).forEach(b -> {
+            if (b) {
+                check.set(true);
+            }
+        });
+        assertTrue(check.get());
     }
 
     ///////////////////////////////////////////
@@ -518,7 +536,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testChangeRequestStatus() {
-        changeRequestStatus(createMarketTeamRequest(createMarketIdea().getId()).getId());
+        changeRequestStatus(createMarketTeamRequest(createMarketIdea().getId()).getId(), RequestStatus.ACCEPTED);
     }
 
     @Test

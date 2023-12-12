@@ -45,9 +45,9 @@ public class TeamController {
         return teamService.getTeams(user.getId());
     }
 
-    @GetMapping("/owner/all")
-    public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal User user) {
-        return teamService.getOwnerTeams(user.getId());
+    @GetMapping("/owner/all/{ideaMarketId}")
+    public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
+        return teamService.getOwnerTeams(user.getId(), ideaMarketId);
     }
 
     @GetMapping("/users/{teamId}")
