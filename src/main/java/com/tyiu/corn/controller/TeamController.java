@@ -173,6 +173,11 @@ public class TeamController {
         return teamService.kickFromTeam(teamId, userId);
     }
 
+    @DeleteMapping("/leave/{teamId}")
+    public Mono<Void> leaveFromTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
+        return teamService.leaveFromTeam(teamId, user.getId());
+    }
+
     ////////////////////////
     //   ___   __  __ ______
     //  / _ \ / / / //_  __/

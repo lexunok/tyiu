@@ -160,7 +160,7 @@ public class TeamService {
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
                 "ws.id as wanted_skill_id, ws.name as wanted_skill_name, ws.type as wanted_skill_type," +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -193,7 +193,7 @@ public class TeamService {
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -442,7 +442,7 @@ public class TeamService {
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member, " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member, " +
                 "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
@@ -468,7 +468,7 @@ public class TeamService {
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member, " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member, " +
                 "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
@@ -589,6 +589,13 @@ public class TeamService {
                         .and("member_id").is(userId)),Team2Member.class)
                 .then(updateSkills(teamId))
                 .then(template.insert(new Team2Refused(teamId, userId)))
+                .then();
+    }
+
+    public Mono<Void> leaveFromTeam(String teamId, String userId) {
+        return template.delete(query(where("team_id").is(teamId)
+                        .and("member_id").is(userId)),Team2Member.class)
+                .then(updateSkills(teamId))
                 .then();
     }
 
