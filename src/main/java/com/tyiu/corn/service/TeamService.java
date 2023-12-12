@@ -120,7 +120,7 @@ public class TeamService {
                         .firstName(row.get("owner_first_name", String.class))
                         .lastName(row.get("owner_last_name", String.class))
                         .build())
-                .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId) || row.get("existed_member", String.class) != null)
+                .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId) || Boolean.TRUE.equals(row.get("existed_member", Boolean.class)))
                 .build();
         String leaderId = row.get("leader_id", String.class);
         if (leaderId != null) {

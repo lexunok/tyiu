@@ -29,7 +29,7 @@ public class TeamMapper {
                             .firstName(row.get("owner_first_name", String.class))
                             .lastName(row.get("owner_last_name", String.class))
                             .build())
-                    .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId) || row.get("existed_member", String.class) != null)
+                    .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId) || Boolean.TRUE.equals(row.get("existed_member", Boolean.class)))
                     .members(new ArrayList<>())
                     .skills(new ArrayList<>())
                     .wantedSkills(new ArrayList<>())
