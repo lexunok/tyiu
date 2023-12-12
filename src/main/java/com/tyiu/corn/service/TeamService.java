@@ -120,7 +120,7 @@ public class TeamService {
                         .firstName(row.get("owner_first_name", String.class))
                         .lastName(row.get("owner_last_name", String.class))
                         .build())
-                .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId))
+                .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId) || row.get("existed_member", String.class) != null)
                 .build();
         String leaderId = row.get("leader_id", String.class);
         if (leaderId != null) {
@@ -153,13 +153,14 @@ public class TeamService {
     public Mono<TeamDTO> getTeam(String teamId, String userId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
-                "tr.team_id AS refused_team_id, " +
+                "tr.team_id as refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "m.id as member_id, m.email as member_email, m.first_name as member_first_name, m.last_name as member_last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
                 "ws.id as wanted_skill_id, ws.name as wanted_skill_name, ws.type as wanted_skill_type," +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
+                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -177,7 +178,7 @@ public class TeamService {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId", teamId)
-                .bind("userId",userId)
+                .bind("userId", userId)
                 .map(teamMapper::apply)
                 .all()
                 .collectList()
@@ -191,7 +192,8 @@ public class TeamService {
                 "tr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
+                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -220,7 +222,35 @@ public class TeamService {
                 .sql(QUERY)
                 .bind("userId", ownerId)
                 .bind("ideaMarketId", ideaMarketId)
-                .map((row, rowMetadata) -> buildTeamDTO(row)).all();
+                .map((row, rowMetadata) -> {
+                    String teamId = row.get("team_id", String.class);
+                    TeamDTO teamDTO = TeamDTO.builder()
+                            .id(teamId)
+                            .name(row.get("team_name", String.class))
+                            .description(row.get("team_description", String.class))
+                            .closed(row.get("team_closed", Boolean.class))
+                            .hasActiveProject(row.get("team_has_active_project", Boolean.class))
+                            .membersCount(row.get("member_count", Integer.class))
+                            .createdAt(row.get("team_created_at", LocalDate.class))
+                            .owner(UserDTO.builder()
+                                    .id(row.get("owner_id", String.class))
+                                    .email(row.get("owner_email", String.class))
+                                    .firstName(row.get("owner_first_name", String.class))
+                                    .lastName(row.get("owner_last_name", String.class))
+                                    .build())
+                            .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId))
+                            .build();
+                    String leaderId = row.get("leader_id", String.class);
+                    if (leaderId != null) {
+                        teamDTO.setLeader(UserDTO.builder()
+                                .id(leaderId)
+                                .email(row.get("leader_email", String.class))
+                                .firstName(row.get("leader_first_name", String.class))
+                                .lastName(row.get("leader_last_name", String.class))
+                                .build());
+                    }
+                    return teamDTO;
+                }).all();
     }
 
     public Flux<TeamMemberDTO> getUsersInTeamWithSkills(String teamId) {
@@ -412,6 +442,7 @@ public class TeamService {
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
+                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member, " +
                 "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
@@ -436,7 +467,8 @@ public class TeamService {
                 "tr.team_id as refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count," +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
+                "(SELECT member_id FROM team_member WHERE member_id = :userId AND team_id = t.id) as existed_member, " +
                 "team_skill.*, team_wanted_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
