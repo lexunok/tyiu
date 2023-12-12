@@ -35,7 +35,7 @@ public class TeamController {
     ///////////////////////
 
     @GetMapping("/{teamId}")
-    public Mono<TeamDTO> getTeam(@PathVariable String teamId, @AuthenticationPrincipal User user){
+    public Mono<TeamDTO> getTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
         return teamService.getTeam(teamId, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось загрузить команду")));
     }
@@ -59,6 +59,7 @@ public class TeamController {
     public Flux<TeamInvitation> getInvitation(@AuthenticationPrincipal User user) {
         return teamService.getInvitations(user.getId());
     }
+
     @GetMapping("/requests/{teamId}")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
         return teamService.getTeamRequests(teamId);
@@ -95,13 +96,13 @@ public class TeamController {
 
     @PostMapping("/skill-filter/{role}")
     @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal User user){
+    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal User user) {
         return teamService.getTeamsBySkills(checkedSkills, role, user.getId());
     }
 
     @PostMapping("/vacancy-filter")
     @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal User user){
+    public Flux<TeamDTO> getTeamsByVacancies(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal User user) {
         return teamService.getTeamsByVacancies(checkedSkills, user.getId());
     }
 
@@ -112,14 +113,9 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
 
-    /*@PostMapping("/send-invite/{teamId}")
-    public Mono<Void> sendInvite(@PathVariable String teamId, @PathVariable List<UserDTO> users, User userInviter){
-        return teamService.sendInviteToUser(teamId, users, userInviter)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
-    }*/
     @PostMapping("/send-invites/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<TeamMemberDTO> users, @AuthenticationPrincipal User user){
+    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<TeamMemberDTO> users, @AuthenticationPrincipal User user) {
         return teamService.sendInvitesToUsers(teamId, users, user);
     }
 
@@ -129,17 +125,17 @@ public class TeamController {
     }
 
     @PostMapping("/skills/users")
-    public Flux<SkillDTO> getSkillsByUsers(@RequestBody List<UserDTO> users){
+    public Flux<SkillDTO> getSkillsByUsers(@RequestBody List<UserDTO> users) {
         return teamService.getSkillsByUsers(users);
     }
 
     @PostMapping("/skills/invitations")
-    public Flux<SkillDTO> getSkillsByInvitations(@RequestBody List<TeamInvitation> users){
+    public Flux<SkillDTO> getSkillsByInvitations(@RequestBody List<TeamInvitation> users) {
         return teamService.getSkillsByInvitations(users);
     }
 
     @PostMapping("/skills/requests")
-    public Flux<SkillDTO> getSkillsByRequests(@RequestBody List<TeamRequest> users){
+    public Flux<SkillDTO> getSkillsByRequests(@RequestBody List<TeamRequest> users) {
         return teamService.getSkillsByRequests(users);
     }
 
@@ -212,7 +208,7 @@ public class TeamController {
 
     @PutMapping("/change/leader/{teamId}/{userId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> changeLeader(@PathVariable String teamId, @PathVariable String userId){
+    public Mono<InfoResponse> changeLeader(@PathVariable String teamId, @PathVariable String userId) {
         return teamService.changeTeamLeader(teamId, userId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное изменение лидера"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось назначить лидера"));

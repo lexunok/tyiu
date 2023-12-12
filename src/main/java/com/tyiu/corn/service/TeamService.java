@@ -46,11 +46,12 @@ public class TeamService {
     private final EmailService emailService;
     private final String path = "https://hits.tyuiu.ru/";
 
-    private Mono<Void> updateSkills(String teamId){
+    private Mono<Void> updateSkills(String teamId) {
         String QUERY = "SELECT user_skill.*, team_member.* " +
                 "FROM team_member " +
                 "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
                 "WHERE team_member.team_id = :teamId AND user_skill.user_id IS NOT NULL";
+
         return template.delete(query(where("team_id").is(teamId)), Team2Skill.class)
                 .then(template.getDatabaseClient()
                         .sql(QUERY)
@@ -78,11 +79,12 @@ public class TeamService {
                         .flatMap(emailService::sendMailInvitation));
     }
 
-    private Flux<SkillDTO> getSkillsByList(List<String> skills){
+    private Flux<SkillDTO> getSkillsByList(List<String> skills) {
         String QUERY = "SELECT user_skill.*, skill.id, skill.name, skill.type " +
                 "FROM user_skill " +
                 "LEFT JOIN skill ON skill.id = user_skill.skill_id " +
                 "WHERE user_skill.user_id IN (:skills)";
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("skills", skills)
@@ -94,7 +96,7 @@ public class TeamService {
                 .all();
     }
 
-    private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills, String userId){
+    private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills, String userId) {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
@@ -102,7 +104,7 @@ public class TeamService {
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all().distinct();
     }
 
-    private TeamDTO buildTeamDTO(Row row){
+    private TeamDTO buildTeamDTO(Row row) {
         String teamId = row.get("team_id", String.class);
         TeamDTO teamDTO = TeamDTO.builder()
                 .id(teamId)
@@ -132,7 +134,7 @@ public class TeamService {
         return teamDTO;
     }
 
-    private Mono<Void> annul(String userId){
+    private Mono<Void> annul(String userId) {
         return template.update(query(where("user_id").is(userId)),
                         update("status", RequestStatus.ANNULLED),
                         TeamRequest.class)
@@ -260,13 +262,15 @@ public class TeamService {
                 .all();
     }
 
-    public Flux<TeamMemberDTO> getAllUsersWithSkills(){
+    public Flux<TeamMemberDTO> getAllUsersWithSkills() {
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id AS skill_id, s.name AS skill_name, s.type AS skill_type " +
                 "FROM users u " +
                 "LEFT JOIN user_skill us ON u.id = us.user_id " +
                 "LEFT JOIN skill s ON us.skill_id = s.id ORDER BY u.id";
+
         ConcurrentHashMap<String, TeamMemberDTO> map = new ConcurrentHashMap<>();
+
         return template.getDatabaseClient()
                 .sql(query)
                 .map((row, rowMetadata) -> {
@@ -342,7 +346,7 @@ public class TeamService {
         return template.select(query(where("team_id").is(teamId)), TeamRequest.class);
     }
 
-    public Flux<TeamInvitation> getInvitationByTeam(String teamId){
+    public Flux<TeamInvitation> getInvitationByTeam(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamInvitation.class);
     }
 
@@ -441,20 +445,9 @@ public class TeamService {
                 "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
                 "LEFT JOIN team_wanted_skill ON team_wanted_skill.team_id = t.id " +
                 "WHERE team_wanted_skill.skill_id IN (:skills) AND team_skill.skill_id NOT IN (:skills)";
+
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
-
-    /*public Mono<Void> sendInviteToUser(String teamId, List<UserDTO> users, User userInviter) {
-        return template.selectOne(query(where("id").is(teamId)), Team.class)
-                .flatMap(t -> Flux.fromIterable(users)
-                        .flatMap(user -> template.insert(TeamInvitation.builder()
-                                        .userId(user.getId())
-                                        .teamId(teamId)
-                                        .build())
-                                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getId(), userInviter, t.getName()))
-                        ).then()
-                );
-    }*/
 
     public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<TeamMemberDTO> users, User userInviter) {
         return Flux.fromIterable(users)
@@ -484,7 +477,7 @@ public class TeamService {
                 .build());
     }
 
-    public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId){
+    public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId) {
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type " +
                 "FROM users u " +
@@ -522,15 +515,15 @@ public class TeamService {
                         }).last());
     }
 
-    public Flux<SkillDTO> getSkillsByUsers(List<UserDTO> users){
+    public Flux<SkillDTO> getSkillsByUsers(List<UserDTO> users) {
         return getSkillsByList(users.stream().map(UserDTO::getId).toList());
     }
 
-    public Flux<SkillDTO> getSkillsByInvitations(List<TeamInvitation> users){
+    public Flux<SkillDTO> getSkillsByInvitations(List<TeamInvitation> users) {
         return getSkillsByList(users.stream().map(TeamInvitation::getUserId).toList());
     }
 
-    public Flux<SkillDTO> getSkillsByRequests(List<TeamRequest> users){
+    public Flux<SkillDTO> getSkillsByRequests(List<TeamRequest> users) {
         return getSkillsByList(users.stream().map(TeamRequest::getUserId).toList());
     }
 
@@ -553,13 +546,13 @@ public class TeamService {
 
     public Mono<Void> deleteInvite(String id) {
         return template.delete(query(where("id").is(id)), TeamInvitation.class).then();
-    }
+    } // не используется
 
-    public Mono<Void> deleteRequest(String id){
+    public Mono<Void> deleteRequest(String id) {
         return template.delete(query(where("id").is(id)), TeamRequest.class).then();
-    }
+    } // не используется
 
-    public Mono<Void> kickFromTeam(String teamId, String userId){
+    public Mono<Void> kickFromTeam(String teamId, String userId) {
         return template.delete(query(where("team_id").is(teamId)
                         .and("member_id").is(userId)),Team2Member.class)
                 .then(updateSkills(teamId))
@@ -599,11 +592,11 @@ public class TeamService {
                 .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
     }
 
-    public Mono<Void> changeTeamLeader(String teamId, String userId){
+    public Mono<Void> changeTeamLeader(String teamId, String userId) {
         return template.update(query(where("id").is(teamId)),
                 update("leader_id", userId),
                 Team.class).then();
-    }
+    } // TODO: добавить проверку на то, что лидера меняет владелец конкретно этой команды
 
     public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus) {
         return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
@@ -618,7 +611,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus){
+    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus) {
         return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
                     request.setStatus(newStatus);
@@ -634,5 +627,5 @@ public class TeamService {
                     }
                     return template.update(request).thenReturn(request);
                 });
-    }
+    } // TODO: нужно сделать так, чтобы обновить статус мог лишь тот, кто этот запрос оставил
 }
