@@ -369,8 +369,8 @@ public class TeamService {
 //    }
 
     public Flux<TeamInvitation> getInvitations(String userId) {
-        return template.select(query(where("receiver_id").is(userId)), TeamInvitation.class);
-    }
+        return template.select(query(where("user_id").is(userId)), TeamInvitation.class);
+    } // TODO: не выводятся все приглашения
 
     public Flux<TeamRequest> getTeamRequests(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamRequest.class);
@@ -481,20 +481,19 @@ public class TeamService {
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, List<TeamMemberDTO> users, User userInviter) {
-        return Flux.fromIterable(users)
-                .flatMap(user -> template.insert(
-                        TeamInvitation.builder()
-                                .userId(user.getUserId())
-                                .teamId(teamId)
-                                .email(user.getEmail())
-                                .firstName(user.getFirstName())
-                                .lastName(user.getLastName())
-                                .status(RequestStatus.NEW)
-                                .build())
-                        .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
-                                .thenReturn(teamInvitation))
-                );
+    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, Flux<TeamMemberDTO> users, User userInviter) {
+        return users.flatMap(user -> template.insert(
+                TeamInvitation.builder()
+                        .userId(user.getUserId())
+                        .teamId(teamId)
+                        .email(user.getEmail())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .status(RequestStatus.NEW)
+                        .build())
+                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
+                        .thenReturn(teamInvitation))
+        );
     }
 
     public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
@@ -641,13 +640,15 @@ public class TeamService {
         return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
                 .flatMap(invitation -> {
                     invitation.setStatus(newStatus);
-                    if (newStatus.equals(RequestStatus.ACCEPTED)){
+                    if (newStatus.equals(RequestStatus.ACCEPTED)) {
                         return annul(invitation.getUserId())
                                 .then(template.update(invitation))
                                 .thenReturn(invitation);
                     }
                     return template.update(invitation).thenReturn(invitation);
                 });
+        // TODO: Владелец команды - может только удалить(отклонить) приглашение. Приглашённый пользователь - может приянть или отклонить приглашение
+        // TODO: Все остальные - не могут взаимодействовать со статусом приглашения.
     }
 
     public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus) {
@@ -666,5 +667,7 @@ public class TeamService {
                     }
                     return template.update(request).thenReturn(request);
                 });
-    } // TODO: нужно сделать так, чтобы обновить статус мог лишь тот, кто этот запрос оставил
+        // TODO: Владелец команды - принимает или отклоняет заявку. Отправитель заявки - может только отозвать заявку.
+        // TODO: Все остальные - не могут взаимодействовать со статусом заявки.
+    }
 }

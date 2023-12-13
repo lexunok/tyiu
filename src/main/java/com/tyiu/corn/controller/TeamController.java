@@ -46,6 +46,7 @@ public class TeamController {
     }
 
     @GetMapping("/owner/all/{ideaMarketId}")
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
         return teamService.getOwnerTeams(user.getId(), ideaMarketId);
     }
@@ -56,16 +57,18 @@ public class TeamController {
     }
 
     @GetMapping("/invites")
-    public Flux<TeamInvitation> getInvitation(@AuthenticationPrincipal User user) {
+    public Flux<TeamInvitation> getInvitations(@AuthenticationPrincipal User user) {
         return teamService.getInvitations(user.getId());
     }
 
     @GetMapping("/requests/{teamId}")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
         return teamService.getTeamRequests(teamId);
     }
 
     @GetMapping("/invitations/{teamId}")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamInvitation> getInvitationByTeam(@PathVariable String teamId) {
         return teamService.getInvitationByTeam(teamId);
     }
@@ -115,7 +118,7 @@ public class TeamController {
 
     @PostMapping("/send-invites/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody List<TeamMemberDTO> users, @AuthenticationPrincipal User user) {
+    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody Flux<TeamMemberDTO> users, @AuthenticationPrincipal User user) {
         return teamService.sendInvitesToUsers(teamId, users, user);
     }
 
