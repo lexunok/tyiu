@@ -145,6 +145,29 @@ public class IdeaMarketService {
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
 
+    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
+        String QUERY = "SELECT im.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
+                "fi.*, " +
+                "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
+                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count, " +
+                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
+                "ROW_NUMBER () OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number " +
+                "FROM idea_market im " +
+                "LEFT JOIN favorite_idea fi ON fi.user_id = :userId " +
+                "LEFT JOIN users u ON u.id = im.initiator_id " +
+                "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
+                "LEFT JOIN skill s ON s.id = ids.skill_id " +
+                "WHERE im.market_id = :marketId " +
+                "ORDER BY im.id";
+        ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId", userId)
+                .bind("marketId", marketId)
+                .map((row, rowMetadata) -> buildIdeaMarket(row, map))
+                .all().thenMany(Flux.fromIterable(map.values()));
+    }
+
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId){
         String QUERY = "SELECT im.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
                 "fi.*, " +
@@ -424,6 +447,8 @@ public class IdeaMarketService {
         return template.selectOne(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class)
                 .flatMap(a -> {
                     a.setText(advertisementDTO.getText());
+                    a.setCheckedBy(List.of(advertisementDTO.getSender().getEmail()));
+                    advertisementDTO.setCheckedBy(a.getCheckedBy());
                     return template.update(a).thenReturn(advertisementDTO);
                 });
     }

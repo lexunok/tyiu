@@ -19,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/market/idea")
@@ -37,6 +35,11 @@ public class IdeaMarketController {
     @GetMapping("/all")
     public Flux<IdeaMarketDTO> getAllMarketIdeas(@AuthenticationPrincipal User user) {
         return ideaMarketService.getAllMarketIdeas(user.getId());
+    }
+
+    @GetMapping("/market/{marketId}")
+    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal User user, @PathVariable String marketId) {
+        return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
     }
 
     @GetMapping("/initiator/all")
@@ -89,8 +92,8 @@ public class IdeaMarketController {
 
     @PostMapping("/add/advertisement")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO teamMarketRequestDTO, @AuthenticationPrincipal User user) {
-        return ideaMarketService.addAdvertisement(teamMarketRequestDTO, user)
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO, @AuthenticationPrincipal User user) {
+        return ideaMarketService.addAdvertisement(ideaMarketAdvertisementDTO, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать объявление")));
     }
 

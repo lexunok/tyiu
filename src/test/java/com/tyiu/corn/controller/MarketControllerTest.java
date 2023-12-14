@@ -47,13 +47,38 @@ public class MarketControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(MarketDTO.class)
                 .returnResult().getResponseBody();
+        assertNotNull(market);
         assertMarket(market, buildMarket);
         assertSame(market.getStatus(), MarketStatus.NEW);
         return market;
     }
 
-    private void assertMarket(MarketDTO market, MarketDTO buildMarket){
+    private MarketDTO getActiveMarket(){
+        MarketDTO market = webTestClient
+                .get()
+                .uri("/api/v1/market/active")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(MarketDTO.class)
+                .returnResult().getResponseBody();
         assertNotNull(market);
+        assertSame(market.getStatus(), MarketStatus.ACTIVE);
+        return market;
+    }
+
+    private MarketDTO updateStatus(String marketId){
+        MarketDTO marketDTO = webTestClient
+                .put()
+                .uri("/api/v1/market/status/{marketId}/{status}", marketId, MarketStatus.ACTIVE)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(MarketDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(marketDTO);
+        return marketDTO;
+    }
+
+    private void assertMarket(MarketDTO market, MarketDTO buildMarket){
         assertNotNull(market.getId());
         assertEquals(buildMarket.getName(), market.getName());
         assertEquals(buildMarket.getStartDate(), market.getStartDate());
@@ -92,6 +117,7 @@ public class MarketControllerTest extends TestContainers {
     @Test
     void testGetAll() {
         createMarket();
+        createMarket();
         List<MarketDTO> markets = webTestClient
                 .get()
                 .uri("/api/v1/market/all")
@@ -100,7 +126,14 @@ public class MarketControllerTest extends TestContainers {
                 .expectBodyList(MarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(markets);
-        assertTrue(markets.size() >= 1);
+        assertTrue(markets.size() >= 2);
+    }
+
+    @Test
+    void testGetActiveMarket() {
+        createMarket();
+        updateStatus(createMarket().getId());
+        getActiveMarket();
     }
 
     //////////////////////////////
@@ -154,20 +187,20 @@ public class MarketControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(MarketDTO.class)
                 .returnResult().getResponseBody();
+        assertNotNull(market);
         assertMarket(market, buildMarket);
         assertSame(market.getStatus(), MarketStatus.NEW);
     }
 
     @Test
     void testUpdateStatus(){
-        MarketDTO market = webTestClient
-                .put()
-                .uri("/api/v1/market/status/{marketId}/{status}", createMarket().getId(), MarketStatus.ACTIVE)
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
-                .expectBody(MarketDTO.class)
-                .returnResult().getResponseBody();
-        assertMarket(market, market);
-        assertSame(market.getStatus(), MarketStatus.ACTIVE);
+        MarketDTO market1 = updateStatus(createMarket().getId());
+        assertMarket(market1, market1);
+        assertSame(market1.getStatus(), MarketStatus.ACTIVE);
+        String marketId = createMarket().getId();
+        MarketDTO market2 = updateStatus(marketId);
+        assertMarket(market2, market2);
+        assertSame(market2.getStatus(), MarketStatus.ACTIVE);
+        assertEquals(getActiveMarket().getId(), market2.getId());
     }
 }

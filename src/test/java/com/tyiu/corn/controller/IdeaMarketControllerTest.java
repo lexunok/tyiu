@@ -431,6 +431,24 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     @Test
     void testGetAllInitiatorMarketIdeas() {
+        createMarketIdea();
+        IdeaMarketDTO marketIdea = createMarketIdea();
+        createMarketTeamRequest(marketIdea.getId());
+        createMarketTeamRequest(marketIdea.getId());
+        List<IdeaMarketDTO> marketIdeas = webTestClient
+                .get()
+                .uri(path + "/market/{marketId}", marketIdea.getMarketId())
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBodyList(IdeaMarketDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(marketIdeas);
+        assertTrue(marketIdeas.get(0).getStack().size() >= 2);
+        assertTrue(marketIdeas.size() >= 2);
+    }
+
+    @Test
+    void testGetAllMarketIdeasForMarket() {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
