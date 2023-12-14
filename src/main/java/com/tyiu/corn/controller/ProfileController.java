@@ -3,10 +3,13 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.model.dto.ProfileDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.requests.ProfileUpdateRequest;
+import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
@@ -30,7 +33,6 @@ public class ProfileController {
         return profileService.getUserProfile(userId);
     }
 
-
     @GetMapping("/avatar/get/{userId}")
     public Mono<ResponseEntity<Resource>> getAvatar(@PathVariable String userId) {
         return profileService.getAvatar(userId)
@@ -42,7 +44,7 @@ public class ProfileController {
 
     @PostMapping("/avatar/upload")
     public Mono<ResponseEntity<Resource>> uploadAvatar(@AuthenticationPrincipal User user,
-                                         @RequestPart("file") FilePart file) {
+                                                       @RequestPart("file") FilePart file) {
         return Mono.just(ResponseEntity
                         .ok()
                         .contentType(MediaType.IMAGE_JPEG)
@@ -50,8 +52,13 @@ public class ProfileController {
     }
 
     @PostMapping("/skills/save")
-    public Flux<SkillDTO> saveUserSkills(Principal principal,
-                                                     @RequestBody Flux<SkillDTO> skills) {
+    public Flux<SkillDTO> saveUserSkills(Principal principal, @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(principal.getName(), skills);
+    }
+    @PutMapping("/fullname/update")
+    public Mono<InfoResponse> updateUserFullName(@AuthenticationPrincipal User user, @RequestBody ProfileUpdateRequest request) {
+        return profileService.updateFullName(user.getId(), request)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное изменение"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Не удалось изменить"));
     }
 }

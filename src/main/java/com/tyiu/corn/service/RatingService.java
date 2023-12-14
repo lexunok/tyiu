@@ -3,6 +3,7 @@ package com.tyiu.corn.service;
 import com.tyiu.corn.model.dto.RatingDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.Rating;
+import com.tyiu.corn.model.entities.mappers.RatingMapper;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
@@ -22,55 +23,50 @@ import static org.springframework.data.relational.core.query.Update.update;
 @CacheConfig(cacheNames = "ratings")
 public class RatingService {
     private final R2dbcEntityTemplate template;
+    private final RatingMapper ratingMapper;
     private final ModelMapper mapper;
     @Cacheable
     public Flux<RatingDTO> getRatings(String ideaId) {
-        return template.select(query(where("idea_id").is(ideaId)), Rating.class)
-                .flatMap(r -> Flux.just(mapper.map(r, RatingDTO.class)));
+        String query = """
+                SELECT r.*, u.first_name expert_first_name, u.last_name expert_last_name FROM rating r
+                LEFT JOIN users u ON u.id = r.expert_id WHERE idea_id = :ideaId""";
+        return template.getDatabaseClient().sql(query)
+                .bind("ideaId", ideaId)
+                .map(ratingMapper::apply)
+                .all();
     }
+    @Cacheable
     public Mono<RatingDTO> getExpertRating(String ideaId, String expertId) {
-        return template.selectOne(query(where("expert_id").is(expertId)
-                .and(where("idea_id").is(ideaId))), Rating.class)
-                .flatMap(r -> Mono.just(mapper.map(r, RatingDTO.class)));
+        String query = """
+                SELECT r.*, u.first_name expert_first_name, u.last_name expert_last_name FROM rating r
+                LEF JOIN users u ON u.id = r.expert_id WHERE idea_id = :ideaId AND expert_id = :expertId""";
+        return template.getDatabaseClient().sql(query)
+                .bind("ideaId", ideaId)
+                .bind("expertId", expertId)
+                .map(ratingMapper::apply)
+                .one();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> confirmRating(RatingDTO ratingDTO, String expertId) {
-        return template.update(query(where("expert_id").is(expertId)
-                .and(where("idea_id").is(ratingDTO.getIdeaId()))),
-                update("market_value",ratingDTO.getMarketValue())
-                        .set("originality",ratingDTO.getOriginality())
-                        .set("technicalRealizability", ratingDTO.getTechnicalRealizability())
-                        .set("suitability", ratingDTO.getSuitability())
-                        .set("budget", ratingDTO.getBudget())
-                        .set("rating", ratingDTO.getRating())
-                        .set("confirmed", true), Rating.class)
-                .flatMap(r ->
-                    template.select(query(where("idea_id").is(ratingDTO.getIdeaId())), Rating.class)
+    public Mono<Void> confirmRating(RatingDTO ratingDTO) {
+        Rating rating = mapper.map(ratingDTO, Rating.class);
+        rating.setIsConfirmed(true);
+        return template.update(rating).flatMap(r ->
+                    template.select(query(where("idea_id").is(r.getIdeaId())), Rating.class)
                             .collectList()
                             .flatMap(list -> {
-                                if (list.size() == list.stream().filter(Rating::getConfirmed).count()) {
+                                if (list.size() == list.stream().filter(Rating::getIsConfirmed).count()) {
                                     double number = list.stream().mapToDouble(Rating::getRating).sum();
-                                    Double rating = number / list.size();
+                                    Double result = number / list.size();
                                     return template.update(query(where("id").is(ratingDTO.getIdeaId())),
-                                            update("rating", rating)
-                                                    .set("status", Idea.Status.CONFIRMED), Idea.class).then();
+                                            update("rating", result).set("status", Idea.Status.CONFIRMED), Idea.class);
                                 }
                                 return Mono.empty();
-                            })
-                ).then();
+                            })).then();
     }
     @CacheEvict(allEntries = true)
-    public Mono<Void> saveRating(RatingDTO ratingDTO, String expertId){
-        return template.update(query(where("expert_id")
-                .is(expertId).and("idea_id")
-                .is(ratingDTO.getIdeaId())),
-                        update("market_value",ratingDTO.getMarketValue())
-                                .set("originality",ratingDTO.getOriginality())
-                                .set("technical_realizability", ratingDTO.getTechnicalRealizability())
-                                .set("suitability", ratingDTO.getSuitability())
-                                .set("budget", ratingDTO.getBudget())
-                                .set("rating", ratingDTO.getRating())
-                                .set("confirmed",false), Rating.class).
-                then();
+    public Mono<Void> saveRating(RatingDTO ratingDTO){
+        Rating rating = mapper.map(ratingDTO, Rating.class);
+        rating.setIsConfirmed(false);
+        return template.update(rating).then();
     }
 }

@@ -8,6 +8,7 @@ import org.springframework.data.relational.core.mapping.Table;
 @Getter
 @Builder
 @Table
+@Setter
 public class Rating {
     @Id
     private String id;
@@ -19,5 +20,5 @@ public class Rating {
     private Long suitability;
     private Long budget;
     private Double rating;
-    private Boolean confirmed;
+    private Boolean isConfirmed;
 }

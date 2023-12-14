@@ -6,6 +6,7 @@ import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.ProfileMapper;
 import com.tyiu.corn.model.entities.relations.User2Skill;
 import com.tyiu.corn.model.enums.SkillType;
+import com.tyiu.corn.model.requests.ProfileUpdateRequest;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
 import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
 
 @Service
@@ -117,5 +119,9 @@ public class ProfileService {
             template.insert(new User2Skill(userId,s.getId())).subscribe();
             return s;
         });
+    }
+    public Mono<Void> updateFullName(String userId, ProfileUpdateRequest request){
+        return template.update(query(where("id").is(userId)),
+                update("first_name", request.getFirstName()).set("last_name", request.getLastName()), User.class).then();
     }
 }

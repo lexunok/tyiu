@@ -2,16 +2,17 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.RatingDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.RatingService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.security.Principal;
 
 @RestController
 @RequestMapping("/api/v1/rating")
@@ -22,30 +23,29 @@ public class RatingController {
 
     @GetMapping("/all/{ideaId}")
     public Flux<RatingDTO> getAllIdeasRatings(@PathVariable String ideaId){
-        return ratingService.getRatings(ideaId)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not Found")));
+        return ratingService.getRatings(ideaId);
     }
 
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAuthority('EXPERT')")
-    public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable String ideaId, Principal principal){
-        return ratingService.getExpertRating(ideaId, principal.getName())
-                .switchIfEmpty(Mono.error(new NotFoundException("Not Found")));
+    public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable String ideaId, @AuthenticationPrincipal User user){
+        return ratingService.getExpertRating(ideaId, user.getId())
+                .switchIfEmpty(Mono.error(new NotFoundException("Рейтинг не найден")));
     }
 
     @PutMapping("/save")
     @PreAuthorize("hasAuthority('EXPERT')")
-    public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO, Principal principal) {
-        return ratingService.saveRating(ratingDTO, principal.getName())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success saving!"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Not saved"));
+    public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO) {
+        return ratingService.saveRating(ratingDTO)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное сохранение рейтинга"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Рейтинг не сохранен"));
     }
 
     @PutMapping("/confirm")
     @PreAuthorize("hasAuthority('EXPERT')")
-    public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO, Principal principal) {
-        return ratingService.confirmRating(ratingDTO, principal.getName())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming!"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Not confirmed"));
+    public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO) {
+        return ratingService.confirmRating(ratingDTO)
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное утверждение рейтинга"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Рейтинг не утвержден"));
     }
 }
