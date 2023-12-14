@@ -20,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -176,7 +177,7 @@ public class IdeaMarketService {
     public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId){
         return template.select(query(where("user_id").is(userId)), Favorite2Idea.class)
                 .flatMap(id -> getOneMarketIdea(userId, id.getIdeaMarketId()));
-    }
+    }// TODO: переделать
 
     public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
         String QUERY = "SELECT tmr.*, " +
@@ -217,6 +218,31 @@ public class IdeaMarketService {
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
 
+    public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(String ideaMarketId){
+        String QUERY = "SELECT ima.*, " +
+                "u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name " +
+                "FROM idea_market_advertisement ima " +
+                "LEFT JOIN users u ON u.id = ima.sender_id " +
+                "WHERE ima.idea_market_id = :ideaMarketId";
+
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("ideaMarketId", ideaMarketId)
+                .map((row, rowMetadata) -> IdeaMarketAdvertisementDTO.builder()
+                        .id(row.get("id", String.class))
+                        .ideaMarketId(row.get("idea_market_id", String.class))
+                        .createdAt(row.get("created_at", LocalDateTime.class))
+                        .text(row.get("text", String.class))
+                        .sender(UserDTO.builder()
+                                .id(row.get("u_id", String.class))
+                                .email(row.get("u_email", String.class))
+                                .firstName(row.get("u_first_name", String.class))
+                                .lastName(row.get("u_last_name", String.class))
+                                .build())
+                        .checkedBy(List.of(Objects.requireNonNull(row.get("checked_by", String[].class))))
+                        .build()).all();
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -224,38 +250,34 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, List<IdeaMarketRequest> ideaDTOList) {
-        return Flux.fromIterable(ideaDTOList)
-                .flatMap(ideaDTO -> {
-                            IdeaMarket ideaMarket = IdeaMarket.builder()
-                                    .ideaId(ideaDTO.getId())
-                                    .marketId(marketId)
-                                    .name(ideaDTO.getName())
-                                    .description(ideaDTO.getDescription())
-                                    .problem(ideaDTO.getProblem())
-                                    .result(ideaDTO.getResult())
-                                    .solution(ideaDTO.getSolution())
-                                    .customer(ideaDTO.getCustomer())
-                                    .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
-                                    .maxTeamSize(ideaDTO.getMaxTeamSize())
-                                    .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
-                                    .startDate(ideaDTO.getStartDate())
-                                    .finishDate(ideaDTO.getFinishDate())
-                                    .build();
-                            log.info(ideaMarket.toString());
-                            return template.selectOne(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
-                                    .flatMap(u -> {
-                                        log.info(u.getId());
-                                        ideaMarket.setInitiatorId(u.getId());
-                                        return Mono.empty();
-                                    })
-                                    .then(template.update(query(where("id").is(ideaDTO.getId())),
-                                            update("status", Idea.Status.ON_MARKET),
-                                            Idea.class)).log()
-                                    .then(template.insert(ideaMarket)
-                                            .map(i -> mapper.map(i, IdeaMarketDTO.class))).log();
-                        }
-                );
+    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaMarketRequest> ideaDTOList) {
+        return ideaDTOList.flatMap(ideaDTO -> {
+            IdeaMarket ideaMarket = IdeaMarket.builder()
+                    .ideaId(ideaDTO.getId())
+                    .marketId(marketId)
+                    .name(ideaDTO.getName())
+                    .description(ideaDTO.getDescription())
+                    .problem(ideaDTO.getProblem())
+                    .result(ideaDTO.getResult())
+                    .solution(ideaDTO.getSolution())
+                    .customer(ideaDTO.getCustomer())
+                    .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
+                    .maxTeamSize(ideaDTO.getMaxTeamSize())
+                    .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
+                    .startDate(ideaDTO.getStartDate())
+                    .finishDate(ideaDTO.getFinishDate())
+                    .build();
+            return template.selectOne(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
+                    .flatMap(u -> {
+                        ideaMarket.setInitiatorId(u.getId());
+                        return Mono.empty();
+                    })
+                    .then(template.update(query(where("id").is(ideaDTO.getId())),
+                            update("status", Idea.Status.ON_MARKET),
+                            Idea.class)).log()
+                    .then(template.insert(ideaMarket)
+                            .map(i -> mapper.map(i, IdeaMarketDTO.class))).log();
+        });
     }
 
     public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO){
@@ -265,6 +287,26 @@ public class IdeaMarketService {
             teamMarketRequestDTO.setId(r.getId());
             return Mono.just(teamMarketRequestDTO);
         });
+    }
+
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
+        return template.insert(IdeaMarketAdvertisement.builder()
+                        .ideaMarketId(advertisementDTO.getIdeaMarketId())
+                        .checkedBy(List.of(user.getEmail()))
+                        .createdAt(LocalDateTime.now())
+                        .text(advertisementDTO.getText())
+                        .senderId(user.getId())
+                        .build())
+                .flatMap(a -> {
+                    advertisementDTO.setId(a.getId());
+                    advertisementDTO.setSender(UserDTO.builder()
+                            .id(user.getId())
+                            .email(user.getEmail())
+                            .firstName(user.getFirstName())
+                            .lastName(user.getLastName())
+                            .build());
+                    return Mono.just(advertisementDTO);
+                });
     }
 
     ///////////////////////////////////////////
@@ -285,6 +327,10 @@ public class IdeaMarketService {
     public Mono<Void> deleteMarketIdeaFromFavorite(String userId, String ideaMarketId){
         return template.delete(query(where("user_id").is(userId)
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
+    }
+
+    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId){
+        return template.delete(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class).then();
     }
 
     ////////////////////////
@@ -372,5 +418,21 @@ public class IdeaMarketService {
                 })
                 .all().thenMany(Flux.fromIterable(map.values()))
                 .collectList().map(i -> i.get(0)));
+    }
+
+    public Mono<IdeaMarketAdvertisementDTO> updateIdeaMarketAdvertisement(String ideaMarketAdvertisementId, IdeaMarketAdvertisementDTO advertisementDTO){
+        return template.selectOne(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class)
+                .flatMap(a -> {
+                    a.setText(advertisementDTO.getText());
+                    return template.update(a).thenReturn(advertisementDTO);
+                });
+    }
+
+    public Mono<Void> updateCheckByAdvertisement(String ideaMarketAdvertisementId, String email){
+        String QUERY = "UPDATE idea_market_advertisement SET checked_by = array_append(checked_by,:userEmail) WHERE id =:advertisementId";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("advertisementId", ideaMarketAdvertisementId)
+                .bind("userEmail", email).then();
     }
 }

@@ -89,6 +89,10 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .build();
     }
 
+    private IdeaMarketAdvertisementDTO buildAdvertisement(String name, String id){
+        return IdeaMarketAdvertisementDTO.builder().text(name).ideaMarketId(id).build();
+    }
+
     private IdeaDTO createIdea(IdeaDTO ideaDTO){
         IdeaDTO createdIdea = webTestClient
                 .post()
@@ -142,10 +146,11 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .post()
                 .uri(path + "/send/{marketId}", market.getId())
                 .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(List.of(buildIdeaMarket(idea1), buildIdeaMarket(idea2))), IdeaMarketRequest.class)
+                .body(Flux.just(buildIdeaMarket(idea1), buildIdeaMarket(idea2)), IdeaMarketRequest.class)
                 .exchange()
                 .expectBodyList(IdeaMarketDTO.class)
                 .returnResult().getResponseBody();
+        assertNotNull(createdMarketIdea);
         IdeaMarketDTO ideaMarketDTO = createdMarketIdea.get(0);
         assertNotNull(ideaMarketDTO);
         assertTrue(Objects.equals(ideaMarketDTO.getName(), ideaDTO1.getName()) || Objects.equals(ideaMarketDTO.getName(), ideaDTO2.getName()));
@@ -218,6 +223,20 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertNotNull(createdGroup);
         assertEquals(groupDTO.getName(), createdGroup.getName());
         return createdGroup;
+    }
+
+    private IdeaMarketAdvertisementDTO createAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO){
+        IdeaMarketAdvertisementDTO createdAdvertisementDTO =  webTestClient
+                .post()
+                .uri(path + "/add/advertisement")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(advertisementDTO), IdeaMarketAdvertisementDTO.class)
+                .exchange()
+                .expectBody(IdeaMarketAdvertisementDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(createdAdvertisementDTO);
+        assertEquals(advertisementDTO.getText(), createdAdvertisementDTO.getText());
+        return createdAdvertisementDTO;
     }
 
     private IdeaDTO getIdea(String id, String name){
@@ -321,6 +340,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .exchange()
                 .expectBody(TeamDTO.class)
                 .returnResult().getResponseBody();
+        assertNotNull(teamDTO);
         assertNotNull(teamDTO.getId());
         assertTrue(teamDTO.getSkills().size() >= 2);
         TeamDTO ideaMarketTeam = getMarketIdea(ideaMarketId).getTeam();
@@ -450,6 +470,24 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertTrue(marketTeamsRequests.get(0).getSkills().size() >= 2);
     }
 
+    @Test
+    void testGetIdeaMarketAdvertisement() {
+        String ideaMarketId = createMarketIdea().getId();
+        createAdvertisement(buildAdvertisement("Очень крутое сообщение", ideaMarketId));
+        createAdvertisement(buildAdvertisement("Очень некрутое сообщение", ideaMarketId));
+        List<IdeaMarketAdvertisementDTO> advertisementDTOS =  webTestClient
+                .get()
+                .uri(path + "/get/advertisements/{ideaMarketId}", ideaMarketId)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBodyList(IdeaMarketAdvertisementDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(advertisementDTOS);
+        assertEquals(ideaMarketId, advertisementDTOS.get(0).getIdeaMarketId());
+        assertEquals(ideaMarketId, advertisementDTOS.get(1).getIdeaMarketId());
+        assertTrue(advertisementDTOS.size() >= 2);
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -484,6 +522,11 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertTrue(check.get());
     }
 
+    @Test
+    void testAddAdvertisement() {
+        createAdvertisement(buildAdvertisement("Очень крутое сообщение", createMarketIdea().getId()));
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/
@@ -509,6 +552,12 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaMarketId = createMarketIdea().getId();
         makeFavorite(ideaMarketId);
         deleteModel(path + "/unfavorite/{ideaMarketId}", ideaMarketId);
+    }
+
+    @Test
+    void testDeleteIdeaMarketAdvertisement() {
+        deleteModel(path + "/delete/advertisement/{ideaMarketAdvertisementId}",
+                createAdvertisement(buildAdvertisement("Очень крутое сообщение", createMarketIdea().getId())).getId());
     }
 
     ////////////////////////
@@ -544,5 +593,32 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaMarketId = createMarketIdea().getId();
         assertNull(getMarketIdea(ideaMarketId).getTeam());
         acceptTeam(ideaMarketId, createMarketTeamRequest(ideaMarketId).getTeamId());
+    }
+
+    @Test
+    void testUpdateIdeaMarketAdvertisement() {
+        String ideaMarketId = createMarketIdea().getId();
+        IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO = createAdvertisement(buildAdvertisement("Очень крутое сообщение", ideaMarketId));
+        IdeaMarketAdvertisementDTO advertisementDTO = webTestClient
+                .put()
+                .uri(path + "/update/advertisement/{ideaMarketAdvertisementId}", ideaMarketAdvertisementDTO.getId(),
+                        buildAdvertisement("Обычное сообщение", ideaMarketId))
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(IdeaMarketAdvertisementDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(advertisementDTO);
+        assertNotEquals(ideaMarketAdvertisementDTO.getText(), advertisementDTO.getText());
+    }
+
+    @Test
+    void testUpdateCheckByAdvertisement() {
+        webTestClient
+                .put()
+                .uri(path + "/check/advertisement/{ideaMarketAdvertisementId}",
+                        createAdvertisement(buildAdvertisement("Очень крутое сообщение", createMarketIdea().getId())).getId())
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
     }
 }
