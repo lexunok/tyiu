@@ -43,7 +43,7 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                     .createdAt(row.get("created_at", LocalDate.class))
                     .maxTeamSize(row.get("max_team_size", Short.class))
                     .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
-                    .requests(row.get("request_count", Integer.class))
+                    .requests(row.get("requests", Integer.class))
                     .acceptedRequests(row.get("accepted_request_count", Integer.class))
                     .isFavorite(Objects.equals(row.get("idea_market_id", String.class), ideaMarketId))
                     .startDate(row.get("start_date", LocalDate.class))

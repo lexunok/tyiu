@@ -38,6 +38,8 @@ public class IdeaMarketControllerTest extends TestContainers {
     private GroupDTO groupProjectOffice;
     private SkillDTO skill1;
     private SkillDTO skill2;
+    private String marketId;
+    private TeamDTO createdTeam;
 
     private final String path = "/api/v1/market/idea";
 
@@ -108,31 +110,6 @@ public class IdeaMarketControllerTest extends TestContainers {
     }
 
     private IdeaMarketDTO createMarketIdea(){
-        LocalDate localDate = LocalDate.now();
-        MarketDTO buildMarket = MarketDTO.builder()
-                .name("Зимняя биржа 2024")
-                .startDate(localDate)
-                .finishDate(localDate.plusDays(30))
-                .build();
-        MarketDTO market = webTestClient
-                .post()
-                .uri("/api/v1/market/create")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(buildMarket), MarketDTO.class)
-                .exchange()
-                .expectBody(MarketDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(market);
-        assertEquals(buildMarket.getName(), market.getName());
-        assertSame(market.getStatus(), MarketStatus.NEW);
-
-        webTestClient
-                .put()
-                .uri("/api/v1/market/status/{marketId}/{status}", market.getId(), MarketStatus.ACTIVE)
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
-                .expectStatus().isOk();
-
         IdeaDTO ideaDTO1 = buildIdea("idea1");
         IdeaDTO idea1 = getIdea(createIdea(ideaDTO1).getId(),ideaDTO1.getName());
 
@@ -144,7 +121,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
         List<IdeaMarketDTO> createdMarketIdea = webTestClient
                 .post()
-                .uri(path + "/send/{marketId}", market.getId())
+                .uri(path + "/send/{marketId}", marketId)
                 .header("Authorization", "Bearer " + jwt)
                 .body(Flux.just(buildIdeaMarket(idea1), buildIdeaMarket(idea2)), IdeaMarketRequest.class)
                 .exchange()
@@ -159,25 +136,6 @@ public class IdeaMarketControllerTest extends TestContainers {
     }
 
     private TeamMarketRequestDTO createMarketTeamRequest(String ideaMarketId){
-        TeamDTO teamDTO = TeamDTO.builder()
-                .name("name")
-                .description("description")
-                .closed(false)
-                .owner(userDTO)
-                .leader(userDTO)
-                .members(List.of(userDTO))
-                .wantedSkills(List.of(skill1, skill2))
-                .build();
-        TeamDTO createdTeam = webTestClient
-                .post()
-                .uri("/api/v1/team/add")
-                .header("Authorization", "Bearer " + jwt)
-                .body(Mono.just(teamDTO), TeamDTO.class)
-                .exchange()
-                .expectBody(TeamDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(createdTeam);
-        assertEquals(teamDTO.getName(),createdTeam.getName());
         TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
                 .ideaMarketId(ideaMarketId)
                 .teamId(createdTeam.getId())
@@ -392,6 +350,53 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .body(Flux.just(skill1, skill2), SkillDTO.class)
                 .exchange()
                 .expectStatus().isOk();
+
+        LocalDate localDate = LocalDate.now();
+        MarketDTO buildMarket = MarketDTO.builder()
+                .name("Зимняя биржа 2024")
+                .startDate(localDate)
+                .finishDate(localDate.plusDays(30))
+                .build();
+        MarketDTO market = webTestClient
+                .post()
+                .uri("/api/v1/market/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(buildMarket), MarketDTO.class)
+                .exchange()
+                .expectBody(MarketDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(market);
+        assertEquals(buildMarket.getName(), market.getName());
+        assertSame(market.getStatus(), MarketStatus.NEW);
+
+        webTestClient
+                .put()
+                .uri("/api/v1/market/status/{marketId}/{status}", market.getId(), MarketStatus.ACTIVE)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectStatus().isOk();
+
+        marketId = market.getId();
+
+        TeamDTO teamDTO = TeamDTO.builder()
+                .name("name")
+                .description("description")
+                .closed(false)
+                .owner(userDTO)
+                .leader(userDTO)
+                .members(List.of(userDTO))
+                .wantedSkills(List.of(skill1, skill2))
+                .build();
+        createdTeam = webTestClient
+                .post()
+                .uri("/api/v1/team/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(teamDTO), TeamDTO.class)
+                .exchange()
+                .expectBody(TeamDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(createdTeam);
+        assertEquals(teamDTO.getName(),createdTeam.getName());
     }
 
     ///////////////////////
@@ -404,33 +409,24 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testGetAllMarketIdeas() {
         String ideaId1 = createMarketIdea().getId();
-//        String ideaId2 = createMarketIdea().getId();
-//        String ideaId3 = createMarketIdea().getId();
-//        String ideaId4 = createMarketIdea().getId();
-//        String ideaId5 = createMarketIdea().getId();
         createMarketTeamRequest(ideaId1);
         createMarketTeamRequest(ideaId1);
-//        createMarketTeamRequest(ideaId2);
-//        createMarketTeamRequest(ideaId3);
-//        createMarketTeamRequest(ideaId3);
-//        createMarketTeamRequest(ideaId3);
-//        createMarketTeamRequest(ideaId4);
-//        createMarketTeamRequest(ideaId4);
-//        createMarketTeamRequest(ideaId5);
-//        createMarketTeamRequest(ideaId5);
-//        createMarketTeamRequest(ideaId5);
-//        createMarketTeamRequest(ideaId5);
+        createMarketTeamRequest(createMarketIdea().getId());
         List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/all");
         assertTrue(ideaMarketDTOList.size() >= 2);
-//        System.out.print(ideaMarketDTOList.get(0).getPosition());
-//        System.out.print(ideaMarketDTOList.get(1).getPosition());
-//        System.out.print(ideaMarketDTOList.get(2).getPosition());
-//        System.out.print(ideaMarketDTOList.get(3).getPosition());
-//        System.out.print(ideaMarketDTOList.get(4).getPosition());
+        //ideaMarketDTOList.forEach(p -> System.out.print(p.getPosition() + " "));
     }
 
     @Test
     void testGetAllInitiatorMarketIdeas() {
+        String ideaId = createMarketIdea().getId();
+        createMarketTeamRequest(ideaId);
+        createMarketTeamRequest(ideaId);
+        assertTrue(getMarketIdeaList(path + "/initiator/all").size() >= 2);
+    }
+
+    @Test
+    void testGetAllMarketIdeasForMarket() {
         createMarketIdea();
         IdeaMarketDTO marketIdea = createMarketIdea();
         createMarketTeamRequest(marketIdea.getId());
@@ -445,14 +441,6 @@ public class IdeaMarketControllerTest extends TestContainers {
         assertNotNull(marketIdeas);
         assertTrue(marketIdeas.get(0).getStack().size() >= 2);
         assertTrue(marketIdeas.size() >= 2);
-    }
-
-    @Test
-    void testGetAllMarketIdeasForMarket() {
-        String ideaId = createMarketIdea().getId();
-        createMarketTeamRequest(ideaId);
-        createMarketTeamRequest(ideaId);
-        assertTrue(getMarketIdeaList(path + "/all").size() >= 2);
     }
 
     @Test
@@ -557,12 +545,6 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaMarketId = createMarketIdea().getId();
         getMarketIdea(ideaMarketId);
         deleteModel(path + "/delete/idea/{ideaMarketId}", ideaMarketId);
-    }
-
-    @Test
-    void testDeleteTeamMarketRequest() {
-        deleteModel(path + "/delete/request/{teamMarketRequestId}",
-                createMarketTeamRequest(createMarketIdea().getId()).getId());
     }
 
     @Test

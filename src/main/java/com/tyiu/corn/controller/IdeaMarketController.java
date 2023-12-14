@@ -38,6 +38,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/market/{marketId}")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal User user, @PathVariable String marketId) {
         return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
     }
@@ -112,13 +113,6 @@ public class IdeaMarketController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить идею"));
     }
 
-    @DeleteMapping("/delete/request/{teamMarketRequestId}")
-    public Mono<InfoResponse> deleteTeamMarketRequest(@PathVariable String teamMarketRequestId) {
-        return ideaMarketService.deleteTeamMarketRequest(teamMarketRequestId)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
-    }
-
     @DeleteMapping("/unfavorite/{ideaMarketId}")
     public Mono<InfoResponse> deleteFavoriteMarketIdea(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
         return ideaMarketService.deleteMarketIdeaFromFavorite(user.getId(), ideaMarketId)
@@ -159,6 +153,7 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
         return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
     }
