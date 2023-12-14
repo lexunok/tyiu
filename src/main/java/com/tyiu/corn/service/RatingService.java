@@ -25,6 +25,7 @@ public class RatingService {
     private final R2dbcEntityTemplate template;
     private final RatingMapper ratingMapper;
     private final ModelMapper mapper;
+
     @Cacheable
     public Flux<RatingDTO> getRatings(String ideaId) {
         String query = """
@@ -35,17 +36,19 @@ public class RatingService {
                 .map(ratingMapper::apply)
                 .all();
     }
+
     @Cacheable
     public Mono<RatingDTO> getExpertRating(String ideaId, String expertId) {
         String query = """
                 SELECT r.*, u.first_name expert_first_name, u.last_name expert_last_name FROM rating r
-                LEF JOIN users u ON u.id = r.expert_id WHERE idea_id = :ideaId AND expert_id = :expertId""";
+                LEFT JOIN users u ON u.id = r.expert_id WHERE idea_id = :ideaId AND expert_id = :expertId""";
         return template.getDatabaseClient().sql(query)
                 .bind("ideaId", ideaId)
                 .bind("expertId", expertId)
                 .map(ratingMapper::apply)
                 .one();
     }
+
     @CacheEvict(allEntries = true)
     public Mono<Void> confirmRating(RatingDTO ratingDTO) {
         Rating rating = mapper.map(ratingDTO, Rating.class);
@@ -63,6 +66,7 @@ public class RatingService {
                                 return Mono.empty();
                             })).then();
     }
+
     @CacheEvict(allEntries = true)
     public Mono<Void> saveRating(RatingDTO ratingDTO){
         Rating rating = mapper.map(ratingDTO, Rating.class);

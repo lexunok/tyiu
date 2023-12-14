@@ -114,7 +114,7 @@ class RatingControllerTest extends TestContainers {
     }
 
     @Test
-    void testGetIdea(){
+    void testGetIdea() {
         IdeaDTO getResponse = webTestClient
                 .get()
                 .uri("/api/v1/idea/{ideaId}", ideaId)
@@ -128,11 +128,11 @@ class RatingControllerTest extends TestContainers {
 
     @Order(4)
     @Test
-    void testConfirmRating(){
+    void testConfirmRating() {
         RatingDTO ratingDTO = RatingDTO.builder()
                 .expertId(userDTO.getId())
                 .ideaId(ideaId)
-                .confirmed(false)
+                .isConfirmed(false)
                 .build();
 
         webTestClient
@@ -145,7 +145,7 @@ class RatingControllerTest extends TestContainers {
     }
     @Order(1)
     @Test
-    void testSaveRating(){
+    void testSaveRating() {
         RatingDTO ratingDTO = RatingDTO.builder()
                 .expertId(userDTO.getId())
                 .budget(400000L)
@@ -175,13 +175,12 @@ class RatingControllerTest extends TestContainers {
                 .exchange()
                 .expectBodyList(RatingDTO.class)
                 .returnResult().getResponseBody();
-
         assertNotNull(rating);
     }
 
     @Order(3)
     @Test
-    void testGetExpertRatingForIdea(){
+    void testGetExpertRatingForIdea() {
         RatingDTO rating = webTestClient
                 .get()
                 .uri("/api/v1/rating/{ideaId}", ideaId)
