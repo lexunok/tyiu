@@ -388,7 +388,7 @@ public class IdeaMarketService {
                                 .then();
                     }
                     else if (status.equals(RequestStatus.ACCEPTED)) {
-                        return template.update(query(where("id").is(teamMarketId)),
+                        return template.update(query(where("idea_market_id").is(r.getIdeaMarketId())),
                                 update("status", RequestStatus.ANNULLED),
                                 TeamMarketRequest.class)
                                 .then(template.update(r))
