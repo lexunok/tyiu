@@ -118,7 +118,7 @@ public class TeamController {
 
     @PostMapping("/send-invites/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody Flux<TeamMemberDTO> users, @AuthenticationPrincipal User user) {
+    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
         return teamService.sendInvitesToUsers(teamId, users, user);
     }
 

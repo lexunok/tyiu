@@ -481,19 +481,13 @@ public class TeamService {
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, Flux<TeamMemberDTO> users, User userInviter) {
-        return users.flatMap(user -> template.insert(
-                TeamInvitation.builder()
-                        .userId(user.getUserId())
-                        .teamId(teamId)
-                        .email(user.getEmail())
-                        .firstName(user.getFirstName())
-                        .lastName(user.getLastName())
-                        .status(RequestStatus.NEW)
-                        .build())
-                .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
-                        .thenReturn(teamInvitation))
-        );
+    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, Flux<TeamInvitation> users, User userInviter) {
+        return users.flatMap(user -> {
+            user.setStatus(RequestStatus.NEW);
+            return template.insert(user)
+                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
+                            .thenReturn(teamInvitation));
+        });
     }
 
     public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
