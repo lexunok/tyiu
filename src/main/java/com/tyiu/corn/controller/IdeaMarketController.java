@@ -85,7 +85,7 @@ public class IdeaMarketController {
     }
 
     @PostMapping("/declare")
-    @PreAuthorize("hasAuthority('TEAM_MEMBER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO,
                                                               @AuthenticationPrincipal User user) {
         return ideaMarketService.declareTeam(teamMarketRequestDTO, user.getId())
@@ -145,12 +145,14 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/idea-status/{ideaMarketId}/{status}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status,
                                              @AuthenticationPrincipal User user) {
         return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status, user);
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status,
                                           @AuthenticationPrincipal User user) {
         return ideaMarketService.changeRequestStatus(teamMarketId, status, user);
