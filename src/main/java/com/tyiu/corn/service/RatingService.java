@@ -50,8 +50,9 @@ public class RatingService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> confirmRating(RatingDTO ratingDTO) {
+    public Mono<Void> confirmRating(RatingDTO ratingDTO, String id) {
         Rating rating = mapper.map(ratingDTO, Rating.class);
+        rating.setExpertId(id);
         rating.setIsConfirmed(true);
         return template.update(rating).flatMap(r ->
                     template.select(query(where("idea_id").is(r.getIdeaId())), Rating.class)
@@ -68,8 +69,9 @@ public class RatingService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> saveRating(RatingDTO ratingDTO){
+    public Mono<Void> saveRating(RatingDTO ratingDTO, String id){
         Rating rating = mapper.map(ratingDTO, Rating.class);
+        rating.setExpertId(id);
         rating.setIsConfirmed(false);
         return template.update(rating).then();
     }

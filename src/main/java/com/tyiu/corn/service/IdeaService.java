@@ -151,7 +151,7 @@ public class IdeaService {
                                             Batch batch = connection.createBatch();
                                             list.forEach(u -> batch.add(
                                                     String.format(
-                                                            "INSERT INTO rating (expert_id, confirmed, idea_id) VALUES ('%s', FALSE, '%s');",
+                                                            "INSERT INTO rating (expert_id, is_confirmed, idea_id) VALUES ('%s', FALSE, '%s');",
                                                             u.getUserId(), savedIdea.getId()
                                                     ))
                                             );

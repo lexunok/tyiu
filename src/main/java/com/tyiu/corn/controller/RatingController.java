@@ -35,16 +35,16 @@ public class RatingController {
 
     @PutMapping("/save")
     @PreAuthorize("hasAuthority('EXPERT')")
-    public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO) {
-        return ratingService.saveRating(ratingDTO)
+    public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO, @AuthenticationPrincipal User user) {
+        return ratingService.saveRating(ratingDTO, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное сохранение рейтинга"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Рейтинг не сохранен"));
     }
 
     @PutMapping("/confirm")
     @PreAuthorize("hasAuthority('EXPERT')")
-    public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO) {
-        return ratingService.confirmRating(ratingDTO)
+    public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO, @AuthenticationPrincipal User user) {
+        return ratingService.confirmRating(ratingDTO, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное утверждение рейтинга"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Рейтинг не утвержден"));
     }
