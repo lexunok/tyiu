@@ -416,7 +416,7 @@ public class IdeaMarketService {
     public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
         return checkInitiator(ideaMarketId,user.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                         return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -432,7 +432,7 @@ public class IdeaMarketService {
         return template.exists(query(where("id").is(ideaMarketAdvertisementId)
                         .and("sender_id").is(user.getId())), IdeaMarketAdvertisement.class)
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                         return template.delete(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -453,7 +453,7 @@ public class IdeaMarketService {
     public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, User user){
         return checkInitiator(ideaMarketId,user.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)) {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
                         return template.update(query(where("id").is(ideaMarketId)),
                                 update("status", statusType),
                                 IdeaMarket.class).then();
@@ -470,7 +470,7 @@ public class IdeaMarketService {
                     if (status.equals(RequestStatus.CANCELED)){
                         return checkInitiator(r.getIdeaMarketId(),userId)
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
                                                 .then(template.update(r))
                                                 .then();
@@ -481,7 +481,7 @@ public class IdeaMarketService {
                     else if (status.equals(RequestStatus.ACCEPTED)) {
                         return checkInitiator(r.getIdeaMarketId(),userId)
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(query(where("idea_market_id").is(r.getIdeaMarketId())),
                                                         update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
@@ -494,13 +494,13 @@ public class IdeaMarketService {
                     else if (status.equals(RequestStatus.WITHDRAWN)){
                         return checkOwner(r.getTeamId(), userId)
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(r).then();
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
-                    else if (user.getRoles().equals(Role.ADMIN) &&
+                    else if (user.getRoles().contains(Role.ADMIN) &&
                             (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
                     {
                         return template.update(r).then();
@@ -523,7 +523,7 @@ public class IdeaMarketService {
         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
         return checkInitiator(ideaMarketId,user.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                         return template.update(query(where("id").is(ideaMarketId)),
                                         update("team_id", teamId)
                                                 .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
@@ -566,9 +566,8 @@ public class IdeaMarketService {
     }
 
     public Mono<Void> updateCheckByAdvertisement(String ideaMarketAdvertisementId, String email){
-        String QUERY = "UPDATE idea_market_advertisement SET checked_by = array_append(checked_by,:userEmail) WHERE id =:advertisementId";
         return template.getDatabaseClient()
-                .sql(QUERY)
+                .sql("UPDATE idea_market_advertisement SET checked_by = array_append(checked_by,:userEmail) WHERE id =:advertisementId")
                 .bind("advertisementId", ideaMarketAdvertisementId)
                 .bind("userEmail", email).then();
     }
