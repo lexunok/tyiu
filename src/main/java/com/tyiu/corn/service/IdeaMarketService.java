@@ -223,27 +223,6 @@ public class IdeaMarketService {
     }
 
     public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId){
-        //активная биржа
-//        String QUERY = """
-//                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-//                       fi.idea_market_id AS favorite,
-//                       s.id AS s_id, s.name AS s_name, s.type AS s_type
-//                FROM (
-//                    SELECT im.*,
-//                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-//                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-//                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
-//                    FROM idea_market im
-//                    INNER JOIN market m ON m.id = im.market_id
-//                    WHERE m.status = 'ACTIVE'
-//                ) AS im_sub
-//                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-//                LEFT JOIN users u ON u.id = im_sub.initiator_id
-//                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-//                LEFT JOIN skill s ON s.id = ids.skill_id
-//                WHERE fi.idea_market_id = im_sub.id
-//                """;
-        //неактивная биржа
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -254,6 +233,8 @@ public class IdeaMarketService {
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
                            ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
                     FROM idea_market im
+                    INNER JOIN market m ON m.id = im.market_id
+                    WHERE m.status = 'ACTIVE'
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
                 LEFT JOIN users u ON u.id = im_sub.initiator_id
