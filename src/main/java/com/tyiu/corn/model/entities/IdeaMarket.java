@@ -29,7 +29,6 @@ public class IdeaMarket {
     private Short maxTeamSize;
     private String customer;
     private IdeaMarketStatusType status;
-    private Integer requests;
     private LocalDate startDate;
     private LocalDate finishDate;
 }

@@ -1,0 +1,1 @@
+ALTER TABLE idea_market DROP COLUMN requests;

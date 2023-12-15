@@ -158,13 +158,6 @@ public class IdeaMarketController {
         return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
     }
 
-    @PutMapping("/update/advertisement/{ideaMarketAdvertisementId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaMarketAdvertisementDTO> updateIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId,
-                                                       @RequestBody IdeaMarketAdvertisementDTO advertisementDTO) {
-        return ideaMarketService.updateIdeaMarketAdvertisement(ideaMarketAdvertisementId, advertisementDTO);
-    }
-
     @PutMapping("/check/advertisement/{ideaMarketAdvertisementId}")
     public Mono<Void> updateCheckByAdvertisement(@PathVariable String ideaMarketAdvertisementId,
                                                                           @AuthenticationPrincipal User user) {

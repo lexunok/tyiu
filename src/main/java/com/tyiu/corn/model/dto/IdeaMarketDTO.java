@@ -28,7 +28,7 @@ public class IdeaMarketDTO {
     private String result;
     private Short maxTeamSize;
     private String customer;
-    private Long position;
+    private Integer position;
     private List<SkillDTO> stack;
     private IdeaMarketStatusType status;
     private Integer requests;

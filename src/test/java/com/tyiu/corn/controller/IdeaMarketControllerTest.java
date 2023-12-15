@@ -311,7 +311,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @BeforeAll
     public void setUp() {
         RegisterRequest request = new RegisterRequest(
-                "fakemail104", "fakename104", "fakename104", "fakepass104",
+                "idea.market@gmail.com", "idea", "market", "idea-market",
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
@@ -351,11 +351,10 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .exchange()
                 .expectStatus().isOk();
 
-        LocalDate localDate = LocalDate.now();
         MarketDTO buildMarket = MarketDTO.builder()
                 .name("Зимняя биржа 2024")
-                .startDate(localDate)
-                .finishDate(localDate.plusDays(30))
+                .startDate(LocalDate.now())
+                .finishDate(LocalDate.now().plusDays(30))
                 .build();
         MarketDTO market = webTestClient
                 .post()
@@ -414,7 +413,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         createMarketTeamRequest(createMarketIdea().getId());
         List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/all");
         assertTrue(ideaMarketDTOList.size() >= 2);
-        //ideaMarketDTOList.forEach(p -> System.out.print(p.getPosition() + " "));
+        assertTrue(ideaMarketDTOList.get(0).getStack().size() >= 2);
     }
 
     @Test
@@ -422,7 +421,9 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        assertTrue(getMarketIdeaList(path + "/initiator/all").size() >= 2);
+        List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/initiator/all");
+        assertTrue(ideaMarketDTOList.size() >= 2);
+        assertTrue(ideaMarketDTOList.get(0).getStack().size() >= 2);
     }
 
     @Test
@@ -457,7 +458,9 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testGetAllFavoriteMarketIdeas() {
         makeFavorite(createMarketIdea().getId());
-        assertTrue(getMarketIdeaList(path + "/favorite").size() >= 1);
+        List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/favorite");
+        assertTrue(ideaMarketDTOList.size() >= 1);
+        assertTrue(ideaMarketDTOList.get(0).getStack().size() >= 2);
     }
 
     @Test
@@ -593,22 +596,6 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaMarketId = createMarketIdea().getId();
         assertNull(getMarketIdea(ideaMarketId).getTeam());
         acceptTeam(ideaMarketId, createMarketTeamRequest(ideaMarketId).getTeamId());
-    }
-
-    @Test
-    void testUpdateIdeaMarketAdvertisement() {
-        String ideaMarketId = createMarketIdea().getId();
-        IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO = createAdvertisement(buildAdvertisement("Очень крутое сообщение", ideaMarketId));
-        IdeaMarketAdvertisementDTO advertisementDTO = webTestClient
-                .put()
-                .uri(path + "/update/advertisement/{ideaMarketAdvertisementId}", ideaMarketAdvertisementDTO.getId(),
-                        buildAdvertisement("Обычное сообщение", ideaMarketId))
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
-                .expectBody(IdeaMarketAdvertisementDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(advertisementDTO);
-        assertNotEquals(ideaMarketAdvertisementDTO.getText(), advertisementDTO.getText());
     }
 
     @Test
