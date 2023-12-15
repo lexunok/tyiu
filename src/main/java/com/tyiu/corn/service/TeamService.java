@@ -535,7 +535,7 @@ public class TeamService {
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills) {
         return template.delete(query(where("team_id").is(teamId)), Team2WantedSkill.class)
                 .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
-    }
+    } // TODO: изменить желаемые компетенции может только владелец команды
 
     public Mono<Void> changeTeamLeader(String teamId, String userId) {
         return template.update(query(where("id").is(teamId)),

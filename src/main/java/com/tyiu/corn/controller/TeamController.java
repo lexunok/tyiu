@@ -172,6 +172,7 @@ public class TeamController {
     }
 
     @PutMapping("/skills/update/{teamId}")
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateTeamSkills(@PathVariable String teamId, @RequestBody Flux<SkillDTO> wantedSkills) {
         return teamService.updateTeamSkills(teamId, wantedSkills)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Компетенции успешно изменены"))
