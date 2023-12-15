@@ -1,5 +1,6 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.IdeaMarketMapper;
@@ -7,6 +8,7 @@ import com.tyiu.corn.model.entities.relations.Favorite2Idea;
 import com.tyiu.corn.model.entities.relations.IdeaMarket2Refused;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.RequestStatus;
+import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import io.r2dbc.spi.Row;
@@ -118,6 +120,16 @@ public class IdeaMarketService {
         }
         map.put(ideaMarketId, ideaMarketDTO);
         return ideaMarketDTO;
+    }
+
+    private Mono<Boolean> checkInitiator(String ideaMarketId, String userId){
+        return template.exists(query(where("id").is(ideaMarketId)
+                .and("initiator_id").is(userId)), IdeaMarket.class);
+    }
+
+    private Mono<Boolean> checkOwner(String teamId, String userId){
+        return template.exists(query(where("id").is(teamId)
+                .and("owner_id").is(userId)), Team.class);
     }
 
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Yekaterinburg")
@@ -353,32 +365,44 @@ public class IdeaMarketService {
         });
     }
 
-    public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO){
-        teamMarketRequestDTO.setStatus(RequestStatus.NEW);
-        TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
-        return template.insert(teamMarketRequest).flatMap(r -> {
-            teamMarketRequestDTO.setId(r.getId());
-            return Mono.just(teamMarketRequestDTO);
-        });
+    public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO, String userId){
+        return checkOwner(teamMarketRequestDTO.getTeamId(), userId)
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists)){
+                        teamMarketRequestDTO.setStatus(RequestStatus.NEW);
+                        TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
+                        return template.insert(teamMarketRequest).flatMap(r -> {
+                            teamMarketRequestDTO.setId(r.getId());
+                            return Mono.just(teamMarketRequestDTO);
+                        });
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                });
     }
 
     public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
-        return template.insert(IdeaMarketAdvertisement.builder()
-                        .ideaMarketId(advertisementDTO.getIdeaMarketId())
-                        .checkedBy(List.of(user.getEmail()))
-                        .createdAt(LocalDateTime.now())
-                        .text(advertisementDTO.getText())
-                        .senderId(user.getId())
-                        .build())
-                .flatMap(a -> {
-                    advertisementDTO.setId(a.getId());
-                    advertisementDTO.setSender(UserDTO.builder()
-                            .id(user.getId())
-                            .email(user.getEmail())
-                            .firstName(user.getFirstName())
-                            .lastName(user.getLastName())
-                            .build());
-                    return Mono.just(advertisementDTO);
+        return checkInitiator(advertisementDTO.getIdeaMarketId(), user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists)){
+                        return template.insert(IdeaMarketAdvertisement.builder()
+                                        .ideaMarketId(advertisementDTO.getIdeaMarketId())
+                                        .checkedBy(List.of(user.getEmail()))
+                                        .createdAt(LocalDateTime.now())
+                                        .text(advertisementDTO.getText())
+                                        .senderId(user.getId())
+                                        .build())
+                                .flatMap(a -> {
+                                    advertisementDTO.setId(a.getId());
+                                    advertisementDTO.setSender(UserDTO.builder()
+                                            .id(user.getId())
+                                            .email(user.getEmail())
+                                            .firstName(user.getFirstName())
+                                            .lastName(user.getLastName())
+                                            .build());
+                                    return Mono.just(advertisementDTO);
+                                });
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
                 });
     }
 
@@ -389,8 +413,14 @@ public class IdeaMarketService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteMarketIdea(String ideaMarketId){
-        return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class).then();
+    public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
+        return checkInitiator(ideaMarketId,user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                        return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                }).then();
     }
 
     public Mono<Void> deleteMarketIdeaFromFavorite(String userId, String ideaMarketId){
@@ -398,8 +428,15 @@ public class IdeaMarketService {
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
     }
 
-    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId){
-        return template.delete(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class).then();
+    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, User user){
+        return template.exists(query(where("id").is(ideaMarketAdvertisementId)
+                        .and("sender_id").is(user.getId())), IdeaMarketAdvertisement.class)
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                        return template.delete(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                }).then();
     }
 
     ////////////////////////
@@ -413,33 +450,66 @@ public class IdeaMarketService {
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
     }
 
-    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType){
-        return template.update(query(where("id").is(ideaMarketId)),
-                update("status", statusType),
-                IdeaMarket.class).then();
-    }
-
-    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status){
-        return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
-                .flatMap(r -> {
-                    r.setStatus(status);
-                    if (status.equals(RequestStatus.CANCELED)){
-                        return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
-                                .then(template.update(r))
-                                .then();
+    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, User user){
+        return checkInitiator(ideaMarketId,user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)) {
+                        return template.update(query(where("id").is(ideaMarketId)),
+                                update("status", statusType),
+                                IdeaMarket.class).then();
                     }
-                    else if (status.equals(RequestStatus.ACCEPTED)) {
-                        return template.update(query(where("idea_market_id").is(r.getIdeaMarketId())),
-                                update("status", RequestStatus.ANNULLED),
-                                TeamMarketRequest.class)
-                                .then(template.update(r))
-                                .then();
-                    }
-                    return template.update(r).then();
+                    return Mono.error(new AccessException("Нет Прав"));
                 });
     }
 
-    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId){
+    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user){
+        return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
+                .flatMap(r -> {
+                    String userId = user.getId();
+                    r.setStatus(status);
+                    if (status.equals(RequestStatus.CANCELED)){
+                        return checkInitiator(r.getIdeaMarketId(),userId)
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                                        return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
+                                                .then(template.update(r))
+                                                .then();
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
+                    }
+                    else if (status.equals(RequestStatus.ACCEPTED)) {
+                        return checkInitiator(r.getIdeaMarketId(),userId)
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                                        return template.update(query(where("idea_market_id").is(r.getIdeaMarketId())),
+                                                        update("status", RequestStatus.ANNULLED),
+                                                        TeamMarketRequest.class)
+                                                .then(template.update(r))
+                                                .then();
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
+                    }
+                    else if (status.equals(RequestStatus.WITHDRAWN)){
+                        return checkOwner(r.getTeamId(), userId)
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                                        return template.update(r).then();
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
+                    }
+                    else if (user.getRoles().equals(Role.ADMIN) &&
+                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
+                    {
+                        return template.update(r).then();
+                    }
+                    return Mono.error(new AccessException("Ошибка"));
+                });
+    }
+
+    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user){
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
@@ -451,42 +521,48 @@ public class IdeaMarketService {
                 "LEFT JOIN skill s ON ts.skill_id = s.id " +
                 "WHERE t.id = :teamId";
         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
-        return template.update(query(where("id").is(ideaMarketId)),
-                        update("team_id", teamId)
-                                .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
-                        IdeaMarket.class)
-                .then(template.update(query(where("id").is(teamId)),
-                        update("has_active_project", true),
-                        Team.class))
-                .then(template.getDatabaseClient()
-                .sql(QUERY)
-                .bind("teamId", teamId)
-                .map((row, rowMetadata) -> {
-                    String skillId = row.get("skill_id", String.class);
-                    TeamDTO teamDTO = map.getOrDefault(teamId, TeamDTO.builder()
-                            .id(teamId)
-                            .name(row.get("team_name", String.class))
-                            .leader(UserDTO.builder()
-                                    .id(row.get("leader_id", String.class))
-                                    .email(row.get("leader_email", String.class))
-                                    .firstName(row.get("leader_first_name", String.class))
-                                    .lastName(row.get("leader_last_name", String.class))
-                                    .build())
-                            .skills(new ArrayList<>())
-                            .build());
-                    if (skillId!=null) {
-                        SkillDTO skill = SkillDTO.builder()
-                                .name(row.get("skill_name", String.class))
-                                .type(SkillType.valueOf(row.get("skill_type", String.class)))
-                                .id(skillId)
-                                .build();
-                        teamDTO.getSkills().add(skill);
+        return checkInitiator(ideaMarketId,user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().equals(Role.ADMIN)){
+                        return template.update(query(where("id").is(ideaMarketId)),
+                                        update("team_id", teamId)
+                                                .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
+                                        IdeaMarket.class)
+                                .then(template.update(query(where("id").is(teamId)),
+                                        update("has_active_project", true),
+                                        Team.class))
+                                .then(template.getDatabaseClient()
+                                        .sql(QUERY)
+                                        .bind("teamId", teamId)
+                                        .map((row, rowMetadata) -> {
+                                            String skillId = row.get("skill_id", String.class);
+                                            TeamDTO teamDTO = map.getOrDefault(teamId, TeamDTO.builder()
+                                                    .id(teamId)
+                                                    .name(row.get("team_name", String.class))
+                                                    .leader(UserDTO.builder()
+                                                            .id(row.get("leader_id", String.class))
+                                                            .email(row.get("leader_email", String.class))
+                                                            .firstName(row.get("leader_first_name", String.class))
+                                                            .lastName(row.get("leader_last_name", String.class))
+                                                            .build())
+                                                    .skills(new ArrayList<>())
+                                                    .build());
+                                            if (skillId!=null) {
+                                                SkillDTO skill = SkillDTO.builder()
+                                                        .name(row.get("skill_name", String.class))
+                                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                                        .id(skillId)
+                                                        .build();
+                                                teamDTO.getSkills().add(skill);
+                                            }
+                                            map.put(teamId,teamDTO);
+                                            return teamDTO;
+                                        })
+                                        .all().thenMany(Flux.fromIterable(map.values()))
+                                        .collectList().map(i -> i.get(0)));
                     }
-                    map.put(teamId,teamDTO);
-                    return teamDTO;
-                })
-                .all().thenMany(Flux.fromIterable(map.values()))
-                .collectList().map(i -> i.get(0)));
+                    return Mono.error(new AccessException("Нет Прав"));
+                });
     }
 
     public Mono<Void> updateCheckByAdvertisement(String ideaMarketAdvertisementId, String email){

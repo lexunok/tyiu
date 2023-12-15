@@ -86,14 +86,16 @@ public class IdeaMarketController {
 
     @PostMapping("/declare")
     @PreAuthorize("hasAuthority('TEAM_MEMBER') || hasAuthority('ADMIN')")
-    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
-        return ideaMarketService.declareTeam(teamMarketRequestDTO)
+    public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO,
+                                                              @AuthenticationPrincipal User user) {
+        return ideaMarketService.declareTeam(teamMarketRequestDTO, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось заявить команду")));
     }
 
     @PostMapping("/add/advertisement")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO, @AuthenticationPrincipal User user) {
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO,
+                                                             @AuthenticationPrincipal User user) {
         return ideaMarketService.addAdvertisement(ideaMarketAdvertisementDTO, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать объявление")));
     }
@@ -107,8 +109,8 @@ public class IdeaMarketController {
 
     @DeleteMapping("/delete/idea/{ideaMarketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> deleteMarketIdea(@PathVariable String ideaMarketId) {
-        return ideaMarketService.deleteMarketIdea(ideaMarketId)
+    public Mono<InfoResponse> deleteMarketIdea(@PathVariable String ideaMarketId, @AuthenticationPrincipal User user) {
+        return ideaMarketService.deleteMarketIdea(ideaMarketId, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить идею"));
     }
@@ -122,8 +124,8 @@ public class IdeaMarketController {
 
     @DeleteMapping("/delete/advertisement/{ideaMarketAdvertisementId}")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> deleteIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId) {
-        return ideaMarketService.deleteIdeaMarketAdvertisement(ideaMarketAdvertisementId)
+    public Mono<InfoResponse> deleteIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId, @AuthenticationPrincipal User user) {
+        return ideaMarketService.deleteIdeaMarketAdvertisement(ideaMarketAdvertisementId, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
     }
@@ -143,19 +145,22 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/idea-status/{ideaMarketId}/{status}")
-    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status) {
-        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status);
+    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status,
+                                             @AuthenticationPrincipal User user) {
+        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status, user);
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")
-    public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status) {
-        return ideaMarketService.changeRequestStatus(teamMarketId, status);
+    public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status,
+                                          @AuthenticationPrincipal User user) {
+        return ideaMarketService.changeRequestStatus(teamMarketId, status, user);
     }
 
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
-        return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
+    public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId,
+                                         @AuthenticationPrincipal User user) {
+        return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId, user);
     }
 
     @PutMapping("/check/advertisement/{ideaMarketAdvertisementId}")
