@@ -253,45 +253,6 @@ public class TeamService {
                 }).all();
     }
 
-    public Flux<TeamMemberDTO> getUsersInTeamWithSkills(String teamId) {
-        String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
-                "s.id as skill_id, s.name as skill_name, s.type as skill_type " +
-                "FROM users u " +
-                "JOIN team_member tm ON u.id = tm.member_id " +
-                "LEFT JOIN user_skill us ON u.id = us.user_id " +
-                "LEFT JOIN skill s ON us.skill_id = s.id " +
-                "WHERE tm.team_id = :teamId";
-
-        return template.getDatabaseClient()
-                .sql(query)
-                .bind("teamId", teamId)
-                .map((row, rowMetadata) -> {
-                    TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
-                            .userId(row.get("user_id", String.class))
-                            .email(row.get("email", String.class))
-                            .firstName(row.get("first_name", String.class))
-                            .lastName(row.get("last_name", String.class))
-                            .build();
-
-                    String skillId = row.get("skill_id", String.class);
-                    SkillDTO skillDTO = SkillDTO.builder()
-                            .id(row.get("skill_id", String.class))
-                            .name(row.get("skill_name", String.class))
-                            .type(SkillType.valueOf(row.get("skill_type", String.class)))
-                            .build();
-
-                    if (skillId != null && skillDTO.getName() != null) {
-                        if (teamMemberDTO.getSkills() == null) {
-                            teamMemberDTO.setSkills(new ArrayList<>());
-                        }
-                        teamMemberDTO.getSkills().add(skillDTO);
-                    }
-
-                    return teamMemberDTO;
-                })
-                .all();
-    }
-
     public Flux<TeamMemberDTO> getAllUsersWithSkills() {
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id AS skill_id, s.name AS skill_name, s.type AS skill_type " +
@@ -328,49 +289,9 @@ public class TeamService {
 
     }
 
-//    public Mono<TeamSkillsResponse> getTeamSkills(String teamId) {
-//        TeamSkillsResponse teamSkillsResponse = new TeamSkillsResponse();
-//        String SKILLSQUERY = "SELECT team_skill.*, skill.id, skill.name, skill.type " +
-//                "FROM team_skill " +
-//                "LEFT JOIN skill ON skill.id = team_skill.skill_id " +
-//                "WHERE team_skill.team_id = :teamId";
-//        String WANTEDSKILLSQUERY = "SELECT team_wanted_skill.*, skill.id, skill.name, skill.type " +
-//                "FROM team_wanted_skill " +
-//                "LEFT JOIN skill ON skill.id = team_wanted_skill.skill_id " +
-//                "WHERE team_wanted_skill.team_id = :teamId";
-//        return template.getDatabaseClient()
-//                .sql(SKILLSQUERY)
-//                .bind("teamId", teamId)
-//                .map((row, rowMetadata) -> SkillDTO.builder()
-//                        .id(row.get("id", String.class))
-//                        .name(row.get("name", String.class))
-//                        .type(SkillType.valueOf(row.get("type", String.class)))
-//                        .build())
-//                .all()
-//                .collectList()
-//                .flatMap(skills -> {
-//                    teamSkillsResponse.setSkills(skills);
-//                    return Mono.empty();
-//                })
-//                .then(template.getDatabaseClient()
-//                        .sql(WANTEDSKILLSQUERY)
-//                        .bind("teamId", teamId)
-//                        .map((row, rowMetadata) -> SkillDTO.builder()
-//                                .id(row.get("id", String.class))
-//                                .name(row.get("name", String.class))
-//                                .type(SkillType.valueOf(row.get("type", String.class)))
-//                                .build())
-//                        .all()
-//                        .collectList()
-//                        .flatMap(skills -> {
-//                            teamSkillsResponse.setWantedSkills(skills);
-//                            return Mono.empty();
-//                        })).thenReturn(teamSkillsResponse);
-//    }
-
     public Flux<TeamInvitation> getInvitations(String userId) {
         return template.select(query(where("user_id").is(userId)), TeamInvitation.class);
-    } // TODO: не выводятся все приглашения
+    } // TODO: не выводятся все приглашения (пустой список)
 
     public Flux<TeamRequest> getTeamRequests(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamRequest.class);
@@ -378,7 +299,7 @@ public class TeamService {
 
     public Flux<TeamInvitation> getInvitationByTeam(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamInvitation.class);
-    }
+    } // TODO: не выводятся все приглашения (пустой список)
 
     //////////////////////////////
     //   ___   ____    ____ ______
@@ -443,7 +364,7 @@ public class TeamService {
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
                 "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member, " +
-                "team_skill.*, team_wanted_skill.* " +
+                "team_skill.* " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -568,14 +489,6 @@ public class TeamService {
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
     }
-
-    public Mono<Void> deleteInvite(String id) {
-        return template.delete(query(where("id").is(id)), TeamInvitation.class).then();
-    } // не используется
-
-    public Mono<Void> deleteRequest(String id) {
-        return template.delete(query(where("id").is(id)), TeamRequest.class).then();
-    } // не используется
 
     public Mono<Void> kickFromTeam(String teamId, String userId) {
         return template.delete(query(where("team_id").is(teamId)

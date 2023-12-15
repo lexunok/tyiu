@@ -1,6 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
+import com.tyiu.corn.model.dto.IdeaMarketAdvertisementDTO;
 import com.tyiu.corn.model.dto.IdeaMarketDTO;
 import com.tyiu.corn.model.dto.TeamDTO;
 import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
@@ -18,8 +19,6 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/market/idea")
@@ -36,6 +35,12 @@ public class IdeaMarketController {
     @GetMapping("/all")
     public Flux<IdeaMarketDTO> getAllMarketIdeas(@AuthenticationPrincipal User user) {
         return ideaMarketService.getAllMarketIdeas(user.getId());
+    }
+
+    @GetMapping("/market/{marketId}")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal User user, @PathVariable String marketId) {
+        return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
     }
 
     @GetMapping("/initiator/all")
@@ -60,6 +65,11 @@ public class IdeaMarketController {
         return ideaMarketService.getAllTeamsRequests(ideaMarketId);
     }
 
+    @GetMapping("/get/advertisements/{ideaMarketId}")
+    public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(@PathVariable String ideaMarketId) {
+        return ideaMarketService.getIdeaMarketAdvertisement(ideaMarketId);
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -69,7 +79,7 @@ public class IdeaMarketController {
 
     @PostMapping("/send/{marketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody List<IdeaMarketRequest> ideaDTOList) {
+    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody Flux<IdeaMarketRequest> ideaDTOList) {
         return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить идею на биржу")));
     }
@@ -79,6 +89,13 @@ public class IdeaMarketController {
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO) {
         return ideaMarketService.declareTeam(teamMarketRequestDTO)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось заявить команду")));
+    }
+
+    @PostMapping("/add/advertisement")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO, @AuthenticationPrincipal User user) {
+        return ideaMarketService.addAdvertisement(ideaMarketAdvertisementDTO, user)
+                .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать объявление")));
     }
 
     ///////////////////////////////////////////
@@ -96,18 +113,19 @@ public class IdeaMarketController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить идею"));
     }
 
-    @DeleteMapping("/delete/request/{teamMarketRequestId}")
-    public Mono<InfoResponse> deleteTeamMarketRequest(@PathVariable String teamMarketRequestId) {
-        return ideaMarketService.deleteTeamMarketRequest(teamMarketRequestId)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
-    }
-
     @DeleteMapping("/unfavorite/{ideaMarketId}")
     public Mono<InfoResponse> deleteFavoriteMarketIdea(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
         return ideaMarketService.deleteMarketIdeaFromFavorite(user.getId(), ideaMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Идея убрана из избранных"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось убрать идею из избранных"));
+    }
+
+    @DeleteMapping("/delete/advertisement/{ideaMarketAdvertisementId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    public Mono<InfoResponse> deleteIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId) {
+        return ideaMarketService.deleteIdeaMarketAdvertisement(ideaMarketAdvertisementId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
     }
 
     ////////////////////////
@@ -135,7 +153,21 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
     public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId) {
         return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId);
+    }
+
+    @PutMapping("/update/advertisement/{ideaMarketAdvertisementId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    public Mono<IdeaMarketAdvertisementDTO> updateIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId,
+                                                       @RequestBody IdeaMarketAdvertisementDTO advertisementDTO) {
+        return ideaMarketService.updateIdeaMarketAdvertisement(ideaMarketAdvertisementId, advertisementDTO);
+    }
+
+    @PutMapping("/check/advertisement/{ideaMarketAdvertisementId}")
+    public Mono<Void> updateCheckByAdvertisement(@PathVariable String ideaMarketAdvertisementId,
+                                                                          @AuthenticationPrincipal User user) {
+        return ideaMarketService.updateCheckByAdvertisement(ideaMarketAdvertisementId, user.getEmail());
     }
 }

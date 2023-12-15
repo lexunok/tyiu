@@ -32,6 +32,12 @@ public class MarketController {
         return marketService.getAll();
     }
 
+    @GetMapping("/active")
+    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    public Mono<MarketDTO> getActiveMarket(){
+        return marketService.getActiveMarket();
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

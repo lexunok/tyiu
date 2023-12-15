@@ -42,6 +42,11 @@ public class MarketService {
                 .flatMap(m -> Flux.just(mapper.map(m, MarketDTO.class)));
     }
 
+    public Mono<MarketDTO> getActiveMarket(){
+        return template.selectOne(query(where("status").is(MarketStatus.ACTIVE)), Market.class)
+                .flatMap(m -> Mono.just(mapper.map(m, MarketDTO.class)));
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -90,6 +95,13 @@ public class MarketService {
         return template.selectOne(query(where("id").is(id)), Market.class)
                 .flatMap(m -> {
                     m.setStatus(status);
+                    if (status == MarketStatus.ACTIVE){
+                        return template.update(query(where("status").is(MarketStatus.ACTIVE)),
+                                update("status", MarketStatus.DONE),
+                                Market.class)
+                                .then(template.update(m))
+                                .thenReturn(mapper.map(m, MarketDTO.class));
+                    }
                     return template.update(m).thenReturn(mapper.map(m, MarketDTO.class));
                 });
     }

@@ -51,11 +51,6 @@ public class TeamController {
         return teamService.getOwnerTeams(user.getId(), ideaMarketId);
     }
 
-    @GetMapping("/users/{teamId}")
-    public Flux<TeamMemberDTO> getUsersInTeamWithSkills(@PathVariable String teamId) {
-        return teamService.getUsersInTeamWithSkills(teamId);
-    }
-
     @GetMapping("/invites")
     public Flux<TeamInvitation> getInvitations(@AuthenticationPrincipal User user) {
         return teamService.getInvitations(user.getId());
@@ -77,11 +72,6 @@ public class TeamController {
     public Flux<TeamMemberDTO> getAllUsersWithSkills(){
         return teamService.getAllUsersWithSkills();
     }
-
-//    @GetMapping("/skills/{teamId}")
-//    public Mono<TeamDTO> getTeamSkills(@PathVariable String teamId) {
-//        return teamService.getTeamSkills(teamId);
-//    }
 
     //////////////////////////////
     //   ___   ____    ____ ______
@@ -153,20 +143,6 @@ public class TeamController {
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> deleteTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
         return teamService.deleteTeam(teamId, user.getId())
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
-    }
-
-    @DeleteMapping("/delete/invite/{inviteId}")
-    public Mono<InfoResponse> deleteInvite(@PathVariable String inviteId) {
-        return teamService.deleteInvite(inviteId)
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
-    }
-
-    @DeleteMapping("/delete/request/{requestId}")
-    public Mono<InfoResponse> deleteRequest(@PathVariable String requestId) {
-        return teamService.deleteRequest(requestId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
     }
