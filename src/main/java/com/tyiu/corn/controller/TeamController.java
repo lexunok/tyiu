@@ -106,10 +106,10 @@ public class TeamController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
 
-    @PostMapping("/send-invites/{teamId}")
+    @PostMapping("/send-invites")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@PathVariable String teamId, @RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
-        return teamService.sendInvitesToUsers(teamId, users, user);
+    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
+        return teamService.sendInvitesToUsers(users, user);
     }
 
     @PostMapping("/invite/{teamId}/{userId}")
@@ -173,28 +173,36 @@ public class TeamController {
 
     @PutMapping("/skills/update/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> updateTeamSkills(@PathVariable String teamId, @RequestBody Flux<SkillDTO> wantedSkills) {
-        return teamService.updateTeamSkills(teamId, wantedSkills)
+    public Mono<InfoResponse> updateTeamSkills(@PathVariable String teamId,
+                                               @RequestBody Flux<SkillDTO> wantedSkills,
+                                               @AuthenticationPrincipal User user) {
+        return teamService.updateTeamSkills(teamId, wantedSkills, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Компетенции успешно изменены"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить компетенции"));
     }
 
     @PutMapping("/request/{requestId}/update/{newStatus}")
-    public Mono<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId, @PathVariable RequestStatus newStatus) {
-        return teamService.updateTeamRequestStatus(requestId, newStatus)
+    public Mono<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId,
+                                                     @PathVariable RequestStatus newStatus,
+                                                     @AuthenticationPrincipal User user) {
+        return teamService.updateTeamRequestStatus(requestId, newStatus, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/invitation/{invitationId}/update/{newStatus}")
-    public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId, @PathVariable RequestStatus newStatus) {
-        return teamService.updateTeamInvitationStatus(invitationId, newStatus)
+    public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId,
+                                                           @PathVariable RequestStatus newStatus,
+                                                           @AuthenticationPrincipal User user) {
+        return teamService.updateTeamInvitationStatus(invitationId, newStatus, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/change/leader/{teamId}/{userId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> changeLeader(@PathVariable String teamId, @PathVariable String userId) {
-        return teamService.changeTeamLeader(teamId, userId)
+    public Mono<InfoResponse> changeLeader(@PathVariable String teamId,
+                                           @PathVariable String userId,
+                                           @AuthenticationPrincipal User user) {
+        return teamService.changeTeamLeader(teamId, userId, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное изменение лидера"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось назначить лидера"));
     }
