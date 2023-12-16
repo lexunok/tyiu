@@ -32,11 +32,11 @@ public class MarketService {
                 .flatMap(m -> {
                     m.setStatus(MarketStatus.DONE);
                     String QUERY = """
-                        UPDATE idea SET status = 'CONFIRMED'
-                        WHERE id IN (
-                            SELECT idea_id FROM idea_market
-                            WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
-                        )
+                        UPDATE idea SET status = 'CONFIRMED', is_active = false
+                                WHERE id IN (
+                                    SELECT idea_id FROM idea_market
+                                    WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
+                                )
                         """;
                     return template.getDatabaseClient()
                             .sql(QUERY)
@@ -121,11 +121,11 @@ public class MarketService {
                     }
                     else if (status == MarketStatus.DONE) {
                         String QUERY = """
-                                UPDATE idea SET status = 'CONFIRMED'
-                                WHERE id IN (
-                                    SELECT idea_id FROM idea_market
-                                    WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
-                                )
+                                UPDATE idea SET status = 'CONFIRMED', is_active = false
+                                        WHERE id IN (
+                                            SELECT idea_id FROM idea_market
+                                            WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
+                                        )
                                 """;
                         return template.getDatabaseClient()
                                 .sql(QUERY)
