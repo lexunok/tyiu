@@ -1,8 +1,11 @@
 package com.tyiu.corn.service;
 
+import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.MarketDTO;
 import com.tyiu.corn.model.entities.Market;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.MarketStatus;
+import com.tyiu.corn.model.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -25,9 +28,23 @@ public class MarketService {
 
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Yekaterinburg")
     private void checkFinalDate(){
-        template.update(query(where("finish_date").is(LocalDate.now())),
-                update("status", MarketStatus.DONE),
-                Market.class).subscribe();
+        template.select(query(where("finish_date").is(LocalDate.now())), Market.class)
+                .flatMap(m -> {
+                    m.setStatus(MarketStatus.DONE);
+                    String QUERY = """
+                        UPDATE idea SET status = 'CONFIRMED'
+                        WHERE id IN (
+                            SELECT idea_id FROM idea_market
+                            WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
+                        )
+                        """;
+                    return template.getDatabaseClient()
+                            .sql(QUERY)
+                            .bind("marketId", m.getId())
+                            .map((row, rowMetadata) -> Mono.empty())
+                            .all()
+                            .then(template.update(m));
+                }).subscribe();
     }
 
     ///////////////////////
@@ -91,7 +108,7 @@ public class MarketService {
                 });
     }
 
-    public Mono<MarketDTO> updateStatus(String id, MarketStatus status){
+    public Mono<MarketDTO> updateStatus(String id, MarketStatus status, User user){
         return template.selectOne(query(where("id").is(id)), Market.class)
                 .flatMap(m -> {
                     m.setStatus(status);
@@ -102,7 +119,26 @@ public class MarketService {
                                 .then(template.update(m))
                                 .thenReturn(mapper.map(m, MarketDTO.class));
                     }
-                    return template.update(m).thenReturn(mapper.map(m, MarketDTO.class));
+                    else if (status == MarketStatus.DONE) {
+                        String QUERY = """
+                                UPDATE idea SET status = 'CONFIRMED'
+                                WHERE id IN (
+                                    SELECT idea_id FROM idea_market
+                                    WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
+                                )
+                                """;
+                        return template.getDatabaseClient()
+                                .sql(QUERY)
+                                .bind("marketId", id)
+                                .map((row, rowMetadata) -> Mono.empty())
+                                .all()
+                                .then(template.update(m))
+                                .thenReturn(mapper.map(m, MarketDTO.class));
+                    }
+                    else if (status == MarketStatus.NEW && user.getRoles().contains(Role.ADMIN)) {
+                        return template.update(m).thenReturn(mapper.map(m, MarketDTO.class));
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
                 });
     }
 }
