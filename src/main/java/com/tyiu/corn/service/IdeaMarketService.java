@@ -463,7 +463,7 @@ public class IdeaMarketService {
                         return checkInitiator(r.getIdeaMarketId(),userId)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
-                                        return template.update(query(where("idea_market_id").is(r.getIdeaMarketId())
+                                        return template.update(query(where("team_id").is(r.getTeamId())
                                                                 .and("status").is(RequestStatus.NEW)),
                                                         update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
