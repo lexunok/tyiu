@@ -135,10 +135,12 @@ public class TeamService {
     }
 
     private Mono<Void> annul(String userId) {
-        return template.update(query(where("user_id").is(userId)),
+        return template.update(query(where("user_id").is(userId)
+                                .and("status").is(RequestStatus.NEW)),
                         update("status", RequestStatus.ANNULLED),
                         TeamRequest.class)
-                .then(template.update(query(where("user_id").is(userId)),
+                .then(template.update(query(where("user_id").is(userId)
+                                .and("status").is(RequestStatus.NEW)),
                         update("status", RequestStatus.ANNULLED),
                         TeamInvitation.class)).then();
     }
