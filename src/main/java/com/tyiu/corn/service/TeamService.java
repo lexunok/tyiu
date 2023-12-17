@@ -1,15 +1,9 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.AccessException;
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
-import com.tyiu.corn.model.dto.TeamMemberDTO;
-import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.email.requests.InvitationEmailRequest;
-import com.tyiu.corn.model.entities.Team;
-import com.tyiu.corn.model.entities.TeamInvitation;
-import com.tyiu.corn.model.entities.TeamRequest;
-import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Team2Member;
 import com.tyiu.corn.model.entities.relations.Team2Refused;
@@ -311,6 +305,26 @@ public class TeamService {
 
     public Flux<TeamInvitation> getInvitationByTeam(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamInvitation.class);
+    }
+
+    public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
+        String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.team_id, tmr.status, tmr.letter, " +
+                "im.name AS name " +
+                "FROM team_market_request tmr " +
+                "LEFT JOIN idea_market im ON im.id = tmr.idea_market_id " +
+                "WHERE tmr.team_id = :teamId";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("teamId",teamId)
+                .map((row, rowMetadata) -> TeamMarketRequestDTO.builder()
+                        .id(row.get("id", String.class))
+                        .ideaMarketId(row.get("idea_market_id", String.class))
+                        .teamId(row.get("team_id", String.class))
+                        .name(row.get("name", String.class))
+                        .status(RequestStatus.valueOf(row.get("status", String.class)))
+                        .letter(row.get("letter", String.class))
+                        .build())
+                .all();
     }
 
     //////////////////////////////

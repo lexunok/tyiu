@@ -283,6 +283,24 @@ public class TeamControllerTest extends TestContainers {
         return responseAddTeam;
     }
 
+    private TeamMarketRequestDTO createMarketTeamRequest(String ideaMarketId, TeamDTO createdTeam){
+        TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
+                .ideaMarketId(ideaMarketId)
+                .teamId(createdTeam.getId())
+                .name(createdTeam.getName())
+                .letter("letter")
+                .build();
+        TeamMarketRequestDTO createdTeamMarketRequest = postRequest("/api/v1/market/idea/declare",
+                "Bearer " + jwt_owner)
+                .body(Mono.just(teamMarketRequest), TeamMarketRequestDTO.class)
+                .exchange()
+                .expectBody(TeamMarketRequestDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(createdTeamMarketRequest);
+        assertEquals(teamMarketRequest.getName(),createdTeamMarketRequest.getName());
+        return createdTeamMarketRequest;
+    }
+
     private TeamRequest sendTeamRequest(String teamId, UserDTO user, String jwt) {
         TeamRequest request = TeamRequest.builder()
                 .teamId(teamId)
@@ -492,10 +510,261 @@ public class TeamControllerTest extends TestContainers {
                 .build();
     }
 
+    ///////////////////////
+    //  _____   ____ ______
+    // / ___/  / __//_  __/
+    /// (_ /  / _/   / /
+    //\___/  /___/  /_/
+    ///////////////////////
+
+    @Test
+    void testGetTeam() {
+        String teamId1 = createTeam(List.of(leader)).getId();
+        String teamId2 = createTeam(List.of(leader, member)).getId();
+        assertEquals("Богатыри", getTeam(teamId1).getName());
+        assertEquals("Слава Руси!", getTeam(teamId1).getDescription());
+        assertFalse(getTeam(teamId1).getClosed());
+        assertNotNull(getTeam(teamId1).getMembers());
+        assertEquals(1, getTeam(teamId1).getMembersCount());
+        assertEquals(2, getTeam(teamId2).getMembersCount());
+        assertEquals(owner.getId(), getTeam(teamId1).getOwner().getId());
+        assertNotEquals(leader.getId(), getTeam(teamId1).getOwner().getId());
+        assertNotEquals(member.getId(), getTeam(teamId1).getOwner().getId());
+        assertEquals(leader.getId(), getTeam(teamId1).getLeader().getId());
+        assertNotEquals(owner.getId(), getTeam(teamId1).getLeader().getId());
+        assertNotEquals(member.getId(), getTeam(teamId2).getLeader().getId());
+    }
+
+    @Test
+    void testGetAllTeams() {
+        createTeam(List.of(leader));
+        createTeam(List.of(leader, member));
+
+        List<TeamDTO> allTeams = getRequest("api/v1/team/all","Bearer " + jwt_randomUser)
+                .expectBodyList(TeamDTO.class).returnResult().getResponseBody();
+        assertNotNull(allTeams);
+        assertTrue(allTeams.size() > 1);
+    }
+
+    @Test
+    void testGetOwnerTeams() {
+        String ideaMarketId = createMarketIdea().getId();
+
+        createTeam(List.of(leader));
+        createTeam(List.of(leader, member));
+
+        getOwnerTeams(ideaMarketId);
+
+        TeamDTO team3 = buildTeam("Не моя команда","Хз кто это",1,
+                randomUser,owner,List.of(owner),List.of());
+        postRequest("/api/v1/team/add","Bearer " + jwt_randomUser)
+                .body(Mono.just(team3), TeamDTO.class)
+                .exchange();
+
+        getOwnerTeams(ideaMarketId);
+    }
+
+    @Test
+    void testGetAllUsersWithSkills() {
+        List<TeamMemberDTO> allUsersWithSkills = getRequest("api/v1/team/users","Bearer " + jwt_randomUser)
+                .expectBodyList(TeamMemberDTO.class).returnResult().getResponseBody();
+        assertNotNull(allUsersWithSkills);
+
+        allUsersWithSkills.forEach(user -> {
+            if (user.getUserId().equals(leader.getId()))
+                assertEquals(2, user.getSkills().size());
+
+            if (user.getUserId().equals(member.getId()))
+                assertEquals(1, user.getSkills().size());
+
+            if (user.getUserId().equals(kostya.getId()))
+                assertEquals(1, user.getSkills().size());
+        });
+    }
+
+    @Test
+    void testGetInvitations() {
+        sendInvites(List.of(buildInvitation(createTeam(List.of(leader)).getId(), kostya), buildInvitation(createTeam(List.of(leader, member)).getId(), kostya)));
+        List<TeamInvitation> invitations = getRequest("api/v1/team/invites","Bearer " + jwt_kostya)
+                .expectBodyList(TeamInvitation.class)
+                .returnResult().getResponseBody();
+        assertNotNull(invitations);
+        assertTrue(invitations.size() >= 2);
+    }
+
+    @Test
+    void testGetTeamRequests() {
+        String teamId = createTeam(List.of(leader)).getId();
+
+        sendTeamRequest(teamId, member, jwt_member);
+        sendTeamRequest(teamId, randomUser, jwt_randomUser);
+
+        List<TeamRequest> allTeamRequests = getRequest("api/v1/team/users/requests/{teamId}",
+                teamId, "Bearer " + jwt_owner).expectBodyList(TeamRequest.class)
+                .returnResult().getResponseBody();
+        assertNotNull(allTeamRequests);
+        assertTrue(allTeamRequests.size() > 1);
+    }
+
+    @Test
+    void testGetInvitationsByTeam() {
+        String teamId = createTeam(List.of(leader)).getId();
+        sendInvites(List.of(buildInvitation(teamId, kostya), buildInvitation(teamId, randomUser)));
+        List<TeamInvitation> invitationsByTeam = getRequest("api/v1/team/invitations/{teamId}",
+                teamId,"Bearer " + jwt_owner).expectBodyList(TeamInvitation.class)
+                .returnResult().getResponseBody();
+        assertNotNull(invitationsByTeam);
+        assertEquals(2, invitationsByTeam.size());
+    }
+
+    @Test
+    void testGetTeamMarketRequests(){
+        createMarketIdea();
+        TeamDTO team = createTeam(List.of(kostya, member));
+        List<IdeaMarketDTO> marketIdeas = getRequest("/api/v1/market/idea/all", "Bearer " + jwt_owner)
+                .expectBodyList(IdeaMarketDTO.class).returnResult().getResponseBody();
+        assertNotNull(marketIdeas);
+        createMarketTeamRequest(marketIdeas.get(0).getId(), team);
+        createMarketTeamRequest(marketIdeas.get(1).getId(), team);
+        List<TeamMarketRequestDTO> requestDTOS = getRequest("/api/v1/team/idea/requests/{teamId}", team.getId(),
+                "Bearer " + jwt_owner).expectBodyList(TeamMarketRequestDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(requestDTOS);
+        assertTrue(requestDTOS.size() >= 2);
+        assertNotEquals(team.getName(), requestDTOS.get(0).getName());
+    }
+
+    //////////////////////////////
+    //   ___   ____    ____ ______
+    //  / _ \ / __ \  / __//_  __/
+    // / ___// /_/ / _\ \   / /
+    ///_/    \____/ /___/  /_/
+    //////////////////////////////
+
     @Test
     void testAddTeam() {
         createTeam(List.of(leader, member));
     }
+
+    @Test
+    void testGetTeamsByVacancies() {
+        TeamDTO team = buildTeam("Богатыри","Слава Руси!",1,
+                owner,leader,List.of(leader),List.of(skill3, skill4));
+        createTeamRequest(team);
+        assertEquals(0, getTeamsByVacancies(List.of(skill1, skill2), jwt_owner).size());
+        assertEquals(0, getTeamsByVacancies(List.of(skill1), jwt_leader).size());
+        assertEquals(0, getTeamsByVacancies(List.of(skill2), jwt_member).size());
+        assertEquals(1, getTeamsByVacancies(List.of(skill3), jwt_randomUser).size());
+        assertEquals(1, getTeamsByVacancies(List.of(skill4), jwt_owner).size());
+        assertEquals(1, getTeamsByVacancies(List.of(skill3, skill4), jwt_leader).size());
+    }
+
+    @Test
+    void testSendTeamRequest() {
+        String teamId = createTeam(List.of(leader)).getId();
+        TeamRequest request = sendTeamRequest(teamId, randomUser, jwt_randomUser);
+        assertEquals(request.getTeamId(), teamId);
+        assertEquals(request.getUserId(), randomUser.getId());
+        assertEquals(request.getEmail(), randomUser.getEmail());
+        assertEquals(request.getFirstName(), randomUser.getFirstName());
+        assertEquals(request.getLastName(), randomUser.getLastName());
+        assertEquals(RequestStatus.NEW, request.getStatus());
+    }
+
+    @Test
+    void testSendInvitesToUsers() {
+        assertNotNull(sendInvites(List.of(buildInvitation(createTeam(List.of(leader)).getId(), kostya))).get(0).getUserId());
+    }
+
+    @Test
+    void testInviteUserInTeam() {
+        String teamId = createTeam(List.of(leader)).getId();
+        assertEquals(1, getTeam(teamId).getMembersCount());
+        assertEquals(randomUser.getId(), inviteUserInTeam(teamId, randomUser.getId()).getUserId());
+        assertEquals(2, getTeam(teamId).getMembersCount());
+    }
+
+    @Test
+    void testGetSkillsByUsers() {
+        checkSkills(List.of(admin, owner), 0);
+        checkSkills(List.of(leader, member), 3);
+        checkSkills(List.of(leader, member, kostya), 4);
+    }
+
+    @Test
+    void testGetSkillsByInvitations() {
+        String teamId = createTeam(List.of(leader)).getId();
+        TeamInvitation teamMember1 = buildInvitation(teamId, member);
+        TeamInvitation teamMember2 = buildInvitation(teamId, randomUser);
+        assertEquals(1, getSkillsByInvitations(sendInvites(List.of(teamMember1))).size());
+        assertEquals(0, getSkillsByInvitations(sendInvites(List.of(teamMember2))).size());
+        assertEquals(1, getSkillsByInvitations(sendInvites(List.of(buildInvitation(teamId, kostya)))).size());
+        assertEquals(1, getSkillsByInvitations(sendInvites(List.of(teamMember1, teamMember2))).size());
+    }
+
+    @Test
+    void testGetSkillsByRequests() {
+        String teamId = createTeam(List.of(leader)).getId();
+        assertEquals(0, getSkillsByRequests(List.of(sendTeamRequest(teamId, randomUser, jwt_randomUser))).size());
+        assertEquals(1, getSkillsByRequests(List.of(sendTeamRequest(teamId, kostya, jwt_kostya))).size());
+    }
+
+    ///////////////////////////////////////////
+    //   ___    ____   __    ____ ______   ____
+    //  / _ \  / __/  / /   / __//_  __/  / __/
+    // / // / / _/   / /__ / _/   / /    / _/
+    ///____/ /___/  /____//___/  /_/    /___/
+    ///////////////////////////////////////////
+
+    @Test
+    void testDeleteTeam() {
+        InfoResponse response1 = deleteRequest("/api/v1/team/delete/{teamId}",
+                createTeam(List.of(leader)).getId(),"Bearer " + jwt_owner)
+                .expectBody(InfoResponse.class)
+                .returnResult().getResponseBody();
+        assertNotNull(response1);
+        assertEquals("Успешное удаление", response1.getMessage());
+        InfoResponse response2 = deleteRequest("/api/v1/team/delete/{teamId}",
+                createTeam(List.of(leader)).getId(),"Bearer " + jwt_leader)
+                .expectBody(InfoResponse.class)
+                .returnResult().getResponseBody();
+        assertNotNull(response2);
+        assertEquals("Ошибка при удалении", response2.getMessage());
+
+        String teamId = createTeam(List.of(leader, member)).getId();
+        deleteRequest("/api/v1/team/delete/{teamId}", teamId,"Bearer " + jwt_member).expectStatus().isForbidden();
+        deleteRequest("/api/v1/team/delete/{teamId}", teamId,"Bearer " + jwt_randomUser).expectStatus().isForbidden();
+    }
+
+    @Test
+    void testKickUserFromTeam() {
+        String teamId = createTeam(List.of(leader, member)).getId();
+        assertEquals(2, getTeam(teamId).getMembersCount());
+        kickUserFromTeam(teamId, member.getId());
+        assertEquals(1, getTeam(teamId).getMembersCount());
+    }
+
+    @Test
+    void testLeaveFromTeam() {
+        String teamId = createTeam(List.of(leader, member, randomUser)).getId();
+        assertEquals(3, getTeam(teamId).getMembersCount());
+
+        leaveFromTeam(teamId, "Bearer " + jwt_member);
+        assertEquals(2, getTeam(teamId).getMembersCount());
+
+        leaveFromTeam(teamId, "Bearer " + jwt_randomUser);
+        assertEquals(1, getTeam(teamId).getMembersCount());
+
+        leaveFromTeam(teamId, "Bearer " + jwt_leader);
+        assertEquals(0, getTeam(teamId).getMembersCount());
+    }
+
+    ////////////////////////
+    //   ___   __  __ ______
+    //  / _ \ / / / //_  __/
+    // / ___// /_/ /  / /
+    ///_/    \____/  /_/
+    ////////////////////////
 
     @Test
     void testUpdateTeam() {
@@ -508,6 +777,22 @@ public class TeamControllerTest extends TestContainers {
         assertEquals(3, updateTeam(team.getId(), List.of(leader, member, randomUser)).getMembersCount());
         assertEquals(team.getOwner().getId(), updateTeam(team.getId(), List.of(leader)).getOwner().getId());
         assertEquals(team.getLeader().getId(), updateTeam(team.getId(), List.of(leader)).getLeader().getId());
+    }
+
+    @Test
+    void testUpdateTeamSkills() {
+        TeamDTO team = createTeam(List.of(leader));
+        Flux<SkillDTO> skills = Flux.just(skill3, skill4);
+
+        updateSkills(team.getId(), skills, "Bearer " + jwt_owner).expectStatus().isOk();
+        assertTrue(team.getWantedSkills().size() < getTeam(team.getId()).getWantedSkills().size());
+
+        InfoResponse response = updateSkills(team.getId(), skills, "Bearer " + jwt_leader)
+                .expectBody(InfoResponse.class).returnResult().getResponseBody();
+        assertNotNull(response);
+        assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
+
+        updateSkills(team.getId(), skills, "Bearer " + jwt_randomUser).expectStatus().isForbidden();
     }
 
     @Test
@@ -533,34 +818,6 @@ public class TeamControllerTest extends TestContainers {
         changeLeader(team4.getId(), randomUser.getId(), "Bearer " + jwt_randomUser)
                 .expectStatus().isForbidden();
         assertEquals(team4.getLeader().getId(), getTeam(team4.getId()).getLeader().getId());
-    }
-
-    @Test
-    void testUpdateTeamSkills() {
-        TeamDTO team = createTeam(List.of(leader));
-        Flux<SkillDTO> skills = Flux.just(skill3, skill4);
-
-        updateSkills(team.getId(), skills, "Bearer " + jwt_owner).expectStatus().isOk();
-        assertTrue(team.getWantedSkills().size() < getTeam(team.getId()).getWantedSkills().size());
-
-        InfoResponse response = updateSkills(team.getId(), skills, "Bearer " + jwt_leader)
-                .expectBody(InfoResponse.class).returnResult().getResponseBody();
-        assertNotNull(response);
-        assertSame(HttpStatus.BAD_REQUEST, response.getStatusCode());
-
-        updateSkills(team.getId(), skills, "Bearer " + jwt_randomUser).expectStatus().isForbidden();
-    }
-
-    @Test
-    void testSendTeamRequest() {
-        String teamId = createTeam(List.of(leader)).getId();
-        TeamRequest request = sendTeamRequest(teamId, randomUser, jwt_randomUser);
-        assertEquals(request.getTeamId(), teamId);
-        assertEquals(request.getUserId(), randomUser.getId());
-        assertEquals(request.getEmail(), randomUser.getEmail());
-        assertEquals(request.getFirstName(), randomUser.getFirstName());
-        assertEquals(request.getLastName(), randomUser.getLastName());
-        assertEquals(RequestStatus.NEW, request.getStatus());
     }
 
 //    @Test
@@ -694,25 +951,6 @@ public class TeamControllerTest extends TestContainers {
 //                .expectStatus().isBadRequest();
 //    }
 
-    @Test
-    void testGetTeamRequests() {
-        String teamId = createTeam(List.of(leader)).getId();
-
-        sendTeamRequest(teamId, member, jwt_member);
-        sendTeamRequest(teamId, randomUser, jwt_randomUser);
-
-        List<TeamRequest> allTeamRequests = getRequest("api/v1/team/requests/{teamId}",
-                teamId, "Bearer " + jwt_owner).expectBodyList(TeamRequest.class)
-                .returnResult().getResponseBody();
-        assertNotNull(allTeamRequests);
-        assertTrue(allTeamRequests.size() > 1);
-    }
-
-    @Test
-    void testSendInvitesToUsers() {
-        assertNotNull(sendInvites(List.of(buildInvitation(createTeam(List.of(leader)).getId(), kostya))).get(0).getUserId());
-    }
-
 //    @Test
 //    void testUpdateInvitationStatus() {
 //
@@ -806,123 +1044,6 @@ public class TeamControllerTest extends TestContainers {
 //                .expectStatus().isBadRequest();
 //    }
 
-    @Test
-    void testGetInvitations() {
-        sendInvites(List.of(buildInvitation(createTeam(List.of(leader)).getId(), kostya), buildInvitation(createTeam(List.of(leader, member)).getId(), kostya)));
-        List<TeamInvitation> invitations = getRequest("api/v1/team/invites","Bearer " + jwt_kostya)
-                .expectBodyList(TeamInvitation.class)
-                .returnResult().getResponseBody();
-        assertNotNull(invitations);
-        assertTrue(invitations.size() >= 2);
-    }
-
-    @Test
-    void testGetInvitationsByTeam() {
-        String teamId = createTeam(List.of(leader)).getId();
-        sendInvites(List.of(buildInvitation(teamId, kostya), buildInvitation(teamId, randomUser)));
-        List<TeamInvitation> invitationsByTeam = getRequest("api/v1/team/invitations/{teamId}",
-                teamId,"Bearer " + jwt_owner).expectBodyList(TeamInvitation.class)
-                .returnResult().getResponseBody();
-        assertNotNull(invitationsByTeam);
-        assertEquals(2, invitationsByTeam.size());
-    }
-
-    @Test
-    void testInviteUserInTeam() {
-        String teamId = createTeam(List.of(leader)).getId();
-        assertEquals(1, getTeam(teamId).getMembersCount());
-        assertEquals(randomUser.getId(), inviteUserInTeam(teamId, randomUser.getId()).getUserId());
-        assertEquals(2, getTeam(teamId).getMembersCount());
-    }
-
-    @Test
-    void testKickUserFromTeam() {
-        String teamId = createTeam(List.of(leader, member)).getId();
-        assertEquals(2, getTeam(teamId).getMembersCount());
-        kickUserFromTeam(teamId, member.getId());
-        assertEquals(1, getTeam(teamId).getMembersCount());
-    }
-
-    @Test
-    void testLeaveFromTeam() {
-        String teamId = createTeam(List.of(leader, member, randomUser)).getId();
-        assertEquals(3, getTeam(teamId).getMembersCount());
-
-        leaveFromTeam(teamId, "Bearer " + jwt_member);
-        assertEquals(2, getTeam(teamId).getMembersCount());
-
-        leaveFromTeam(teamId, "Bearer " + jwt_randomUser);
-        assertEquals(1, getTeam(teamId).getMembersCount());
-
-        leaveFromTeam(teamId, "Bearer " + jwt_leader);
-        assertEquals(0, getTeam(teamId).getMembersCount());
-    }
-
-    @Test
-    void testGetTeam() {
-        String teamId1 = createTeam(List.of(leader)).getId();
-        String teamId2 = createTeam(List.of(leader, member)).getId();
-        assertEquals("Богатыри", getTeam(teamId1).getName());
-        assertEquals("Слава Руси!", getTeam(teamId1).getDescription());
-        assertFalse(getTeam(teamId1).getClosed());
-        assertNotNull(getTeam(teamId1).getMembers());
-        assertEquals(1, getTeam(teamId1).getMembersCount());
-        assertEquals(2, getTeam(teamId2).getMembersCount());
-        assertEquals(owner.getId(), getTeam(teamId1).getOwner().getId());
-        assertNotEquals(leader.getId(), getTeam(teamId1).getOwner().getId());
-        assertNotEquals(member.getId(), getTeam(teamId1).getOwner().getId());
-        assertEquals(leader.getId(), getTeam(teamId1).getLeader().getId());
-        assertNotEquals(owner.getId(), getTeam(teamId1).getLeader().getId());
-        assertNotEquals(member.getId(), getTeam(teamId2).getLeader().getId());
-    }
-
-    @Test
-    void testGetAllTeams() {
-        createTeam(List.of(leader));
-        createTeam(List.of(leader, member));
-
-        List<TeamDTO> allTeams = getRequest("api/v1/team/all","Bearer " + jwt_randomUser)
-                .expectBodyList(TeamDTO.class).returnResult().getResponseBody();
-        assertNotNull(allTeams);
-        assertTrue(allTeams.size() > 1);
-    }
-
-    @Test
-    void testGetOwnerTeams() {
-        String ideaMarketId = createMarketIdea().getId();
-
-        createTeam(List.of(leader));
-        createTeam(List.of(leader, member));
-
-        getOwnerTeams(ideaMarketId);
-
-        TeamDTO team3 = buildTeam("Не моя команда","Хз кто это",1,
-                randomUser,owner,List.of(owner),List.of());
-        postRequest("/api/v1/team/add","Bearer " + jwt_randomUser)
-                .body(Mono.just(team3), TeamDTO.class)
-                .exchange();
-
-        getOwnerTeams(ideaMarketId);
-    }
-
-    @Test
-    void testGetAllUsersWithSkills() {
-        List<TeamMemberDTO> allUsersWithSkills = getRequest("api/v1/team/users","Bearer " + jwt_randomUser)
-                .expectBodyList(TeamMemberDTO.class).returnResult().getResponseBody();
-        assertNotNull(allUsersWithSkills);
-
-        allUsersWithSkills.forEach(user -> {
-            if (user.getUserId().equals(leader.getId()))
-                assertEquals(2, user.getSkills().size());
-
-            if (user.getUserId().equals(member.getId()))
-                assertEquals(1, user.getSkills().size());
-
-            if (user.getUserId().equals(kostya.getId()))
-                assertEquals(1, user.getSkills().size());
-        });
-    }
-
 //    @Test
 //    void testGetTeamsBySkills() {
 //
@@ -956,62 +1077,4 @@ public class TeamControllerTest extends TestContainers {
 //        assertEquals(1, getTeamsBySkills(List.of(skill2), Role.MEMBER, jwt_member).size());
 //        assertEquals(1, getTeamsBySkills(List.of(skill1, skill2), Role.MEMBER, jwt_member).size());
 //    }
-
-    @Test
-    void testGetTeamsByVacancies() {
-        TeamDTO team = buildTeam("Богатыри","Слава Руси!",1,
-                owner,leader,List.of(leader),List.of(skill3, skill4));
-        createTeamRequest(team);
-        assertEquals(0, getTeamsByVacancies(List.of(skill1, skill2), jwt_owner).size());
-        assertEquals(0, getTeamsByVacancies(List.of(skill1), jwt_leader).size());
-        assertEquals(0, getTeamsByVacancies(List.of(skill2), jwt_member).size());
-        assertEquals(1, getTeamsByVacancies(List.of(skill3), jwt_randomUser).size());
-        assertEquals(1, getTeamsByVacancies(List.of(skill4), jwt_owner).size());
-        assertEquals(1, getTeamsByVacancies(List.of(skill3, skill4), jwt_leader).size());
-    }
-
-    @Test
-    void testGetSkillsByUsers() {
-        checkSkills(List.of(admin, owner), 0);
-        checkSkills(List.of(leader, member), 3);
-        checkSkills(List.of(leader, member, kostya), 4);
-    }
-
-    @Test
-    void testGetSkillsByInvitations() {
-        String teamId = createTeam(List.of(leader)).getId();
-        TeamInvitation teamMember1 = buildInvitation(teamId, member);
-        TeamInvitation teamMember2 = buildInvitation(teamId, randomUser);
-        assertEquals(1, getSkillsByInvitations(sendInvites(List.of(teamMember1))).size());
-        assertEquals(0, getSkillsByInvitations(sendInvites(List.of(teamMember2))).size());
-        assertEquals(1, getSkillsByInvitations(sendInvites(List.of(buildInvitation(teamId, kostya)))).size());
-        assertEquals(1, getSkillsByInvitations(sendInvites(List.of(teamMember1, teamMember2))).size());
-    }
-
-    @Test
-    void testGetSkillsByRequests() {
-        String teamId = createTeam(List.of(leader)).getId();
-        assertEquals(0, getSkillsByRequests(List.of(sendTeamRequest(teamId, randomUser, jwt_randomUser))).size());
-        assertEquals(1, getSkillsByRequests(List.of(sendTeamRequest(teamId, kostya, jwt_kostya))).size());
-    }
-
-    @Test
-    void testDeleteTeam() {
-        InfoResponse response1 = deleteRequest("/api/v1/team/delete/{teamId}",
-                createTeam(List.of(leader)).getId(),"Bearer " + jwt_owner)
-                .expectBody(InfoResponse.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response1);
-        assertEquals("Успешное удаление", response1.getMessage());
-        InfoResponse response2 = deleteRequest("/api/v1/team/delete/{teamId}",
-                createTeam(List.of(leader)).getId(),"Bearer " + jwt_leader)
-                .expectBody(InfoResponse.class)
-                .returnResult().getResponseBody();
-        assertNotNull(response2);
-        assertEquals("Ошибка при удалении", response2.getMessage());
-
-        String teamId = createTeam(List.of(leader, member)).getId();
-        deleteRequest("/api/v1/team/delete/{teamId}", teamId,"Bearer " + jwt_member).expectStatus().isForbidden();
-        deleteRequest("/api/v1/team/delete/{teamId}", teamId,"Bearer " + jwt_randomUser).expectStatus().isForbidden();
-    }
 }

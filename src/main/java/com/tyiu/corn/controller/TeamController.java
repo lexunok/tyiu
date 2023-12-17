@@ -51,12 +51,17 @@ public class TeamController {
         return teamService.getOwnerTeams(user.getId(), ideaMarketId);
     }
 
+    @GetMapping("/users")
+    public Flux<TeamMemberDTO> getAllUsersWithSkills(){
+        return teamService.getAllUsersWithSkills();
+    }
+
     @GetMapping("/invites")
     public Flux<TeamInvitation> getInvitations(@AuthenticationPrincipal User user) {
         return teamService.getInvitations(user.getId());
     }
 
-    @GetMapping("/requests/{teamId}")
+    @GetMapping("/users/requests/{teamId}")
     @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
         return teamService.getTeamRequests(teamId);
@@ -68,9 +73,9 @@ public class TeamController {
         return teamService.getInvitationByTeam(teamId);
     }
 
-    @GetMapping("/users")
-    public Flux<TeamMemberDTO> getAllUsersWithSkills(){
-        return teamService.getAllUsersWithSkills();
+    @GetMapping("/idea/requests/{teamId}")
+    public Flux<TeamMarketRequestDTO> getTeamMarketRequests(@PathVariable String teamId){
+        return teamService.getTeamMarketRequests(teamId);
     }
 
     //////////////////////////////
