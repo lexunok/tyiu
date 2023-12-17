@@ -47,6 +47,7 @@ public class TeamControllerTest extends TestContainers {
     private String jwt_leader;
     private String jwt_member;
     private String jwt_randomUser;
+    private String jwt_initiator;
     private String jwt_kostya;
     private GroupDTO groupExpert;
     private GroupDTO groupProjectOffice;
@@ -148,7 +149,20 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private List<TeamDTO> getTeamsByVacancies(List<SkillDTO> skills, String jwt) {
-        List<TeamDTO> allTeamsByVacancies = postRequest("api/v1/team/vacancy-filter", "Bearer " + jwt)
+        List<TeamDTO> allTeamsByVacancies = postRequest("api/v1/team/vacancy-filter", jwt)
+                .body(Flux.fromIterable(skills), SkillDTO.class)
+                .exchange()
+                .expectBodyList(TeamDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(allTeamsByVacancies);
+        return allTeamsByVacancies;
+    }
+
+    private List<TeamDTO> getTeamsBySkills(List<SkillDTO> skills, Role role, String jwt) {
+        List<TeamDTO> allTeamsByVacancies = webTestClient
+                .post()
+                .uri("api/v1/team/skill-filter/{role}", role)
+                .header("Authorization",jwt)
                 .body(Flux.fromIterable(skills), SkillDTO.class)
                 .exchange()
                 .expectBodyList(TeamDTO.class)
@@ -283,24 +297,6 @@ public class TeamControllerTest extends TestContainers {
         return responseAddTeam;
     }
 
-    private TeamMarketRequestDTO createMarketTeamRequest(String ideaMarketId, TeamDTO createdTeam){
-        TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
-                .ideaMarketId(ideaMarketId)
-                .teamId(createdTeam.getId())
-                .name(createdTeam.getName())
-                .letter("letter")
-                .build();
-        TeamMarketRequestDTO createdTeamMarketRequest = postRequest("/api/v1/market/idea/declare",
-                "Bearer " + jwt_owner)
-                .body(Mono.just(teamMarketRequest), TeamMarketRequestDTO.class)
-                .exchange()
-                .expectBody(TeamMarketRequestDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(createdTeamMarketRequest);
-        assertEquals(teamMarketRequest.getName(),createdTeamMarketRequest.getName());
-        return createdTeamMarketRequest;
-    }
-
     private TeamRequest sendTeamRequest(String teamId, UserDTO user, String jwt) {
         TeamRequest request = TeamRequest.builder()
                 .teamId(teamId)
@@ -374,38 +370,6 @@ public class TeamControllerTest extends TestContainers {
         return responseUpdateTeam;
     }
 
-    private void saveSkillToUser(List<SkillDTO> skills, String jwt) {
-        postRequest("/api/v1/profile/skills/save","Bearer " + jwt)
-                .body(Mono.just(skills), SkillDTO.class)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-    private void addSkills(IdeaSkillRequest ideaSkillRequest) {
-        InfoResponse skillRequest = postRequest("/api/v1/idea/skills/add","Bearer " + jwt_admin)
-                .body(Mono.just(ideaSkillRequest), IdeaSkillRequest.class)
-                .exchange()
-                .expectBody(InfoResponse.class)
-                .returnResult().getResponseBody();
-        assertNotNull(skillRequest);
-    }
-
-    private void kickUserFromTeam(String teamId, String userId) {
-        webTestClient
-                .delete()
-                .uri("/api/v1/team/kick/{teamId}/{userId}", teamId, userId)
-                .header("Authorization", "Bearer " + jwt_randomUser)
-                .exchange()
-                .expectStatus().isOk();
-    }
-
-    private void getOwnerTeams(String ideaMarketId){
-        List<TeamDTO> ownerTeams = getRequest("api/v1/team/owner/all/{ideaMarketId}", ideaMarketId,"Bearer " + jwt_owner)
-                .expectBodyList(TeamDTO.class).returnResult().getResponseBody();
-        assertNotNull(ownerTeams);
-        assertEquals(2, ownerTeams.size());
-    }
-
     private WebTestClient.ResponseSpec changeLeader(String teamId, String userId, String jwt){
         return webTestClient
                 .put()
@@ -421,20 +385,6 @@ public class TeamControllerTest extends TestContainers {
                 .header("Authorization", jwt)
                 .body(skills, SkillDTO.class)
                 .exchange();
-    }
-
-    private void leaveFromTeam(String teamId, String jwt){
-        deleteRequest("/api/v1/team/leave/{teamId}", teamId, jwt).expectStatus().isOk();
-    }
-
-    private void checkSkills(List<UserDTO> users ,Integer checkNum){
-        List<SkillDTO> empty = postRequest("api/v1/team/skills/users","Bearer " + jwt_owner)
-                .body(Flux.fromIterable(users), UserDTO.class)
-                .exchange()
-                .expectBodyList(SkillDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(empty);
-        assertEquals(checkNum, empty.size());
     }
 
     private WebTestClient.ResponseSpec createTeamRequest(TeamDTO teamDTO){
@@ -468,6 +418,127 @@ public class TeamControllerTest extends TestContainers {
                 .exchange();
     }
 
+    private void createMarketTeamRequest(String ideaMarketId, TeamDTO createdTeam){
+        TeamMarketRequestDTO teamMarketRequest = TeamMarketRequestDTO.builder()
+                .ideaMarketId(ideaMarketId)
+                .teamId(createdTeam.getId())
+                .name(createdTeam.getName())
+                .letter("letter")
+                .build();
+        TeamMarketRequestDTO createdTeamMarketRequest = postRequest("/api/v1/market/idea/declare",
+                "Bearer " + jwt_owner)
+                .body(Mono.just(teamMarketRequest), TeamMarketRequestDTO.class)
+                .exchange()
+                .expectBody(TeamMarketRequestDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(createdTeamMarketRequest);
+        assertEquals(teamMarketRequest.getName(),createdTeamMarketRequest.getName());
+    }
+
+    private void saveSkillToUser(List<SkillDTO> skills, String jwt) {
+        postRequest("/api/v1/profile/skills/save","Bearer " + jwt)
+                .body(Mono.just(skills), SkillDTO.class)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    private void addSkills(IdeaSkillRequest ideaSkillRequest) {
+        InfoResponse skillRequest = postRequest("/api/v1/idea/skills/add","Bearer " + jwt_admin)
+                .body(Mono.just(ideaSkillRequest), IdeaSkillRequest.class)
+                .exchange()
+                .expectBody(InfoResponse.class)
+                .returnResult().getResponseBody();
+        assertNotNull(skillRequest);
+    }
+
+    private void kickUserFromTeam(String teamId, String userId) {
+        webTestClient
+                .delete()
+                .uri("/api/v1/team/kick/{teamId}/{userId}", teamId, userId)
+                .header("Authorization", "Bearer " + jwt_randomUser)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    private void getOwnerTeams(String ideaMarketId){
+        List<TeamDTO> ownerTeams = getRequest("api/v1/team/owner/all/{ideaMarketId}", ideaMarketId,"Bearer " + jwt_owner)
+                .expectBodyList(TeamDTO.class).returnResult().getResponseBody();
+        assertNotNull(ownerTeams);
+        assertEquals(2, ownerTeams.size());
+    }
+
+    private void leaveFromTeam(String teamId, String jwt){
+        deleteRequest("/api/v1/team/leave/{teamId}", teamId, jwt).expectStatus().isOk();
+    }
+
+    private void checkSkills(List<UserDTO> users ,Integer checkNum){
+        List<SkillDTO> empty = postRequest("api/v1/team/skills/users","Bearer " + jwt_owner)
+                .body(Flux.fromIterable(users), UserDTO.class)
+                .exchange()
+                .expectBodyList(SkillDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(empty);
+        assertEquals(checkNum, empty.size());
+    }
+
+    private void changeStatusRequest(String requestId, RequestStatus status, String jwt){
+        webTestClient
+                .put()
+                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
+                        requestId, status)
+                .header("Authorization", jwt)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    private void changeStatusRequestCheck(String requestId, RequestStatus status, String jwt, HttpStatus httpStatus){
+        if (httpStatus == HttpStatus.FORBIDDEN) {
+            assertThrows(AssertionError.class, () -> {
+                changeStatusRequest(requestId,status,jwt);
+            }, "Нет Прав");
+            return;
+        }
+        changeStatusRequest(requestId,status,jwt);
+    }
+
+    private void threeRequestChangeStatus(String teamId, String jwt, HttpStatus status1,  HttpStatus status2,  HttpStatus status3){
+        changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
+                RequestStatus.ACCEPTED, jwt, status1);
+        changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
+                RequestStatus.CANCELED, jwt, status2);
+        changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
+                RequestStatus.WITHDRAWN, jwt, status3);
+    }
+
+    private void changeStatusInvitation(String invitationId, RequestStatus status, String jwt){
+        webTestClient
+                .put()
+                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
+                        invitationId, status)
+                .header("Authorization", jwt)
+                .exchange()
+                .expectStatus().isOk();
+    }
+
+    private void changeStatusInvitationCheck(String invitationId, RequestStatus status, String jwt, HttpStatus httpStatus){
+        if (httpStatus == HttpStatus.FORBIDDEN) {
+            assertThrows(AssertionError.class, () -> {
+                changeStatusInvitation(invitationId,status,jwt);
+            }, "Нет Прав");
+            return;
+        }
+        changeStatusInvitation(invitationId,status,jwt);
+    }
+
+    private void threeInvitationChangeStatus(List<TeamInvitation> invitations, String jwt, HttpStatus status1,  HttpStatus status2,  HttpStatus status3){
+        changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
+                RequestStatus.ACCEPTED, jwt, status1);
+        changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
+                RequestStatus.CANCELED, jwt, status2);
+        changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
+                RequestStatus.WITHDRAWN, jwt, status3);
+    }
+
     @BeforeAll
     public void setUp() {
         AuthenticationResponse response = register("admin.addSkill@gmail.com", "Admin", "Adminov", List.of(Role.ADMIN));
@@ -483,6 +554,7 @@ public class TeamControllerTest extends TestContainers {
         jwt_leader = response2.getToken();
         jwt_member = response3.getToken();
         jwt_randomUser = response4.getToken();
+        jwt_initiator = response5.getToken();
         jwt_kostya = response6.getToken();
 
         admin = userBuild(response.getId(), response.getEmail(), response.getFirstName(), response.getLastName(), response.getRoles());
@@ -647,16 +719,46 @@ public class TeamControllerTest extends TestContainers {
     }
 
     @Test
+    void testGetTeamsBySkills() {
+        TeamDTO team1 = buildTeam("Богатыри", "Слава Руси!",1,
+                owner,leader,List.of(leader),List.of(skill3, skill4));
+        postRequest("/api/v1/team/add", "Bearer " + jwt_owner)
+                .body(Mono.just(team1), TeamDTO.class)
+                .exchange();
+        TeamDTO team2 = buildTeam("Богатыри", "Слава Руси!",1,
+                owner,leader,List.of(member),List.of(skill1, skill4));
+        postRequest("/api/v1/team/add", "Bearer " + jwt_owner)
+                .body(Mono.just(team2), TeamDTO.class)
+                .exchange();
+
+        assertTrue(getTeamsBySkills(List.of(skill1), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 1);
+        assertTrue(getTeamsBySkills(List.of(skill2), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 1);
+        assertTrue(getTeamsBySkills(List.of(skill1, skill2), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 1);
+        assertTrue(getTeamsBySkills(List.of(skill3), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 1);
+        assertTrue(getTeamsBySkills(List.of(skill4), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 0);
+        assertTrue(getTeamsBySkills(List.of(skill3, skill4), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 1);
+        assertTrue(getTeamsBySkills(List.of(skill1, skill2, skill3, skill4), Role.INITIATOR, "Bearer " + jwt_initiator).size() >= 2);
+
+        assertTrue(getTeamsBySkills(List.of(skill1), Role.MEMBER, "Bearer " + jwt_member).size() >= 2);
+        assertTrue(getTeamsBySkills(List.of(skill2), Role.MEMBER, "Bearer " + jwt_member).size() >= 1);
+        assertTrue(getTeamsBySkills(List.of(skill1, skill2), Role.MEMBER, "Bearer " + jwt_member).size() >= 2);
+        assertTrue(getTeamsBySkills(List.of(skill3), Role.MEMBER, "Bearer " + jwt_member).size() >= 2);
+        assertTrue(getTeamsBySkills(List.of(skill4), Role.MEMBER, "Bearer " + jwt_member).size() >= 2);
+        assertTrue(getTeamsBySkills(List.of(skill3, skill4), Role.MEMBER, "Bearer " + jwt_member).size() >= 2);
+        assertTrue(getTeamsBySkills(List.of(skill1, skill2, skill3, skill4), Role.MEMBER, "Bearer " + jwt_member).size() >= 2);
+    }
+
+    @Test
     void testGetTeamsByVacancies() {
         TeamDTO team = buildTeam("Богатыри","Слава Руси!",1,
                 owner,leader,List.of(leader),List.of(skill3, skill4));
         createTeamRequest(team);
-        assertEquals(0, getTeamsByVacancies(List.of(skill1, skill2), jwt_owner).size());
-        assertEquals(0, getTeamsByVacancies(List.of(skill1), jwt_leader).size());
-        assertEquals(0, getTeamsByVacancies(List.of(skill2), jwt_member).size());
-        assertEquals(1, getTeamsByVacancies(List.of(skill3), jwt_randomUser).size());
-        assertEquals(1, getTeamsByVacancies(List.of(skill4), jwt_owner).size());
-        assertEquals(1, getTeamsByVacancies(List.of(skill3, skill4), jwt_leader).size());
+        assertEquals(0, getTeamsByVacancies(List.of(skill1, skill2), "Bearer " + jwt_owner).size());
+        assertEquals(0, getTeamsByVacancies(List.of(skill1), "Bearer " + jwt_leader).size());
+        assertEquals(0, getTeamsByVacancies(List.of(skill2), "Bearer " + jwt_member).size());
+        assertEquals(1, getTeamsByVacancies(List.of(skill3), "Bearer " + jwt_randomUser).size());
+        assertEquals(1, getTeamsByVacancies(List.of(skill4), "Bearer " + jwt_owner).size());
+        assertEquals(1, getTeamsByVacancies(List.of(skill3, skill4), "Bearer " + jwt_leader).size());
     }
 
     @Test
@@ -820,261 +922,23 @@ public class TeamControllerTest extends TestContainers {
         assertEquals(team4.getLeader().getId(), getTeam(team4.getId()).getLeader().getId());
     }
 
-//    @Test
-//    void testUpdateTeamRequestStatus() {
-//
-//        TeamDTO team = createTeam(List.of(leader, member));
-//
-//        // ОТПРАВИТЕЛЬ ЗАЯВКИ (может отозвать заявку)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_randomUser)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_randomUser)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.WITHDRAWN)
-//                .header("Authorization", "Bearer " + jwt_randomUser)
-//                .exchange()
-//                .expectStatus().isOk();
-//
-//        // ВЛАДЕЛЕЦ КОМАНДЫ (может принять или отклонить заявку)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_owner)
-//                .exchange()
-//                .expectStatus().isOk();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_owner)
-//                .exchange()
-//                .expectStatus().isOk();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.WITHDRAWN)
-//                .header("Authorization", "Bearer " + jwt_owner)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        // ЛИДЕР КОМАНДЫ (не может менять статус заявки)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_leader)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_leader)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.WITHDRAWN)
-//                .header("Authorization", "Bearer " + jwt_leader)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        // ЧЛЕН КОМАНДЫ (не может менять статус заявки)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_member)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_member)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.WITHDRAWN)
-//                .header("Authorization", "Bearer " + jwt_member)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        // СЛУЧАЙНЫЙ ПОЛЬЗОВАТЕЛЬ ВНЕ КОМАНДЫ (не может менять статус заявки)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_kostya)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_kostya)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
-//                        sendTeamRequest(team.getId(), randomUser, jwt_randomUser).getId(), RequestStatus.WITHDRAWN)
-//                .header("Authorization", "Bearer " + jwt_kostya)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//    }
+    @Test
+    void testUpdateTeamRequestStatus() {
+        String teamId = createTeam(List.of(leader, member)).getId();
+        threeRequestChangeStatus(teamId, "Bearer " + jwt_randomUser,HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.OK);
+        threeRequestChangeStatus(teamId, "Bearer " + jwt_owner,HttpStatus.OK, HttpStatus.OK, HttpStatus.FORBIDDEN);
+        threeRequestChangeStatus(teamId, "Bearer " + jwt_leader,HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN);
+        threeRequestChangeStatus(teamId, "Bearer " + jwt_member,HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN);
+        threeRequestChangeStatus(teamId, "Bearer " + jwt_kostya,HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
 
-//    @Test
-//    void testUpdateInvitationStatus() {
-//
-//        TeamDTO team = createTeam(List.of(leader, member));
-//
-//        TeamMemberDTO teamMember = teamMemberBuilder(kostya);
-//
-//        // ПРИГЛАШЁННЫЙ ПОЛЬЗОВАТЕЛЬ (может принять или отклонить приглашение в команду)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_kostya)
-//                .exchange()
-//                .expectStatus().isOk();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_kostya)
-//                .exchange()
-//                .expectStatus().isOk();
-//
-//        // ВЛАДЕЛЕЦ КОМАНДЫ (может отозвать приглашение)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_owner)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_owner)
-//                .exchange()
-//                .expectStatus().isOk();
-//
-//        // ЛИДЕР КОМАНДЫ (не может менять статус приглашения)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_leader)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_leader)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        // ЧЛЕН КОМАНДЫ (не может менять статус приглашения)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_member)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_member)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        // СЛУЧАЙНЫЙ ПОЛЬЗОВАТЕЛЬ (не может менять статус приглашения)
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.ACCEPTED)
-//                .header("Authorization", "Bearer " + jwt_randomUser)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//
-//        webTestClient
-//                .put()
-//                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
-//                        sendInvites(team.getId(), List.of(teamMember)).get(0).getId(), RequestStatus.CANCELED)
-//                .header("Authorization", "Bearer " + jwt_randomUser)
-//                .exchange()
-//                .expectStatus().isBadRequest();
-//    }
-
-//    @Test
-//    void testGetTeamsBySkills() {
-//
-//        TeamDTO team = TeamDTO.builder()
-//                .name("Богатыри")
-//                .description("Слава Руси!")
-//                .closed(false)
-//                .membersCount(1)
-//                .createdAt(LocalDate.now())
-//                .owner(owner)
-//                .leader(leader)
-//                .members(List.of(leader))
-//                .wantedSkills(List.of(skill3, skill4))
-//                .build();
-//
-//        webTestClient
-//                .post()
-//                .uri("/api/v1/team/add")
-//                .header("Authorization", "Bearer " + jwt_owner)
-//                .body(Mono.just(team), TeamDTO.class)
-//                .exchange();
-//
-//        assertEquals(0, getTeamsBySkills(List.of(skill3), Role.INITIATOR, jwt_initiator).size());
-//        assertEquals(0, getTeamsBySkills(List.of(skill4), Role.INITIATOR, jwt_initiator).size());
-//        assertEquals(0, getTeamsBySkills(List.of(skill3, skill4), Role.INITIATOR, jwt_initiator).size());
-//
-//        assertEquals(1, getTeamsBySkills(List.of(skill1), Role.INITIATOR, jwt_initiator).size());
-//        assertEquals(1, getTeamsBySkills(List.of(skill2), Role.INITIATOR, jwt_initiator).size());
-//        assertEquals(1, getTeamsBySkills(List.of(skill1, skill2), Role.INITIATOR, jwt_initiator).size());
-//        assertEquals(1, getTeamsBySkills(List.of(skill1), Role.MEMBER, jwt_member).size());
-//        assertEquals(1, getTeamsBySkills(List.of(skill2), Role.MEMBER, jwt_member).size());
-//        assertEquals(1, getTeamsBySkills(List.of(skill1, skill2), Role.MEMBER, jwt_member).size());
-//    }
+    @Test
+    void testUpdateInvitationStatus() {
+        TeamInvitation invitation = buildInvitation(createTeam(List.of(leader, member)).getId(),kostya);
+        threeInvitationChangeStatus(List.of(invitation),"Bearer " + jwt_kostya, HttpStatus.OK, HttpStatus.OK, HttpStatus.FORBIDDEN);
+        threeInvitationChangeStatus(List.of(invitation),"Bearer " + jwt_owner, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.OK);
+        threeInvitationChangeStatus(List.of(invitation),"Bearer " + jwt_leader, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN);
+        threeInvitationChangeStatus(List.of(invitation),"Bearer " + jwt_member, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN);
+        threeInvitationChangeStatus(List.of(invitation),"Bearer " + jwt_randomUser, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN, HttpStatus.FORBIDDEN);
+    }
 }
