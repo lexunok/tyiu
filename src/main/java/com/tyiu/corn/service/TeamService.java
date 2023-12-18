@@ -1,15 +1,9 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.AccessException;
-import com.tyiu.corn.model.dto.SkillDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
-import com.tyiu.corn.model.dto.TeamMemberDTO;
-import com.tyiu.corn.model.dto.UserDTO;
+import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.email.requests.InvitationEmailRequest;
-import com.tyiu.corn.model.entities.Team;
-import com.tyiu.corn.model.entities.TeamInvitation;
-import com.tyiu.corn.model.entities.TeamRequest;
-import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Team2Member;
 import com.tyiu.corn.model.entities.relations.Team2Refused;
@@ -135,12 +129,24 @@ public class TeamService {
     }
 
     private Mono<Void> annul(String userId) {
-        return template.update(query(where("user_id").is(userId)),
+        return template.update(query(where("user_id").is(userId)
+                                .and("status").is(RequestStatus.NEW)),
                         update("status", RequestStatus.ANNULLED),
                         TeamRequest.class)
-                .then(template.update(query(where("user_id").is(userId)),
+                .then(template.update(query(where("user_id").is(userId)
+                                .and("status").is(RequestStatus.NEW)),
                         update("status", RequestStatus.ANNULLED),
                         TeamInvitation.class)).then();
+    }
+
+    private Mono<Boolean> checkOwner(String teamId, String userId){
+        return template.exists(query(where("id").is(teamId)
+                .and("owner_id").is(userId)), Team.class);
+    }
+
+    private Mono<Boolean> checkInitiator(String invitationId, String userId){
+        return template.exists(query(where("id").is(invitationId)
+                .and("user_id").is(userId)), TeamInvitation.class);
     }
 
     ///////////////////////
@@ -291,7 +297,7 @@ public class TeamService {
 
     public Flux<TeamInvitation> getInvitations(String userId) {
         return template.select(query(where("user_id").is(userId)), TeamInvitation.class);
-    } // TODO: не выводятся все приглашения (пустой список)
+    }
 
     public Flux<TeamRequest> getTeamRequests(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamRequest.class);
@@ -299,7 +305,27 @@ public class TeamService {
 
     public Flux<TeamInvitation> getInvitationByTeam(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamInvitation.class);
-    } // TODO: не выводятся все приглашения (пустой список)
+    }
+
+    public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
+        String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.team_id, tmr.status, tmr.letter, " +
+                "im.name AS name " +
+                "FROM team_market_request tmr " +
+                "LEFT JOIN idea_market im ON im.id = tmr.idea_market_id " +
+                "WHERE tmr.team_id = :teamId";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("teamId",teamId)
+                .map((row, rowMetadata) -> TeamMarketRequestDTO.builder()
+                        .id(row.get("id", String.class))
+                        .ideaMarketId(row.get("idea_market_id", String.class))
+                        .teamId(row.get("team_id", String.class))
+                        .name(row.get("name", String.class))
+                        .status(RequestStatus.valueOf(row.get("status", String.class)))
+                        .letter(row.get("letter", String.class))
+                        .build())
+                .all();
+    }
 
     //////////////////////////////
     //   ___   ____    ____ ______
@@ -402,11 +428,11 @@ public class TeamService {
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamInvitation> sendInvitesToUsers(String teamId, Flux<TeamInvitation> users, User userInviter) {
+    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, User userInviter) {
         return users.flatMap(user -> {
             user.setStatus(RequestStatus.NEW);
             return template.insert(user)
-                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, teamId)
+                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, user.getTeamId())
                             .thenReturn(teamInvitation));
         });
     }
@@ -481,7 +507,7 @@ public class TeamService {
     ///////////////////////////////////////////
 
     public Mono<Void> deleteTeam(String id, String userId) {
-        return template.exists(query(where("owner_id").is(userId)), Team.class)
+        return checkOwner(id, userId)
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)){
                         return template.delete(query(where("id").is(id)), Team.class);
@@ -532,49 +558,111 @@ public class TeamService {
                                 })).then(updateSkills(id)).thenReturn(teamDTO);
     }
 
-    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills) {
-        return template.delete(query(where("team_id").is(teamId)), Team2WantedSkill.class)
-                .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
-    } // TODO: изменить желаемые компетенции может только владелец команды
+    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
+        return checkOwner(teamId, user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                        return template.delete(query(where("team_id").is(teamId)), Team2WantedSkill.class)
+                                .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                });
+    }
 
-    public Mono<Void> changeTeamLeader(String teamId, String userId) {
-        return template.update(query(where("id").is(teamId)),
-                update("leader_id", userId),
-                Team.class).then();
-    } // TODO: добавить проверку на то, что лидера меняет владелец конкретно этой команды
+    public Mono<Void> changeTeamLeader(String teamId, String userId, User user) {
+        return checkOwner(teamId, user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                        return template.update(query(where("id").is(teamId)),
+                                update("leader_id", userId),
+                                Team.class);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                }).then();
+    }
 
-    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus) {
+    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, User user) {
         return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
                 .flatMap(invitation -> {
                     invitation.setStatus(newStatus);
                     if (newStatus.equals(RequestStatus.ACCEPTED)) {
-                        return annul(invitation.getUserId())
-                                .then(template.update(invitation))
-                                .thenReturn(invitation);
+                        return checkInitiator(invitationId, user.getId())
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return annul(invitation.getUserId())
+                                                .then(template.update(invitation))
+                                                .thenReturn(invitation);
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
                     }
-                    return template.update(invitation).thenReturn(invitation);
+                    else if (newStatus.equals(RequestStatus.CANCELED)){
+                        return checkInitiator(invitationId, user.getId())
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return template.update(invitation).thenReturn(invitation);
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
+                    }
+                    else if (newStatus.equals(RequestStatus.WITHDRAWN)) {
+                        return checkOwner(invitation.getTeamId(), user.getId())
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return template.update(invitation).thenReturn(invitation);
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
+                    }
+                    else if (user.getRoles().contains(Role.ADMIN) &&
+                            (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.ANNULLED))) {
+                        return template.update(invitation).thenReturn(invitation);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
                 });
-        // TODO: Владелец команды - может только удалить(отклонить) приглашение. Приглашённый пользователь - может приянть или отклонить приглашение
-        // TODO: Все остальные - не могут взаимодействовать со статусом приглашения.
     }
 
-    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus) {
+    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, User user) {
         return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
                     request.setStatus(newStatus);
                     if (newStatus.equals(RequestStatus.CANCELED)){
-                        return template.insert(new Team2Refused(request.getTeamId(), request.getUserId()))
-                                .then(template.update(request))
-                                .thenReturn(request);
+                        return checkOwner(request.getTeamId(), user.getId())
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return template.insert(new Team2Refused(request.getTeamId(), request.getUserId()))
+                                                .then(template.update(request))
+                                                .thenReturn(request);
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
                     }
                     else if (newStatus.equals(RequestStatus.ACCEPTED)){
-                        return annul(request.getUserId())
-                                .then(template.update(request))
-                                .thenReturn(request);
+                        return checkOwner(request.getTeamId(), user.getId())
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return annul(request.getUserId())
+                                                .then(template.update(request))
+                                                .thenReturn(request);
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
                     }
-                    return template.update(request).thenReturn(request);
+                    else if (newStatus.equals(RequestStatus.WITHDRAWN)) {
+                        return template.exists(query(where("user_id").is(user.getId())
+                                        .and("id").is(requestId)), TeamRequest.class)
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return template.update(request).thenReturn(request);
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
+                    }
+                    else if (user.getRoles().contains(Role.ADMIN) &&
+                            (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.ANNULLED))){
+                        return template.update(request).thenReturn(request);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
                 });
-        // TODO: Владелец команды - принимает или отклоняет заявку. Отправитель заявки - может только отозвать заявку.
-        // TODO: Все остальные - не могут взаимодействовать со статусом заявки.
     }
 }

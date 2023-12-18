@@ -2,12 +2,14 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.MarketDTO;
+import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.MarketStatus;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.MarketService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -83,8 +85,10 @@ public class MarketController {
 
     @PutMapping("/status/{marketId}/{status}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Mono<MarketDTO> updateStatus(@PathVariable String marketId, @PathVariable MarketStatus status){
-        return marketService.updateStatus(marketId, status)
+    public Mono<MarketDTO> updateStatus(@PathVariable String marketId,
+                                        @PathVariable MarketStatus status,
+                                        @AuthenticationPrincipal User user){
+        return marketService.updateStatus(marketId, status, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 }
