@@ -277,8 +277,10 @@ public class IdeaService {
                     template.exists(query(where("initiator_email").is(user.getEmail())
                             .and("id").is(ideaId)),Idea.class)
                                     .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists) ||
-                                                new HashSet<>(user.getRoles()).containsAll(List.of(Role.ADMIN,Role.EXPERT,Role.PROJECT_OFFICE))) {
+                                        if (Boolean.TRUE.equals(isExists)
+                                                || user.getRoles().contains(Role.ADMIN)
+                                                || user.getRoles().contains(Role.EXPERT)
+                                                || user.getRoles().contains(Role.PROJECT_OFFICE)) {
                                             return  Mono.just(IdeaSkillRequest.builder()
                                                     .skills(list)
                                                     .ideaId(ideaId)
