@@ -15,6 +15,7 @@ import com.tyiu.corn.model.responses.ChangeResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
 import com.tyiu.corn.model.responses.UserInfoResponse;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -230,7 +231,7 @@ public class AccountChangeService {
         .flatMap(emailChange ->
                 template.exists(query(where("old_email").is(email)), ChangeEmailData.class)
         .flatMap(b -> {
-                emailChange.setCode(new Random(System.currentTimeMillis()).nextInt(90000000)+10000000);
+                emailChange.setCode(new SecureRandom().nextInt(90000000)+10000000);
                 emailChange.setDateExpired(LocalDateTime.now().plusHours(12));
                 emailChange.setOldEmail(email);
                 if (Boolean.TRUE.equals(b)){
@@ -259,7 +260,7 @@ public class AccountChangeService {
                 .flatMap(passwordChange -> template.exists(query(where("email").is(passwordChange.getEmail())), ChangePasswordData.class)
                         .flatMap(b -> {
                             passwordChange.setDateExpired(LocalDateTime.now().plusMinutes(5));
-                            passwordChange.setCode(new Random(System.currentTimeMillis()).nextInt(90000000) + 10000000);
+                            passwordChange.setCode(new SecureRandom().nextInt(90000000)+10000000);
                             if (Boolean.TRUE.equals(b)){
                                 return template.delete(query(where("email").is(passwordChange.getEmail())), ChangePasswordData.class)
                                         .then(template.insert(passwordChange)
