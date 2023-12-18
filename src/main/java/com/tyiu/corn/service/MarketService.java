@@ -64,6 +64,11 @@ public class MarketService {
                 .flatMap(m -> Mono.just(mapper.map(m, MarketDTO.class)));
     }
 
+    public Mono<MarketDTO> getMarket(String marketId){
+        return template.selectOne(query(where("id").is(marketId)), Market.class)
+                .flatMap(m -> Mono.just(mapper.map(m, MarketDTO.class)));
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

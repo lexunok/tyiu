@@ -29,10 +29,16 @@ public class MarketControllerTest extends TestContainers {
 
     private String jwt;
 
+    private WebTestClient.ResponseSpec getRequest(String path){
+        return webTestClient
+                .get()
+                .uri(path)
+                .header("Authorization", "Bearer " + jwt)
+                .exchange();
+    }
+
     private MarketDTO buildMarket(String name, LocalDate localDate){
-        return MarketDTO.builder()
-                .name(name)
-                .startDate(localDate)
+        return MarketDTO.builder().name(name).startDate(localDate)
                 .finishDate(localDate.plusDays(30))
                 .build();
     }
@@ -54,11 +60,7 @@ public class MarketControllerTest extends TestContainers {
     }
 
     private MarketDTO getActiveMarket(){
-        MarketDTO market = webTestClient
-                .get()
-                .uri("/api/v1/market/active")
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
+        MarketDTO market = getRequest("/api/v1/market/active")
                 .expectBody(MarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(market);
@@ -118,11 +120,7 @@ public class MarketControllerTest extends TestContainers {
     void testGetAll() {
         createMarket();
         createMarket();
-        List<MarketDTO> markets = webTestClient
-                .get()
-                .uri("/api/v1/market/all")
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
+        List<MarketDTO> markets = getRequest("/api/v1/market/all")
                 .expectBodyList(MarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(markets);
@@ -134,6 +132,20 @@ public class MarketControllerTest extends TestContainers {
         createMarket();
         updateStatus(createMarket().getId());
         getActiveMarket();
+    }
+
+    @Test
+    void testGetMarket() {
+        MarketDTO marketDTO = createMarket();
+        MarketDTO market = webTestClient
+                .get()
+                .uri("/api/v1/market/{marketId}", marketDTO.getId())
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBody(MarketDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(market);
+        assertEquals(marketDTO.getName(), market.getName());
     }
 
     //////////////////////////////
