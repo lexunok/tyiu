@@ -1,9 +1,0 @@
-<!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:th="http://www.thymeleaf.org"
-      lang="ru">
-<p th:if="${invitation.title}" th:text="${invitation.title}"></p>
-<p th:text="${invitation.message}"></p>
-<a th:href="${invitation.link}"> Перейти по ссылке </a>
-<p th:if="${invitation.from}" th:text="${invitation.from}"></p>
-</html>

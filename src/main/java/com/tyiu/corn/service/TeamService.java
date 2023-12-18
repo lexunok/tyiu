@@ -2,7 +2,7 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.*;
-import com.tyiu.corn.model.email.requests.InvitationEmailRequest;
+import com.tyiu.corn.model.email.requests.NotificationEmailRequest;
 import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.entities.mappers.TeamMapper;
 import com.tyiu.corn.model.entities.relations.Team2Member;
@@ -62,7 +62,7 @@ public class TeamService {
                         .flatMap(u -> {
                             String message = String.format("Вас пригласили в команду \"%s\". " +
                                     "Перейдите по ссылке, чтобы ответить на приглашение", t.getName());
-                            return Mono.just(InvitationEmailRequest.builder()
+                            return Mono.just(NotificationEmailRequest.builder()
                                     .to(u.getEmail())
                                     .from("Вас пригласил: " + userInviter.getFirstName() + " " + userInviter.getLastName())
                                     .title("Приглашение в команду")
@@ -70,7 +70,7 @@ public class TeamService {
                                     .link(path + "team/invitations")
                                     .build());
                         })
-                        .flatMap(emailService::sendMailInvitation));
+                        .flatMap(emailService::sendMailNotification));
     }
 
     private Flux<SkillDTO> getSkillsByList(List<String> skills) {
