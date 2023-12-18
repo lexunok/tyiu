@@ -71,6 +71,7 @@ public class EmailService {
                             helper.setSubject("Уведомление от портала HITS");
                             helper.setTo(notificationEmailRequest.getTo());
                             helper.setText(html, true);
+                            helper.setFrom("HITS@hits1.tyuiu.ru");
                             javaMailSender.send(mimeMessage);
                         }
                         catch (Exception e) {
@@ -91,6 +92,7 @@ public class EmailService {
                                 helper.setSubject(changeEmailRequest.getSubject());
                                 helper.setTo(changeEmailRequest.getTo());
                                 helper.setText(html, true);
+                                helper.setFrom("HITS@hits1.tyuiu.ru");
                                 javaMailSender.send(mimeMessage);
                             }
                             catch (Exception e) {
