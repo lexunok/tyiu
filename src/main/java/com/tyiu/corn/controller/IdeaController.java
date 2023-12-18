@@ -116,9 +116,8 @@ public class IdeaController {
     }
 
     @GetMapping("/skills/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('MEMBER') || hasAuthority('ADMIN')")
-    public Mono<IdeaSkillRequest> getIdeaSkills(@PathVariable String ideaId) {
-        return ideaService.getIdeaSkills(ideaId);
+    public Mono<IdeaSkillRequest> getIdeaSkills(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
+        return ideaService.getIdeaSkills(ideaId, user);
     }
 
     @PostMapping("/skills/add")
