@@ -27,8 +27,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
-import java.util.HashSet;
-import java.util.List;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -259,7 +257,7 @@ public class IdeaService {
                 });
     }
 
-    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, User user) {
+    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId) {
         String query = """
                 SELECT skill.*, i.skill_id skill_id FROM idea_skill i
                 LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId""";
@@ -274,17 +272,15 @@ public class IdeaService {
                             .build()
                 ).all().collectList()
                 .flatMap(list ->
-                    template.exists(query(where("initiator_email").is(user.getEmail())
-                            .and("id").is(ideaId)),Idea.class)
+                    template.exists(query(where("id").is(ideaId)), Idea.class)
                                     .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists) ||
-                                                new HashSet<>(user.getRoles()).containsAll(List.of(Role.ADMIN,Role.EXPERT,Role.PROJECT_OFFICE))) {
+                                        if (Boolean.TRUE.equals(isExists)) {
                                             return  Mono.just(IdeaSkillRequest.builder()
                                                     .skills(list)
                                                     .ideaId(ideaId)
                                                     .build());
                                         }
-                                        return Mono.error(new AccessException("Нет Прав"));
+                                        return Mono.error(new AccessException("Не найдено"));
                                     })
                 );
     }

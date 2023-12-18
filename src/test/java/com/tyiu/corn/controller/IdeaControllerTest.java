@@ -39,7 +39,8 @@ class IdeaControllerTest extends TestContainers {
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
-                        Role.INITIATOR));
+                        Role.INITIATOR,
+                        Role.MEMBER));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
