@@ -1,14 +1,10 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
-import com.tyiu.corn.model.dto.IdeaMarketAdvertisementDTO;
-import com.tyiu.corn.model.dto.IdeaMarketDTO;
-import com.tyiu.corn.model.dto.TeamDTO;
-import com.tyiu.corn.model.dto.TeamMarketRequestDTO;
+import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.RequestStatus;
-import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.responses.InfoResponse;
 import com.tyiu.corn.service.IdeaMarketService;
 import lombok.RequiredArgsConstructor;
@@ -79,7 +75,7 @@ public class IdeaMarketController {
 
     @PostMapping("/send/{marketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody Flux<IdeaMarketRequest> ideaDTOList) {
+    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody Flux<IdeaDTO> ideaDTOList) {
         return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить идею на биржу")));
     }

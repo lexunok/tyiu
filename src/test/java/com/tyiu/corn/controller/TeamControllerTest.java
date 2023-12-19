@@ -8,7 +8,6 @@ import com.tyiu.corn.model.enums.MarketStatus;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -95,23 +94,6 @@ public class TeamControllerTest extends TestContainers {
                 .contactPerson("Стас")
                 .description("Для студентов!")
                 .maxTeamSize((short) 5)
-                .build();
-    }
-
-    private IdeaMarketRequest buildIdeaMarket(IdeaDTO ideaDTO) {
-        return IdeaMarketRequest.builder()
-                .initiatorEmail(ideaDTO.getInitiatorEmail())
-                .name(ideaDTO.getName())
-                .id(ideaDTO.getId())
-                .createdAt(ideaDTO.getCreatedAt())
-                .problem(ideaDTO.getProblem())
-                .solution(ideaDTO.getSolution())
-                .result(ideaDTO.getResult())
-                .customer(ideaDTO.getCustomer())
-                .description(ideaDTO.getDescription())
-                .maxTeamSize(ideaDTO.getMaxTeamSize())
-                .startDate(LocalDate.now())
-                .finishDate(LocalDate.now().plusDays(14))
                 .build();
     }
 
@@ -269,7 +251,7 @@ public class TeamControllerTest extends TestContainers {
         addSkills(buildSkillRequest(idea2.getId(),List.of(skill1, skill2)));
 
         List<IdeaMarketDTO> createdMarketIdea = postRequest("/api/v1/market/idea/send/{marketId}",market.getId(),"Bearer " + jwt_admin)
-                .body(Mono.just(List.of(buildIdeaMarket(idea1), buildIdeaMarket(idea2))), IdeaMarketRequest.class)
+                .body(Flux.just(idea1, idea2), IdeaDTO.class)
                 .exchange()
                 .expectBodyList(IdeaMarketDTO.class)
                 .returnResult().getResponseBody();

@@ -34,6 +34,4 @@ public class IdeaMarketDTO {
     private Integer requests;
     private Integer acceptedRequests;
     private Boolean isFavorite;
-    private LocalDate startDate;
-    private LocalDate finishDate;
 }

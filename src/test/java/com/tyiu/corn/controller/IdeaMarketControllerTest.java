@@ -3,7 +3,6 @@ package com.tyiu.corn.controller;
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.enums.*;
-import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.AuthenticationResponse;
@@ -64,23 +63,6 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .build();
     }
 
-    private IdeaMarketRequest buildIdeaMarket(IdeaDTO ideaDTO){
-        return IdeaMarketRequest.builder()
-                .initiatorEmail(ideaDTO.getInitiatorEmail())
-                .name(ideaDTO.getName())
-                .id(ideaDTO.getId())
-                .createdAt(ideaDTO.getCreatedAt())
-                .problem(ideaDTO.getProblem())
-                .solution(ideaDTO.getSolution())
-                .result(ideaDTO.getResult())
-                .customer(ideaDTO.getCustomer())
-                .description(ideaDTO.getDescription())
-                .maxTeamSize(ideaDTO.getMaxTeamSize())
-                .startDate(LocalDate.now())
-                .finishDate(LocalDate.now().plusDays(14))
-                .build();
-    }
-
     private GroupDTO buildGroup(String name, List<Role> roles){
         return GroupDTO.builder().name(name).users(List.of(userDTO))
                 .roles(roles).build();
@@ -123,7 +105,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .post()
                 .uri(path + "/send/{marketId}", marketId)
                 .header("Authorization", "Bearer " + jwt)
-                .body(Flux.just(buildIdeaMarket(idea1), buildIdeaMarket(idea2)), IdeaMarketRequest.class)
+                .body(Flux.just(idea1, idea2), IdeaDTO.class)
                 .exchange()
                 .expectBodyList(IdeaMarketDTO.class)
                 .returnResult().getResponseBody();

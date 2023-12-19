@@ -10,7 +10,6 @@ import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.RequestStatus;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
-import com.tyiu.corn.model.requests.IdeaMarketRequest;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -105,8 +104,6 @@ public class IdeaMarketService {
                     .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                     .requests(row.get("request_count", Integer.class))
                     .acceptedRequests(row.get("accepted_request_count", Integer.class))
-                    .startDate(row.get("start_date", LocalDate.class))
-                    .finishDate(row.get("finish_date", LocalDate.class))
                     .isFavorite(Objects.equals(row.get("favorite", String.class), ideaMarketId))
                     .build());
         }
@@ -316,7 +313,7 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaMarketRequest> ideaDTOList) {
+    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList) {
         return ideaDTOList.flatMap(ideaDTO -> {
             IdeaMarket ideaMarket = IdeaMarket.builder()
                     .ideaId(ideaDTO.getId())
@@ -330,8 +327,6 @@ public class IdeaMarketService {
                     .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
                     .maxTeamSize(ideaDTO.getMaxTeamSize())
                     .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
-                    .startDate(ideaDTO.getStartDate())
-                    .finishDate(ideaDTO.getFinishDate())
                     .build();
             return template.selectOne(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
                     .flatMap(u -> {
