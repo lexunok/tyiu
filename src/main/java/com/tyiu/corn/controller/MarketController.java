@@ -36,8 +36,8 @@ public class MarketController {
 
     @GetMapping("/active")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Mono<MarketDTO> getActiveMarket(){
-        return marketService.getActiveMarket();
+    public Flux<MarketDTO> getActiveMarket(){
+        return marketService.getActiveMarkets();
     }
 
     @GetMapping("/{marketId}")

@@ -59,12 +59,12 @@ public class MarketControllerTest extends TestContainers {
         return market;
     }
 
-    private MarketDTO getActiveMarket(){
-        MarketDTO market = getRequest("/api/v1/market/active")
-                .expectBody(MarketDTO.class)
+    private List<MarketDTO> getActiveMarkets(){
+        List<MarketDTO> market = getRequest("/api/v1/market/active")
+                .expectBodyList(MarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(market);
-        assertSame(market.getStatus(), MarketStatus.ACTIVE);
+        assertSame(market.get(0).getStatus(), MarketStatus.ACTIVE);
         return market;
     }
 
@@ -128,10 +128,11 @@ public class MarketControllerTest extends TestContainers {
     }
 
     @Test
-    void testGetActiveMarket() {
+    void testGetActiveMarkets() {
         createMarket();
         updateStatus(createMarket().getId());
-        getActiveMarket();
+        updateStatus(createMarket().getId());
+        getActiveMarkets();
     }
 
     @Test
@@ -213,6 +214,6 @@ public class MarketControllerTest extends TestContainers {
         MarketDTO market2 = updateStatus(marketId);
         assertMarket(market2, market2);
         assertSame(market2.getStatus(), MarketStatus.ACTIVE);
-        assertEquals(getActiveMarket().getId(), market2.getId());
+        assertEquals(getActiveMarkets().get(1).getId(), market2.getId());
     }
 }
