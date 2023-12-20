@@ -40,6 +40,7 @@ public class AuthenticationService {
                         .firstName(u.getFirstName())
                         .lastName(u.getLastName())
                         .roles(u.getRoles())
+                        .createdAt(u.getCreatedAt())
                         .build());
             } else return Mono.error(new NotFoundException("Авторизация не удалась!"));
         });
@@ -71,6 +72,7 @@ public class AuthenticationService {
                                         .firstName(u.getFirstName())
                                         .lastName(u.getLastName())
                                         .roles(u.getRoles())
+                                        .createdAt(u.getCreatedAt())
                                         .build());
                             });
                         }
