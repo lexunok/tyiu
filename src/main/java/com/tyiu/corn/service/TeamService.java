@@ -67,7 +67,7 @@ public class TeamService {
                                     .from("Вас пригласил: " + userInviter.getFirstName() + " " + userInviter.getLastName())
                                     .title("Приглашение в команду")
                                     .message(message)
-                                    .link(path + "team/invitations")
+                                    .link(path + "teams/list/" + t.getId())
                                     .build());
                         })
                         .flatMap(emailService::sendMailNotification));
