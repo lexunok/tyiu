@@ -4,7 +4,6 @@ import com.tyiu.corn.model.enums.Role;
 import lombok.Builder;
 import lombok.Data;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -16,5 +15,4 @@ public class AuthenticationResponse {
     private String lastName;
     private String firstName;
     private List<Role> roles;
-    private LocalDateTime createdAt;
 }

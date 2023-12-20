@@ -16,7 +16,6 @@ import com.tyiu.corn.model.responses.InvitationResponse;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
-import java.util.*;
 
 import lombok.RequiredArgsConstructor;
 
@@ -70,7 +69,7 @@ public class AccountChangeService {
                 .flatMap(emailService::sendMailCodeToChangeData);
     }
 
-    @Scheduled(fixedRate = 86400000)
+    @Scheduled(fixedRate = 28800000)
     private void deleteExpiredData() {
         template.delete(query(where("dateExpired").is(LocalDateTime.now())), Invitation.class).subscribe();
         template.delete(query(where("dateExpired").is(LocalDateTime.now())), ChangeEmailData.class).subscribe();
@@ -87,7 +86,7 @@ public class AccountChangeService {
     public Mono<InvitationResponse> findInvitationByUrl(String url) {
         return template.selectOne(query(where("id").is(url)), Invitation.class)
                 .flatMap(i -> {
-                    i.setDateExpired(LocalDateTime.now().plusHours(5));
+                    i.setDateExpired(LocalDateTime.now().plusHours(3));
                     return template.update(i).flatMap(inv -> Mono.just(InvitationResponse.builder()
                             .email(inv.getEmail())
                             .roles(inv.getRoles())
