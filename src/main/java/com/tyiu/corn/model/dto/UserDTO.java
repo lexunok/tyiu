@@ -1,5 +1,6 @@
 package com.tyiu.corn.model.dto;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 import com.tyiu.corn.model.enums.Role;
@@ -18,4 +19,5 @@ public class UserDTO {
     private String lastName;
     private String firstName;
     private List<Role> roles;
+    private LocalDateTime createdAt;
 }

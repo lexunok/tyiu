@@ -2,8 +2,6 @@ package com.tyiu.corn.controller;
 
 import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.*;
-import com.tyiu.corn.model.entities.ChangeEmailData;
-import com.tyiu.corn.model.entities.ChangePasswordData;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
@@ -13,18 +11,14 @@ import org.springframework.web.bind.annotation.*;
 
 import lombok.RequiredArgsConstructor;
 
-import com.tyiu.corn.model.entities.Invitation;
 import com.tyiu.corn.model.requests.ChangeRequest;
 import com.tyiu.corn.model.responses.ChangeResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
-import com.tyiu.corn.model.responses.UserInfoResponse;
 import com.tyiu.corn.service.AccountChangeService;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.core.publisher.ParallelFlux;
 
 import java.time.Duration;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -53,14 +47,14 @@ public class AccountChangeController {
 
     @GetMapping("/get/users")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public Flux<UserInfoResponse> getUsersInfo(){
+    public Flux<UserDTO> getUsersInfo(){
         return accountChangeService.getUsersInfo()
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }
 
     @GetMapping("/get/emails")
     @PreAuthorize("hasAuthority('ADMIN')")
-    public Mono<List<String>> getUsersEmail(){
+    public Flux<String> getUsersEmail(){
         return accountChangeService.getAllEmails()
                 .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
     }

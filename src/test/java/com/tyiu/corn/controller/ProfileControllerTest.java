@@ -76,6 +76,7 @@ public class ProfileControllerTest extends TestContainers {
                 .roles(userDTO.getRoles())
                 .skills(List.of(skills))
                 .ideas(List.of(ideas))
+                .createdAt(userDTO.getCreatedAt())
                 .build();
     }
 
@@ -106,6 +107,7 @@ public class ProfileControllerTest extends TestContainers {
                 .lastName(response.getLastName())
                 .firstName(response.getFirstName())
                 .roles(response.getRoles())
+                .createdAt(response.getCreatedAt())
                 .build();
 
         GroupDTO expertGroupDTO = GroupDTO.builder()

@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Data
@@ -20,6 +21,7 @@ public class ProfileDTO {
     String email;
     String lastName;
     String firstName;
+    LocalDateTime createdAt;
     List<Role> roles;
     List<SkillDTO> skills;
     List<ProfileIdeaResponse> ideas;

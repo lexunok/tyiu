@@ -13,7 +13,6 @@ import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.ChangeRequest;
 import com.tyiu.corn.model.responses.ChangeResponse;
 import com.tyiu.corn.model.responses.InvitationResponse;
-import com.tyiu.corn.model.responses.UserInfoResponse;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -111,20 +110,21 @@ public class AccountChangeService {
                 );
     }
 
-    public Flux<UserInfoResponse> getUsersInfo(){
+    public Flux<UserDTO> getUsersInfo(){
         return template.select(User.class).all()
-                .flatMap(u -> Mono.just(UserInfoResponse.builder()
+                .flatMap(u -> Mono.just(UserDTO.builder()
                             .id(u.getId())
                             .email(u.getEmail())
                             .roles(u.getRoles())
                             .firstName(u.getFirstName())
                             .lastName(u.getLastName())
+                            .createdAt(u.getCreatedAt())
                             .build())
         );
     }
 
-    public Mono<List<String>> getAllEmails(){
-        return template.select(User.class).all().flatMap(u -> Mono.just(u.getEmail())).collectList();
+    public Flux<String> getAllEmails(){
+        return template.select(User.class).all().flatMap(u -> Mono.just(u.getEmail()));
     }
 
     //////////////////////////////

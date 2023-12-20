@@ -13,6 +13,8 @@ import reactor.core.publisher.Mono;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
+
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 
@@ -56,6 +58,7 @@ public class AuthenticationService {
                                 .firstName(request.getFirstName())
                                 .lastName(request.getLastName())
                                 .password(passwordEncoder.encode(request.getPassword()))
+                                .createdAt(LocalDateTime.now())
                                 .build();
                         try {
                             Mono<User> userFromDB = template.insert(user);

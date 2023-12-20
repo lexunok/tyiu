@@ -11,29 +11,23 @@ import com.tyiu.corn.model.requests.ChangeRequest;
 import com.tyiu.corn.model.requests.LoginRequest;
 import com.tyiu.corn.model.requests.RegisterRequest;
 import com.tyiu.corn.model.responses.*;
-import org.checkerframework.checker.units.qual.A;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.data.r2dbc.DataR2dbcTest;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.data.r2dbc.core.DefaultReactiveDataAccessStrategy;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.r2dbc.core.DatabaseClient;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Stream;
 
@@ -43,11 +37,6 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
 public class AccountChangeControllerTest extends TestContainers {
-
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-
-
     @Autowired
     private WebTestClient webTestClient;
 
@@ -65,9 +54,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
     private Integer code;
     private String changeDataId;
-
-    private final String EMAIL = "vshtst.hits0@gmail.com";
-
+    
     public AccountChangeControllerTest() {
     }
 
@@ -97,6 +84,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .lastName(response.getLastName())
                 .firstName(response.getFirstName())
                 .roles(response.getRoles())
+                .createdAt(response.getCreatedAt())
                 .build();
         userPassword = request.getPassword();
         webTestClient = webTestClient.mutate()
@@ -105,7 +93,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testGetNotExistedInvitation(){
+    void testGetNotExistedInvitation() {
         ErrorResponse errorResponse = webTestClient
                 .get()
                 .uri("/api/v1/profile/get/invitation/not-existed")
@@ -118,7 +106,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testSendInvitation(){
+    void testSendInvitation() {
         InvitationDTO invitationDTO = InvitationDTO.builder()
                 .email("timur.minyazeff@gmail.com")
                 .roles(List.of(Role.INITIATOR))
@@ -144,7 +132,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testGetInvitation(){
+    void testGetInvitation() {
         template.insert(Invitation.builder()
                 .dateExpired(LocalDateTime.now().plusDays(1))
                 .roles(List.of(Role.ADMIN))
@@ -165,7 +153,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testSendInvitationToRegisteredUser(){
+    void testSendInvitationToRegisteredUser() {
         InvitationDTO invitationDTO = InvitationDTO.builder()
                 .email("account.change@gmail.com")
                 .roles(List.of(Role.INITIATOR))
@@ -191,7 +179,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testSendInvitations(){
+    void testSendInvitations() {
         RegisterRequest request = new RegisterRequest(
                 "account2.change@gmail.com", "account", "change", "account.change",
                 List.of(Role.ADMIN,
@@ -209,23 +197,23 @@ public class AccountChangeControllerTest extends TestContainers {
         assertNotNull(response);
         InvitationsDTO invitations = InvitationsDTO.builder()
                 .emails(List.of("1@mail.com",
-                "12@marfrfil.com",
-                "3@marfril.com",
-                "4@marfril.com",
-                "5@mafrfil.com",
-                "1@mfrfail.com",
-                "12452grwrg@mail.com",
-                "1@mgwergewail.com",
-                "1@margwrgwwrgwril.com",
-                "1@mgwrail.com",
-                "1@mgwrgwrail.com",
-                "1@margwril.com",
-                "1@mail.com",
-                "account2.change@gmail.com",
-                "account.change@gmail.com",
-                "1@mrgwrgwragwrgwril.com",
-                "1@magwrgwil.com",
-                "1@mgwrgwail.com"))
+                        "12@marfrfil.com",
+                        "3@marfril.com",
+                        "4@marfril.com",
+                        "5@mafrfil.com",
+                        "1@mfrfail.com",
+                        "12452grwrg@mail.com",
+                        "1@mgwergewail.com",
+                        "1@margwrgwwrgwril.com",
+                        "1@mgwrail.com",
+                        "1@mgwrgwrail.com",
+                        "1@margwril.com",
+                        "1@mail.com",
+                        "account2.change@gmail.com",
+                        "account.change@gmail.com",
+                        "1@mrgwrgwragwrgwril.com",
+                        "1@magwrgwil.com",
+                        "1@mgwrgwail.com"))
                 .roles(List.of(Role.INITIATOR))
                 .build();
         Void result = webTestClient
@@ -238,14 +226,15 @@ public class AccountChangeControllerTest extends TestContainers {
         assertNull(result);
 
         template.exists(query(where("email").is("account2.change@gmail.com")
-                .and(where("email").is("account.change@gmail.com"))), Invitation.class)
+                        .and(where("email").is("account.change@gmail.com"))), Invitation.class)
                 .flatMap(b -> Mono.fromRunnable(() -> assertFalse(b)))
                 .as(StepVerifier::create)
                 .expectComplete()
                 .verify();
     }
+
     @Test
-    void testChangeEmailToNew(){
+    void testChangeEmailToNew() {
         RegisterRequest request = new RegisterRequest(
                 "kill@me.now", "account", "change", "account.change",
                 List.of(Role.ADMIN,
@@ -276,7 +265,7 @@ public class AccountChangeControllerTest extends TestContainers {
         assertEquals("Ссылка на изменение почты находится на новой почте", changerUrl.getMessage());
 
         template.selectOne(query(where("new_email").is(changeEmailDataDTO.getNewEmail())
-                .and(where("old_email").is(response.getEmail()))), ChangeEmailData.class)
+                        .and(where("old_email").is(response.getEmail()))), ChangeEmailData.class)
                 .flatMap(changeEmailData -> Mono.fromRunnable(() -> {
                     code = changeEmailData.getCode();
                     changeDataId = changeEmailData.getId();
@@ -318,7 +307,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testFailLinkChangeEmail(){
+    void testFailLinkChangeEmail() {
         ErrorResponse errorResponse = webTestClient
                 .get()
                 .uri("/api/v1/profile/change/email/not-existed-letter")
@@ -330,7 +319,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testFailCodeChangeEmail(){
+    void testFailCodeChangeEmail() {
         ChangeEmailData changeEmailData = ChangeEmailData.builder()
                 .oldEmail(userDTO.getEmail())
                 .newEmail("1234567@gerhe.rgwr")
@@ -339,13 +328,13 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
 
         template.insert(changeEmailData).flatMap(e -> Mono.fromRunnable(() -> changeDataId = e.getId()))
-                        .as(StepVerifier::create).expectComplete().verify();
+                .as(StepVerifier::create).expectComplete().verify();
 
         ChangeRequest changeRequest = new ChangeRequest();
         changeRequest.setOldEmail(changeEmailData.getOldEmail());
         changeRequest.setNewEmail(changeEmailData.getNewEmail());
         changeRequest.setKey(changeDataId);
-        Stream.of(1,2,3).forEach(code -> {
+        Stream.of(1, 2, 3).forEach(code -> {
             changeRequest.setCode(code);
             ErrorResponse errorResponse = webTestClient.put()
                     .uri("/api/v1/profile/change/email")
@@ -381,8 +370,9 @@ public class AccountChangeControllerTest extends TestContainers {
                 .flatMap(e -> Mono.fromRunnable(() -> assertTrue(e)))
                 .as(StepVerifier::create).expectComplete().verify();
     }
+
     @Test
-    void testChangePasswordToNew(){
+    void testChangePasswordToNew() {
         RegisterRequest request = new RegisterRequest(
                 "delete@me.now", "account", "change", "account.change",
                 List.of(Role.ADMIN,
@@ -456,7 +446,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testFailCodeChangePassword(){
+    void testFailCodeChangePassword() {
         ChangePasswordData changePasswordData = ChangePasswordData.builder()
                 .email(userDTO.getEmail())
                 .code(123533)
@@ -470,7 +460,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setEmail(changePasswordData.getEmail());
         changeRequest.setKey(changeDataId);
         changeRequest.setPassword("1234");
-        Stream.of(1,2,3).forEach(code -> {
+        Stream.of(1, 2, 3).forEach(code -> {
             changeRequest.setCode(code);
             ErrorResponse errorResponse = webTestClient.put()
                     .uri("/api/v1/profile/change/password")
@@ -523,7 +513,7 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testDeleteExpiredCodeToChangePassword(){
+    void testDeleteExpiredCodeToChangePassword() {
         ChangePasswordData changePasswordData = ChangePasswordData.builder()
                 .email(userDTO.getEmail())
                 .code(123533)
@@ -554,16 +544,35 @@ public class AccountChangeControllerTest extends TestContainers {
     }
 
     @Test
-    void testGetUsersInfo(){
-        List<UserInfoResponse> users = webTestClient
+    void testGetUsersInfoByAdmin() {
+        List<UserDTO> users = webTestClient
                 .get()
                 .uri("/api/v1/profile/get/users")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
-                .expectBodyList(UserInfoResponse.class)
+                .expectBodyList(UserDTO.class)
                 .returnResult().getResponseBody();
-        UserInfoResponse user = users.get(0);
-        assertNotNull(user);
-        assertEquals(userDTO.getEmail(), user.getEmail());
+        assertNotNull(users);
+        boolean isContained = users.stream().anyMatch(user ->
+                user.getEmail().equals(userDTO.getEmail())
+                        && user.getLastName().equals(userDTO.getLastName())
+                        && user.getId().equals(userDTO.getId())
+                        && user.getRoles().equals(userDTO.getRoles())
+        );
+        assertTrue(isContained);
+    }
+
+    @Test
+    void testGetUsersEmailsByAdmin() {
+        List<String> emails = webTestClient
+                .get()
+                .uri("/api/v1/profile/get/emails")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBodyList(String.class)
+                .returnResult().getResponseBody();
+        assertNotNull(emails);
+        boolean isContained = emails.stream().anyMatch(email -> email.equals(userDTO.getEmail()));
+        assertTrue(isContained);
     }
 }
