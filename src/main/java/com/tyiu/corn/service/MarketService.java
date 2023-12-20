@@ -2,8 +2,10 @@ package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.AccessException;
 import com.tyiu.corn.model.dto.MarketDTO;
+import com.tyiu.corn.model.entities.IdeaMarket;
 import com.tyiu.corn.model.entities.Market;
 import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.enums.IdeaMarketStatusType;
 import com.tyiu.corn.model.enums.MarketStatus;
 import com.tyiu.corn.model.enums.Role;
 import lombok.RequiredArgsConstructor;
@@ -18,7 +20,6 @@ import java.time.LocalDate;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
@@ -43,7 +44,9 @@ public class MarketService {
                             .bind("marketId", m.getId())
                             .map((row, rowMetadata) -> Mono.empty())
                             .all()
-                            .then(template.update(m));
+                            .then(template.update(m))
+                            .then(template.delete(query(where("market_id").is(m.getId())
+                                    .and("status").is(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)), IdeaMarket.class));
                 }).subscribe();
     }
 
@@ -135,6 +138,8 @@ public class MarketService {
                                 .map((row, rowMetadata) -> Mono.empty())
                                 .all()
                                 .then(template.update(m))
+                                .then(template.delete(query(where("market_id").is(m.getId())
+                                        .and("status").is(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)), IdeaMarket.class))
                                 .thenReturn(mapper.map(m, MarketDTO.class));
                     }
                     else if (status == MarketStatus.NEW && user.getRoles().contains(Role.ADMIN)) {

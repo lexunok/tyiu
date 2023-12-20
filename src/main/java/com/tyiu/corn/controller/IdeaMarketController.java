@@ -33,16 +33,16 @@ public class IdeaMarketController {
         return ideaMarketService.getAllMarketIdeas(user.getId());
     }
 
-    @GetMapping("/market/{marketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @GetMapping("/market/{marketId}/all")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal User user, @PathVariable String marketId) {
         return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
     }
 
-    @GetMapping("/initiator/all")
+    @GetMapping("/market/{marketId}/initiator")
     @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user) {
-        return ideaMarketService.getAllInitiatorMarketIdeas(user.getId());
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user, @PathVariable String marketId) {
+        return ideaMarketService.getAllInitiatorMarketIdeas(user.getId(), marketId);
     }
 
     @GetMapping("/{ideaMarketId}")
@@ -51,9 +51,9 @@ public class IdeaMarketController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось загрузить идею")));
     }
 
-    @GetMapping("/favorite")
-    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(@AuthenticationPrincipal User user) {
-        return ideaMarketService.getAllFavoriteMarketIdeas(user.getId());
+    @GetMapping("/favourite/{marketId}")
+    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(@AuthenticationPrincipal User user, @PathVariable String marketId) {
+        return ideaMarketService.getAllFavoriteMarketIdeas(user.getId(), marketId);
     }
 
     @GetMapping("/requests/{ideaMarketId}")

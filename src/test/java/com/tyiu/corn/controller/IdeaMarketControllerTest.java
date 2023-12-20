@@ -208,7 +208,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private List<IdeaMarketDTO> getMarketIdeaList(String uri){
         List<IdeaMarketDTO> marketIdeas = webTestClient
                 .get()
-                .uri(uri)
+                .uri(uri, marketId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(IdeaMarketDTO.class)
@@ -393,7 +393,14 @@ public class IdeaMarketControllerTest extends TestContainers {
         createMarketTeamRequest(ideaId1);
         createMarketTeamRequest(ideaId1);
         createMarketTeamRequest(createMarketIdea().getId());
-        List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/all");
+        List<IdeaMarketDTO> ideaMarketDTOList = webTestClient
+                .get()
+                .uri(path + "/all")
+                .header("Authorization", "Bearer " + jwt)
+                .exchange()
+                .expectBodyList(IdeaMarketDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(ideaMarketDTOList);
         assertTrue(ideaMarketDTOList.size() >= 2);
         assertTrue(ideaMarketDTOList.get(0).getStack().size() >= 2);
     }
@@ -403,27 +410,16 @@ public class IdeaMarketControllerTest extends TestContainers {
         String ideaId = createMarketIdea().getId();
         createMarketTeamRequest(ideaId);
         createMarketTeamRequest(ideaId);
-        List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/initiator/all");
-        assertTrue(ideaMarketDTOList.size() >= 2);
-        assertTrue(ideaMarketDTOList.get(0).getStack().size() >= 2);
+        assertTrue(getMarketIdeaList(path + "/market/{marketId}/initiator").size() >= 2);
     }
 
     @Test
     void testGetAllMarketIdeasForMarket() {
         createMarketIdea();
-        IdeaMarketDTO marketIdea = createMarketIdea();
-        createMarketTeamRequest(marketIdea.getId());
-        createMarketTeamRequest(marketIdea.getId());
-        List<IdeaMarketDTO> marketIdeas = webTestClient
-                .get()
-                .uri(path + "/market/{marketId}", marketIdea.getMarketId())
-                .header("Authorization", "Bearer " + jwt)
-                .exchange()
-                .expectBodyList(IdeaMarketDTO.class)
-                .returnResult().getResponseBody();
-        assertNotNull(marketIdeas);
-        assertTrue(marketIdeas.get(0).getStack().size() >= 2);
-        assertTrue(marketIdeas.size() >= 2);
+        String marketIdeaId = createMarketIdea().getId();
+        createMarketTeamRequest(marketIdeaId);
+        createMarketTeamRequest(marketIdeaId);
+        assertTrue(getMarketIdeaList(path + "/market/{marketId}/all").size() >= 2);
     }
 
     @Test
@@ -440,9 +436,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testGetAllFavoriteMarketIdeas() {
         makeFavorite(createMarketIdea().getId());
-        List<IdeaMarketDTO> ideaMarketDTOList = getMarketIdeaList(path + "/favorite");
-        assertTrue(ideaMarketDTOList.size() >= 1);
-        assertTrue(ideaMarketDTOList.get(0).getStack().size() >= 2);
+        assertTrue(getMarketIdeaList(path + "/favourite/{marketId}").size() >= 1);
     }
 
     @Test

@@ -15,7 +15,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -72,11 +71,12 @@ public class IdeaMarketService {
                 .map(i -> i.get(0));
     }
 
-    private Flux<IdeaMarketDTO> getListMarketIdea(String QUERY, String userId){
+    private Flux<IdeaMarketDTO> getListMarketIdea(String QUERY, String userId, String marketId){
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
                 .sql(QUERY)
-                .bind("userId",userId)
+                .bind("userId", userId)
+                .bind("marketId", marketId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
                 .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
@@ -97,7 +97,7 @@ public class IdeaMarketService {
                             .firstName(row.get("u_fn", String.class))
                             .lastName(row.get("u_ln", String.class))
                             .build())
-                    .description(row.get("description", String.class))
+                    .solution(row.get("solution", String.class))
                     .stack(new ArrayList<>())
                     .createdAt(row.get("created_at", LocalDate.class))
                     .maxTeamSize(row.get("max_team_size", Short.class))
@@ -129,13 +129,6 @@ public class IdeaMarketService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
-    @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Yekaterinburg")
-    private void checkFinalDate(){
-        template.update(query(where("finish_date").is(LocalDate.now())),
-                update("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
-                IdeaMarket.class).subscribe();
-    }
-
     ///////////////////////
     //  _____   ____ ______
     // / ___/  / __//_  __/
@@ -162,7 +155,12 @@ public class IdeaMarketService {
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
-        return getListMarketIdea(QUERY, userId);
+        ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId",userId)
+                .map((row, rowMetadata) -> buildIdeaMarket(row, map))
+                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
@@ -184,16 +182,10 @@ public class IdeaMarketService {
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
-        ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
-        return template.getDatabaseClient()
-                .sql(QUERY)
-                .bind("userId", userId)
-                .bind("marketId", marketId)
-                .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+        return getListMarketIdea(QUERY, userId, marketId);
     }
 
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId){
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId){
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -205,21 +197,21 @@ public class IdeaMarketService {
                            ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
                     FROM idea_market im
                     INNER JOIN market m ON m.id = im.market_id
-                    WHERE im.initiator_id = :userId AND m.status = 'ACTIVE'
+                    WHERE im.initiator_id = :userId AND im.market_id = :marketId
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
                 LEFT JOIN users u ON u.id = im_sub.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
-        return getListMarketIdea(QUERY, userId);
+        return getListMarketIdea(QUERY, userId, marketId);
     }
 
     public Mono<IdeaMarketDTO> getMarketIdea(String userId, String ideaMarketId){
         return getOneMarketIdea(userId, ideaMarketId);
     }
 
-    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId){
+    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId, String marketId){
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -231,7 +223,7 @@ public class IdeaMarketService {
                            ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
                     FROM idea_market im
                     INNER JOIN market m ON m.id = im.market_id
-                    WHERE m.status = 'ACTIVE'
+                    WHERE im.market_id = :marketId
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
                 LEFT JOIN users u ON u.id = im_sub.initiator_id
@@ -239,7 +231,7 @@ public class IdeaMarketService {
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 WHERE fi.idea_market_id = im_sub.id
                 """;
-        return getListMarketIdea(QUERY, userId);
+        return getListMarketIdea(QUERY, userId, marketId);
     }
 
     public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
