@@ -326,7 +326,8 @@ public class IdeaMarketService {
                         return Mono.empty();
                     })
                     .then(template.update(query(where("id").is(ideaDTO.getId())),
-                            update("status", Idea.Status.ON_MARKET),
+                            update("status", Idea.Status.ON_MARKET)
+                                    .set("is_active", true),
                             Idea.class)).log()
                     .then(template.insert(ideaMarket)
                             .map(i -> mapper.map(i, IdeaMarketDTO.class))).log();
