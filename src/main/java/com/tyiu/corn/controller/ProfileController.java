@@ -18,7 +18,9 @@ import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.IOException;
 import java.security.Principal;
+import java.util.Base64;
 
 @RestController
 @RequestMapping("/api/v1/profile")
@@ -34,12 +36,20 @@ public class ProfileController {
     }
 
     @GetMapping("/avatar/get/{userId}")
-    public Mono<ResponseEntity<Resource>> getAvatar(@PathVariable String userId) {
+    public Mono<ResponseEntity<String>> getAvatar(@PathVariable String userId) {
         return profileService.getAvatar(userId)
-                .map(avatar -> ResponseEntity
-                        .ok()
-                        .contentType(MediaType.IMAGE_JPEG)
-                        .body(avatar));
+                .flatMap(avatar -> {
+                    try {
+                        String image = Base64.getEncoder().encodeToString(avatar.getContentAsByteArray());
+                        return Mono.just(ResponseEntity
+                                .ok()
+                                .contentType(MediaType.IMAGE_JPEG)
+                                .body(image));
+                    }
+                    catch (IOException e) {
+                        return Mono.empty();
+                    }
+                });
     }
 
     @PostMapping("/avatar/upload")
