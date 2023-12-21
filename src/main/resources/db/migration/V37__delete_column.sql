@@ -1,0 +1,1 @@
+ALTER TABLE idea DROP COLUMN is_checked;

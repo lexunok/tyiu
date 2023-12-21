@@ -7,7 +7,6 @@ import com.tyiu.corn.model.dto.IdeaDTO;
 import com.tyiu.corn.model.dto.SkillDTO;
 import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.User;
-import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
 import com.tyiu.corn.model.entities.relations.Idea2Checked;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
@@ -16,6 +15,7 @@ import com.tyiu.corn.model.enums.SkillType;
 import com.tyiu.corn.model.requests.IdeaSkillRequest;
 import com.tyiu.corn.model.requests.StatusIdeaRequest;
 import io.r2dbc.spi.Batch;
+import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -23,13 +23,14 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.security.core.parameters.P;
 import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
-import java.util.Objects;
 
+import static com.tyiu.corn.model.entities.Idea.*;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
@@ -41,24 +42,50 @@ import static org.springframework.data.relational.core.query.Update.update;
 public class IdeaService {
 
     private final R2dbcEntityTemplate template;
-    private final IdeaMapper ideaMapper;
     private final ModelMapper mapper;
+
+    private IdeaDTO buildIDeaDTO(Row row){
+        return IdeaDTO.builder()
+                .id(row.get("id", String.class))
+                .initiatorEmail(row.get("initiator_email", String.class))
+                .name(row.get("name", String.class))
+                .status(Status.valueOf(row.get("status", String.class)))
+                .isActive(row.get("is_active", Boolean.class))
+                .createdAt(row.get("created_at", LocalDateTime.class))
+                .modifiedAt(row.get("modified_at", LocalDateTime.class))
+                .maxTeamSize(row.get("max_team_size", Short.class))
+                .minTeamSize(row.get("min_team_size", Short.class))
+                .problem(row.get("problem", String.class))
+                .solution(row.get("solution", String.class))
+                .result(row.get("result", String.class))
+                .customer(row.get("customer", String.class))
+                .contactPerson(row.get("contact_person", String.class))
+                .description(row.get("description", String.class))
+                .suitability(row.get("suitability", Long.class))
+                .budget(row.get("budget", Long.class))
+                .preAssessment(row.get("pre_assessment", Double.class))
+                .rating(row.get("rating", Double.class))
+                .isChecked(row.get("is_checked", Boolean.class))
+                .build();
+    }
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId, String userId) {
         String query = """
                 SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id,
-                ic.idea_id checked_idea
+                EXISTS (
+                            SELECT 1 FROM idea_checked ic
+                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+                        ) as is_checked
                 FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id
                 LEFT JOIN groups p ON idea.group_project_office_id = p.id
-                LEFT JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
                 WHERE idea.id =:ideaId""";
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
-                    IdeaDTO idea = ideaMapper.apply(row,rowMetadata);
+                    IdeaDTO idea = buildIDeaDTO(row);
                     idea.setProjectOffice(GroupDTO.builder()
                                     .id(row.get("project_office_id", String.class))
                                     .name(row.get("project_office_name",String.class))
@@ -82,27 +109,49 @@ public class IdeaService {
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea(String userId) {
+//        String query = """
+//                SELECT idea.*,
+//                    EXISTS (
+//                            SELECT 1 FROM idea_checked ic
+//                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+//                        ) as is_checked
+//                FROM idea
+//                """;
+//        return template.getDatabaseClient().sql(query)
+//                .bind("userId", userId)
+//                .map((row, rowMetadata) -> buildIDeaDTO(row))
+//                .all();
         return template.select(Idea.class).all()
-                .flatMap(i -> template.exists(query(where("user_id").is(userId)
-                                .and("idea_id").is(i.getId())), Idea2Checked.class)
+                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(userId)), Idea2Checked.class)
                         .flatMap(isExists -> {
-                            if (Boolean.TRUE.equals(isExists)){
-                                i.setIsChecked(true);
-                            }
-                            return Mono.just(mapper.map(i, IdeaDTO.class));
-                }));
+                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
+                            ideaDTO.setIsChecked(isExists);
+                            return Mono.just(ideaDTO);
+                        }));
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
-        return template.select(query(where("initiator_email").is(user.getEmail())),Idea.class)
-                .flatMap(i -> template.exists(query(where("user_id").is(user.getId())
-                                .and("idea_id").is(i.getId())), Idea2Checked.class)
+//        String query = """
+//                SELECT idea.*,
+//                       EXISTS (
+//                            SELECT 1 FROM idea_checked ic
+//                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+//                        ) as is_checked
+//                FROM idea
+//                WHERE idea.initiator_email = :email
+//                """;
+//        return template.getDatabaseClient().sql(query)
+//                .bind("userId", user.getId())
+//                .bind("email", user.getEmail())
+//                .map((row, rowMetadata) -> buildIDeaDTO(row))
+//                .all();
+        return template.select(query(where("initiator_email").is(user.getEmail())), Idea.class)
+                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(user.getId())), Idea2Checked.class)
                         .flatMap(isExists -> {
-                            if (Boolean.TRUE.equals(isExists)){
-                                i.setIsChecked(true);
-                            }
-                            return Mono.just(mapper.map(i, IdeaDTO.class));
+                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
+                            ideaDTO.setIsChecked(isExists);
+                            return Mono.just(ideaDTO);
                         }));
     }
 
@@ -116,7 +165,8 @@ public class IdeaService {
                 """;
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
-                .map(ideaMapper::apply).all();
+                .map((row, rowMetadata) -> buildIDeaDTO(row))
+                .all();
     }
 
     @CacheEvict(allEntries = true)
@@ -196,7 +246,7 @@ public class IdeaService {
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByInitiator (String ideaId, String initiatorEmail){
         return template.update(query(where("id").is(ideaId).and(where("initiator_email").is(initiatorEmail))),
-                update("status", Idea.Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()),Idea.class).then();
+                update("status", Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()),Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)

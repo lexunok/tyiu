@@ -18,7 +18,6 @@ public class Idea {
     private String name;
     private String groupExpertId;
     private String groupProjectOfficeId;
-    private Boolean isChecked;
     private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
