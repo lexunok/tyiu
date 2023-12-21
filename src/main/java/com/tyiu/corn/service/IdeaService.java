@@ -161,10 +161,13 @@ public class IdeaService {
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
         String query = """
-                SELECT r.idea_id, r.is_confirmed, idea.* 
-                FROM rating r 
-                JOIN idea ON idea.id = r.idea_id AND idea.status = 'ON_CONFIRMATION' 
-                LEFT JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
+                SELECT r.idea_id, r.is_confirmed, idea.*, 
+                EXISTS (
+                            SELECT 1 FROM idea_checked
+                            WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
+                        ) as is_checked
+                FROM rating r
+                JOIN idea ON idea.id = r.idea_id AND idea.status = 'ON_CONFIRMATION'
                 WHERE expert_id = :userId AND r.is_confirmed IS FALSE
                 """;
         return template.getDatabaseClient().sql(query)
