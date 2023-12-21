@@ -1,0 +1,8 @@
+CREATE TABLE IF NOT EXISTS idea_checked (
+    user_id TEXT REFERENCES users (id) ON DELETE CASCADE,
+    idea_id TEXT REFERENCES idea (id) ON DELETE CASCADE
+);
+
+ALTER TABLE idea
+DROP COLUMN checked_by,
+ADD COLUMN is_checked BOOLEAN;

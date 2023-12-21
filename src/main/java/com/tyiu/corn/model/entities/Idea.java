@@ -4,8 +4,6 @@ import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Setter
 @Getter
@@ -20,8 +18,7 @@ public class Idea {
     private String name;
     private String groupExpertId;
     private String groupProjectOfficeId;
-    @Builder.Default
-    private List<String> checkedBy = new ArrayList<>();
+    private Boolean isChecked;
     private Status status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;

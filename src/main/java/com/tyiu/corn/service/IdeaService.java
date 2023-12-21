@@ -9,6 +9,7 @@ import com.tyiu.corn.model.entities.Idea;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.entities.mappers.IdeaMapper;
 import com.tyiu.corn.model.entities.relations.Group2User;
+import com.tyiu.corn.model.entities.relations.Idea2Checked;
 import com.tyiu.corn.model.entities.relations.Idea2Skill;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.enums.SkillType;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
+
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
@@ -41,23 +43,19 @@ public class IdeaService {
     private final IdeaMapper ideaMapper;
     private final ModelMapper mapper;
 
-    public Mono<Void> checkIdea(String ideaId, String userEmail){
-        String query = "UPDATE idea SET checked_by = array_append(checked_by,:userEmail) WHERE id =:ideaId";
-        return template.getDatabaseClient().sql(query)
-                .bind("userEmail", userEmail)
-                .bind("ideaId", ideaId).then();
-    }
-
     @Cacheable
-    public Mono<IdeaDTO> getIdea(String ideaId) {
+    public Mono<IdeaDTO> getIdea(String ideaId, String userId) {
         String query = """
-                SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id
+                SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id,
+                ic.idea_id checked_idea
                 FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id
                 LEFT JOIN groups p ON idea.group_project_office_id = p.id
+                LEFT JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
                 WHERE idea.id =:ideaId""";
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
+                .bind("userId", userId)
                 .map((row, rowMetadata) -> {
                     IdeaDTO idea = ideaMapper.apply(row,rowMetadata);
                     idea.setProjectOffice(GroupDTO.builder()
@@ -71,28 +69,50 @@ public class IdeaService {
                     return idea;
                 })
                 .first()
+                .flatMap(i -> template.exists(query(where("user_id").is(userId)
+                        .and("idea_id").is(i.getId())), Idea2Checked.class).flatMap(isExists -> {
+                    if (Boolean.FALSE.equals(isExists)){
+                        return template.insert(new Idea2Checked(userId, i.getId()));
+                    }
+                    return Mono.empty();
+                }).thenReturn(i))
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
 
     @Cacheable
-    public Flux<IdeaDTO> getListIdea() {
-        return template.select(Idea.class).all()
-                .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
+    public Flux<IdeaDTO> getListIdea(String userId) {
+        String query = """
+                SELECT idea.*, ic.idea_id checked_idea
+                FROM idea
+                INNER JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id""";
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", userId)
+                .map(ideaMapper::apply).all();
     }
 
     @Cacheable
-    public Flux<IdeaDTO> getListIdeaByInitiator(String initiatorEmail) {
-        return template.select(query(where("initiator_email").is(initiatorEmail)),Idea.class)
-                .flatMap(i -> Flux.just(mapper.map(i, IdeaDTO.class)));
+    public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
+        String query = """
+                SELECT idea.*, ic.idea_id checked_idea
+                FROM idea
+                INNER JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
+                WHERE idea.initiator_email = :email""";
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", user.getId())
+                .bind("email", user.getEmail())
+                .map(ideaMapper::apply).all();
     }
 
-    public Flux<IdeaDTO> getListIdeaOnConfirmation(String expertId) {
+    public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
         String query = """
-                SELECT r.idea_id, r.is_confirmed, idea.* FROM rating r JOIN idea ON idea.id = r.idea_id AND idea.status =:status WHERE expert_id =:expertId AND r.is_confirmed IS FALSE
+                SELECT r.idea_id, r.is_confirmed, idea.* 
+                FROM rating r 
+                JOIN idea ON idea.id = r.idea_id AND idea.status = 'ON_CONFIRMATION' 
+                LEFT JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
+                WHERE expert_id = :userId AND r.is_confirmed IS FALSE
                 """;
         return template.getDatabaseClient().sql(query)
-                .bind("status", Idea.Status.ON_CONFIRMATION.toString())
-                .bind("expertId", expertId)
+                .bind("userId", userId)
                 .map(ideaMapper::apply).all();
     }
 

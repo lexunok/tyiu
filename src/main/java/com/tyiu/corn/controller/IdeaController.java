@@ -24,21 +24,16 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
-    @PutMapping("/check/{ideaId}")
-    public Mono<Void> checkIdea(@PathVariable String ideaId, @AuthenticationPrincipal User user){
-        return ideaService.checkIdea(ideaId, user.getEmail());
-    }
-
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
-    public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId) {
-        return ideaService.getIdea(ideaId);
+    public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
+        return ideaService.getIdea(ideaId, user.getId());
     }
 
     @GetMapping("/initiator/{ideaId}")
     @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
-        return ideaService.getIdea(ideaId)
+        return ideaService.getIdea(ideaId, user.getId())
                 .filter(i -> i.getInitiatorEmail().equals(user.getEmail()))
                 .switchIfEmpty(Mono.error(new AccessException("Нет прав!")));
 
@@ -46,8 +41,8 @@ public class IdeaController {
 
     @GetMapping("/all")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
-    public Flux<IdeaDTO> showListIdea(){
-        return ideaService.getListIdea();
+    public Flux<IdeaDTO> showListIdea(@AuthenticationPrincipal User user){
+        return ideaService.getListIdea(user.getId());
     }
 
     @GetMapping("/all/on-confirmation")
@@ -59,7 +54,7 @@ public class IdeaController {
     @GetMapping("/initiator/all")
     @PreAuthorize("hasAuthority('INITIATOR')")
     public Flux<IdeaDTO> showListIdeaByInitiator(@AuthenticationPrincipal User user){
-        return ideaService.getListIdeaByInitiator(user.getEmail());
+        return ideaService.getListIdeaByInitiator(user);
     }
 
     @PostMapping("/add")

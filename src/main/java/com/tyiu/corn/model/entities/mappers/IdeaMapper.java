@@ -6,24 +6,19 @@ import io.r2dbc.spi.Row;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Objects;
 import java.util.function.BiFunction;
 @Component
 public class IdeaMapper implements BiFunction<Row, Object, IdeaDTO> {
     @Override
     public IdeaDTO apply(Row row, Object o) {
-        String[] checkedBy = row.get("checked_by", String[].class);
-        List<String> checkedByList = new ArrayList<>();
-        if (checkedBy!=null) {
-            checkedByList = List.of(checkedBy);
-        }
+        String ideaId = row.get("id", String.class);
         return IdeaDTO.builder()
-                .id(row.get("id", String.class))
+                .id(ideaId)
                 .initiatorEmail(row.get("initiator_email", String.class))
                 .name(row.get("name", String.class))
                 .status(Idea.Status.valueOf(row.get("status", String.class)))
-                .checkedBy(checkedByList)
+                .isChecked(Objects.equals(row.get("checked_idea", String.class), ideaId))
                 .isActive(row.get("is_active", Boolean.class))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))

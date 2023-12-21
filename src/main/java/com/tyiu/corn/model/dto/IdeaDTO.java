@@ -7,8 +7,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 @Builder
 @Data
@@ -20,8 +18,7 @@ public class IdeaDTO {
     private String name;
     private GroupDTO experts;
     private GroupDTO projectOffice;
-    @Builder.Default
-    private List<String> checkedBy = new ArrayList<>();
+    private Boolean isChecked;
     private Idea.Status status;
     private LocalDateTime createdAt;
     private LocalDateTime modifiedAt;
