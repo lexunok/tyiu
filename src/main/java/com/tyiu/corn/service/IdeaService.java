@@ -44,12 +44,11 @@ public class IdeaService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
 
-    private IdeaDTO buildIDeaDTO(Row row){
-        return IdeaDTO.builder()
+    private IdeaDTO buildIdeaDTO(Row row){
+        IdeaDTO ideaDTO = IdeaDTO.builder()
                 .id(row.get("id", String.class))
                 .initiatorEmail(row.get("initiator_email", String.class))
                 .name(row.get("name", String.class))
-                .status(Status.valueOf(row.get("status", String.class)))
                 .isActive(row.get("is_active", Boolean.class))
                 .createdAt(row.get("created_at", LocalDateTime.class))
                 .modifiedAt(row.get("modified_at", LocalDateTime.class))
@@ -67,6 +66,11 @@ public class IdeaService {
                 .rating(row.get("rating", Double.class))
                 .isChecked(row.get("is_checked", Boolean.class))
                 .build();
+        String status = row.get("status", String.class);
+        if (status != null){
+            ideaDTO.setStatus(Status.valueOf(status));
+        }
+        return ideaDTO;
     }
 
     @Cacheable
@@ -85,7 +89,7 @@ public class IdeaService {
                 .bind("ideaId", ideaId)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
-                    IdeaDTO idea = buildIDeaDTO(row);
+                    IdeaDTO idea = buildIdeaDTO(row);
                     idea.setProjectOffice(GroupDTO.builder()
                                     .id(row.get("project_office_id", String.class))
                                     .name(row.get("project_office_name",String.class))
@@ -109,50 +113,50 @@ public class IdeaService {
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea(String userId) {
-//        String query = """
-//                SELECT idea.*,
-//                    EXISTS (
-//                            SELECT 1 FROM idea_checked ic
-//                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
-//                        ) as is_checked
-//                FROM idea
-//                """;
-//        return template.getDatabaseClient().sql(query)
-//                .bind("userId", userId)
-//                .map((row, rowMetadata) -> buildIDeaDTO(row))
-//                .all();
-        return template.select(Idea.class).all()
-                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(userId)), Idea2Checked.class)
-                        .flatMap(isExists -> {
-                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-                            ideaDTO.setIsChecked(isExists);
-                            return Mono.just(ideaDTO);
-                        }));
+        String query = """
+                SELECT idea.*,
+                    EXISTS (
+                            SELECT 1 FROM idea_checked ic
+                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+                        ) as is_checked
+                FROM idea
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", userId)
+                .map((row, rowMetadata) -> buildIdeaDTO(row))
+                .all();
+//        return template.select(Idea.class).all()
+//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(userId)), Idea2Checked.class)
+//                        .flatMap(isExists -> {
+//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
+//                            ideaDTO.setIsChecked(isExists);
+//                            return Mono.just(ideaDTO);
+//                        }));
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
-//        String query = """
-//                SELECT idea.*,
-//                       EXISTS (
-//                            SELECT 1 FROM idea_checked ic
-//                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
-//                        ) as is_checked
-//                FROM idea
-//                WHERE idea.initiator_email = :email
-//                """;
-//        return template.getDatabaseClient().sql(query)
-//                .bind("userId", user.getId())
-//                .bind("email", user.getEmail())
-//                .map((row, rowMetadata) -> buildIDeaDTO(row))
-//                .all();
-        return template.select(query(where("initiator_email").is(user.getEmail())), Idea.class)
-                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(user.getId())), Idea2Checked.class)
-                        .flatMap(isExists -> {
-                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-                            ideaDTO.setIsChecked(isExists);
-                            return Mono.just(ideaDTO);
-                        }));
+        String query = """
+                SELECT idea.*,
+                       EXISTS (
+                            SELECT 1 FROM idea_checked
+                            WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
+                        ) as is_checked
+                FROM idea
+                WHERE idea.initiator_email = :email
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", user.getId())
+                .bind("email", user.getEmail())
+                .map((row, rowMetadata) -> buildIdeaDTO(row))
+                .all();
+//        return template.select(query(where("initiator_email").is(user.getEmail())), Idea.class)
+//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(user.getId())), Idea2Checked.class)
+//                        .flatMap(isExists -> {
+//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
+//                            ideaDTO.setIsChecked(isExists);
+//                            return Mono.just(ideaDTO);
+//                        }));
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
@@ -165,7 +169,7 @@ public class IdeaService {
                 """;
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
-                .map((row, rowMetadata) -> buildIDeaDTO(row))
+                .map((row, rowMetadata) -> buildIdeaDTO(row))
                 .all();
     }
 
