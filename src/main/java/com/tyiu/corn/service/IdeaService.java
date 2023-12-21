@@ -84,7 +84,7 @@ public class IdeaService {
         String query = """
                 SELECT idea.*, ic.idea_id checked_idea
                 FROM idea
-                INNER JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id""";
+                JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id""";
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .map(ideaMapper::apply).all();
@@ -95,7 +95,7 @@ public class IdeaService {
         String query = """
                 SELECT idea.*, ic.idea_id checked_idea
                 FROM idea
-                INNER JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
+                JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
                 WHERE idea.initiator_email = :email""";
         return template.getDatabaseClient().sql(query)
                 .bind("userId", user.getId())
