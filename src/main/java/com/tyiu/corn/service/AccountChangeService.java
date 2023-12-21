@@ -1,6 +1,7 @@
 package com.tyiu.corn.service;
 
 import com.tyiu.corn.config.exception.AccessException;
+import com.tyiu.corn.config.exception.NotFoundException;
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.email.requests.ChangeDataEmailRequest;
 import com.tyiu.corn.model.email.requests.NotificationEmailRequest;
@@ -297,50 +298,63 @@ public class AccountChangeService {
     ////////////////////////
 
     public Mono<Void> changePasswordByUser(ChangeRequest request){
-        return template.selectOne(query(where("id").is(request.getKey())), ChangePasswordData.class)
-                .flatMap(c -> {
-                    if (request.getCode().equals(c.getCode())) {
-                        if (LocalDateTime.now().isAfter(c.getDateExpired())){
-                            return template.delete(c).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
-                        }
-                        return template.update(query(where("email").is(c.getEmail())),
-                                        update("password", passwordEncoder.encode(request.getPassword())),
-                                        User.class)
-                                .then(template.delete(c))
-                                .then();
-                    } else {
-                        if (c.getWrongTries()>=3){
-                            return template.delete(c).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
-                        }
-                        return  Mono.empty().then(template.update(query(where("id").is(c.getId())),
-                                update("wrong_tries", c.getWrongTries() + 1), ChangePasswordData.class))
-                                .then(Mono.error(new AccessException(CodeStatus.WRONG_CODE.toString())));
+        return template.exists(query(where("id").is(request.getKey())), ChangePasswordData.class)
+                .flatMap(exists -> {
+                    if (Boolean.FALSE.equals(exists)) {
+                        return Mono.error(new NotFoundException("Not found!"));
                     }
-        });
+                    return template.selectOne(query(where("id").is(request.getKey())), ChangePasswordData.class)
+                            .flatMap(c -> {
+                                if (request.getCode().equals(c.getCode())) {
+                                    if (LocalDateTime.now().isAfter(c.getDateExpired())){
+                                        return template.delete(c).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
+                                    }
+                                    return template.update(query(where("email").is(c.getEmail())),
+                                                    update("password", passwordEncoder.encode(request.getPassword())),
+                                                    User.class)
+                                            .then(template.delete(c).then());
+                                } else {
+                                    if (c.getWrongTries()>=3){
+                                        return template.delete(c).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
+                                    }
+                                    return template.update(query(where("id").is(c.getId())),
+                                                    update("wrong_tries", c.getWrongTries() + 1), ChangePasswordData.class)
+                                            .then(Mono.error(new AccessException(CodeStatus.WRONG_CODE.toString())));
+                                }
+                            });
+                })
+                ;
     }
 
     public Mono<Void> changeEmailByUser(ChangeRequest request){
-        return template.selectOne(query(where("id").is(request.getKey())), ChangeEmailData.class)
-                .flatMap(e -> template.exists(query(where("email").is(e.getNewEmail())), User.class)
-                        .flatMap(b -> {
-                            if (Boolean.TRUE.equals(b)){
-                                return Mono.error(new VerifyError("Ошибка смены почты"));
-                            }
-                            if (request.getCode().equals(e.getCode())){
-                                return template.update(query(where("email").is(request.getOldEmail())),
-                                                update("email", request.getNewEmail()),
-                                                User.class)
-                                        .then(template.delete(e))
-                                        .then();
-                            } else {
-                                if (e.getWrongTries()>=3){
-                                    return template.delete(e).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
-                                }
-                                return  Mono.empty().then(template.update(query(where("id").is(e.getId())),
-                                                update("wrong_tries", e.getWrongTries() + 1), ChangeEmailData.class))
-                                        .then(Mono.error(new AccessException(CodeStatus.WRONG_CODE.toString())));
-                            }
-                        }));
+        return template.exists(query(where("id").is(request.getKey())), ChangeEmailData.class)
+                .flatMap(exists -> {
+                    if (Boolean.FALSE.equals(exists)){
+                        return Mono.error(new NotFoundException("Not found!"));
+                    }
+                    return template.selectOne(query(where("id").is(request.getKey())), ChangeEmailData.class)
+                            .flatMap(e -> template.exists(query(where("email").is(e.getNewEmail())), User.class)
+                                    .flatMap(b -> {
+                                        if (Boolean.TRUE.equals(b)){
+                                            return Mono.error(new VerifyError("Ошибка смены почты"));
+                                        }
+                                        if (request.getCode().equals(e.getCode())){
+                                            return template.update(query(where("email").is(request.getOldEmail())),
+                                                            update("email", request.getNewEmail()),
+                                                            User.class)
+                                                    .then(template.delete(e))
+                                                    .then();
+                                        } else {
+                                            if (e.getWrongTries()>=3){
+                                                return template.delete(e).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
+                                            }
+                                            return  Mono.empty().then(template.update(query(where("id").is(e.getId())),
+                                                            update("wrong_tries", e.getWrongTries() + 1), ChangeEmailData.class))
+                                                    .then(Mono.error(new AccessException(CodeStatus.WRONG_CODE.toString())));
+                                        }
+                                    })
+                            );
+                });
     }
 
     public Mono<UserDTO> changeUserInfo(UserDTO userDTO){

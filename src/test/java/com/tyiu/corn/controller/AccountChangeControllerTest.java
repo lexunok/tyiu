@@ -349,14 +349,25 @@ public class AccountChangeControllerTest extends TestContainers {
                     .flatMap(e -> Mono.fromRunnable(() -> assertTrue(e)))
                     .as(StepVerifier::create).expectComplete().verify();
         });
-        ErrorResponse errorResponse = webTestClient.put()
+        ErrorResponse firstErrorResponse = webTestClient.put()
                 .uri("/api/v1/profile/change/email")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
 
-        assertNotNull(errorResponse);
-        assertEquals(CodeStatus.CHANGE_FAILED.toString(), errorResponse.getError());
+        assertNotNull(firstErrorResponse);
+        assertEquals(CodeStatus.CHANGE_FAILED.toString(), firstErrorResponse.getError());
+
+        changeRequest.setCode(123533);
+
+        ErrorResponse secondErrorResponse = webTestClient.put()
+                .uri("/api/v1/profile/change/email")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(changeRequest), ChangeRequest.class)
+                .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
+
+        assertNotNull(secondErrorResponse);
+        assertEquals("Not found!", secondErrorResponse.getError());
 
         template.exists(query(where("id").is(changeDataId)), ChangeEmailData.class)
                 .flatMap(e -> Mono.fromRunnable(() -> assertFalse(e)))
@@ -475,14 +486,25 @@ public class AccountChangeControllerTest extends TestContainers {
                     .flatMap(e -> Mono.fromRunnable(() -> assertTrue(e)))
                     .as(StepVerifier::create).expectComplete().verify();
         });
-        ErrorResponse errorResponse = webTestClient.put()
+        ErrorResponse firstErrorResponse = webTestClient.put()
                 .uri("/api/v1/profile/change/password")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
 
-        assertNotNull(errorResponse);
-        assertEquals(CodeStatus.CHANGE_FAILED.toString(), errorResponse.getError());
+        assertNotNull(firstErrorResponse);
+        assertEquals(CodeStatus.CHANGE_FAILED.toString(), firstErrorResponse.getError());
+
+        changeRequest.setCode(123533);
+
+        ErrorResponse secondErrorResponse = webTestClient.put()
+                .uri("/api/v1/profile/change/password")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(changeRequest), ChangeRequest.class)
+                .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
+
+        assertNotNull(secondErrorResponse);
+        assertEquals("Not found!", secondErrorResponse.getError());
 
         template.exists(query(where("id").is(changeDataId)), ChangePasswordData.class)
                 .flatMap(e -> Mono.fromRunnable(() -> assertFalse(e)))
