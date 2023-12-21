@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -81,26 +82,28 @@ public class IdeaService {
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea(String userId) {
-        String query = """
-                SELECT idea.*, ic.idea_id checked_idea
-                FROM idea
-                JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id""";
-        return template.getDatabaseClient().sql(query)
-                .bind("userId", userId)
-                .map(ideaMapper::apply).all();
+        return template.select(Idea.class).all()
+                .flatMap(i -> template.exists(query(where("user_id").is(userId)
+                                .and("idea_id").is(i.getId())), Idea2Checked.class)
+                        .flatMap(isExists -> {
+                            if (Boolean.TRUE.equals(isExists)){
+                                i.setIsChecked(true);
+                            }
+                            return Mono.just(mapper.map(i, IdeaDTO.class));
+                }));
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
-        String query = """
-                SELECT idea.*, ic.idea_id checked_idea
-                FROM idea
-                JOIN idea_checked ic ON ic.user_id = :userId AND ic.idea_id = idea.id
-                WHERE idea.initiator_email = :email""";
-        return template.getDatabaseClient().sql(query)
-                .bind("userId", user.getId())
-                .bind("email", user.getEmail())
-                .map(ideaMapper::apply).all();
+        return template.select(query(where("initiator_email").is(user.getEmail())),Idea.class)
+                .flatMap(i -> template.exists(query(where("user_id").is(user.getId())
+                                .and("idea_id").is(i.getId())), Idea2Checked.class)
+                        .flatMap(isExists -> {
+                            if (Boolean.TRUE.equals(isExists)){
+                                i.setIsChecked(true);
+                            }
+                            return Mono.just(mapper.map(i, IdeaDTO.class));
+                        }));
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
