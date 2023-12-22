@@ -3,7 +3,6 @@ package com.tyiu.corn.model.dto;
 
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.responses.ProfileIdeaResponse;
-import com.tyiu.corn.model.responses.ProfileProjectResponse;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
