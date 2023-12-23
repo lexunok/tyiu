@@ -26,4 +26,12 @@ public class GlobalExceptionHandler {
                 .status(HttpStatus.FORBIDDEN.value())
                 .body(new ErrorResponse(HttpStatus.FORBIDDEN.value(),ex.getMessage())));
     }
+
+    @ExceptionHandler
+    public Mono<ResponseEntity<ErrorResponse>> customHttpException(CustomHttpException ex){
+        log.error(ex.getMessage(), ex.getStatusCode(), ex);
+        return Mono.just(ResponseEntity
+                .status(ex.getStatusCode())
+                .body(new ErrorResponse(ex.getStatusCode() ,ex.getMessage())));
+    }
 }

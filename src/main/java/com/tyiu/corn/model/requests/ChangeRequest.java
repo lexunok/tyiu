@@ -11,7 +11,7 @@ public class ChangeRequest {
     private String newEmail;
     private String oldEmail;
     private String url;
-    private Integer code;
+    private String code;
     private String email;
     private String password;
     private String key;

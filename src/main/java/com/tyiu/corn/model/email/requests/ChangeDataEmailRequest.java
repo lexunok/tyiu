@@ -13,5 +13,5 @@ public class ChangeDataEmailRequest {
     private String subject;
     private String text;
     private String to;
-    private int code;
+    private String code;
 }

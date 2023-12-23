@@ -283,7 +283,7 @@ public class AccountChangeControllerTest extends TestContainers {
         assertEquals(changeResponse.getOldEmail(), response.getEmail());
 
         ChangeRequest changeRequest = new ChangeRequest();
-        changeRequest.setCode(code);
+        changeRequest.setCode(code.toString());
         changeRequest.setKey(changeDataId);
         changeRequest.setNewEmail(changeResponse.getNewEmail());
         changeRequest.setOldEmail(response.getEmail());
@@ -334,7 +334,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setOldEmail(changeEmailData.getOldEmail());
         changeRequest.setNewEmail(changeEmailData.getNewEmail());
         changeRequest.setKey(changeDataId);
-        Stream.of(1, 2, 3).forEach(code -> {
+        Stream.of("r3g3g3g", "123456", "12345etnetbne").forEach(code -> {
             changeRequest.setCode(code);
             ErrorResponse errorResponse = webTestClient.put()
                     .uri("/api/v1/profile/change/email")
@@ -358,7 +358,7 @@ public class AccountChangeControllerTest extends TestContainers {
         assertNotNull(firstErrorResponse);
         assertEquals(CodeStatus.CHANGE_FAILED.toString(), firstErrorResponse.getError());
 
-        changeRequest.setCode(123533);
+        changeRequest.setCode("123533");
 
         ErrorResponse secondErrorResponse = webTestClient.put()
                 .uri("/api/v1/profile/change/email")
@@ -367,7 +367,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
 
         assertNotNull(secondErrorResponse);
-        assertEquals("Not found!", secondErrorResponse.getError());
+        assertEquals(CodeStatus.CHANGE_FAILED.toString(), secondErrorResponse.getError());
 
         template.exists(query(where("id").is(changeDataId)), ChangeEmailData.class)
                 .flatMap(e -> Mono.fromRunnable(() -> assertFalse(e)))
@@ -419,7 +419,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .as(StepVerifier::create).expectComplete().verify();
 
         ChangeRequest changeRequest = new ChangeRequest();
-        changeRequest.setCode(code);
+        changeRequest.setCode(code.toString());
         changeRequest.setKey(changerUrl);
         changeRequest.setEmail(changePasswordDataDTO.getEmail());
         changeRequest.setPassword("1234");
@@ -471,8 +471,8 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setEmail(changePasswordData.getEmail());
         changeRequest.setKey(changeDataId);
         changeRequest.setPassword("1234");
-        Stream.of(1, 2, 3).forEach(code -> {
-            changeRequest.setCode(code);
+        Stream.of("wrg3wrgwr", "3153", "wegwrhwr").forEach(code -> {
+            changeRequest.setCode(code.toString());
             ErrorResponse errorResponse = webTestClient.put()
                     .uri("/api/v1/profile/change/password")
                     .header("Authorization", "Bearer " + jwt)
@@ -495,7 +495,7 @@ public class AccountChangeControllerTest extends TestContainers {
         assertNotNull(firstErrorResponse);
         assertEquals(CodeStatus.CHANGE_FAILED.toString(), firstErrorResponse.getError());
 
-        changeRequest.setCode(123533);
+        changeRequest.setCode("123533");
 
         ErrorResponse secondErrorResponse = webTestClient.put()
                 .uri("/api/v1/profile/change/password")
@@ -504,7 +504,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
 
         assertNotNull(secondErrorResponse);
-        assertEquals("Not found!", secondErrorResponse.getError());
+        assertEquals(CodeStatus.CHANGE_FAILED.toString(), secondErrorResponse.getError());
 
         template.exists(query(where("id").is(changeDataId)), ChangePasswordData.class)
                 .flatMap(e -> Mono.fromRunnable(() -> assertFalse(e)))
@@ -549,7 +549,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setEmail(changePasswordData.getEmail());
         changeRequest.setKey(changeDataId);
         changeRequest.setPassword("1234");
-        changeRequest.setCode(changePasswordData.getCode());
+        changeRequest.setCode(changePasswordData.getCode().toString());
 
         ErrorResponse errorResponse = webTestClient.put()
                 .uri("/api/v1/profile/change/password")

@@ -1,7 +1,6 @@
 package com.tyiu.corn.service;
 
-import com.tyiu.corn.config.exception.AccessException;
-import com.tyiu.corn.config.exception.NotFoundException;
+import com.tyiu.corn.config.exception.CustomHttpException;
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.email.requests.ChangeDataEmailRequest;
 import com.tyiu.corn.model.email.requests.NotificationEmailRequest;
@@ -23,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -61,7 +61,7 @@ public class AccountChangeService {
         return emailService.sendMailNotification(emailRequest);
     }
 
-    private Mono<Void> sendChangeDateCode(String subject, String text, String to, int code){
+    private Mono<Void> sendChangeDateCode(String subject, String text, String to, String code){
         return Mono.just(ChangeDataEmailRequest.builder()
                         .code(code).to(to)
                         .subject(subject)
@@ -101,7 +101,7 @@ public class AccountChangeService {
                             "Код для изменения почты",
                             "Вы изменяете почту на вашем аккаунте. Необходимо ввести код для изменения почты для потверждения изменения",
                             e.getOldEmail(),
-                            e.getCode())
+                            e.getCode().toString())
                         .then(Mono.just(ChangeResponse.builder()
                                     .newEmail(e.getNewEmail())
                                     .oldEmail(e.getOldEmail())
@@ -190,7 +190,6 @@ public class AccountChangeService {
                                                     .onErrorResume(e -> Mono.fromRunnable(() -> {
                                                         log.error("Error processing invitation for email {}: {}",
                                                                 email, e.getMessage());
-
                                                     }));
                                         return template.insert(invitation)
                                                 .flatMap(i ->
@@ -219,7 +218,7 @@ public class AccountChangeService {
                 template.exists(query(where("email").is(emailChange.getNewEmail())), User.class)
                         .flatMap(b -> {
                             if (Boolean.TRUE.equals(b)){
-                                return Mono.error(new VerifyError("Ошибка смены почты"));
+                                return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value()));
                             }
                             return Mono.just(emailChange);
                         })
@@ -227,7 +226,7 @@ public class AccountChangeService {
         .flatMap(emailChange ->
                 template.exists(query(where("old_email").is(email)), ChangeEmailData.class)
         .flatMap(b -> {
-                emailChange.setCode(new SecureRandom().nextInt(90000000)+10000000);
+                emailChange.setCode(new SecureRandom().nextInt(900000)+100000);
                 emailChange.setDateExpired(LocalDateTime.now().plusHours(12));
                 emailChange.setOldEmail(email);
                 if (Boolean.TRUE.equals(b)){
@@ -256,7 +255,7 @@ public class AccountChangeService {
                 .flatMap(passwordChange -> template.exists(query(where("email").is(passwordChange.getEmail())), ChangePasswordData.class)
                         .flatMap(b -> {
                             passwordChange.setDateExpired(LocalDateTime.now().plusMinutes(5));
-                            passwordChange.setCode(new SecureRandom().nextInt(90000000)+10000000);
+                            passwordChange.setCode(new SecureRandom().nextInt(900000)+100000);
                             if (Boolean.TRUE.equals(b)){
                                 return template.delete(query(where("email").is(passwordChange.getEmail())), ChangePasswordData.class)
                                         .then(template.insert(passwordChange)
@@ -264,7 +263,7 @@ public class AccountChangeService {
                                                         "Код для изменения пароля",
                                                         "Вы изменяете пароль на вашем аккаунте. Необходимо ввести код для потверждения изменения",
                                                         p.getEmail(),
-                                                        p.getCode()
+                                                        p.getCode().toString()
                                                 ).then(Mono.just(p.getId())))
                                         );
                             }
@@ -273,7 +272,7 @@ public class AccountChangeService {
                                             "Код для изменения пароля",
                                             "Вы изменяете пароль на вашем аккаунте. Необходимо ввести код для потверждения изменения",
                                             p.getEmail(),
-                                            p.getCode()
+                                            p.getCode().toString()
                                         ).then(Mono.just(p.getId())));
                         })
                 );
@@ -301,13 +300,14 @@ public class AccountChangeService {
         return template.exists(query(where("id").is(request.getKey())), ChangePasswordData.class)
                 .flatMap(exists -> {
                     if (Boolean.FALSE.equals(exists)) {
-                        return Mono.error(new NotFoundException("Not found!"));
+                        return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.NOT_FOUND.value()));
                     }
                     return template.selectOne(query(where("id").is(request.getKey())), ChangePasswordData.class)
                             .flatMap(c -> {
-                                if (request.getCode().equals(c.getCode())) {
+                                if (request.getCode().equals(c.getCode().toString())) {
                                     if (LocalDateTime.now().isAfter(c.getDateExpired())){
-                                        return template.delete(c).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
+                                        return template.delete(c)
+                                                .then(Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value())));
                                     }
                                     return template.update(query(where("email").is(c.getEmail())),
                                                     update("password", passwordEncoder.encode(request.getPassword())),
@@ -315,11 +315,12 @@ public class AccountChangeService {
                                             .then(template.delete(c).then());
                                 } else {
                                     if (c.getWrongTries()>=3){
-                                        return template.delete(c).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
+                                        return template.delete(c)
+                                                .then(Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value())));
                                     }
                                     return template.update(query(where("id").is(c.getId())),
                                                     update("wrong_tries", c.getWrongTries() + 1), ChangePasswordData.class)
-                                            .then(Mono.error(new AccessException(CodeStatus.WRONG_CODE.toString())));
+                                            .then(Mono.error(new CustomHttpException(CodeStatus.WRONG_CODE.toString(), HttpStatus.CONFLICT.value())));
                                 }
                             });
                 })
@@ -330,15 +331,15 @@ public class AccountChangeService {
         return template.exists(query(where("id").is(request.getKey())), ChangeEmailData.class)
                 .flatMap(exists -> {
                     if (Boolean.FALSE.equals(exists)){
-                        return Mono.error(new NotFoundException("Not found!"));
+                        return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.NOT_FOUND.value()));
                     }
                     return template.selectOne(query(where("id").is(request.getKey())), ChangeEmailData.class)
                             .flatMap(e -> template.exists(query(where("email").is(e.getNewEmail())), User.class)
                                     .flatMap(b -> {
                                         if (Boolean.TRUE.equals(b)){
-                                            return Mono.error(new VerifyError("Ошибка смены почты"));
+                                            return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.NOT_FOUND.value()));
                                         }
-                                        if (request.getCode().equals(e.getCode())){
+                                        if (request.getCode().equals(e.getCode().toString())){
                                             return template.update(query(where("email").is(request.getOldEmail())),
                                                             update("email", request.getNewEmail()),
                                                             User.class)
@@ -346,11 +347,11 @@ public class AccountChangeService {
                                                     .then();
                                         } else {
                                             if (e.getWrongTries()>=3){
-                                                return template.delete(e).then(Mono.error(new AccessException(CodeStatus.CHANGE_FAILED.toString())));
+                                                return template.delete(e).then(Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value())));
                                             }
                                             return  Mono.empty().then(template.update(query(where("id").is(e.getId())),
                                                             update("wrong_tries", e.getWrongTries() + 1), ChangeEmailData.class))
-                                                    .then(Mono.error(new AccessException(CodeStatus.WRONG_CODE.toString())));
+                                                    .then(Mono.error(new CustomHttpException(CodeStatus.WRONG_CODE.toString(), HttpStatus.CONFLICT.value())));
                                         }
                                     })
                             );

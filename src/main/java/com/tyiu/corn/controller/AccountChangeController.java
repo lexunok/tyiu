@@ -1,6 +1,6 @@
 package com.tyiu.corn.controller;
 
-import com.tyiu.corn.config.exception.NotFoundException;
+import com.tyiu.corn.config.exception.CustomHttpException;
 import com.tyiu.corn.model.dto.*;
 import com.tyiu.corn.model.entities.User;
 import com.tyiu.corn.model.responses.InfoResponse;
@@ -36,27 +36,27 @@ public class AccountChangeController {
     @GetMapping("/get/invitation/{url}")
     public Mono<InvitationResponse> registerByInvitation(@PathVariable String url){
         return accountChangeService.findInvitationByUrl(url)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new CustomHttpException("Not found!", HttpStatus.NOT_FOUND.value())));
     }
 
     @GetMapping("/change/email/{url}")
     public Mono<ChangeResponse> changeNewEmail(@PathVariable String url){
         return accountChangeService.findByUrlAndSendCode(url)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new CustomHttpException("Not found!", HttpStatus.NOT_FOUND.value())));
     }
 
     @GetMapping("/get/users")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Flux<UserDTO> getUsersInfo(){
         return accountChangeService.getUsersInfo()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new CustomHttpException("Not found!", HttpStatus.NOT_FOUND.value())));
     }
 
     @GetMapping("/get/emails")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Flux<String> getUsersEmail(){
         return accountChangeService.getAllEmails()
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new CustomHttpException("Not found!", HttpStatus.NOT_FOUND.value())));
     }
 
     //////////////////////////////
@@ -85,13 +85,13 @@ public class AccountChangeController {
     public Mono<InfoResponse> requestToChangeEmail(@RequestBody ChangeEmailDataDTO changeEmail, @AuthenticationPrincipal User user){
         return accountChangeService.sendEmailToChangeEmail(changeEmail, user.getEmail())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Ссылка на изменение почты находится на новой почте"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось отправить ссылку на новую почту"));
+                .onErrorReturn(new InfoResponse(HttpStatus.INTERNAL_SERVER_ERROR,"Не удалось отправить ссылку на новую почту"));
     }
 
     @PostMapping("/send/change/password")
     public Mono<String> requestToChangePassword(@RequestBody ChangePasswordDataDTO changePassword) {
         return accountChangeService.sendEmailToChangePassword(changePassword)
-                .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить ссылку на почту")));
+                .switchIfEmpty(Mono.error(new CustomHttpException("Не удалось отправить ссылку на почту", HttpStatus.INTERNAL_SERVER_ERROR.value())));
     }
 
     ///////////////////////////////////////////
@@ -105,7 +105,7 @@ public class AccountChangeController {
     public Mono<InfoResponse> deleteByUrl(@PathVariable String url){
         return accountChangeService.deleteInvitationByUrl(url)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success delete"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
+                .onErrorReturn(new InfoResponse(HttpStatus.INTERNAL_SERVER_ERROR,"Delete is not success"));
     }
 
     ////////////////////////
@@ -131,7 +131,7 @@ public class AccountChangeController {
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<UserDTO> changeUserInfoByAdmin(@RequestBody UserDTO user){
         return accountChangeService.changeUserInfo(user)
-                .switchIfEmpty(Mono.error(new NotFoundException("Не удалось изменить пользователя")));
+                .switchIfEmpty(Mono.error(new CustomHttpException("Не удалось изменить пользователя", HttpStatus.INTERNAL_SERVER_ERROR.value())));
     }
 
 

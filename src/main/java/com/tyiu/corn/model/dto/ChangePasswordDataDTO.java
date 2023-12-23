@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class ChangePasswordDataDTO {
     private String email;
-    private Integer code;
+    private String code;
     private Integer wrongTries;
     private LocalDateTime dateExpired;
 }

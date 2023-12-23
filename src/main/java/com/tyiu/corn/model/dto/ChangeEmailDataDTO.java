@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 public class ChangeEmailDataDTO {
     private String newEmail;
     private String oldEmail;
-    private Integer code;
+    private String code;
     private Integer wrongTries;
     private LocalDateTime dateExpired;
 }
