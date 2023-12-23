@@ -63,7 +63,8 @@
             padding: 8px;
 
             border-radius: 4px;
-            background-color: #0d6efd;
+            font-size: 18px;
+            font-weight: 600;
 
             text-decoration: none;
             
@@ -107,7 +108,6 @@
                           <a
                             class="notification__link"
                             href=${notification.link}
-                            style="color: #ffffff;"
                           >
                             ${notification.buttonName}
                           </a>
