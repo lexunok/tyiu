@@ -1,263 +1,116 @@
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-  <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <title>HTML Template</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title></title>
     <style>
-      body {
-font-family: Arial, Helvetica, sans-serif;
-width: 100% !important;
--webkit-text-size-adjust: 100%;
--ms-text-size-adjust: 100%;
-margin: 0;
-padding: 0;
-line-height: 100%;
-}
+        body, h2, p {
+          padding: 0;
+          margin: 0;
+        }
+        .content {
+          height: inherit;
+          width: inherit;
+          background-color: #f5f5f5;
+        }
 
-      [style*="Open Sans"] {
-font-family: "Open Sans", arial, sans-serif !important;
-}
+        .change-data-wrapper {
+          padding: 16px;
+          margin: auto;
 
-      img {
-outline: none;
-text-decoration: none;
-border: none;
--ms-interpolation-mode: bicubic;
-max-width: 100% !important;
-margin: 0;
-padding: 0;
-display: block;
-}
+          max-width: 400px;
 
-      table td {
-border-collapse: collapse;
-}
+          display: block;
+        }
 
-      table {
-border-collapse: collapse;
-mso-table-lspace: 0pt;
-mso-table-rspace: 0pt;
-}
+        .change-data {
+          background-color: #ffffff;
+          border-radius: 4px;
 
-.all {
-padding: 20px;
-}
+          overflow: hidden;
+        }
 
-.header-td {
-background: linear-gradient(to bottom left, rgb(161, 91, 226), #0d6efd);
-border-radius: 8px 8px 0 0;
-padding: 20px;
-color: #ffffff;
-font-size: 52px;
-font-weight: 500;
-}
+        .change-data__header {
+          padding: 16px;
 
-.logo {
-padding-top: 8px;
-padding-bottom: 8px;
-}
+          background-color: #0d6efd;
 
-.title-td {
-padding: 30px;
-font-size: 24px;
-font-weight: 300;
-}
+          color: #ffffff;
+        }
 
-.title {
-padding-top: 8px;
-padding-bottom: 8px;
-}
+        .change-data__title {
+          margin-bottom: 16px;
 
-.hello-td {
-padding: 10px;
-font-size: 16px;
-}
+          font-size: 18px;
+          font-weight: 600;
+        }
 
-.system-text-td {
-padding: 10px;
-font-size: 16px;
-}
+        .change-data__content {
+          padding: 16px;
+        }
 
-.sender-text-td {
-padding: 10px;
-font-size: 16px;
-font-style: italic;
-}
+        .change-data__greetings {
+          margin-bottom: 4px;
+        }
 
-.button-td {
-padding: 32px;
-font-size: 20px;
-font-weight: 400;
-}
+        .change-data__message {
+          margin-bottom: 16px;
+        }
 
-.button-click {
-padding-left: 16px;
-padding-right: 16px;
-padding-top: 12px;
-padding-bottom: 12px;
-border-radius: 4px;
-background-color: #0d6efd;
-text-decoration: none;
-color: white;
-}
+        .change-data__code {
+          margin: auto;
 
-.thanks-td {
-padding: 10px;
-font-size: 16px;
-border-radius: 0 0 8px 8px;
-}
+          letter-spacing: 2px;
+          font-size: 18px;
+          font-weight: 600;
 
-.thanks {
-padding-top: 10px;
-padding-bottom: 10px;
-}
-</style>
+          display: table;
+        }
+
+        .change-data__footer {
+          padding-bottom: 16px;
+          padding-top: 4px;
+          margin-left: 16px;
+          margin-right: 16px;
+
+          border-top: 1px solid #dbdada;
+
+          text-align: center;
+        }
+    </style>
 </head>
 
-<body style="margin: 0; padding: 0">
-      <div
-      style="
-        font-size: 0px;
-        font-color: #ffffff;
-        opacity: 0;
-        visibility: hidden;
-        width: 0;
-        height: 0;
-        display: none;
-      "
-    >
+<body>
+    <div class="content">
+
+        <div class="change-data-wrapper">
+            <div class="change-data">
+                <h2 class="change-data__header">HITS</h2>
+
+                <div class="change-data__content">
+                    <#if (changeData.subject)??>
+                      <p class="change-data__title">${changeData.subject}</p>
+                    </#if>
+
+                    <p class="change-data__greetings">Привет!</p>
+
+                    <#if (changeData.text)??>
+                      <p class="change-data__message">${changeData.text}</p>
+                    </#if>
+
+                    <#if (changeData.code)??>
+                      <p class="change-data__code">${changeData.code}</p>
+                    </#if>
+                </div>
+
+                <div class="change-data__footer">
+                    <p>Спасибо за уделенное время,</p>
+                    <p>С уважением команда HITS</p>
+                </div>
+            </div>
+        </div>
+
     </div>
-
-    <table cellpadding="0" cellspacing="0" width="100%" bgcolor="#EBEBEB">
-      <tr>
-        <td class="all">
-          <table
-            class="main table-600"
-            cellpadding="0"
-            cellspacing="0"
-            width="600"
-            align="center"
-          >
-            <tr>
-              <td height="30" width="600"></td>
-            </tr>
-
-            <tr>
-              <td bgcolor="#ffffff" class="header-td">
-                <table
-                  class="table-528"
-                  cellpadding="0"
-                  cellspacing="0"
-                  width="528"
-                  align="center"
-                >
-                  <tr>
-                    <td align="left" class="logo">HITS</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-            <#if (changeData.subject)??>
-              <tr>
-                <td bgcolor="#ffffff" class="title-td">
-                  <table
-                    class="table-528"
-                    cellpadding="0"
-                    cellspacing="0"
-                    width="528"
-                    align="center"
-                  >
-                    <tr>
-                      <td align="left" class="title">
-                         ${changeData.subject}
-                      </td>
-                    </tr>
-                  </table>
-                </td>
-              </tr>
-            </#if>
-
-            <tr>
-              <td bgcolor="#ffffff" class="hello-td">
-                <table
-                  class="table-528"
-                  cellpadding="0"
-                  cellspacing="0"
-                  width="528"
-                  align="center"
-                >
-                  <tr>
-                    <td align="left" class="hello">Привет!</td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-
-            <#if (changeData.text)??>
-                <tr>
-                  <td bgcolor="#ffffff" class="system-text-td">
-                    <table
-                      class="table-528"
-                      cellpadding="0"
-                      cellspacing="0"
-                      width="528"
-                      align="center"
-                    >
-                      <tr>
-                        <td align="left" class="system-text">
-                          ${changeData.text}
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-            </#if>
-
-            <#if (changeData.code)??>
-                <tr>
-                  <td bgcolor="#ffffff" class="hello-td">
-                    <table
-                      class="table-528"
-                      cellpadding="0"
-                      cellspacing="0"
-                      width="528"
-                      align="center"
-                    >
-                      <tr>
-                        <td align="left" class="hello">${changeData.code}</td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-            </#if>
-
-
-            <tr>
-              <td bgcolor="#ffffff" class="thanks-td">
-                <table
-                  class="table-528"
-                  cellpadding="0"
-                  cellspacing="0"
-                  width="528"
-                  align="center"
-                >
-                  <tr>
-                    <td align="left" class="thanks">
-                      Спасибо за уделенное время,
-                      <br />
-                      С уважением команда HITS
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-
-          </table>
-        </td>
-      </tr>
-    </table>
-  </body>
+</body>
 </html>
