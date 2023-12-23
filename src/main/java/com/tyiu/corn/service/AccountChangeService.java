@@ -47,15 +47,16 @@ public class AccountChangeService {
     private final EmailService emailService;
 
     private Mono<Void> sendInvitation(String receiver, String link, User user) {
-        String invitationText = "Вы были приглашены в качестве пользователя на Портал ВШЦТ. " +
-                "Для регистрации на сервисе перейдите по данной ссылке и заполните все поля.";
+        String invitationText = "Вас пригласил(-а) зарегистрироваться на портал HITS " +
+                user.getFirstName() + " " + user.getLastName() +
+                " в качестве пользователя. Для регистрации на сервисе перейдите по данной ссылке и заполните все поля.";
 
         NotificationEmailRequest emailRequest = NotificationEmailRequest.builder()
                 .to(receiver)
-                .title("Приглашение на регистрацию на портале HITS")
+                .title("Приглашение на регистрацию")
                 .message(invitationText)
                 .link(link)
-                .from(user.getFirstName() + " " + user.getLastName())
+                .buttonName("Зарегистрироваться")
                 .build();
 
         return emailService.sendMailNotification(emailRequest);
@@ -214,44 +215,53 @@ public class AccountChangeService {
 
     public Mono<Void> sendEmailToChangeEmail(ChangeEmailDataDTO changeEmailDataDTO, String email){
         return Mono.just(mapper.map(changeEmailDataDTO, ChangeEmailData.class))
-        .flatMap(emailChange ->
-                template.exists(query(where("email").is(emailChange.getNewEmail())), User.class)
-                        .flatMap(b -> {
-                            if (Boolean.TRUE.equals(b)){
-                                return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value()));
-                            }
-                            return Mono.just(emailChange);
-                        })
-        )
-        .flatMap(emailChange ->
-                template.exists(query(where("old_email").is(email)), ChangeEmailData.class)
-        .flatMap(b -> {
-                emailChange.setCode(new SecureRandom().nextInt(900000)+100000);
-                emailChange.setDateExpired(LocalDateTime.now().plusHours(12));
-                emailChange.setOldEmail(email);
-                if (Boolean.TRUE.equals(b)){
-                    return template.delete(query(where("old_email").is(emailChange.getOldEmail())), ChangeEmailData.class)
-                            .then(template.insert(emailChange)
-                            .flatMap(d ->  Mono.just(NotificationEmailRequest.builder()
-                                            .title("Изменение почты")
-                                            .message("Вы собираетесь изменить почту. Необходимо подтвердить новую почту, перейдя по ссылке")
-                                            .to(emailChange.getNewEmail())
-                                            .link(String.format("change-email/%s", d.getId()))
-                                            .build()).flatMap(emailService::sendMailNotification).then()
-                            ));
-                }
-                return template.insert(emailChange).flatMap(d ->  Mono.just(NotificationEmailRequest.builder()
-                        .title("Изменение почты")
-                        .message("Вы собираетесь изменить почту. Необходимо подтвердить новую почту, перейдя по ссылке")
-                        .to(emailChange.getNewEmail())
-                        .link(String.format("change-email/%s", d.getId()))
-                        .build()).flatMap(emailService::sendMailNotification).then()
-                );
-        }));
+            .flatMap(emailChange ->
+                    template.exists(query(where("email").is(emailChange.getNewEmail())), User.class)
+                            .flatMap(b -> {
+                                if (Boolean.TRUE.equals(b)){
+                                    return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value()));
+                                }
+                                return Mono.just(emailChange);
+                            })
+            )
+            .flatMap(emailChange ->
+                    template.exists(query(where("old_email").is(email)), ChangeEmailData.class)
+            .flatMap(b -> {
+                    emailChange.setCode(new SecureRandom().nextInt(900000)+100000);
+                    emailChange.setDateExpired(LocalDateTime.now().plusHours(12));
+                    emailChange.setOldEmail(email);
+                    if (Boolean.TRUE.equals(b)){
+                        return template.delete(query(where("old_email").is(emailChange.getOldEmail())), ChangeEmailData.class)
+                                .then(template.insert(emailChange)
+                                .flatMap(d ->  Mono.just(NotificationEmailRequest.builder()
+                                                .title("Изменение почты")
+                                                .message("Вы собираетесь изменить почту. Необходимо подтвердить новую почту, перейдя по ссылке")
+                                                .to(emailChange.getNewEmail())
+                                                .buttonName("Перейти по ссылке")
+                                                .link(String.format("change-email/%s", d.getId()))
+                                                .build()).flatMap(emailService::sendMailNotification).then()
+                                ));
+                    }
+                    return template.insert(emailChange).flatMap(d ->  Mono.just(NotificationEmailRequest.builder()
+                            .title("Изменение почты")
+                            .message("Вы собираетесь изменить почту. Необходимо подтвердить новую почту, перейдя по ссылке")
+                            .to(emailChange.getNewEmail())
+                            .link(String.format("change-email/%s", d.getId()))
+                            .buttonName("Перейти по ссылке")
+                            .build()).flatMap(emailService::sendMailNotification).then()
+                    );
+            }));
     }
 
     public Mono<String> sendEmailToChangePassword(ChangePasswordDataDTO changePasswordDataDTO) {
         return Mono.just(mapper.map(changePasswordDataDTO, ChangePasswordData.class))
+                .flatMap(passwordChange -> template.exists(query(where("email").is(changePasswordDataDTO.getEmail())), User.class)
+                        .flatMap(exists -> {
+                            if (Boolean.FALSE.equals(exists)){
+                                return Mono.error(new CustomHttpException(CodeStatus.CHANGE_FAILED.toString(), HttpStatus.CONFLICT.value()));
+                            }
+                            return Mono.just(passwordChange);
+                        }))
                 .flatMap(passwordChange -> template.exists(query(where("email").is(passwordChange.getEmail())), ChangePasswordData.class)
                         .flatMap(b -> {
                             passwordChange.setDateExpired(LocalDateTime.now().plusMinutes(5));
@@ -261,7 +271,7 @@ public class AccountChangeService {
                                         .then(template.insert(passwordChange)
                                                 .flatMap(p -> sendChangeDateCode(
                                                         "Код для изменения пароля",
-                                                        "Вы изменяете пароль на вашем аккаунте. Необходимо ввести код для потверждения изменения",
+                                                        "Вы изменяете пароль на вашем аккаунте. Необходимо ввести код для подтверждения изменения",
                                                         p.getEmail(),
                                                         p.getCode().toString()
                                                 ).then(Mono.just(p.getId())))
@@ -270,7 +280,7 @@ public class AccountChangeService {
                             return template.insert(passwordChange)
                                         .flatMap(p -> sendChangeDateCode(
                                             "Код для изменения пароля",
-                                            "Вы изменяете пароль на вашем аккаунте. Необходимо ввести код для потверждения изменения",
+                                            "Вы изменяете пароль на вашем аккаунте. Необходимо ввести код для подтверждения изменения",
                                             p.getEmail(),
                                             p.getCode().toString()
                                         ).then(Mono.just(p.getId())));

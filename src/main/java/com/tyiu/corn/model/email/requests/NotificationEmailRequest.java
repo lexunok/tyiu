@@ -9,7 +9,7 @@ import lombok.*;
 public class NotificationEmailRequest {
     private String title;
     private String to;
-    private String from;
     private String message;
+    private String buttonName;
     private String link;
 }

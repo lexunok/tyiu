@@ -108,7 +108,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testSendInvitation() {
         InvitationDTO invitationDTO = InvitationDTO.builder()
-                .email("timur.minyazeff@gmail.com")
+                .email("test1@gmailerge.com")
                 .roles(List.of(Role.INITIATOR))
                 .build();
         InfoResponse infoResponse = webTestClient
@@ -236,7 +236,7 @@ public class AccountChangeControllerTest extends TestContainers {
     @Test
     void testChangeEmailToNew() {
         RegisterRequest request = new RegisterRequest(
-                "kill@me.now", "account", "change", "account.change",
+                "egerger.eg@gwrg.wrg", "account", "change", "account.change",
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
@@ -251,7 +251,7 @@ public class AccountChangeControllerTest extends TestContainers {
         assertNotNull(response);
 
         ChangeEmailDataDTO changeEmailDataDTO = ChangeEmailDataDTO.builder()
-                .newEmail("123@gmargril.com")
+                .newEmail("wrgwrgwg@rgwrg.wrg")
                 .build();
         InfoResponse changerUrl = webTestClient
                 .post()
@@ -454,6 +454,26 @@ public class AccountChangeControllerTest extends TestContainers {
         assertNotNull(authenticationResponse);
         assertEquals(response.getEmail(), authenticationResponse.getEmail());
         assertEquals(response.getId(), authenticationResponse.getId());
+    }
+    @Test
+    void testSendNonExistedUserEmailToChangePassword(){
+        ChangePasswordDataDTO changePasswordDataDTO = ChangePasswordDataDTO.builder()
+                .email("nonExistedMail@gergwrbh.tr")
+                .build();
+        ErrorResponse changerUrl = webTestClient
+                .post()
+                .uri("/api/v1/profile/send/change/password")
+                .body(Mono.just(changePasswordDataDTO), ChangePasswordDataDTO.class)
+                .exchange()
+                .expectBody(ErrorResponse.class)
+                .returnResult().getResponseBody();
+        assertNotNull(changerUrl);
+        assertEquals(CodeStatus.CHANGE_FAILED.toString(), changerUrl.getError());
+        assertEquals(HttpStatus.CONFLICT.value(), changerUrl.getStatusCode());
+
+        template.exists(query(where("email").is(changePasswordDataDTO.getEmail())), ChangePasswordData.class)
+                .flatMap(e -> Mono.fromRunnable(() -> assertFalse(e)))
+                .as(StepVerifier::create).expectComplete().verify();
     }
 
     @Test

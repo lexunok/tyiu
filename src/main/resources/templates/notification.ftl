@@ -102,14 +102,14 @@
                       <p>${notification.message}</p>
                     </#if>
 
-                    <#if (notification.link)??>
+                    <#if (notification.link)?? && (notification.buttonName)??>
                       <div class="notification__link-wrapper">
                           <a
                             class="notification__link"
                             href=${notification.link}
                             style="color: #ffffff;"
                           >
-                            Перейти по ссылке
+                            ${notification.buttonName}
                           </a>
                       </div>
                     </#if>

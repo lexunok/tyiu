@@ -60,14 +60,14 @@ public class TeamService {
         return template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
                         .flatMap(u -> {
-                            String message = String.format("Вас пригласили в команду \"%s\". " +
-                                    "Перейдите по ссылке, чтобы ответить на приглашение", t.getName());
+                            String message = String.format("Вас пригласил(-а) %s %s в команду \"%s\" в качестве участника.",
+                                    userInviter.getFirstName(), userInviter.getLastName(), t.getName());
                             return Mono.just(NotificationEmailRequest.builder()
                                     .to(u.getEmail())
-                                    .from("Вас пригласил: " + userInviter.getFirstName() + " " + userInviter.getLastName())
                                     .title("Приглашение в команду")
                                     .message(message)
                                     .link(path + "teams/list/" + t.getId())
+                                    .buttonName("Перейти в команду")
                                     .build());
                         })
                         .flatMap(emailService::sendMailNotification));
