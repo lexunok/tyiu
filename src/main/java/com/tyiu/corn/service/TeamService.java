@@ -66,7 +66,7 @@ public class TeamService {
                                     .to(u.getEmail())
                                     .title("Приглашение в команду")
                                     .message(message)
-                                    .link(path + "teams/list/" + t.getId())
+                                    .link("teams/list/" + t.getId())
                                     .buttonName("Перейти в команду")
                                     .build());
                         })
