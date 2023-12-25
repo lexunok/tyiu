@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class IdeaDTO {
     private String id;
-    private String initiatorEmail;
+    private UserDTO initiator;
     private String name;
     private GroupDTO experts;
     private GroupDTO projectOffice;

@@ -82,7 +82,7 @@ public class TeamControllerTest extends TestContainers {
 
     private IdeaDTO buildIdea(String name) {
         return IdeaDTO.builder()
-                .initiatorEmail(initiator.getEmail())
+                .initiator(initiator)
                 .name(name)
                 .status(Idea.Status.ON_APPROVAL)
                 .experts(groupExpert)

@@ -94,7 +94,7 @@ class IdeaControllerTest extends TestContainers {
     @Test
     void testSaveIdea(){
         IdeaDTO ideaDTO = IdeaDTO.builder()
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .name("ГДЗ онлайн")
                 .status(Idea.Status.ON_APPROVAL)
                 .experts(expertGroup)
@@ -123,7 +123,7 @@ class IdeaControllerTest extends TestContainers {
     @Test
     void testAddIdeaInDraft(){
         IdeaDTO ideaDTOinDraft = IdeaDTO.builder()
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .name("ГДЗ онлайн 2")
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
@@ -274,7 +274,7 @@ class IdeaControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("АнтиПлагиат 3")
                 .id(ideaId)
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .status(Idea.Status.NEW)
@@ -327,7 +327,7 @@ class IdeaControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("АнтиПлагиат 3")
                 .id(ideaId)
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .status(Idea.Status.NEW)
@@ -355,7 +355,7 @@ class IdeaControllerTest extends TestContainers {
                 .experts(ideaAddResponse.getExperts())
                 .contactPerson(ideaAddResponse.getContactPerson())
                 .description(ideaAddResponse.getDescription())
-                .initiatorEmail(ideaAddResponse.getInitiatorEmail())
+                .initiator(ideaAddResponse.getInitiator())
                 .solution(ideaAddResponse.getSolution())
                 .build();
 
@@ -373,7 +373,7 @@ class IdeaControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("АнтиПлагиат 3")
                 .id(ideaId)
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .status(Idea.Status.NEW)
@@ -407,7 +407,7 @@ class IdeaControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("АнтиПлагиат 4")
                 .id(ideaId)
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .status(Idea.Status.NEW)
@@ -446,7 +446,7 @@ class IdeaControllerTest extends TestContainers {
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .name("АнтиПлагиат 3")
                 .id(ideaId)
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .experts(expertGroup)
                 .projectOffice(projectGroup)
                 .status(Idea.Status.NEW)

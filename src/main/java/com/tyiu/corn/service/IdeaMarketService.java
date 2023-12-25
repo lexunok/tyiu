@@ -320,7 +320,7 @@ public class IdeaMarketService {
                     .maxTeamSize(ideaDTO.getMaxTeamSize())
                     .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
                     .build();
-            return template.selectOne(query(where("email").is(ideaDTO.getInitiatorEmail())), User.class)
+            return template.selectOne(query(where("email").is(ideaDTO.getInitiator().getEmail())), User.class)
                     .flatMap(u -> {
                         ideaMarket.setInitiatorId(u.getId());
                         return Mono.empty();

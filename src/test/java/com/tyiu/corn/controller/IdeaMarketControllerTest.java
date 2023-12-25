@@ -48,7 +48,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
     private IdeaDTO buildIdea(String name){
         return IdeaDTO.builder()
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .name(name)
                 .status(Idea.Status.ON_APPROVAL)
                 .experts(groupExpert)

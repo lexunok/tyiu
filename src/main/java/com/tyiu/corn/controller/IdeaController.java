@@ -34,7 +34,7 @@ public class IdeaController {
     @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId, user.getId())
-                .filter(i -> i.getInitiatorEmail().equals(user.getEmail()))
+                .filter(i -> i.getInitiator().getId().equals(user.getId()))
                 .switchIfEmpty(Mono.error(new AccessException("Нет прав!")));
 
     }
@@ -60,13 +60,13 @@ public class IdeaController {
     @PostMapping("/add")
     public Mono<IdeaDTO> saveIdeaToApproval(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
         idea.setStatus(Idea.Status.ON_APPROVAL);
-        return ideaService.saveIdea(idea, user.getEmail());
+        return ideaService.saveIdea(idea, user.getId());
     }
 
     @PostMapping("/draft/add")
     public Mono<IdeaDTO> addIdeaInDraft(@RequestBody IdeaDTO idea, @AuthenticationPrincipal User user) {
         idea.setStatus(Idea.Status.NEW);
-        return ideaService.saveIdea(idea, user.getEmail());
+        return ideaService.saveIdea(idea, user.getId());
     }
 
     @DeleteMapping("/delete/{ideaId}")
@@ -80,7 +80,7 @@ public class IdeaController {
     @PutMapping("/initiator/send/{ideaId}")
     @PreAuthorize("hasAuthority('INITIATOR')")
     public Mono<InfoResponse> updateStatusByInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
-        return ideaService.updateStatusByInitiator(ideaId, user.getEmail())
+        return ideaService.updateStatusByInitiator(ideaId, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешная отправка идеи"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Идея не отправилась"));
     }

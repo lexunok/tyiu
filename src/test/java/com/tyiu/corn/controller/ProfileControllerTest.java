@@ -35,7 +35,7 @@ public class ProfileControllerTest extends TestContainers {
     private ProfileDTO createProfile() {
 
         IdeaDTO idea = IdeaDTO.builder()
-                .initiatorEmail(userDTO.getEmail())
+                .initiator(userDTO)
                 .name("Сдал ИГЭ по барьба")
                 .status(Idea.Status.ON_APPROVAL)
                 .experts(expertGroup)

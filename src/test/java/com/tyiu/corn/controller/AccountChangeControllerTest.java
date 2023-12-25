@@ -1,10 +1,7 @@
 package com.tyiu.corn.controller;
 
 import com.tyiu.corn.model.dto.*;
-import com.tyiu.corn.model.entities.ChangeEmailData;
-import com.tyiu.corn.model.entities.ChangePasswordData;
-import com.tyiu.corn.model.entities.Invitation;
-import com.tyiu.corn.model.entities.User;
+import com.tyiu.corn.model.entities.*;
 import com.tyiu.corn.model.enums.CodeStatus;
 import com.tyiu.corn.model.enums.Role;
 import com.tyiu.corn.model.requests.ChangeRequest;
@@ -27,6 +24,7 @@ import reactor.core.publisher.Mono;
 import reactor.test.StepVerifier;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Stream;
@@ -52,10 +50,106 @@ public class AccountChangeControllerTest extends TestContainers {
 
     private String invitationId;
 
+    private GroupDTO projectGroup;
+    private GroupDTO expertGroup;
+
+
     private Integer code;
     private String changeDataId;
-    
-    public AccountChangeControllerTest() {
+
+    private TeamDTO buildTeam(String name,String description, Integer membersCount,
+                              UserDTO owner, UserDTO leader, List<UserDTO> members,
+                              List<SkillDTO> wantedSkills){
+        return TeamDTO.builder()
+                .name(name)
+                .description(description)
+                .closed(false)
+                .membersCount(membersCount)
+                .createdAt(LocalDate.now())
+                .owner(owner)
+                .leader(leader)
+                .members(members)
+                .wantedSkills(wantedSkills)
+                .build();
+    }
+
+    private void createObjectsWithUserReference(UserDTO userDTO, String userToken){
+        TeamDTO team = buildTeam("Богатыри","Слава Руси!",1,
+                userDTO,userDTO,List.of(userDTO),List.of());
+        TeamDTO responseAddTeam = webTestClient.post().uri("/api/v1/team/add")
+                .header("Authorization", "Bearer " + userToken)
+                .body(Mono.just(team), TeamDTO.class)
+                .exchange().expectBody(TeamDTO.class).returnResult().getResponseBody();
+
+        assertNotNull(responseAddTeam);
+        assertEquals(team.getName(), responseAddTeam.getName());
+        assertEquals(team.getDescription(), responseAddTeam.getDescription());
+        assertEquals(team.getClosed(), responseAddTeam.getClosed());
+        assertEquals(team.getMembersCount(), responseAddTeam.getMembersCount());
+        assertEquals(team.getOwner(), responseAddTeam.getOwner());
+        assertEquals(team.getLeader(), responseAddTeam.getLeader());
+        assertEquals(team.getSkills(), responseAddTeam.getSkills());
+        assertEquals(team.getWantedSkills(), responseAddTeam.getWantedSkills());
+
+        createProjectOfficeAndExpertGroups();
+
+        IdeaDTO ideaDTOinDraft = IdeaDTO.builder()
+                .initiator(userDTO)
+                .name("ГДЗ онлайн 2")
+                .status(Idea.Status.NEW)
+                .problem("Отсутствия готовых решений задач")
+                .solution("Форум, где студенты могут оставить свои решения")
+                .result("Удобная онлайн платформа")
+                .customer("Студенты")
+                .contactPerson("Стас")
+                .description("Для студентов!")
+                .build();
+
+        IdeaDTO ideaResponse = webTestClient
+                .post()
+                .uri("/api/v1/idea/draft/add")
+                .header("Authorization", "Bearer " + userToken)
+                .body(Mono.just(ideaDTOinDraft), IdeaDTO.class)
+                .exchange()
+                .expectBody(IdeaDTO.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(ideaResponse);
+        assertNotNull(ideaResponse.getName(), ideaDTOinDraft.getName());
+    }
+    private void createProjectOfficeAndExpertGroups() {
+        GroupDTO expertGroupDTO = GroupDTO.builder()
+                .name("Эксперты")
+                .users(List.of(userDTO))
+                .roles(List.of(Role.EXPERT))
+                .build();
+
+        expertGroup = webTestClient
+                .post()
+                .uri("/api/v1/group/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(expertGroupDTO), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+
+        GroupDTO projectGroupDTO = GroupDTO.builder()
+                .name("Проекты")
+                .users(List.of(userDTO))
+                .roles(List.of(Role.PROJECT_OFFICE))
+                .build();
+
+        projectGroup = webTestClient
+                .post()
+                .uri("/api/v1/group/create")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(projectGroupDTO), GroupDTO.class)
+                .exchange()
+                .expectBody(GroupDTO.class)
+                .returnResult().getResponseBody();
+
+        assertNotNull(expertGroup);
+        assertNotNull(projectGroup);
     }
 
     @BeforeAll
@@ -240,7 +334,9 @@ public class AccountChangeControllerTest extends TestContainers {
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
-                        Role.INITIATOR));
+                        Role.INITIATOR,
+                        Role.MEMBER,
+                        Role.TEAM_OWNER));
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -249,6 +345,13 @@ public class AccountChangeControllerTest extends TestContainers {
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response);
+
+        createObjectsWithUserReference(
+                UserDTO.builder()
+                        .id(response.getId())
+                        .email(response.getEmail())
+                        .build(), response.getToken()
+        );
 
         ChangeEmailDataDTO changeEmailDataDTO = ChangeEmailDataDTO.builder()
                 .newEmail("wrgwrgwg@rgwrg.wrg")
@@ -614,7 +717,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .expectBodyList(String.class)
                 .returnResult().getResponseBody();
         assertNotNull(emails);
-        boolean isContained = emails.stream().anyMatch(email -> email.equals(userDTO.getEmail()));
+        boolean isContained = emails.stream().anyMatch(email -> email.equals("account.change@gmail.com"));
         assertTrue(isContained);
     }
 }
