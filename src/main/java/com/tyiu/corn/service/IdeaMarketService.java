@@ -350,13 +350,15 @@ public class IdeaMarketService {
     }
 
     public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
+        advertisementDTO.setCreatedAt(LocalDateTime.now());
+        advertisementDTO.setCheckedBy(List.of(user.getEmail()));
         return checkInitiator(advertisementDTO.getIdeaMarketId(), user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)){
                         return template.insert(IdeaMarketAdvertisement.builder()
                                         .ideaMarketId(advertisementDTO.getIdeaMarketId())
-                                        .checkedBy(List.of(user.getEmail()))
-                                        .createdAt(LocalDateTime.now())
+                                        .checkedBy(advertisementDTO.getCheckedBy())
+                                        .createdAt(advertisementDTO.getCreatedAt())
                                         .text(advertisementDTO.getText())
                                         .senderId(user.getId())
                                         .build())
