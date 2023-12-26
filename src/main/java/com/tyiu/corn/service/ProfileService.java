@@ -42,7 +42,7 @@ public class ProfileService {
 
     public Mono<ProfileDTO> getUserProfile(String userId) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, " +
-                "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.description i_description, i.status i_status " +
+                "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.solution i_solution, i.status i_status " +
                 "FROM users u LEFT JOIN team ON team.id = u.id " +
                 "LEFT JOIN idea i ON i.initiator_id = u.id LEFT JOIN user_skill us ON us.user_id = u.id " +
                 "LEFT JOIN skill s ON s.id = us.skill_id WHERE u.id = :userId";
@@ -61,7 +61,7 @@ public class ProfileService {
                                             .id(ideaId)
                                             .status(Idea.Status.valueOf(row.get("i_status",String.class)))
                                             .name(row.get("i_name",String.class))
-                                            .description(row.get("i_description",String.class))
+                                            .solution(row.get("i_solution",String.class))
                                             .build());
                         }
                         if (skillId!=null) {

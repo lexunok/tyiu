@@ -60,7 +60,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileIdeaResponse ideas = ProfileIdeaResponse.builder()
                 .name(responseCreateIdea.getName())
-                .description(responseCreateIdea.getDescription())
+                .solution(responseCreateIdea.getSolution())
                 .build();
 
         SkillDTO skills = SkillDTO.builder()

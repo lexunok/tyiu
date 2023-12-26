@@ -452,7 +452,9 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(marketTeamsRequests);
         assertEquals(1, marketTeamsRequests.size());
-        assertTrue(marketTeamsRequests.get(0).getSkills().size() >= 2);
+        marketTeamsRequests.stream().forEach(request -> {
+            assertTrue(request.getSkills().size() >= 2);
+        });
     }
 
     @Test

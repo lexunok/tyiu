@@ -4,10 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import com.tyiu.corn.model.enums.Role;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Data
 @AllArgsConstructor
@@ -20,4 +17,11 @@ public class UserDTO {
     private String firstName;
     private List<Role> roles;
     private LocalDateTime createdAt;
+
+    public UserDTO(String id, String email, String firstName, String lastName) {
+        this.id = id;
+        this.email = email;
+        this.firstName = firstName;
+        this.lastName = lastName;
+    }
 }

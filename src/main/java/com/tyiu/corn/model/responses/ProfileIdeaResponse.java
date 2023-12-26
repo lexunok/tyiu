@@ -13,6 +13,6 @@ import lombok.NoArgsConstructor;
 public class ProfileIdeaResponse {
     private String id;
     private String name;
-    private String description;
+    private String solution;
     private Idea.Status status;
 }

@@ -21,7 +21,7 @@ class CommentController (private val commentService: CommentService) {
 
     @PostMapping("/send")
     suspend fun createComment(@RequestBody comment: CommentDTO, @AuthenticationPrincipal user: User): CommentDTO =
-            commentService.createComment(comment, user.email)
+            commentService.createComment(comment, user.id)
 
 
     @DeleteMapping("/delete/{commentId}")
@@ -29,5 +29,5 @@ class CommentController (private val commentService: CommentService) {
 
     @PutMapping("/check/{commentId}")
     suspend fun checkComment(@PathVariable commentId: String, @AuthenticationPrincipal user: User) =
-            commentService.checkCommentByUser(commentId, user.email)
+            commentService.checkCommentByUser(commentId, user.id)
 }
