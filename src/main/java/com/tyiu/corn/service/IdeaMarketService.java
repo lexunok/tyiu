@@ -295,7 +295,7 @@ public class IdeaMarketService {
                                 .lastName(row.get("u_last_name", String.class))
                                 .build())
                         .checkedBy(List.of(Objects.requireNonNull(row.get("checked_by", String[].class))))
-                        .build()).all();
+                        .build()).all().sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
     }
 
     //////////////////////////////
