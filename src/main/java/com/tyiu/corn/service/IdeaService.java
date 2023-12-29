@@ -405,7 +405,8 @@ public class IdeaService {
                                         if (Boolean.TRUE.equals(isExists)
                                                 || user.getRoles().contains(Role.ADMIN)
                                                 || user.getRoles().contains(Role.EXPERT)
-                                                || user.getRoles().contains(Role.PROJECT_OFFICE)) {
+                                                || user.getRoles().contains(Role.PROJECT_OFFICE)
+                                                || user.getRoles().contains(Role.MEMBER)) {
                                             return  Mono.just(IdeaSkillRequest.builder()
                                                     .skills(list)
                                                     .ideaId(ideaId)

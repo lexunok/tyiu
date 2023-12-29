@@ -93,13 +93,13 @@ public class TeamController {
     }
 
     @PostMapping("/skill-filter/{role}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal User user) {
         return teamService.getTeamsBySkills(checkedSkills, role, user.getId());
     }
 
     @PostMapping("/vacancy-filter")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamDTO> getTeamsByVacancies(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal User user) {
         return teamService.getTeamsByVacancies(checkedSkills, user.getId());
     }

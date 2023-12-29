@@ -41,7 +41,7 @@ public class MarketController {
     }
 
     @GetMapping("/{marketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<MarketDTO> getMarket(@PathVariable String marketId){
         return marketService.getMarket(marketId);
     }

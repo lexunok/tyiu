@@ -57,6 +57,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/requests/{ideaMarketId}")
+    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Flux<TeamMarketRequestDTO> getAllTeamMarketIdeaRequests(@PathVariable String ideaMarketId) {
         return ideaMarketService.getAllTeamsRequests(ideaMarketId);
     }
