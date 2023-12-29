@@ -18,6 +18,7 @@ public class TeamMarketRequest {
     private String id;
     private String ideaMarketId;
     private String teamId;
+    private String marketId;
 
     private String name;
     private RequestStatus status;

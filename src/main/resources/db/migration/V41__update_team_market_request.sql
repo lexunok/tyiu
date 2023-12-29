@@ -1,0 +1,1 @@
+ALTER TABLE team_market_request ADD COLUMN market_id TEXT REFERENCES market (id) ON DELETE CASCADE;

@@ -252,6 +252,7 @@ public class IdeaMarketService {
                     TeamMarketRequestDTO teamMarketRequestDTO = map.getOrDefault(teamRequestId, TeamMarketRequestDTO.builder()
                             .id(teamRequestId)
                             .ideaMarketId(row.get("idea_market_id", String.class))
+                            .marketId(row.get("market_id", String.class))
                             .teamId(row.get("team_id", String.class))
                             .name(row.get("name", String.class))
                             .letter(row.get("letter", String.class))

@@ -308,7 +308,7 @@ public class TeamService {
     }
 
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
-        String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.team_id, tmr.status, tmr.letter, " +
+        String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.market_id, tmr.team_id, tmr.status, tmr.letter, " +
                 "im.name AS name " +
                 "FROM team_market_request tmr " +
                 "LEFT JOIN idea_market im ON im.id = tmr.idea_market_id " +
@@ -319,6 +319,7 @@ public class TeamService {
                 .map((row, rowMetadata) -> TeamMarketRequestDTO.builder()
                         .id(row.get("id", String.class))
                         .ideaMarketId(row.get("idea_market_id", String.class))
+                        .marketId(row.get("market_id", String.class))
                         .teamId(row.get("team_id", String.class))
                         .name(row.get("name", String.class))
                         .status(RequestStatus.valueOf(row.get("status", String.class)))
