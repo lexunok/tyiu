@@ -38,4 +38,6 @@ out/
 
 docker-compose-prod.yml
 ### recourses ###
-/src/main/resources/application.yml
+/ideas-service/src/main/resources/application.yml
+# Ignore Gradle build output directory
+build
