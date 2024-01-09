@@ -688,6 +688,17 @@ public class TeamControllerTest extends TestContainers {
         assertNotEquals(team.getName(), requestDTOS.get(0).getName());
     }
 
+    @Test
+    void testGetAllUsersInTeams(){
+        createTeam(List.of(leader));
+        createTeam(List.of(member));
+        createTeam(List.of(leader, member));
+        List<TeamMemberDTO> usersInTeam = getRequest("/api/v1/team/users/consist","Bearer " + jwt_owner)
+                .expectBodyList(TeamMemberDTO.class).returnResult().getResponseBody();
+        assertNotNull(usersInTeam);
+        assertTrue(usersInTeam.size() >= 2);
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

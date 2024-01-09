@@ -79,6 +79,11 @@ public class TeamController {
         return teamService.getTeamMarketRequests(teamId);
     }
 
+    @GetMapping("/users/consist")
+    public Flux<TeamMemberDTO> getAllUsersInTeams(){
+        return teamService.getAllUsersInTeams();
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

@@ -328,6 +328,21 @@ public class TeamService {
                 .all();
     }
 
+    public Flux<TeamMemberDTO> getAllUsersInTeams() {
+        String QUERY = "SELECT tm.*, u.id, u.email, u.first_name, u.last_name " +
+                "FROM team_member tm " +
+                "LEFT JOIN users u ON u.id = tm.member_id";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .map((row, rowMetadata) -> TeamMemberDTO.builder()
+                        .userId(row.get("id", String.class))
+                        .email(row.get("email", String.class))
+                        .firstName(row.get("first_name", String.class))
+                        .lastName(row.get("last_name", String.class))
+                        .build())
+                .all().distinct();
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
