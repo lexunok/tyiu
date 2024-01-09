@@ -36,7 +36,9 @@ jobs:
               ./gradlew -PspringProfile=test build -x test
 
       - name: Run tests
-        run: ./gradlew test -Pprofile=test
+        run: |
+              cd ideas-service
+              ./gradlew test -Pprofile=test
 
   build-and-push:
     needs: run_tests
