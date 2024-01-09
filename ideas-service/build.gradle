@@ -54,6 +54,10 @@ dependencies {
 	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
+tasks.named('test') {
+	systemProperties['spring.profiles.active'] = project.properties['profile']
+	useJUnitPlatform()
+}
 kotlin {
 	jvmToolchain(17)
 }

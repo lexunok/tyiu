@@ -31,10 +31,12 @@ jobs:
       - name: Change wrapper permissions
         run: chmod +x ./ideas-service/gradlew
       - name: Build JAR file
-        run: ./ideas-service/gradlew -PspringProfile=test build -x test
+        run: | 
+              cd ideas-service
+              ./gradlew -PspringProfile=test build -x test
 
       - name: Run tests
-        run: ./ideas-service/gradlew test -Pprofile=test
+        run: ./gradlew test -Pprofile=test
 
   build-and-push:
     needs: run_tests
@@ -65,7 +67,9 @@ jobs:
       - name: Change wrapper permissions
         run: chmod +x ./ideas-service/gradlew
       - name: Build JAR file
-        run: ./ideas-service/gradlew -PspringProfile=prod build -x test
+        run: |
+              cd ideas-service
+              ./gradlew -PspringProfile=prod build -x test
 
       - name: Login to DockerHub
         uses: docker/login-action@v2
