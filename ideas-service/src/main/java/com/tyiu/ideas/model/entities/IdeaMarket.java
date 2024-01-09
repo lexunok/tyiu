@@ -17,16 +17,7 @@ public class IdeaMarket {
     @Id
     private String id;
     private String ideaId;
-    private String initiatorId;
     private String teamId;
     private String marketId;
-    private LocalDate createdAt;
-    private String name;
-    private String problem;
-    private String description;
-    private String solution;
-    private String result;
-    private Short maxTeamSize;
-    private String customer;
     private IdeaMarketStatusType status;
 }

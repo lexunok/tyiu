@@ -1,0 +1,10 @@
+ALTER TABLE idea_market
+    DROP COLUMN initiator_id,
+    DROP COLUMN created_at,
+    DROP COLUMN name,
+    DROP COLUMN problem,
+    DROP COLUMN description,
+    DROP COLUMN solution,
+    DROP COLUMN result,
+    DROP COLUMN max_team_size,
+    DROP COLUMN customer;
