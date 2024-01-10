@@ -1,0 +1,16 @@
+logging:
+    level:
+        root: DEBUG
+        org.apache.tomcat.util.net.NioEndpoint: ERROR
+        sun.rmi: ERROR
+        java.io: ERROR
+        javax.management: ERROR
+spring:
+    application:
+        name: j-sso
+server:
+    port: 7777
+authorization:
+    settings:
+        issuer-url: http://localhost:7777
+        introspection-endpoint: /oauth2/token-info
