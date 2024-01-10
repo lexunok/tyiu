@@ -309,9 +309,10 @@ public class TeamService {
 
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
         String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.market_id, tmr.team_id, tmr.status, tmr.letter, " +
-                "im.name AS name " +
+                "i.name AS name " +
                 "FROM team_market_request tmr " +
                 "LEFT JOIN idea_market im ON im.id = tmr.idea_market_id " +
+                "LEFT JOIN idea i ON i.id = im.idea_id " +
                 "WHERE tmr.team_id = :teamId";
         return template.getDatabaseClient()
                 .sql(QUERY)
@@ -326,6 +327,21 @@ public class TeamService {
                         .letter(row.get("letter", String.class))
                         .build())
                 .all();
+    }
+
+    public Flux<TeamMemberDTO> getAllUsersInTeams() {
+        String QUERY = "SELECT tm.*, u.id, u.email, u.first_name, u.last_name " +
+                "FROM team_member tm " +
+                "LEFT JOIN users u ON u.id = tm.member_id";
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .map((row, rowMetadata) -> TeamMemberDTO.builder()
+                        .userId(row.get("id", String.class))
+                        .email(row.get("email", String.class))
+                        .firstName(row.get("first_name", String.class))
+                        .lastName(row.get("last_name", String.class))
+                        .build())
+                .all().distinct();
     }
 
     //////////////////////////////

@@ -19,7 +19,6 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -45,6 +44,7 @@ public class IdeaMarketService {
                 "l.id AS l_id, l.first_name AS l_fn, l.last_name AS l_ln, l.email AS l_e, " +
                 "si.id AS si_id, si.name AS si_name, si.type AS si_type, " +
                 "st.id AS st_id, st.name AS st_name, st.type AS st_type, " +
+                "i.name, i.problem, i.description, i.solution, i.result, i.max_team_size, i.customer, " +
                 "fi.*, " +
                 "t.id AS t_id, t.name AS t_name, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
@@ -52,12 +52,13 @@ public class IdeaMarketService {
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) AS member_count " +
                 "FROM idea_market im " +
                 "LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im.id " +
+                "LEFT JOIN idea i ON i.id = im.idea_id " +
                 "LEFT JOIN team t ON t.id = im.team_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
                 "LEFT JOIN team_skill ts ON ts.team_id = im.team_id " +
                 "LEFT JOIN skill si ON si.id = ids.skill_id " +
                 "LEFT JOIN skill st ON st.id = ts.skill_id " +
-                "LEFT JOIN users u ON u.id = im.initiator_id " +
+                "LEFT JOIN users u ON u.id = i.initiator_id " +
                 "LEFT JOIN users l ON l.id = t.leader_id " +
                 "WHERE im.id = :ideaMarketId";
         IdeaMarketMapper ideaMarketMapper = new IdeaMarketMapper();
@@ -99,7 +100,6 @@ public class IdeaMarketService {
                             .build())
                     .solution(row.get("solution", String.class))
                     .stack(new ArrayList<>())
-                    .createdAt(row.get("created_at", LocalDate.class))
                     .maxTeamSize(row.get("max_team_size", Short.class))
                     .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
                     .requests(row.get("request_count", Integer.class))
@@ -120,8 +120,20 @@ public class IdeaMarketService {
     }
 
     private Mono<Boolean> checkInitiator(String ideaMarketId, String userId){
-        return template.exists(query(where("id").is(ideaMarketId)
-                .and("initiator_id").is(userId)), IdeaMarket.class);
+        String QUERY = """
+                        SELECT EXISTS (
+                            SELECT 1 
+                            FROM idea_market im 
+                            LEFT JOIN idea i ON i.id = im.idea_id 
+                            WHERE im.id = :ideaMarketId AND i.initiator_id = :userId
+                        )
+                        """;
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId", userId)
+                .bind("ideaMarketId", ideaMarketId)
+                .map((row, rowMetadata) -> row.get("exists", Boolean.class))
+                .first();
     }
 
     private Mono<Boolean> checkOwner(String teamId, String userId){
@@ -140,7 +152,8 @@ public class IdeaMarketService {
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type
+                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                       i.name, i.solution, i.max_team_size
                 FROM (
                     SELECT im.*,
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
@@ -151,7 +164,8 @@ public class IdeaMarketService {
                     WHERE m.status = 'ACTIVE'
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN users u ON u.id = im_sub.initiator_id
+                LEFT JOIN idea i ON i.id = im_sub.idea_id
+                LEFT JOIN users u ON u.id = i.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
@@ -167,7 +181,8 @@ public class IdeaMarketService {
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type
+                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                       i.name, i.solution, i.max_team_size
                 FROM (
                     SELECT im.*,
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
@@ -178,7 +193,8 @@ public class IdeaMarketService {
                     WHERE im.market_id = :marketId
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN users u ON u.id = im_sub.initiator_id
+                LEFT JOIN idea i ON i.id = im_sub.idea_id
+                LEFT JOIN users u ON u.id = i.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
@@ -189,7 +205,8 @@ public class IdeaMarketService {
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type
+                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                       i.name, i.solution, i.max_team_size
                 FROM (
                     SELECT im.*,
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
@@ -197,10 +214,12 @@ public class IdeaMarketService {
                            ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
                     FROM idea_market im
                     INNER JOIN market m ON m.id = im.market_id
-                    WHERE im.initiator_id = :userId AND im.market_id = :marketId
+                    LEFT JOIN idea i ON i.id = im.idea_id
+                    WHERE i.initiator_id = :userId AND im.market_id = :marketId
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN users u ON u.id = im_sub.initiator_id
+                LEFT JOIN idea i ON i.id = im_sub.idea_id
+                LEFT JOIN users u ON u.id = i.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
@@ -215,7 +234,8 @@ public class IdeaMarketService {
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type
+                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                       i.name, i.solution, i.max_team_size
                 FROM (
                     SELECT im.*,
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
@@ -226,7 +246,8 @@ public class IdeaMarketService {
                     WHERE im.market_id = :marketId
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN users u ON u.id = im_sub.initiator_id
+                LEFT JOIN idea i ON i.id = im_sub.idea_id
+                LEFT JOIN users u ON u.id = i.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 WHERE fi.idea_market_id = im_sub.id
@@ -308,30 +329,28 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList) {
         return ideaDTOList.flatMap(ideaDTO -> {
-            IdeaMarket ideaMarket = IdeaMarket.builder()
+            IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
                     .ideaId(ideaDTO.getId())
+                    .initiator(ideaDTO.getInitiator())
                     .marketId(marketId)
                     .name(ideaDTO.getName())
                     .description(ideaDTO.getDescription())
                     .problem(ideaDTO.getProblem())
                     .result(ideaDTO.getResult())
                     .solution(ideaDTO.getSolution())
-                    .customer(ideaDTO.getCustomer())
-                    .createdAt(LocalDate.from(ideaDTO.getCreatedAt()))
                     .maxTeamSize(ideaDTO.getMaxTeamSize())
+                    .customer(ideaDTO.getCustomer())
                     .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
                     .build();
-            return template.selectOne(query(where("email").is(ideaDTO.getInitiator().getEmail())), User.class)
-                    .flatMap(u -> {
-                        ideaMarket.setInitiatorId(u.getId());
-                        return Mono.empty();
-                    })
-                    .then(template.update(query(where("id").is(ideaDTO.getId())),
+            return template.update(query(where("id").is(ideaDTO.getId())),
                             update("status", Idea.Status.ON_MARKET)
                                     .set("is_active", true),
-                            Idea.class)).log()
-                    .then(template.insert(ideaMarket)
-                            .map(i -> mapper.map(i, IdeaMarketDTO.class))).log();
+                            Idea.class)
+                    .then(template.insert(mapper.map(ideaMarketDTO, IdeaMarket.class))
+                            .flatMap(i -> {
+                                ideaMarketDTO.setId(i.getId());
+                                return Mono.just(ideaMarketDTO);
+                            }));
         });
     }
 
