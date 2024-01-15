@@ -26,8 +26,8 @@ import java.time.temporal.ChronoUnit;
 @Configuration(proxyBeanMethods = false)
 public class AuthorizationServiceConfig {
 
-    private @Value("${authorization.settings.issuer-url}") String issuer;
-    private @Value("${authorization.settings.introspection-endpoint}") String tokenIntrospectionEndpoint;
+    private @Value("${spring.security.oauth2.authorizationserver.issuer-url}") String issuer;
+    private @Value("${spring.security.oauth2.authorizationserver.introspection-endpoint}") String tokenIntrospectionEndpoint;
 
     @Bean
     @Order(Ordered.HIGHEST_PRECEDENCE)
@@ -46,7 +46,7 @@ public class AuthorizationServiceConfig {
                         .clientName("Test Client")
                         .clientId("test-client")
                         .clientSecret("{noop}test-client")
-                        .redirectUri("http://127.0.0.1:8080/code")
+                        .redirectUri("http://localhost:8080/code")
                         .scope("read.scope")
                         .scope("write.scope")
                         .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)

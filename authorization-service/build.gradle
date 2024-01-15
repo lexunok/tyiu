@@ -11,17 +11,35 @@ java {
 	sourceCompatibility = '17'
 }
 
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
 repositories {
 	mavenCentral()
 }
 
 dependencies {
-	implementation 'org.projectlombok:lombok:1.18.26'
-	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation "org.springframework.boot:spring-boot-starter-security"
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-authorization-server'
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'org.modelmapper:modelmapper:3.1.1'
+
+	compileOnly 'org.projectlombok:lombok'
+
+	runtimeOnly 'org.postgresql:postgresql:42.6.0'
+	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
+
+	annotationProcessor 'org.projectlombok:lombok'
+
 	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.testcontainers:testcontainers:1.18.3'
+	testImplementation 'org.testcontainers:postgresql:1.18.3'
 }
 
 tasks.named('test') {
