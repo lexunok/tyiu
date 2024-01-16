@@ -32,6 +32,8 @@ dependencies {
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
 	compileOnly 'org.projectlombok:lombok'
+	runtimeOnly 'org.postgresql:postgresql:42.6.0'
+	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
 	annotationProcessor 'org.projectlombok:lombok'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'

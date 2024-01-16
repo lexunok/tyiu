@@ -1,0 +1,14 @@
+server:
+  port: 8081
+postgres:
+  url: postgresql://localhost:5432/hits
+spring:
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 10
+      max-idle-time: 1m
+      max-size: 30
+    url: r2dbc:${postgres.url}
+    username: admin
+    password: admin
