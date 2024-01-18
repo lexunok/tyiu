@@ -1,0 +1,58 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.1.2'
+	id 'io.spring.dependency-management' version '1.1.2'
+	id 'org.jetbrains.kotlin.jvm' version '1.9.21'
+}
+
+group = 'com.tyiu'
+version = '1'
+
+java {
+}
+
+configurations {
+	compileOnly {
+		extendsFrom annotationProcessor
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-webflux'
+	implementation 'org.springframework.boot:spring-boot-starter-mail'
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation "org.springframework.boot:spring-boot-starter-freemarker"
+	implementation "org.springframework.boot:spring-boot-starter-amqp"
+	implementation 'org.modelmapper:modelmapper:3.1.1'
+	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
+	implementation 'org.flywaydb:flyway-core:9.21.0'
+	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
+	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
+	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor"
+	implementation "org.jetbrains.kotlin:kotlin-reflect"
+
+
+	compileOnly 'org.projectlombok:lombok'
+
+	runtimeOnly 'org.postgresql:postgresql:42.6.0'
+	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
+
+	annotationProcessor 'org.projectlombok:lombok'
+
+	testImplementation 'io.projectreactor:reactor-test'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation 'org.testcontainers:postgresql:1.18.3'
+	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+}
+
+tasks.named('test') {
+	systemProperties['spring.profiles.active'] = project.properties['profile']
+	useJUnitPlatform()
+}
+kotlin {
+	jvmToolchain(17)
+}
