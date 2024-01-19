@@ -1,9 +1,16 @@
 package com.tyiu.tgbotservice.service;
 
+import com.google.gson.Gson;
+import com.tyiu.tgbotservice.config.RabbitMQConfig;
+import com.tyiu.tgbotservice.model.NotificationTelegramResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.annotation.EnableRabbit;
+import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -17,6 +24,8 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 @Slf4j
 @Component
 @Service
+@EnableRabbit
+@Configuration
 @RestController
 @RequestMapping("/api/v1")
 public class CornBot extends TelegramLongPollingBot {
@@ -29,9 +38,11 @@ public class CornBot extends TelegramLongPollingBot {
     private String exchange;
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
+    private RabbitMQConfig config;
     private final RabbitTemplate rabbitTemplate;
 
-    public CornBot(RabbitTemplate rabbitTemplate) {
+    public CornBot(RabbitMQConfig config, RabbitTemplate rabbitTemplate) {
+        this.config = config;
         this.rabbitTemplate = rabbitTemplate;
     }
 
@@ -65,7 +76,8 @@ public class CornBot extends TelegramLongPollingBot {
                     break;
 
                 case "/check":
-//                    sendUserTagToReceiveNotification(userTag); Здесь потом команда для отправка тега и вывода уведолмений
+                    sendUserTag(userTag); // Здесь потом команда для отправка тега и вывода уведолмений
+                    sendMessage(chatId, "Отправил ваш запрос на сервер\nОжидайте ...");
                     sendMessage(chatId, "Команда недоступна. Мы ещё работаем над этим");
                     break;
 
@@ -111,23 +123,41 @@ public class CornBot extends TelegramLongPollingBot {
         sendMessage(chatId, answer);
     }
 
-
-
-    // Получить данные из rabbitmq
-    @RabbitListener(queues = {"${rabbitmq.queue.receive.notification}"})
-    public void getNotification(String msg) {
-        log.info(String.format("Received message! -> %s", msg));
-    }
-
-    // Отправить данные в rabbitmq
-    @GetMapping("/notification/telegram/{userTag}")
-    public void sendUserTagToReceiveNotification(@PathVariable String userTag) {
-        sendUserTag(userTag);
-        ResponseEntity.ok("User tag sent to RabbitMQ");
-    }
-
     public void sendUserTag(String userTag) {
         log.info(String.format("message sent -> %s", userTag));
         rabbitTemplate.convertAndSend(exchange, routingKey, userTag);
+    }
+
+    @Bean
+    public SimpleMessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory) {
+
+        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+
+        container.setConnectionFactory(connectionFactory);
+        container.setQueues(config.queue());
+        container.setMessageListener(message -> {
+            Gson gson = new Gson();
+            NotificationTelegramResponse notification = gson.fromJson(new String(message.getBody()), NotificationTelegramResponse.class);
+                }
+//                log.info("Received from queue: " + new String(message.getBody()))
+        );
+
+        return container;
+    }
+
+    // Получить данные из rabbitmq
+//    @RabbitListener(queues = {"${rabbitmq.queue.receive.notification}"})
+//    public void getNotification(String message) {
+//        log.info(String.format("Received message! -> %s", message));
+//    }
+
+    // Пример по отправке Json файла в rabbitmq
+    @PostMapping("/a")
+    public ResponseEntity<String> sendJsonMessage(@RequestBody NotificationTelegramResponse notificationTelegramResponse) {
+
+        log.info(String.format("Json message sent -> %s", notificationTelegramResponse.toString()));
+        rabbitTemplate.convertAndSend(exchange, routingKey, notificationTelegramResponse);
+
+        return ResponseEntity.ok("Notification sent to RabbitMQ");
     }
 }
