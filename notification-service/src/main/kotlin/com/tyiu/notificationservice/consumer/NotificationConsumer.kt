@@ -1,10 +1,10 @@
-package com.tyiu.notificationservice.consumers
+package com.tyiu.notificationservice.consumer
 
 import com.tyiu.notificationservice.config.QUEUE_NOTIFICATION
 import com.tyiu.notificationservice.config.QUEUE_TELEGRAM
-import com.tyiu.notificationservice.models.NotificationDTO
-import com.tyiu.notificationservice.publishers.NotificationPublisher
-import com.tyiu.notificationservice.services.NotificationService
+import com.tyiu.notificationservice.model.NotificationDTO
+import com.tyiu.notificationservice.publisher.NotificationPublisher
+import com.tyiu.notificationservice.service.NotificationService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component
 

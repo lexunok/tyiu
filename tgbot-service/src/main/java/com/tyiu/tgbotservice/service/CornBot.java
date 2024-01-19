@@ -1,15 +1,12 @@
 package com.tyiu.tgbotservice.service;
 
-import com.google.gson.Gson;
 import com.tyiu.tgbotservice.config.RabbitMQConfig;
 import com.tyiu.tgbotservice.model.NotificationTelegramResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
-import org.springframework.amqp.rabbit.connection.ConnectionFactory;
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -128,28 +125,28 @@ public class CornBot extends TelegramLongPollingBot {
         rabbitTemplate.convertAndSend(exchange, routingKey, userTag);
     }
 
-    @Bean
-    public SimpleMessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory) {
-
-        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-
-        container.setConnectionFactory(connectionFactory);
-        container.setQueues(config.queue());
-        container.setMessageListener(message -> {
-            Gson gson = new Gson();
-            NotificationTelegramResponse notification = gson.fromJson(new String(message.getBody()), NotificationTelegramResponse.class);
-                }
-//                log.info("Received from queue: " + new String(message.getBody()))
-        );
-
-        return container;
-    }
-
-    // Получить данные из rabbitmq
-//    @RabbitListener(queues = {"${rabbitmq.queue.receive.notification}"})
-//    public void getNotification(String message) {
-//        log.info(String.format("Received message! -> %s", message));
+//    @Bean
+//    public SimpleMessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory) {
+//
+//        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
+//
+//        container.setConnectionFactory(connectionFactory);
+//        container.setQueues(config.queue());
+//        container.setMessageListener(message -> {
+//            Gson gson = new Gson();
+//            NotificationTelegramResponse notification = gson.fromJson(new String(message.getBody()), NotificationTelegramResponse.class);
+//                }
+////                log.info("Received from queue: " + new String(message.getBody()))
+//        );
+//
+//        return container;
 //    }
+
+    @RabbitListener(queues = {"${rabbitmq.queue.receive.notification}"})
+    public void getNotification(NotificationTelegramResponse message) {
+        log.info(String.format("Received message! -> %s", message.getMessage()));
+        log.info(String.valueOf(message));
+    }
 
     // Пример по отправке Json файла в rabbitmq
     @PostMapping("/a")

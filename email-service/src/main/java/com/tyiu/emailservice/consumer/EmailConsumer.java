@@ -1,14 +1,16 @@
-package com.tyiu.emailservice.consumers;
+package com.tyiu.emailservice.consumer;
 
 import com.tyiu.emailservice.model.requests.NotificationEmailRequest;
 import com.tyiu.emailservice.model.responses.NotificationEmailResponse;
 import com.tyiu.emailservice.service.EmailService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Component;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class EmailConsumer {
     private final EmailService emailService;
 
@@ -21,7 +23,6 @@ public class EmailConsumer {
                         .message(notificationRequest.getMessage())
                         .buttonName(notificationRequest.getButtonName())
                         .build())
-        .subscribe();
+                .subscribe();
     }
-
 }

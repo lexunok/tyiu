@@ -1,4 +1,4 @@
-package com.tyiu.notificationservice.models.requests
+package com.tyiu.notificationservice.model.requests
 
 class NotificationEmailRequest (
     val consumerEmail: String? = null,

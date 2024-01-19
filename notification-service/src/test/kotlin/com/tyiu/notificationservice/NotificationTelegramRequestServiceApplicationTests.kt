@@ -13,11 +13,9 @@ import org.springframework.test.web.reactive.server.WebTestClient
 @SpringBootTest
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureWebTestClient
-class NotificationServiceApplicationTests(
+class NotificationTelegramRequestServiceApplicationTests(
 	@Autowired private val webClient: WebTestClient,
 ) {
-
-
 	@Test
 	fun contextLoads() {
 		webClient.get().uri("/api/v1/notification/p").exchange()

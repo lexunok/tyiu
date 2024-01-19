@@ -1,9 +1,9 @@
-package com.tyiu.notificationservice.controllers
+package com.tyiu.notificationservice.controller
 
-import com.tyiu.notificationservice.models.NotificationDTO
-import com.tyiu.notificationservice.models.NotificationType
-import com.tyiu.notificationservice.publishers.NotificationPublisher
-import com.tyiu.notificationservice.services.NotificationService
+import com.tyiu.notificationservice.model.NotificationDTO
+import com.tyiu.notificationservice.model.NotificationType
+import com.tyiu.notificationservice.publisher.NotificationPublisher
+import com.tyiu.notificationservice.service.NotificationService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PathVariable
@@ -26,21 +26,22 @@ class NotificationController(private val notificationService: NotificationServic
     suspend fun sendNotificationToTGEMAIL() {
         val notificationDTO: NotificationDTO = NotificationDTO(
             null,
-            "gandon",
-            "kostagarifullin275@gmail.com",
-            "konstanta172",
+            "Naked Snake",
+            "timur.minyazeff@gmail.com",
+            "TimurMA",
             "title",
-            "Сасай",
+            "Крутой чел",
             "https://www.youtube.com/watch?v=1-kKTOr5mcU",
             null,
             null,
             null,
             null,
-            null,
+            "Присоединиться в ЧВК 'DiamondDogs'",
             NotificationType.SUCCESS,
         );
 
-        notificationPublisher.sendNewNotification(notificationDTO)
+        notificationPublisher.sendNewNotificationToEmail(notificationDTO)
+        notificationPublisher.sendNewNotificationToTelegram(notificationDTO)
     }
 
 }

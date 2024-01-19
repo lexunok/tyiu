@@ -1,10 +1,10 @@
-package com.tyiu.notificationservice.services
+package com.tyiu.notificationservice.service
 
-import com.tyiu.notificationservice.models.NotificationDTO
-import com.tyiu.notificationservice.models.NotificationRepository
-import com.tyiu.notificationservice.models.toDTO
-import com.tyiu.notificationservice.models.toEntity
-import com.tyiu.notificationservice.publishers.NotificationPublisher
+import com.tyiu.notificationservice.model.NotificationDTO
+import com.tyiu.notificationservice.model.NotificationRepository
+import com.tyiu.notificationservice.model.toDTO
+import com.tyiu.notificationservice.model.toEntity
+import com.tyiu.notificationservice.publisher.NotificationPublisher
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Service
@@ -25,6 +25,7 @@ class NotificationService(private val notificationRepository: NotificationReposi
 
     suspend fun createNotification(notificationDTO: NotificationDTO){
         notificationRepository.save(notificationDTO.toEntity())
-        notificationPublisher.sendNewNotification(notificationDTO)
+        notificationPublisher.sendNewNotificationToEmail(notificationDTO)
+        notificationPublisher.sendNewNotificationToTelegram(notificationDTO)
     }
 }

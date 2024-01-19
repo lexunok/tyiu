@@ -42,3 +42,4 @@ docker-compose-prod.yml
 /authorization-service/src/main/resources/application.yml
 # Ignore Gradle build output directory
 build
+/tgbot-service/src/main/resources/application.properties

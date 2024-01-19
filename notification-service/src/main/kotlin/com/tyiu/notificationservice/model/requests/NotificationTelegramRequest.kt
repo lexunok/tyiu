@@ -1,6 +1,6 @@
-package com.tyiu.notificationservice.models.requests
+package com.tyiu.notificationservice.model.requests
 
-class Notification (
+class NotificationTelegramRequest (
     val title: String? = null,
     val message: String? = null,
     val link: String? = null

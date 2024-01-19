@@ -1,4 +1,4 @@
-package com.tyiu.notificationservice.models
+package com.tyiu.notificationservice.model
 
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
