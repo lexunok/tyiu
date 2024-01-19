@@ -1,6 +1,5 @@
 package com.tyiu.tgbotservice.service;
 
-import com.tyiu.tgbotservice.config.RabbitMQConfig;
 import com.tyiu.tgbotservice.model.NotificationTelegramResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
@@ -17,6 +16,8 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
+
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -35,11 +36,9 @@ public class CornBot extends TelegramLongPollingBot {
     private String exchange;
     @Value("${rabbitmq.routing.key}")
     private String routingKey;
-    private RabbitMQConfig config;
     private final RabbitTemplate rabbitTemplate;
 
-    public CornBot(RabbitMQConfig config, RabbitTemplate rabbitTemplate) {
-        this.config = config;
+    public CornBot(RabbitTemplate rabbitTemplate) {
         this.rabbitTemplate = rabbitTemplate;
     }
 
@@ -73,9 +72,7 @@ public class CornBot extends TelegramLongPollingBot {
                     break;
 
                 case "/check":
-                    sendUserTag(userTag); // Здесь потом команда для отправка тега и вывода уведолмений
-                    sendMessage(chatId, "Отправил ваш запрос на сервер\nОжидайте ...");
-                    sendMessage(chatId, "Команда недоступна. Мы ещё работаем над этим");
+                    checkCommand(chatId);
                     break;
 
                 default:
@@ -120,32 +117,26 @@ public class CornBot extends TelegramLongPollingBot {
         sendMessage(chatId, answer);
     }
 
-    public void sendUserTag(String userTag) {
-        log.info(String.format("message sent -> %s", userTag));
-        rabbitTemplate.convertAndSend(exchange, routingKey, userTag);
+    public void checkCommand(long chatId) {
+        sendMessage(chatId, "Команда недоступна. Мы ещё работаем над этим");
     }
 
-//    @Bean
-//    public SimpleMessageListenerContainer messageListenerContainer(ConnectionFactory connectionFactory) {
-//
-//        SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
-//
-//        container.setConnectionFactory(connectionFactory);
-//        container.setQueues(config.queue());
-//        container.setMessageListener(message -> {
-//            Gson gson = new Gson();
-//            NotificationTelegramResponse notification = gson.fromJson(new String(message.getBody()), NotificationTelegramResponse.class);
-//                }
-////                log.info("Received from queue: " + new String(message.getBody()))
-//        );
-//
-//        return container;
-//    }
 
-    @RabbitListener(queues = {"${rabbitmq.queue.receive.notification}"})
+
+    public void sendUserTag(String userTag) {
+        log.info(String.format("message sent -> %s", userTag));
+        rabbitTemplate.convertAndSend(exchange, routingKey, Map.of("userTag", userTag));
+    }
+
+    @RabbitListener(queues = {"${rabbitmq.queue.receive.new}"})
     public void getNotification(NotificationTelegramResponse message) {
-        log.info(String.format("Received message! -> %s", message.getMessage()));
-        log.info(String.valueOf(message));
+
+        String answer = "Вам пришло уведомление!\n\n" +
+                message.getTitle() + "\n" +
+                message.getMessage() + "\n\n" +
+                "Подробнее можете ознакомиться здесь:\n" +
+                message.getLink();
+        log.info(answer);
     }
 
     // Пример по отправке Json файла в rabbitmq

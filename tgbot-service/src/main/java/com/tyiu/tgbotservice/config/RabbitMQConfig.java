@@ -12,7 +12,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
-    @Value("${rabbitmq.queue.receive.notification}")
+    @Value("${rabbitmq.queue.receive.new}")
     private String queue;
     @Value("${rabbitmq.exchange}")
     private String exchange;
