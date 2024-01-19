@@ -18,6 +18,8 @@ import java.util.List;
 public class ProfileDTO {
     String id;
     String email;
+    String userTag;
+    Boolean isUserTagVisible;
     String lastName;
     String firstName;
     LocalDateTime createdAt;

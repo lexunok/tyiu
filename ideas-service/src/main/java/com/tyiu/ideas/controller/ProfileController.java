@@ -31,8 +31,9 @@ public class ProfileController {
 
 
     @GetMapping("/{userId}")
-    public Mono<ProfileDTO> getUserProfile(@PathVariable String userId) {
-        return profileService.getUserProfile(userId);
+    public Mono<ProfileDTO> getUserProfile(@PathVariable String userId,
+                                           @AuthenticationPrincipal User user) {
+        return profileService.getUserProfile(userId, user.getId());
     }
 
     @GetMapping("/avatar/get/{userId}")

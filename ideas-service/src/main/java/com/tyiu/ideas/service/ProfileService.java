@@ -37,15 +37,19 @@ public class ProfileService {
     private final ProfileMapper mapper;
     private final R2dbcEntityTemplate template;
     private final ResourceLoader loader;
+
     @Value("${file.path}")
     String path;
 
-    public Mono<ProfileDTO> getUserProfile(String userId) {
+    public Mono<ProfileDTO> getUserProfile(String userId, String currentUserId) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, " +
-                "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.solution i_solution, i.status i_status " +
+                "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.solution i_solution, i.status i_status, " +
+                "t.user_tag t_user_tag, t.is_visible t_is_visible " +
                 "FROM users u LEFT JOIN team ON team.id = u.id " +
                 "LEFT JOIN idea i ON i.initiator_id = u.id LEFT JOIN user_skill us ON us.user_id = u.id " +
-                "LEFT JOIN skill s ON s.id = us.skill_id WHERE u.id = :userId";
+                "LEFT JOIN skill s ON s.id = us.skill_id " +
+                "LEFT JOIN users_telegram t ON t.user_email = u.email " +
+                "WHERE u.id = :userId";
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .flatMap(p -> {
@@ -74,6 +78,11 @@ public class ProfileService {
                         }
                         profiles.putIfAbsent(userId,mapper.apply(row,rowMetadata));
                         ProfileDTO profileDTO = profiles.get(userId);
+                        profileDTO.setIsUserTagVisible(row.get("t_is_visible", Boolean.class));
+                        if (Boolean.FALSE.equals(profileDTO.getIsUserTagVisible()))
+                            profileDTO.setUserTag(null);
+                        if (currentUserId.equals(userId))
+                            profileDTO.setUserTag(row.get("t_user_tag", String.class));
                         profileDTO.setIdeas(ideas.values().stream().toList());
                         profileDTO.setSkills(skills.values().stream().toList());
                         return profileDTO;

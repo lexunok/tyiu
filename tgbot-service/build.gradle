@@ -23,13 +23,20 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-amqp'
-	implementation group: 'org.telegram', name: 'telegrambots', version: '6.1.0'
 
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
+
+	implementation group: 'org.telegram', name: 'telegrambots', version: '6.1.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'
+
+//	implementation 'org.flywaydb:flyway-core:9.21.0'
+	runtimeOnly 'org.postgresql:postgresql:42.6.0'
+
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'

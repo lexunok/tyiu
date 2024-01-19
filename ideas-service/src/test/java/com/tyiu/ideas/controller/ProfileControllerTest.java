@@ -13,6 +13,8 @@ import org.junit.jupiter.api.TestInstance;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
 
@@ -27,8 +29,14 @@ public class ProfileControllerTest extends TestContainers {
 
     @Autowired
     private WebTestClient webTestClient;
+    @Autowired
+    private R2dbcEntityTemplate template;
+    @Autowired
+    private DatabaseClient databaseClient;
     private UserDTO userDTO;
     private String jwt;
+    private UserDTO randomUser;
+    private String jwt_randomUser;
     private GroupDTO expertGroup;
     private GroupDTO projectGroup;
     private SkillDTO skill;
@@ -68,9 +76,13 @@ public class ProfileControllerTest extends TestContainers {
                 .type(skill.getType())
                 .build();
 
+        setUserTag(userDTO.getEmail(), "lerlfee", 323123232L, false);
+
         return ProfileDTO.builder()
                 .id(userDTO.getId())
                 .email(userDTO.getEmail())
+                .userTag("lerlfee")
+                .isUserTagVisible(false)
                 .firstName("1")
                 .lastName("2")
                 .roles(userDTO.getRoles())
@@ -80,16 +92,27 @@ public class ProfileControllerTest extends TestContainers {
                 .build();
     }
 
-    @BeforeAll
-    public void setUp() {
+    private void setUserTag(String userEmail, String userTag, Long chatId, Boolean isVisible) {
 
+        template.getDatabaseClient()
+                .sql("INSERT INTO users_telegram (user_email, user_tag, chat_id, is_visible) " +
+                        "VALUES(:userEmail, :userTag, :chatId, :isVisible)")
+                .bind("userEmail", userEmail)
+                .bind("userTag", userTag)
+                .bind("chatId", chatId)
+                .bind("isVisible", isVisible)
+                .fetch()
+                .rowsUpdated()
+                .block();
+    }
+
+    private AuthenticationResponse register(String email, String firstName, String lastName, String password){
         RegisterRequest request = new RegisterRequest(
-                "fakemailPROFILE", "2", "1", "fakepass",
+                email, firstName, lastName, password,
                 List.of(Role.ADMIN,
                         Role.EXPERT,
                         Role.PROJECT_OFFICE,
                         Role.INITIATOR));
-
         AuthenticationResponse response = webTestClient
                 .post()
                 .uri("/api/v1/auth/register")
@@ -98,17 +121,30 @@ public class ProfileControllerTest extends TestContainers {
                 .expectBody(AuthenticationResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response);
+        return response;
+    }
 
-        jwt = response.getToken();
-
-        userDTO = UserDTO.builder()
-                .id(response.getId())
-                .email(response.getEmail())
-                .lastName(response.getLastName())
-                .firstName(response.getFirstName())
-                .roles(response.getRoles())
-                .createdAt(response.getCreatedAt())
+    private UserDTO userBuild(String id, String email, String firstname, String lastname, List<Role> roles){
+        return UserDTO.builder()
+                .id(id)
+                .email(email)
+                .firstName(firstname)
+                .lastName(lastname)
+                .roles(roles)
                 .build();
+    }
+
+    @BeforeAll
+    public void setUp() {
+
+        AuthenticationResponse response1 = register("profileOwner@gmail.com", "ddd", "E", "profile-test");
+        jwt = response1.getToken();
+
+        AuthenticationResponse response2 = register("randomUser@gmail.com", "ddd", "E", "profile-test");
+        jwt_randomUser = response2.getToken();
+
+        userDTO = userBuild(response1.getId(), response1.getEmail(), response1.getFirstName(), response1.getLastName(), response1.getRoles());
+        randomUser = userBuild(response2.getId(), response2.getEmail(), response2.getFirstName(), response2.getLastName(), response2.getRoles());
 
         GroupDTO expertGroupDTO = GroupDTO.builder()
                 .name("Эксперты")
@@ -161,15 +197,27 @@ public class ProfileControllerTest extends TestContainers {
         ProfileDTO profile = createProfile();
         String userId = profile.getId();
 
-        ProfileDTO responseGetProfile = webTestClient
+        ProfileDTO responseGetProfileByOwner = webTestClient
                 .get()
                 .uri("/api/v1/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)
                 .returnResult().getResponseBody();
-        assertNotNull(responseGetProfile);
-        assertEquals(profile.getEmail(), responseGetProfile.getEmail());
+        assertNotNull(responseGetProfileByOwner);
+        assertEquals(profile.getEmail(), responseGetProfileByOwner.getEmail());
+        assertEquals(responseGetProfileByOwner.getUserTag(), "lerlfee");
+
+        ProfileDTO responseGetProfileByRandomUser = webTestClient
+                .get()
+                .uri("/api/v1/profile/{userId}", userId)
+                .header("Authorization", "Bearer " + jwt_randomUser)
+                .exchange()
+                .expectBody(ProfileDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseGetProfileByRandomUser);
+        assertEquals(profile.getEmail(), responseGetProfileByRandomUser.getEmail());
+        assertNull(responseGetProfileByRandomUser.getUserTag());
     }
 
     @Test

@@ -34,8 +34,8 @@ public class CornBot extends TelegramLongPollingBot {
     private String botToken;
     @Value("${rabbitmq.exchange}")
     private String exchange;
-    @Value("${rabbitmq.routing.key}")
-    private String routingKey;
+    @Value("${rabbitmq.routes.send}")
+    private String routeSendTag;
     private final RabbitTemplate rabbitTemplate;
 
     public CornBot(RabbitTemplate rabbitTemplate) {
@@ -125,7 +125,7 @@ public class CornBot extends TelegramLongPollingBot {
 
     public void sendUserTag(String userTag) {
         log.info(String.format("message sent -> %s", userTag));
-        rabbitTemplate.convertAndSend(exchange, routingKey, Map.of("userTag", userTag));
+        rabbitTemplate.convertAndSend(exchange, routeSendTag, Map.of("userTag", userTag));
     }
 
     @RabbitListener(queues = {"${rabbitmq.queue.receive.new}"})
@@ -139,12 +139,23 @@ public class CornBot extends TelegramLongPollingBot {
         log.info(answer);
     }
 
+//    @RabbitListener(queues = {"${rabbitmq.queue.receive.unread}"})
+//    public void getUnreadNotifications(Map<String, List<NotificationTelegramResponse>> notifications) {
+//
+//        String answer = "Вам пришло уведомление!\n\n" +
+//                message.getTitle() + "\n" +
+//                message.getMessage() + "\n\n" +
+//                "Подробнее можете ознакомиться здесь:\n" +
+//                message.getLink();
+//        log.info(answer);
+//    }
+
     // Пример по отправке Json файла в rabbitmq
     @PostMapping("/a")
     public ResponseEntity<String> sendJsonMessage(@RequestBody NotificationTelegramResponse notificationTelegramResponse) {
 
         log.info(String.format("Json message sent -> %s", notificationTelegramResponse.toString()));
-        rabbitTemplate.convertAndSend(exchange, routingKey, notificationTelegramResponse);
+        rabbitTemplate.convertAndSend(exchange, routeSendTag, notificationTelegramResponse);
 
         return ResponseEntity.ok("Notification sent to RabbitMQ");
     }
