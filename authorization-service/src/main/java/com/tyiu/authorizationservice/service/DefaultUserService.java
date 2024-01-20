@@ -7,6 +7,7 @@ import com.tyiu.authorizationservice.model.exceptions.AuthException;
 import com.tyiu.authorizationservice.model.mappers.AuthorizedUserMapper;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import com.tyiu.authorizationservice.model.enums.AuthProvider;
@@ -18,6 +19,8 @@ import java.time.format.DateTimeFormatter;
 @RequiredArgsConstructor
 public class DefaultUserService implements UserService {
 
+    @Value("${yandex-avatar-url}")
+    private String yandexAvatarUrl;
     private final UserRepository userRepository;
 
     /**
@@ -129,10 +132,18 @@ public class DefaultUserService implements UserService {
         if (userDto.getAttribute("last_name") != null) {
             user.setSecondName(userDto.getAttribute("last_name"));
         }
+
+        if (userDto.getAttribute("default_avatar_id") != null) {
+            user.setAvatarUrl(this.createYandexAvatarUrl(userDto.getAttribute("default_avatar_id")));
+        }
         if (userDto.getAttribute("birthday") != null) {
             user.setBirthday(LocalDate.parse(userDto.getAttribute("birthday"), DateTimeFormatter.ISO_LOCAL_DATE));
         }
 
         return userRepository.save(user);
+    }
+
+    private String createYandexAvatarUrl(String avatarId) {
+        return yandexAvatarUrl.replace("{avatarId}", avatarId);
     }
 }

@@ -1,6 +1,5 @@
 package com.tyiu.authorizationservice.config;
 
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
@@ -19,7 +18,6 @@ public class CORSConfig {
 
         config.setAllowCredentials(true);
 
-        // Указываем список адресов для которых разрешены кросс-доменные запросы
         config.addAllowedOrigin("http://127.0.0.1:8080,http://localhost:8080");
         config.addAllowedHeader(CorsConfiguration.ALL);
         config.addExposedHeader(CorsConfiguration.ALL);
