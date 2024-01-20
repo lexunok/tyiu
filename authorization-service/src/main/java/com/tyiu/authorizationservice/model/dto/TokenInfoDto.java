@@ -27,7 +27,6 @@ public class TokenInfoDto {
     private String clientId;
     private String tokenType;
 
-    private Object principal;
-    private Collection<? extends GrantedAuthority> authorities;
+    private IntrospectionPrincipal principal;
 
 }

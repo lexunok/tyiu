@@ -1,5 +1,7 @@
 package com.tyiu.authorizationservice.config;
 
+import com.tyiu.authorizationservice.model.dto.AuthorizedUser;
+import com.tyiu.authorizationservice.model.dto.IntrospectionPrincipal;
 import com.tyiu.authorizationservice.model.dto.TokenInfoDto;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -64,21 +66,23 @@ public class AuthorizationServiceConfig {
                     .clientId(claims.getClientId())
                     .tokenType(claims.getTokenType());
 
-
-            String token = introspectionAuthenticationToken.getToken();                                                     // получаем значение токена, который проверяется
-            OAuth2Authorization tokenAuth = oAuth2AuthorizationService.findByToken(token, OAuth2TokenType.ACCESS_TOKEN);    // предполагая что это ACCESS TOKEN, пытаемся получить объект OAuth2Authorization из OAuth2AuthorizationService
+            // Здесь начинаются изменения
+            String token = introspectionAuthenticationToken.getToken();                                                      // получаем значение токена, который проверяется
+            OAuth2Authorization tokenAuth = oAuth2AuthorizationService.findByToken(token, OAuth2TokenType.ACCESS_TOKEN);     // предполагая что это ACCESS TOKEN, пытаемся получить объект OAuth2Authorization из OAuth2AuthorizationService
             if (tokenAuth != null) {
-                Authentication attributeAuth = tokenAuth.getAttribute(principalAttributeKey);                               // Если найден этот объект OAuth2Authorization, то получаем из него объект Authentication следующим образом
+                Authentication attributeAuth = tokenAuth.getAttribute(principalAttributeKey);                                // Если найден этот объект OAuth2Authorization, то получаем из него объект Authentication следующим образом
                 if (attributeAuth != null) {
-                    tokenInfoDtoBuilder                                                                                     // Если полученный объект Authentication не пуст, то заполняем данные в TokenInfoDto
-                            .principal(attributeAuth.getPrincipal())
-                            .authorities(authentication.getAuthorities());
+                    if (attributeAuth.getPrincipal() instanceof AuthorizedUser authorizedUser) {                             // Если полученный объект Authentication не пуст, то проверяем является ли его principal экземпляром класса AuthorizedUser
+                        tokenInfoDtoBuilder.principal(IntrospectionPrincipal.build(authorizedUser));                         // Создаём IntrospectionPrincipal на его основе
+                    } else {                                                                                                 // Иначе выбрасываем исключение, что другие типы principal мы не поддерживаем
+                        throw new RuntimeException("Principal class = " + attributeAuth.getPrincipal().getClass().getSimpleName() + " is not supported");
+                    }
                 }
             }
         }
 
         ServletServerHttpResponse httpResponse = new ServletServerHttpResponse(response);
-        mappingJackson2HttpMessageConverter.write(tokenInfoDtoBuilder.build(), null, httpResponse);              // Предращаем наш TokenInfoDto в json строку и отправляем её через ServletServerHttpResponse
+        mappingJackson2HttpMessageConverter.write(tokenInfoDtoBuilder.build(), null, httpResponse);              // Превращаем наш TokenInfoDto в json строку и отправляем её через ServletServerHttpResponse
     }
 
     @Bean
