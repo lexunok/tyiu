@@ -27,8 +27,8 @@ class NotificationController(private val notificationService: NotificationServic
         val notificationDTO: NotificationDTO = NotificationDTO(
             null,
             "Naked Snake",
-            "timur.minyazeff@gmail.com",
-            "TimurMA",
+            "kostagarifullin275@gmail.com",
+            "konstanta172",
             "title",
             "Крутой чел",
             "https://www.youtube.com/watch?v=1-kKTOr5mcU",
