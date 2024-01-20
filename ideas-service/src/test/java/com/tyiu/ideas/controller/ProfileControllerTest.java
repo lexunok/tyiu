@@ -35,7 +35,6 @@ public class ProfileControllerTest extends TestContainers {
     private DatabaseClient databaseClient;
     private UserDTO userDTO;
     private String jwt;
-    private UserDTO randomUser;
     private String jwt_randomUser;
     private GroupDTO expertGroup;
     private GroupDTO projectGroup;
@@ -76,8 +75,6 @@ public class ProfileControllerTest extends TestContainers {
                 .type(skill.getType())
                 .build();
 
-        setUserTag(userDTO.getEmail(), "lerlfee", 323123232L, false);
-
         return ProfileDTO.builder()
                 .id(userDTO.getId())
                 .email(userDTO.getEmail())
@@ -101,6 +98,16 @@ public class ProfileControllerTest extends TestContainers {
                 .bind("userTag", userTag)
                 .bind("chatId", chatId)
                 .bind("isVisible", isVisible)
+                .fetch()
+                .rowsUpdated()
+                .block();
+    }
+
+    private void setUserTagVisible(Boolean isVisible, String userEmail) {
+        template.getDatabaseClient()
+                .sql("UPDATE users_telegram SET is_visible = :isVisible WHERE user_email = :userEmail")
+                .bind("isVisible", isVisible)
+                .bind("userEmail", userEmail)
                 .fetch()
                 .rowsUpdated()
                 .block();
@@ -144,7 +151,6 @@ public class ProfileControllerTest extends TestContainers {
         jwt_randomUser = response2.getToken();
 
         userDTO = userBuild(response1.getId(), response1.getEmail(), response1.getFirstName(), response1.getLastName(), response1.getRoles());
-        randomUser = userBuild(response2.getId(), response2.getEmail(), response2.getFirstName(), response2.getLastName(), response2.getRoles());
 
         GroupDTO expertGroupDTO = GroupDTO.builder()
                 .name("Эксперты")
@@ -197,6 +203,11 @@ public class ProfileControllerTest extends TestContainers {
         ProfileDTO profile = createProfile();
         String userId = profile.getId();
 
+        String userTag = "lerlfee";
+
+        setUserTag(profile.getEmail(), userTag, 323123232L, false);
+
+
         ProfileDTO responseGetProfileByOwner = webTestClient
                 .get()
                 .uri("/api/v1/profile/{userId}", userId)
@@ -206,7 +217,7 @@ public class ProfileControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(responseGetProfileByOwner);
         assertEquals(profile.getEmail(), responseGetProfileByOwner.getEmail());
-        assertEquals(responseGetProfileByOwner.getUserTag(), "lerlfee");
+        assertEquals(responseGetProfileByOwner.getUserTag(), userTag);
 
         ProfileDTO responseGetProfileByRandomUser = webTestClient
                 .get()
@@ -218,6 +229,20 @@ public class ProfileControllerTest extends TestContainers {
         assertNotNull(responseGetProfileByRandomUser);
         assertEquals(profile.getEmail(), responseGetProfileByRandomUser.getEmail());
         assertNull(responseGetProfileByRandomUser.getUserTag());
+
+        setUserTagVisible(true, profile.getEmail());
+
+        ProfileDTO secondResponseGetProfileByRandomUser = webTestClient
+                .get()
+                .uri("/api/v1/profile/{userId}", userId)
+                .header("Authorization", "Bearer " + jwt_randomUser)
+                .exchange()
+                .expectBody(ProfileDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(secondResponseGetProfileByRandomUser);
+        assertEquals(profile.getEmail(), secondResponseGetProfileByRandomUser.getEmail());
+        assertEquals(userTag, secondResponseGetProfileByRandomUser.getUserTag());
+
     }
 
     @Test

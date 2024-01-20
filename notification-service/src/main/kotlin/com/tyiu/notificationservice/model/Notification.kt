@@ -1,6 +1,8 @@
 package com.tyiu.notificationservice.model
 
 import kotlinx.coroutines.flow.Flow
+import lombok.Getter
+import lombok.Setter
 import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -9,11 +11,14 @@ import java.time.LocalDateTime
 
 interface NotificationRepository: CoroutineCrudRepository<Notification, String> {
 
-    @Query("SELECT * FROM notification n WHERE n.publisher_email = :email or n.consumer_email ORDER BY created_at ASC")
+    @Query("SELECT * FROM notification n WHERE n.publisher_email = :email OR n.consumer_email = :email ORDER BY n.created_at ASC")
     fun findAllByPublisherEmailOrConsumerEmail(email: String): Flow<Notification>
 
-    @Query("SELECT * FROM notification n WHERE n.consumer_tag = :tag AND n.is_readORDER BY created_at ASC")
+    @Query("SELECT * FROM notification n WHERE n.consumer_tag = :tag AND n.is_read = false ORDER BY n.created_at ASC")
     fun findAllUnreadNotificationsByTag(tag: String): Flow<Notification>
+
+    @Query("SELECT * FROM notification n WHERE n.consumer_email = :tag AND n.is_read = false ORDER BY n.created_at ASC")
+    fun findAllUnreadNotificationsByEmail(email: String): Flow<Notification>
 }
 
 enum class NotificationType{
@@ -22,38 +27,40 @@ enum class NotificationType{
 }
 
 @Table
+@Getter
+@Setter
 data class Notification (
     @Id
-    val id: String? = null,
-    val publisherEmail: String? = null,
-    val consumerEmail: String? = null,
-    val consumerTag: String? = null,
-    val title: String? = null,
-    val message: String? = null,
-    val link: String? = null,
-    val isShowed: Boolean? = null,
-    val isRead: Boolean? = null,
-    val isFavourite: Boolean? = null,
-    val createdAt: LocalDateTime? = LocalDateTime.now(),
-    val buttonName: String? = null,
-    val notificationType: NotificationType
+    var id: String? = null,
+    var publisherEmail: String? = null,
+    var consumerEmail: String? = null,
+    var consumerTag: String? = null,
+    var title: String? = null,
+    var message: String? = null,
+    var link: String? = null,
+    var isShowed: Boolean? = null,
+    var isRead: Boolean? = null,
+    var isFavourite: Boolean? = null,
+    var createdAt: LocalDateTime? = LocalDateTime.now(),
+    var buttonName: String? = null,
+    var notificationType: NotificationType
 )
 
 data class NotificationDTO (
     @Id
-    val id: String? = null,
-    val publisherEmail: String? = null,
-    val consumerEmail: String? = null,
-    val consumerTag: String? = null,
-    val title: String? = null,
-    val message: String? = null,
-    val link: String? = null,
-    val isShowed: Boolean? = null,
-    val isRead: Boolean? = null,
-    val isFavourite: Boolean? = null,
-    val createdAt: LocalDateTime? = LocalDateTime.now(),
-    val buttonName: String? = null,
-    val notificationType: NotificationType
+    var id: String? = null,
+    var publisherEmail: String? = null,
+    var consumerEmail: String? = null,
+    var consumerTag: String? = null,
+    var title: String? = null,
+    var message: String? = null,
+    var link: String? = null,
+    var isShowed: Boolean? = null,
+    var isRead: Boolean? = null,
+    var isFavourite: Boolean? = null,
+    var createdAt: LocalDateTime? = LocalDateTime.now(),
+    var buttonName: String? = null,
+    var notificationType: NotificationType
 )
 
 fun Notification.toDTO(): NotificationDTO = NotificationDTO(

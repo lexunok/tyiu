@@ -37,21 +37,6 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Queue queue1() {
-        return new Queue(queueReceiveNew);
-    }
-
-//    @Bean
-//    public Queue queue2() {
-//        return new Queue(queueReceiveUnread);
-//    }
-
-    @Bean
-    public Queue queue3() {
-        return new Queue(queueSend);
-    }
-
-    @Bean
     public List<Binding> fanOutBindings(TopicExchange exchange) {
         Binding receiveUnreadBinding = BindingBuilder.bind(new Queue(queueReceiveNew)).to(exchange).with(routeReceivingNew);
 //        Binding receiveNewBinding = BindingBuilder.bind(new Queue(queueReceiveUnread)).to(exchange).with(routeReceiveUnread);

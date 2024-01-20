@@ -24,8 +24,10 @@ class NotificationService(private val notificationRepository: NotificationReposi
         notificationRepository.findAllUnreadNotificationsByTag(tag).map { notification -> notification.toDTO() }
 
     suspend fun createNotification(notificationDTO: NotificationDTO){
-        notificationRepository.save(notificationDTO.toEntity())
-        notificationPublisher.sendNewNotificationToEmail(notificationDTO)
-        notificationPublisher.sendNewNotificationToTelegram(notificationDTO)
+        val notification = notificationDTO.toEntity()
+        notification.link = path + notification.link
+        val savedNotification = notificationRepository.save(notification)
+        notificationPublisher.sendNewNotificationToEmail(savedNotification.toDTO())
+        notificationPublisher.sendNewNotificationToTelegram(savedNotification.toDTO())
     }
 }

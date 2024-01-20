@@ -78,10 +78,7 @@ public class ProfileService {
                         }
                         profiles.putIfAbsent(userId,mapper.apply(row,rowMetadata));
                         ProfileDTO profileDTO = profiles.get(userId);
-                        profileDTO.setIsUserTagVisible(row.get("t_is_visible", Boolean.class));
-                        if (Boolean.FALSE.equals(profileDTO.getIsUserTagVisible()))
-                            profileDTO.setUserTag(null);
-                        if (currentUserId.equals(userId))
+                        if (Boolean.TRUE.equals(profileDTO.getIsUserTagVisible()) || currentUserId.equals(userId))
                             profileDTO.setUserTag(row.get("t_user_tag", String.class));
                         profileDTO.setIdeas(ideas.values().stream().toList());
                         profileDTO.setSkills(skills.values().stream().toList());

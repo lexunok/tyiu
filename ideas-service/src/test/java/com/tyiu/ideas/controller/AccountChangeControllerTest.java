@@ -717,7 +717,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .expectBodyList(String.class)
                 .returnResult().getResponseBody();
         assertNotNull(emails);
-        boolean isContained = emails.stream().anyMatch(email -> email.equals("account.change@gmail.com"));
+        boolean isContained = emails.stream().anyMatch(email -> email.equals(userDTO.getEmail()));
         assertTrue(isContained);
     }
 }
