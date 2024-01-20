@@ -14,10 +14,10 @@ class NotificationConsumer(private val notificationService: NotificationService,
     suspend fun receiveNotification(notification: NotificationDTO){
         notificationService.createNotification(notification)
     }
-    @RabbitListener(queues = ["\${rabbitmq.queues.telegram.receive}"])
-    suspend fun receiveTelegramTag(telegram: Map<String, String>){
-        val notifications: Flow<NotificationDTO> = notificationService
-                                        .getUnreadNotificationsByTag(telegram["userTag"] as String)
-        notificationPublisher.sendUnreadNotification(notifications)
-    }
+//    @RabbitListener(queues = ["\${rabbitmq.queues.telegram.receive}"])
+//    suspend fun receiveTelegramTag(telegram: Map<String, String>){
+//        val notifications: Flow<NotificationDTO> = notificationService
+//                                        .getUnreadNotificationsByTag(telegram["userTag"] as String)
+//        notificationPublisher.sendUnreadNotification(notifications)
+//    }
 }

@@ -20,8 +20,8 @@ class NotificationService(private val notificationRepository: NotificationReposi
     suspend fun getAllNotifications(): Flow<NotificationDTO> =
         notificationRepository.findAll().map { notification -> notification.toDTO() }
 
-    suspend fun getUnreadNotificationsByTag(tag: String): Flow<NotificationDTO> =
-        notificationRepository.findAllUnreadNotificationsByTag(tag).map { notification -> notification.toDTO() }
+//    suspend fun getUnreadNotificationsByTag(tag: String): Flow<NotificationDTO> =
+//        notificationRepository.findAllUnreadNotificationsByTag(tag).map { notification -> notification.toDTO() }
 
     suspend fun createNotification(notificationDTO: NotificationDTO){
         val notification = notificationDTO.toEntity()

@@ -17,17 +17,17 @@ class NotificationPublisher(private val rabbitTemplate: RabbitTemplate) {
     @Value("\${rabbitmq.routes.telegram.send.new}")
     private var sendNewRoute: String = "sendNewRoute"
 
-    @Value("\${rabbitmq.routes.telegram.send.unread}")
-    private var sendUnreadRoute: String = "sendUnreadRoute"
+//    @Value("\${rabbitmq.routes.telegram.send.unread}")
+//    private var sendUnreadRoute: String = "sendUnreadRoute"
 
     @Value("\${rabbitmq.routes.email.send}")
     private var emailRoute: String = "emailRoute"
 
-    suspend fun sendUnreadNotification(notificationsDTO: Flow<NotificationDTO>){
-        rabbitTemplate.convertAndSend(
-            topic, sendUnreadRoute, notificationsDTO
-        )
-    }
+//    suspend fun sendUnreadNotification(notificationsDTO: Flow<NotificationDTO>){
+//        rabbitTemplate.convertAndSend(
+//            topic, sendUnreadRoute, notificationsDTO
+//        )
+//    }
 
     suspend fun sendNewNotificationToTelegram(notification: NotificationDTO){
         rabbitTemplate.convertAndSend(
