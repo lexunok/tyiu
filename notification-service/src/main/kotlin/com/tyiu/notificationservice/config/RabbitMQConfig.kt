@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Configuration
 @EnableRabbit
 open class RabbitMQConfig {
 
-    @Value("\${rabbitmq.queues.telegram.receive}")
-    private var telegramTagQueue: String = "telegramTagQueue"
+//    @Value("\${rabbitmq.queues.telegram.receive}")
+//    private var telegramTagQueue: String = "telegramTagQueue"
 
 //    @Value("\${rabbitmq.queues.telegram.send.unread}")
 //    private var sendingUnreadQueue: String = "sendingUnreadQueue"
@@ -39,8 +39,8 @@ open class RabbitMQConfig {
 //    @Value("\${rabbitmq.routes.telegram.send.unread}")
 //    private var sendUnreadRoute: String = "sendUnreadRoute"
 
-    @Value("\${rabbitmq.routes.telegram.receive}")
-    private var telegramTagRoute: String = "telegramTagRoute"
+//    @Value("\${rabbitmq.routes.telegram.receive}")
+//    private var telegramTagRoute: String = "telegramTagRoute"
 
     @Value("\${rabbitmq.routes.email.send}")
     private var emailRoute: String = "emailRoute"
@@ -51,8 +51,8 @@ open class RabbitMQConfig {
     @Bean
     open fun exchange(): TopicExchange = TopicExchange(topic)
 
-    @Bean
-    open fun telegramTagQueue(): Queue = Queue(telegramTagQueue)
+//    @Bean
+//    open fun telegramTagQueue(): Queue = Queue(telegramTagQueue)
 //    @Bean
 //    open fun sendingUnreadQueue(): Queue = Queue(sendingUnreadQueue)
     @Bean
@@ -78,21 +78,21 @@ open class RabbitMQConfig {
     @Bean
     open fun fanOutBindings(exchange: TopicExchange): List<Declarable> {
         val notificationQueue = Queue(receiveNotificationQueue)
-        val telegramTagQueue = Queue(telegramTagQueue)
-        val sendingNewQueue = Queue(sendingNewQueue)
+//        val telegramTagQueue = Queue(telegramTagQueue)
+        val telegramQueue = Queue(sendingNewQueue)
 //        val sendingUnreadQueue = Queue(sendingUnreadQueue)
         val emailQueue = Queue(sendingEmailQueue)
 
         val notificationBinding = BindingBuilder.bind(notificationQueue).to(exchange).with(notificationRoute)
-        val telegramTagBinding = BindingBuilder.bind(telegramTagQueue).to(exchange).with(telegramTagRoute)
-        val sendingNewBinding = BindingBuilder.bind(sendingNewQueue).to(exchange).with(sendNewRoute)
+//        val telegramTagBinding = BindingBuilder.bind(telegramTagQueue).to(exchange).with(telegramTagRoute)
+        val sendingNewBinding = BindingBuilder.bind(telegramQueue).to(exchange).with(sendNewRoute)
 //        val sendingUnreadBinding = BindingBuilder.bind(sendingUnreadQueue).to(exchange).with(sendUnreadRoute)
         val emailBinding = BindingBuilder.bind(emailQueue).to(exchange).with(emailRoute)
 
 
         return listOf(
             notificationBinding,
-            telegramTagBinding,
+//            telegramTagBinding,
             sendingNewBinding,
 //            sendingUnreadBinding,
             emailBinding
