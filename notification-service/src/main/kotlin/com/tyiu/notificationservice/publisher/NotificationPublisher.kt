@@ -32,6 +32,7 @@ class NotificationPublisher(private val rabbitTemplate: RabbitTemplate) {
     suspend fun sendNewNotificationToTelegram(notification: NotificationDTO){
         rabbitTemplate.convertAndSend(
             topic, sendNewRoute, NotificationTelegramRequest(
+                notification.consumerTag,
                 notification.title,
                 notification.message,
                 notification.link

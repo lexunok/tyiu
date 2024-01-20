@@ -26,17 +26,17 @@ class NotificationController(private val notificationService: NotificationServic
     suspend fun sendNotificationToTGEMAIL() {
         val notificationDTO: NotificationDTO = NotificationDTO(
             null,
-            "Naked Snake",
-            "kostagarifullin275@gmail.com",
-            "konstanta172",
-            "title",
-            "Крутой чел",
-            "https://www.youtube.com/watch?v=1-kKTOr5mcU",
+            "konstanta1337",
+            "timur.minyazeff@gmail.com",
+            "golngpostal",
+            "Приглашение в команду",
+            "Крутой чел, скиловый",
+            "https://hits.tyuiu.ru/profile/7b79071b-91ab-4db1-930a-e94a9e89c8f1",
             null,
             null,
             null,
             null,
-            "Присоединиться в ЧВК 'DiamondDogs'",
+            "Присоединиться",
             NotificationType.SUCCESS,
         );
 

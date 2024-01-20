@@ -16,7 +16,6 @@ import java.util.List;
 public class RabbitMQConfig {
 
     @Value("${rabbitmq.queue.receive.new}")
-    @NotNull
     private String queueReceiveNew;
 //    @Value("${rabbitmq.queue.receive.unread}")
 //    private String queueReceiveUnread;

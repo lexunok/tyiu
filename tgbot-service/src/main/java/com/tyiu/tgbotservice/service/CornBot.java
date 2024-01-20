@@ -120,7 +120,7 @@ public class CornBot extends TelegramLongPollingBot {
                                 UserTelegram.class);
 
                     return Mono.error(new Exception("Ошибка при дбавлении пользователя"));
-                });
+                }).subscribe();
 
         String answer = "Привет, " + userFirstName + "! " +
                 "Я буду твоим небольшим помощником в области нашего портала https://hits.tyuiu.ru";
@@ -140,26 +140,36 @@ public class CornBot extends TelegramLongPollingBot {
         sendMessage(chatId, "Команда недоступна. Мы ещё работаем над этим");
     }
 
+    private void sendNotificationToChat(String answer, String tag){
+        template.selectOne(query(where("user_tag").is(tag)), UserTelegram.class)
+                .flatMap(send -> {
+                    Long chatId = send.getChatId();
+                    log.info(String.valueOf(chatId));
+                    if (chatId != null){
+                        sendMessage(chatId, answer);
+                    }
+                    return Mono.empty();
+                }).subscribe();
+    }
+
 
 
     @RabbitListener(queues = {"${rabbitmq.queue.receive.new}"})
     public void getNotification(NotificationTelegramResponse notification) {
 
-        String answer = "Вам пришло уведомление!\n\n" +
-                notification.getTitle() + "\n" +
-                notification.getMessage() + "\n\n" +
-                "Подробнее можете ознакомиться здесь:\n" +
-                notification.getLink();
-
-        Mono.just(notification.getTag())
-                        .flatMap(tag -> template.selectOne(query(where("user_tag").is(tag)), UserTelegram.class))
-                                .flatMap(send -> {
-
-                                    long chatId = send.getChatId();
-                                    sendMessage(chatId, answer);
-
-                                    return Mono.empty();
-                                }).subscribe();
-        log.info(answer);
+        try {
+            String answer = "Вам пришло уведомление от портале ВШЦТ!\n\n" +
+                    notification.getTitle() + "\n" +
+                    notification.getMessage() + "\n\n" +
+                    "Подробнее можете ознакомиться здесь:\n" +
+                    notification.getLink();
+            log.info(answer);
+            String tag = notification.getTag();
+            if(tag != null){
+                sendNotificationToChat(answer, tag);
+            }
+        } catch (Exception e) {
+            log.warn(String.valueOf(e.fillInStackTrace()));
+        }
     }
 }
