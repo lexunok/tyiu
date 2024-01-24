@@ -10,7 +10,16 @@ version = '1'
 
 java {
 }
-
+tasks.named("bootBuildImage") {
+	imageName.set("lexunok/ideas-service")
+	publish = true
+	docker {
+		publishRegistry {
+			username = "lexunok"
+			password = ${DOCKER_TOKEN}
+		}
+	}
+}
 configurations {
 	compileOnly {
 		extendsFrom annotationProcessor
