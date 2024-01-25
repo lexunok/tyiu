@@ -6,10 +6,10 @@ import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
-interface TaskMovementLogRepository: CoroutineCrudRepository<TaskMovementLogRepository, String>
+interface TaskMovementLogRepository: CoroutineCrudRepository<TaskMovementLog, String>
 
 @Table
-data class TaskMovementLogRepository (
+data class TaskMovementLog (
     @Id
     val id: String? = null,
     val projectId: String? = null,
@@ -20,5 +20,5 @@ data class TaskMovementLogRepository (
 
     val editDate: LocalDate? = null,
     val startDate: LocalDate? = null,
-    val finishDate: LocalDate? = null,
+    val finishDate: LocalDate? = null
 )
