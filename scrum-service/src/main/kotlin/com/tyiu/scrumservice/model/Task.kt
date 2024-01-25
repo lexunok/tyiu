@@ -27,10 +27,15 @@ data class Task (
 
     val workHour: Long? = null,
 
-    val startDate: LocalDate? = null,
-    val finishDate: LocalDate? = null,
+    val startDate: LocalDate? = LocalDate.now(),
+    val finishDate: LocalDate? = LocalDate.now(),
 
-    var status: String? = null
+    var status: String?  = TaskStatus
+)
+
+data class Task2Sprint (
+    val sprintId: String? = null,
+    val taskId: String? = null
 )
 
 data class TaskDTO (
@@ -46,13 +51,18 @@ data class TaskDTO (
 
     val workHour: Long? = null,
 
-    val startDate: LocalDate? = null,
-    val finishDate: LocalDate? = null,
+    val startDate: LocalDate? = LocalDate.now(),
+    val finishDate: LocalDate? = LocalDate.now(),
 
     var tag: TaskTagDTO? = null,
-    var status: String? = null // = TaskStatus
+    var status: String? = TaskStatus
 )
-//TaskStatus: InBackLog | OnModification | New | InProgress | OnVerification | Done
+
+enum class TaskStatus
+{
+    InBackLog, OnModification, New, InProgress, OnVerification, Done
+}
+
 
 fun Task.toDTO(): TaskDTO = TaskDTO (
     id = id,

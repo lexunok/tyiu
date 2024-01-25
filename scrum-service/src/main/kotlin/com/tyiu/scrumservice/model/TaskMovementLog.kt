@@ -5,3 +5,20 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
+
+interface TaskMovementLogRepository: CoroutineCrudRepository<TaskMovementLogRepository, String>
+
+@Table
+data class TaskMovementLogRepository (
+    @Id
+    val id: String? = null,
+    val projectId: String? = null,
+    val taskId: String? = null,
+
+    val executorId: String? = null,
+    val userId: String? = null,
+
+    val editDate: LocalDate? = null,
+    val startDate: LocalDate? = null,
+    val finishDate: LocalDate? = null,
+)
