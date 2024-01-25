@@ -27,7 +27,7 @@ data class Task (
 
     val workHour: Long? = null,
 
-    val startDate: LocalDate? = LocalDate.now(),
+    val startDate: LocalDate? = LocalDate.now(), //get ourtime date
     val finishDate: LocalDate? = LocalDate.now(),
 
     var status: String?  = TaskStatus
