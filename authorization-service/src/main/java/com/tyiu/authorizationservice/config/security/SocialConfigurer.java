@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.config;
+package com.tyiu.authorizationservice.config.security;
 
 import lombok.Setter;
 import lombok.experimental.Accessors;

@@ -1,6 +1,6 @@
 package com.tyiu.authorizationservice.service;
 
-import com.tyiu.authorizationservice.model.entities.UserEntity;
+import com.tyiu.authorizationservice.model.entities.User;
 import com.tyiu.authorizationservice.model.mappers.AuthorizedUserMapper;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -17,7 +17,7 @@ public class CustomUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        UserEntity entity = userRepository.findByEmail(username);
+        User entity = userRepository.findUserByEmail(username);
         if (entity == null) {
             throw new UsernameNotFoundException("User with username = " + username + " not found");
         }

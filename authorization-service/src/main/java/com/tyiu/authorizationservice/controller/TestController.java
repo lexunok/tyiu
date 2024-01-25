@@ -1,6 +1,6 @@
 package com.tyiu.authorizationservice.controller;
 
-import com.tyiu.authorizationservice.model.entities.UserEntity;
+import com.tyiu.authorizationservice.model.entities.User;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,9 +25,9 @@ public class TestController {
 
     @PostMapping("/register")
     public void reg(){
-        userRepository.save(UserEntity.builder()
+        userRepository.save(User.builder()
                 .email("admin")
-                .passwordHash("password")
+                .password("password")
                 .build());
     }
 }
