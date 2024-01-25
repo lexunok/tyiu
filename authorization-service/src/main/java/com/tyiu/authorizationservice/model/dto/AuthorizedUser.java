@@ -6,7 +6,6 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Map;
 import java.util.UUID;
@@ -15,12 +14,9 @@ import java.util.UUID;
 @Setter
 public class AuthorizedUser extends User implements OAuth2User {
 
-    private UUID id;
+    private String id;
     private String firstName;
-    private String secondName;
-    private String middleName;
-    private LocalDate birthday;
-    private String avatarUrl;
+    private String lastName;
 
     private Map<String, Object> oauthAttributes;
 
@@ -93,7 +89,7 @@ public class AuthorizedUser extends User implements OAuth2User {
             this.entity = new AuthorizedUser(username, password, enabled, accountNonExpired, credentialsNonExpired, accountNonLocked, authorities);
         }
 
-        public AuthorizedUserBuilder id(UUID id) {
+        public AuthorizedUserBuilder id(String id) {
             this.entity.setId(id);
             return this;
         }
@@ -104,22 +100,7 @@ public class AuthorizedUser extends User implements OAuth2User {
         }
 
         public AuthorizedUserBuilder secondName(String secondName) {
-            this.entity.setSecondName(secondName);
-            return this;
-        }
-
-        public AuthorizedUserBuilder middleName(String middleName) {
-            this.entity.setMiddleName(middleName);
-            return this;
-        }
-
-        public AuthorizedUserBuilder birthday(LocalDate birthday) {
-            this.entity.setBirthday(birthday);
-            return this;
-        }
-
-        public AuthorizedUserBuilder avatarUrl(String avatarUrl) {
-            this.entity.setAvatarUrl(avatarUrl);
+            this.entity.setLastName(secondName);
             return this;
         }
 

@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.config;
+package com.tyiu.authorizationservice.config.security;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Configuration;

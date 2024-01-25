@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.config;
+package com.tyiu.authorizationservice.config.security;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;

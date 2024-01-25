@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.config;
+package com.tyiu.authorizationservice.config.security;
 
 import com.tyiu.authorizationservice.model.dto.AuthorizedUser;
 import com.tyiu.authorizationservice.model.dto.IntrospectionPrincipal;
