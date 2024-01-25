@@ -12,7 +12,7 @@ data class ProjectMember (
     val projectId:String?=null,
     val userId:String?=null,
     val teamId:String?=null,
-    val projectRole: String?=null,
+    val projectRole: ProjectRole?=null,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = null
 )
@@ -23,10 +23,14 @@ data class ProjectMemberDTO(
     var email: UserDTO? = null,
     val firstName:UserDTO? = null,
     val lastName:UserDTO? = null,
-    val projectRole:String?=null,
+    val projectRole:ProjectRole?=null,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = LocalDate.now(),
 )
+
+enum class ProjectRole{
+    TEAM_LEADER, INITIATOR, MEMBER
+}
 
 fun ProjectMember.toDTO():ProjectMemberDTO = ProjectMemberDTO(
     userId = userId,

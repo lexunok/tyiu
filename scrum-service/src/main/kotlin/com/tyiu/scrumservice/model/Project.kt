@@ -20,7 +20,7 @@ data class Project(
         val report:String? = null,
         val startDate:LocalDate? = LocalDate.now(),
         val finishDate:LocalDate? = null,
-        val status: String? = null,
+        val status: ProjectStatus? = ProjectStatus.ACTIVE,
 )
 
 data class ProjectDTO (
@@ -34,8 +34,12 @@ data class ProjectDTO (
         val report: String? = null,
         val startDate:LocalDate? = LocalDate.now(),
         val finishDate:LocalDate? = LocalDate.now(),
-        var status: String? = null,
+        var status: ProjectStatus? = ProjectStatus.ACTIVE,
 )
+
+enum class ProjectStatus{
+        ACTIVE, DONE, FAILED
+}
 
 fun Project.toDTO(): ProjectDTO=ProjectDTO(
         id = id,
