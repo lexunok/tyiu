@@ -1,7 +1,8 @@
 package com.tyiu.scrumservice.model
 
-import com.tyiu.ideas.model.dto.UserDTO
-import com.tyiu.ideas.model.entities.User
+
+import com.tyiu.scrumservice.model.dto.UserDTO
+import com.tyiu.scrumservice.model.entities.User
 import jdk.javadoc.internal.tool.Start
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
@@ -30,7 +31,7 @@ data class Task (
     val startDate: LocalDate? = LocalDate.now(), //get ourtime date
     val finishDate: LocalDate? = LocalDate.now(),
 
-    var status: String?  = TaskStatus
+    var status: TaskStatus
 )
 
 data class Task2Sprint (
@@ -55,7 +56,7 @@ data class TaskDTO (
     val finishDate: LocalDate? = LocalDate.now(),
 
     var tag: TaskTagDTO? = null,
-    var status: String? = TaskStatus
+    var status: TaskStatus
 )
 
 enum class TaskStatus
@@ -80,9 +81,9 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     status = status,
 )
 
-fun User.toDTO(): UserDTO = UserDTO (
+/*fun User.toDTO(): UserDTO = UserDTO (
     id,
     email,
     firstName,
     lastName,
-)
+)*/
