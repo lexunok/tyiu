@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import com.tyiu.authorizationservice.model.enums.AuthProvider;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Service

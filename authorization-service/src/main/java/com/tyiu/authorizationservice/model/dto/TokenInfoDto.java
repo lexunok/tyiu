@@ -3,11 +3,9 @@ package com.tyiu.authorizationservice.model.dto;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
-import org.springframework.security.core.GrantedAuthority;
 
 import java.net.URL;
 import java.time.Instant;
-import java.util.Collection;
 import java.util.List;
 
 @Getter

@@ -1,15 +1,17 @@
-package com.tyiu.authorizationservice.config.security;
+package com.tyiu.authorizationservice.config;
 
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.Ordered;
+import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.springframework.web.filter.CorsFilter;
 
 @Configuration
-public class CORSConfig {
+@EnableJpaRepositories(basePackages = "com.tyiu.authorizationservice.repository")
+public class RootAppConfig {
 
     @Bean
     public FilterRegistrationBean<CorsFilter> corsFilter() {
