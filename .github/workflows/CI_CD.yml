@@ -38,7 +38,7 @@ jobs:
               ./gradlew test -Pprofile=test
 
   build-and-push-ideas-service:
-    needs: run_tests
+    needs: run-tests-ideas-service
     runs-on: ubuntu-latest
     env:
       JWT_SECRET: ${{ secrets.JWT_SECRET }}
