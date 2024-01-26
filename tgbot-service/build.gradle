@@ -1,27 +1,6 @@
-plugins {
-	id 'java'
-	id 'org.springframework.boot' version '3.2.1'
-	id 'io.spring.dependency-management' version '1.1.4'
-}
-
-group = 'com.tyiu'
-version = '0.0.1-SNAPSHOT'
-
-java {
-	sourceCompatibility = '17'
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
-repositories {
-	mavenCentral()
-}
 
 dependencies {
+
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation "org.springframework.boot:spring-boot-starter-security"
 
@@ -44,10 +23,10 @@ dependencies {
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
-
 	testImplementation 'org.springframework.amqp:spring-rabbit-test'
-}
+	testImplementation 'org.testcontainers:junit-jupiter'
+	testImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.18.3'
+	testImplementation 'org.testcontainers:postgresql:1.18.3'
+	testImplementation group: 'org.testcontainers', name: 'rabbitmq', version: '1.18.3'
 
-tasks.named('test') {
-	useJUnitPlatform()
 }

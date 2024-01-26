@@ -19,21 +19,18 @@ public class TelegramTagService {
     private final R2dbcEntityTemplate template;
 
     public Mono<Void> addTelegramTag(UserTelegram userTelegram, String userEmail) {
-        log.info("1");
+
         return Mono.just(userTelegram.getUserTag())
                 .flatMap(userTag -> template.exists(query(where("user_tag").is(userTag)), UserTelegram.class))
                 .flatMap(tagExists -> {
-                    log.info("2");
+
                     if (Boolean.TRUE.equals(tagExists)) {
                         return Mono.error(new Exception("Пользователь с таким тегом уже зарегестрирован"));
                     }
                     userTelegram.setUserEmail(userEmail);
                     userTelegram.setUserTag(userTelegram.getUserTag());
-                    log.info("3");
-                    return template.insert(userTelegram).flatMap(u -> {
-                        log.info(String.valueOf(u));
-                        return Mono.empty();
-                    });
+
+                    return template.insert(userTelegram);
                 }).then();
     }
 

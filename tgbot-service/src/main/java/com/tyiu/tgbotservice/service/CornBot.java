@@ -10,18 +10,15 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.*;
-import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 
+import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
-import reactor.core.publisher.Mono;
 
-import java.util.Map;
+import reactor.core.publisher.Mono;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -32,8 +29,6 @@ import static org.springframework.data.relational.core.query.Update.update;
 @Service
 @EnableRabbit
 @Configuration
-@RestController
-@RequestMapping("/api/v1")
 @RequiredArgsConstructor
 public class CornBot extends TelegramLongPollingBot {
 
@@ -108,6 +103,21 @@ public class CornBot extends TelegramLongPollingBot {
         sendMessage(chatId, answer);
     }
 
+    private void sendNotificationToChat(String tag, String answer) {
+
+        template.selectOne(query(where("user_tag").is(tag)), UserTelegram.class)
+                .flatMap(send -> {
+
+                    Long chatId = send.getChatId();
+                    if (chatId != null) {
+                        sendMessage(chatId, answer);
+                    }
+                    return Mono.empty();
+                }).subscribe();
+    }
+
+
+
     public void startCommand(String userTag, long chatId, String userFirstName) {
 
         Mono.just(userTag)
@@ -140,18 +150,6 @@ public class CornBot extends TelegramLongPollingBot {
         sendMessage(chatId, "Команда недоступна. Мы ещё работаем над этим");
     }
 
-    private void sendNotificationToChat(String answer, String tag){
-        template.selectOne(query(where("user_tag").is(tag)), UserTelegram.class)
-                .flatMap(send -> {
-                    Long chatId = send.getChatId();
-                    log.info(String.valueOf(chatId));
-                    if (chatId != null){
-                        sendMessage(chatId, answer);
-                    }
-                    return Mono.empty();
-                }).subscribe();
-    }
-
 
 
     @RabbitListener(queues = {"${rabbitmq.queue.receive.new}"})
@@ -163,13 +161,15 @@ public class CornBot extends TelegramLongPollingBot {
                     notification.getMessage() + "\n\n" +
                     "Подробнее можете ознакомиться здесь:\n" +
                     notification.getLink();
-            log.info(answer);
+
             String tag = notification.getTag();
-            if(tag != null){
-                sendNotificationToChat(answer, tag);
+            if (tag != null) {
+                sendNotificationToChat(tag, answer);
+            } else {
+                log.error("Incorrect consumed object");
             }
         } catch (Exception e) {
-            log.warn(String.valueOf(e.fillInStackTrace()));
+            log.warn("Error sending notification " + e.fillInStackTrace());
         }
     }
 }
