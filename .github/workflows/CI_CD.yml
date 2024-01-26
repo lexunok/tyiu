@@ -30,7 +30,9 @@ jobs:
       - name: Change wrapper permissions
         run: chmod +x ./ideas-service/gradlew
       - name: Build JAR file
-        run: ./ideas-service/gradlew -PspringProfile=test build -x test
+        run: |
+              cd ideas-service
+              ./gradlew -PspringProfile=test build -x test
 
       - name: Run tests
         run: |
