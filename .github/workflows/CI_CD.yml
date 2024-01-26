@@ -69,5 +69,7 @@ jobs:
         run: chmod +x ./ideas-service/gradlew
 
       - name: Build JAR file
-        run:  ./ideas-service/gradlew -PspringProfile=prod -Dtoken=${{ secrets.DOCKERHUB_TOKEN }} bootBuildImage
+        run:  | 
+          cd ideas-service
+          ./gradlew -PspringProfile=prod -Dtoken=${{ secrets.DOCKERHUB_TOKEN }} bootBuildImage
 
