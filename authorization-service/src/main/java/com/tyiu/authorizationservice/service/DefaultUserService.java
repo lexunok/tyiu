@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.stereotype.Service;
 import com.tyiu.authorizationservice.model.enums.AuthProvider;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -22,6 +23,7 @@ public class DefaultUserService implements UserService {
     private final UserRepository userRepository;
 
     @Override
+    @Transactional
     public User save(OAuth2User userDto, AuthProvider provider) {
         return switch (provider) {
             case GITHUB -> saveUserFromGithub(userDto);
@@ -85,9 +87,11 @@ public class DefaultUserService implements UserService {
         if (email == null) {
             throw new AuthException(AuthErrorCode.EMAIL_IS_EMPTY);
         }
-        User user = userRepository.findUserByEmail(email);
+        User user = userRepository.findByEmail(email);
         if (user == null) {
-            user = User.builder().email(email).roles(List.of(Role.INITIATOR)).build();
+            user = new User();
+            user.setEmail(email);
+            user.setRoles(List.of(Role.INITIATOR));
         }
         return user;
     }

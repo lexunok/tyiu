@@ -11,23 +11,9 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 public class TestController {
 
-    private final UserRepository userRepository;
-
-    public TestController(UserRepository userRepository) {
-        this.userRepository = userRepository;
-    }
-
     @GetMapping("/test")
     public String test() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return authentication.getName();
-    }
-
-    @PostMapping("/register")
-    public void reg(){
-        userRepository.save(User.builder()
-                .email("admin")
-                .password("password")
-                .build());
     }
 }
