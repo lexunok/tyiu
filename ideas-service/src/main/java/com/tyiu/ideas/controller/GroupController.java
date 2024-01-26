@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/group")
+@RequestMapping("/api/v1/ideas-service/group")
 public class GroupController {
 
     private final GroupService groupService;

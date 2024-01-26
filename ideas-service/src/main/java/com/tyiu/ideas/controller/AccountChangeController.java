@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 
 @RestController
-@RequestMapping("/api/v1/profile")
+@RequestMapping("/api/v1/ideas-service/profile")
 @RequiredArgsConstructor
 public class AccountChangeController {
     private final AccountChangeService accountChangeService;

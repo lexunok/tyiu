@@ -1,0 +1,10 @@
+server:
+  port: 80
+spring:
+  cloud:
+    gateway:
+      routes:
+        - id: ideas-service
+          uri: ${IDEAS_PATH:http://localhost:8082}
+          predicates:
+            - Path=/api/v1/ideas-service/**

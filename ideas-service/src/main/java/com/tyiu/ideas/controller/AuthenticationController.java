@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/ideas-service/auth")
 @RequiredArgsConstructor
 @Slf4j
 public class AuthenticationController {
