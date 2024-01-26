@@ -30,9 +30,7 @@ jobs:
       - name: Change wrapper permissions
         run: chmod +x ./ideas-service/gradlew
       - name: Build JAR file
-        run: | 
-              cd ideas-service
-              ./gradlew -PspringProfile=test build -x test
+        run: ./ideas-service/gradlew -PspringProfile=test build -x test
 
       - name: Run tests
         run: |
@@ -48,7 +46,6 @@ jobs:
       SERVICE_PASSWORD: ${{ secrets.SERVICE_PASSWORD }}
       MAIL_LOGIN: ${{ secrets.MAIL_LOGIN }}
       MAIL_PASSWORD: ${{ secrets.MAIL_PASSWORD }}
-      DOCKER_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -70,8 +67,5 @@ jobs:
         run: chmod +x ./ideas-service/gradlew
 
       - name: Build JAR file
-        run: |
-              cd ideas-service
-              ./gradlew -PspringProfile=prod bootBuildImage -x test
-
+        run:  ./ideas-service/gradlew -PspringProfile=prod -Dtoken=${{ secrets.DOCKERHUB_TOKEN }} bootBuildImage
 

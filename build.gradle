@@ -1,0 +1,32 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.1.2'
+    id 'io.spring.dependency-management' version '1.1.2'
+    id 'org.jetbrains.kotlin.jvm' version '1.9.21' apply false
+    id 'org.jetbrains.kotlin.plugin.spring' version '1.9.21' apply false
+}
+allprojects {
+    group = 'com.tyiu'
+    version = '1'
+    java {
+        sourceCompatibility(17)
+    }
+    configurations {
+        compileOnly.extendsFrom(annotationProcessor)
+    }
+    repositories {
+        mavenCentral()
+    }
+}
+subprojects {
+    apply plugin: 'java'
+    apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    tasks.named('test') {
+        systemProperties['spring.profiles.active'] = project.properties['profile']
+        useJUnitPlatform()
+    }
+}
+
+
+

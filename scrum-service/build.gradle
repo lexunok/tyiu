@@ -1,27 +1,8 @@
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
 plugins {
-	id 'org.springframework.boot' version '3.1.2'
-	id 'io.spring.dependency-management' version '1.1.2'
-	id 'org.jetbrains.kotlin.jvm' version '1.9.21'
-	id 'org.jetbrains.kotlin.plugin.spring' version '1.9.21'
-}
-
-group = 'com.tyiu'
-version = '1'
-
-java {
-	sourceCompatibility = '17'
-}
-
-configurations {
-	compileOnly {
-		extendsFrom annotationProcessor
-	}
-}
-
-repositories {
-	mavenCentral()
+	id 'org.jetbrains.kotlin.jvm'
+	id 'org.jetbrains.kotlin.plugin.spring'
 }
 
 dependencies {
@@ -38,14 +19,9 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
 }
-
 tasks.withType(KotlinCompile) {
 	kotlinOptions {
 		freeCompilerArgs += '-Xjsr305=strict'
 		jvmTarget = '17'
 	}
-}
-
-tasks.named('test') {
-	useJUnitPlatform()
 }
