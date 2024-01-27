@@ -2,8 +2,6 @@ package com.tyiu.scrumservice.model
 
 
 import com.tyiu.ideas.model.dto.UserDTO
-import com.tyiu.ideas.model.entities.User
-import jdk.javadoc.internal.tool.Start
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository

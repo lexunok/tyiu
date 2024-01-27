@@ -12,6 +12,7 @@ dependencies {
 	implementation 'io.projectreactor.kotlin:reactor-kotlin-extensions'
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
+	implementation project(path: ':ideas-service')
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
