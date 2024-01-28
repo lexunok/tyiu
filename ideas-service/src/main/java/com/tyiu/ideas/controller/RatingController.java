@@ -15,7 +15,7 @@ import reactor.core.publisher.Mono;
 
 
 @RestController
-@RequestMapping("/api/v1/rating")
+@RequestMapping("/api/v1/ideas-service/rating")
 @RequiredArgsConstructor
 public class RatingController {
 

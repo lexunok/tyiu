@@ -21,7 +21,7 @@ import reactor.core.publisher.Mono;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/team")
+@RequestMapping("/api/v1/ideas-service/team")
 @RequiredArgsConstructor
 public class TeamController {
 

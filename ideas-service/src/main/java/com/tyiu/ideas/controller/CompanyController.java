@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 
 @RestController
-@RequestMapping("/api/v1/company")
+@RequestMapping("/api/v1/ideas-service/company")
 @RequiredArgsConstructor
 public class CompanyController {
 

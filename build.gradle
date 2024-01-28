@@ -5,6 +5,10 @@ plugins {
     id 'org.jetbrains.kotlin.jvm' version '1.9.21' apply false
     id 'org.jetbrains.kotlin.plugin.spring' version '1.9.21' apply false
 }
+ext {
+    set('springCloudVersion', "2022.0.3")
+}
+
 allprojects {
     group = 'com.tyiu'
     version = '1'
@@ -25,6 +29,11 @@ subprojects {
     tasks.named('test') {
         systemProperties['spring.profiles.active'] = project.properties['profile']
         useJUnitPlatform()
+    }
+    dependencyManagement {
+        imports {
+            mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
+        }
     }
 }
 

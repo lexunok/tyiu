@@ -16,7 +16,7 @@ import reactor.core.publisher.Mono;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/market")
+@RequestMapping("/api/v1/ideas-service/market")
 public class MarketController {
 
     private final MarketService marketService;

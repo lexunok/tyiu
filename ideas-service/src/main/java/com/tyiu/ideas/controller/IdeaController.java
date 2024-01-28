@@ -18,7 +18,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1/idea")
+@RequestMapping("/api/v1/ideas-service/idea")
 @RequiredArgsConstructor
 public class IdeaController {
     

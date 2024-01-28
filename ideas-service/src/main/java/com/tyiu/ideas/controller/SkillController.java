@@ -20,7 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @RestController
-@RequestMapping("/api/v1/skill")
+@RequestMapping("/api/v1/ideas-service/skill")
 @RequiredArgsConstructor
 public class SkillController {
     private final SkillService skillService;

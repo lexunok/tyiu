@@ -23,7 +23,7 @@ import java.security.Principal;
 import java.util.Base64;
 
 @RestController
-@RequestMapping("/api/v1/profile")
+@RequestMapping("/api/v1/ideas-service/profile")
 @RequiredArgsConstructor
 public class ProfileController {
 
