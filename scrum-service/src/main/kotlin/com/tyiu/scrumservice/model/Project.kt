@@ -1,15 +1,22 @@
 package com.tyiu.scrumservice.model
 
-
 import com.tyiu.ideas.model.dto.IdeaDTO
 import com.tyiu.ideas.model.dto.TeamDTO
+import com.tyiu.ideas.model.dto.UserDTO
+import com.tyiu.ideas.model.entities.Idea
+import com.tyiu.ideas.model.entities.Team
 import org.springframework.data.annotation.Id
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
-interface ProjectRepository: CoroutineCrudRepository<Project, String>{
+interface IdeaRepository: CoroutineCrudRepository<Idea, String> {}
 
+interface TeamRepository: CoroutineCrudRepository<Team, String> {}
+interface ProjectRepository: CoroutineCrudRepository<Project, String>{
+        @Query("SELECT * FROM project WHERE id = :projectId")
+        fun findByProjectId(projectId: String): Project
 }
 @Table
 data class Project(
@@ -25,12 +32,12 @@ data class Project(
 
 data class ProjectDTO (
         val id:String? = null,
-        val name: IdeaDTO? = null,
-        val description:IdeaDTO? = null,
-        val customer:IdeaDTO? = null,
+        /*var name: IdeaDTO? = null,
+        var description:IdeaDTO? = null,
+        var customer:IdeaDTO? = null,
         var initiator: IdeaDTO? = null,
         var team: TeamDTO? = null,
-        var members: List<String>? = null,
+        var members: List<ProjectMemberDTO>? = null,*/
         val report: String? = null,
         val startDate:LocalDate? = LocalDate.now(),
         val finishDate:LocalDate? = LocalDate.now(),
@@ -48,3 +55,23 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
         finishDate = finishDate,
         status = status,
 )
+
+fun ProjectDTO.toEntity(): Project = Project(
+        report = report,
+        startDate = startDate,
+        finishDate = finishDate,
+        status = status,
+)
+
+/*fun Idea.toDTO(): IdeaDTO = IdeaDTO(
+        id,
+        name,
+        description,
+        customer,
+        initiatorId
+)
+
+fun Team.toDTO(): TeamDTO = TeamDTO(
+        id,
+        name,
+)*/
