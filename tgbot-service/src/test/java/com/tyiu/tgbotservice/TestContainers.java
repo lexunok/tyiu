@@ -12,7 +12,9 @@ public abstract class TestContainers {
     static {
         container = new RabbitMQContainer(DockerImageName
                 .parse("rabbitmq")
-                .withTag("3.12.12-management"));
+                .withTag("3.12.12-management"))
+        .withAdminPassword("verySecretPassword");
+
         container.start();
     }
 
