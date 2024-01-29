@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*
 class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/all")
-    fun getAllComments(): Flow<ProjectDTO> = projectService.getAllProjects()
+    fun getAllProjects(): Flow<ProjectDTO> = projectService.getAllProjects()
 
     @GetMapping("/private/all")
     fun getYourProjects(): Flow<Project> = projectService.getYourProjects()
