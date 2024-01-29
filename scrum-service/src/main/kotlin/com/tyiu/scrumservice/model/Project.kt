@@ -32,12 +32,12 @@ data class Project(
 
 data class ProjectDTO (
         val id:String? = null,
-        /*var name: IdeaDTO? = null,
+        var name: IdeaDTO? = null,
         var description:IdeaDTO? = null,
         var customer:IdeaDTO? = null,
         var initiator: IdeaDTO? = null,
         var team: TeamDTO? = null,
-        var members: List<ProjectMemberDTO>? = null,*/
+        var members: List<ProjectMemberDTO>? = null,
         val report: String? = null,
         val startDate:LocalDate? = LocalDate.now(),
         val finishDate:LocalDate? = LocalDate.now(),

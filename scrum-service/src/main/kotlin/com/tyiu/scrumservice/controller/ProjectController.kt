@@ -24,10 +24,10 @@ class ProjectController (private val projectService: ProjectService) {
     suspend fun getOneProject(@PathVariable projectId:String): ProjectDTO? = projectService.getOneProject(projectId)
 
     @GetMapping("/members/{projectId}/all")
-    fun getProjectMembers(): Flow<Project> = projectService.getProjectMembers()
+    fun getProjectMembers(@PathVariable projectId: String): Flow<Project> = projectService.getProjectMembers()
 
     @GetMapping("/marks/{projectId}/all")
-    fun getProjectMarks(): Flow<Project> = projectService.getProjectMarks()
+    fun getProjectMarks(@PathVariable projectId: String): Flow<Project> = projectService.getProjectMarks()
 
     @PostMapping("/send")
     suspend fun createProject(@RequestBody project: ProjectDTO): ProjectDTO = projectService.createProject(project)
@@ -35,10 +35,10 @@ class ProjectController (private val projectService: ProjectService) {
     fun addMembersInProject(): Flow<Project> = projectService.addMembersInProject()
 
     @PutMapping("/marks/{projectId}/update")
-    fun putProjectMarks(): Flow<Project> = projectService.putProjectMarks()
+    fun putProjectMarks(@PathVariable projectId: String): Flow<Project> = projectService.putProjectMarks()
 
     @PutMapping("/status/change/{projectStatus}")
-    fun putProjectStatus(): Flow<Project> = projectService.putProjectStatus()
+    fun putProjectStatus(@PathVariable projectStatus: String): Flow<Project> = projectService.putProjectStatus()
 
     @PutMapping("/finish/change")
     fun putFinishProject(): Flow<Project> = projectService.putFinishProject()

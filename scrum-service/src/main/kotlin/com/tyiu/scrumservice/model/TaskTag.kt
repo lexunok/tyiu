@@ -4,10 +4,10 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 
-interface TaskTagRepository: CoroutineCrudRepository<TaskTagRepository, String>
+interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String>{}
 
 @Table
-data class TaskTag ( //name color isconfirmed сделал VAR т.к посчитал, что они должны будут изменяться. могу ошибаться
+data class TaskTag (
     @Id
     val id: String? = null,
     var name: String? = null,
