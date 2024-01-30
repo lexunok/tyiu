@@ -22,7 +22,7 @@ class TaskController (private val taskService: TaskService  ) {
     fun getAllTasksInBackLog(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksInBacklog(projectId)
 
     @GetMapping("projects/{projectId}/sprint/{sprintId}") // ПОКА ЧТО НЕ РАБОТАЕТ.
-    fun getAllTasksInSprint(@PathVariable projectId: String, sprintId: String): Flow<TaskDTO> = taskService.getAllTasksInSprint(projectId, sprintId)
+    fun getAllTasksInSprint(@PathVariable projectId: String, @PathVariable sprintId: String): Flow<TaskDTO> = taskService.getAllTasksInSprint(projectId, sprintId)
 
     @GetMapping("{id}")
     fun getOneTaskById(@PathVariable id: BigInteger): Flow<TaskDTO> = taskService.getOneTaskById(id)

@@ -18,7 +18,7 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
     fun findAllInBacklog(projectId: String): Flow<Task>
 
-    @Query(" SELECT * FROM task WHERE project_id = :projectId and sprint_id = :sprintid ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
+    @Query(" SELECT * FROM task WHERE project_id = :projectId and sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
     fun findAllTaskBySprint(projectId: String, sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
