@@ -13,11 +13,12 @@ class ProjectService(
     private val ideaRepository: IdeaRepository,
     private val teamRepository: TeamRepository,
     private val projectMemberRepository: ProjectMemberRepository,
-    private val projectMarksRepository: ProjectMarksRepository
+    private val projectMarksRepository: ProjectMarksRepository,
+    private val taskMovementLogRepository: TaskMovementLogRepository,
 ) {
 
     private val connections: MutableMap<String, MutableSharedFlow<Project>> = mutableMapOf()
-    fun ProjectToDTO(project: Project): ProjectDTO {
+    fun projectToDTO(project: Project): ProjectDTO {
     val projects = project.toDTO()
     /*projects.name = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
     projects.description = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
@@ -32,23 +33,23 @@ class ProjectService(
 
     fun getAllProjects(): Flow<ProjectDTO> =
         projectRepository.findAll().map {
-            p -> return@map ProjectToDTO(p)
+            p -> return@map projectToDTO(p)
         }
 
 
     fun getYourProjects(userId: String): Flow<ProjectDTO> = //привязывается к ProjectMembers
-        projectMemberRepository.findProjectByUserId(userId).map {
-            p -> return@map ProjectToDTO(p)
+        projectRepository.findProjectByUserId(userId).map {
+            p -> return@map projectToDTO(p)
         }
 
-    fun getYourActiveProjects(): Flow<ProjectDTO> = //привязывается к ProjectMembers пока не готово но выводит все ACTIVE
-        projectRepository.findByStatus().map {
-            p -> return@map ProjectToDTO(p)
+    fun getYourActiveProjects(userId: String): Flow<ProjectDTO> = //привязывается к ProjectMembers пока не готово но выводит все ACTIVE
+        projectRepository.findByStatus(userId).map {
+            p -> return@map projectToDTO(p)
         }
 
     suspend fun getOneProject(projectId: BigInteger): Flow<ProjectDTO> =
         projectRepository.findByProjectId(projectId).map {
-            p -> return@map ProjectToDTO(p)
+            p -> return@map projectToDTO(p)
         }
 
 
@@ -62,6 +63,8 @@ class ProjectService(
         }
 
     fun getProjectMarks(projectId: String): Flow<ProjectMarks> = projectMarksRepository.findMarksByProjectId(projectId)
+
+    fun getProjectLogs(projectId: String): Flow<TaskMovementLog> = taskMovementLogRepository.findLogByProjectId(projectId)
 
     suspend fun createProject(projectDTO: ProjectDTO): ProjectDTO {
         val project = projectDTO.toEntity()

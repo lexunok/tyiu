@@ -20,10 +20,10 @@ interface ProjectRepository: CoroutineCrudRepository<Project, String>{
         @Query("SELECT * FROM project WHERE id = :projectId")
         fun findByProjectId(projectId: BigInteger): Flow<Project>
 
-        @Query("SELECT * FROM project WHERE status = 'ACTIVE'")
-        fun findByStatus(): Flow<Project>
+        @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId and status = 'ACTIVE'")
+        fun findByStatus(userId: String): Flow<Project>
 
-        @Query("SELECT * FROM project_member WHERE user_id = :userId")
+        @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId")
         fun findProjectByUserId(userId: String): Flow<Project>
 }
 @Table

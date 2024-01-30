@@ -14,11 +14,11 @@ class ProjectController (private val projectService: ProjectService) {
     @GetMapping("/all")
     fun getAllProjects(): Flow<ProjectDTO> = projectService.getAllProjects()
 
-    @GetMapping("/private/all")
-    fun getYourProjects(@RequestBody userId: String): Flow<ProjectDTO> = projectService.getYourProjects(userId)
+    @GetMapping("/{userId}/private/all")
+    fun getYourProjects(@PathVariable userId: String): Flow<ProjectDTO> = projectService.getYourProjects(userId)
 
-    @GetMapping("/active/all")
-    fun getYourActiveProjects(): Flow<ProjectDTO> = projectService.getYourActiveProjects()
+    @GetMapping("/{userId}/active/all")
+    fun getYourActiveProjects(@PathVariable userId: String): Flow<ProjectDTO> = projectService.getYourActiveProjects(userId)
 
     @GetMapping("/{projectId}")
     suspend fun getOneProject(@PathVariable projectId: BigInteger): Flow<ProjectDTO> = projectService.getOneProject(projectId)
@@ -28,6 +28,9 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/marks/{projectId}/all")
     fun getProjectMarks(@PathVariable projectId: String): Flow<ProjectMarks> = projectService.getProjectMarks(projectId)
+
+    @GetMapping("/taskMovementLog/{projectId}/all")
+    fun getProjectLogs(@PathVariable projectId: String): Flow<TaskMovementLog> = projectService.getProjectLogs(projectId)
 
     @PostMapping("/send")
     suspend fun createProject(@RequestBody project: ProjectDTO): ProjectDTO = projectService.createProject(project)
