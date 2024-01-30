@@ -6,6 +6,7 @@ import com.tyiu.scrumservice.model.TaskTagDTO
 import com.tyiu.scrumservice.service.TaskTagService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.*
+import java.math.BigInteger
 
 @RestController
 @RequestMapping("/api/v1/scrum-service/tag")
@@ -17,9 +18,9 @@ class TaskTagController(private val tagService: TaskTagService) {
     @PostMapping("/add")
     fun postTag(): Flow<TaskTag> = tagService.postTag()
 
-    @PutMapping("/{tagId}/update")
+    @PutMapping("/update/{tagId}")
     fun updateTag(@PathVariable tagId: String): Flow<TaskTag> = tagService.updateTag()
 
-    @DeleteMapping("/{tagId}/delete")
-    fun deleteTag(@PathVariable tagId: String): Flow<TaskTag> = tagService.deleteTag()
+    @DeleteMapping("/delete/{tagId}")
+    suspend fun deleteTag(@PathVariable tagId: BigInteger): Flow<TaskTag> = tagService.deleteTag(tagId)
 }

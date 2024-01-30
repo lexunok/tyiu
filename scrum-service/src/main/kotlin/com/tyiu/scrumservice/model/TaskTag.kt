@@ -1,10 +1,17 @@
 package com.tyiu.scrumservice.model
 
+import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import java.math.BigInteger
 
-interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String>{}
+
+interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String>{
+    @Query("DELETE FROM task_tag WHERE id=:tagId")
+    fun deleteTagById(tagId: BigInteger): Flow<TaskTag>
+}
 
 @Table
 data class TaskTag (

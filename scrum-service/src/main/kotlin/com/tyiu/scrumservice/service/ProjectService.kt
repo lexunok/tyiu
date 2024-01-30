@@ -1,11 +1,13 @@
 package com.tyiu.scrumservice.service
 
+import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.scrumservice.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Service
 import java.math.BigInteger
+import java.time.LocalDate
 
 @Service
 class ProjectService(
@@ -49,8 +51,9 @@ class ProjectService(
 
     suspend fun getOneProject(projectId: BigInteger): Flow<ProjectDTO> =
         projectRepository.findByProjectId(projectId).map {
-            p -> return@map projectToDTO(p)
+                p -> return@map projectToDTO(p)
         }
+
 
 
     fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> =
@@ -66,17 +69,17 @@ class ProjectService(
 
     fun getProjectLogs(projectId: String): Flow<TaskMovementLog> = taskMovementLogRepository.findLogByProjectId(projectId)
 
-    suspend fun createProject(projectDTO: ProjectDTO): ProjectDTO {
-        val project = projectDTO.toEntity()
-        return projectRepository.save(project).toDTO()
-    }
+    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): Flow<Project> = projectRepository.findAll()
 
     fun addMembersInProject(): Flow<Project> = projectRepository.findAll()
 
     fun putProjectMarks(): Flow<Project> = projectRepository.findAll()
 
-    fun putProjectStatus(): Flow<Project> = projectRepository.findAll()
+    fun putProjectStatus(projectId: BigInteger, projectStatus: ProjectStatus): Flow<ProjectDTO> =
+        projectRepository.updateProjectStatus(projectId, projectStatus).map {
+                p -> return@map projectToDTO(p)
+        }
 
-    fun putFinishProject(): Flow<Project> = projectRepository.findAll()
+    fun putFinishProject(projectDTO: ProjectDTO): Flow<Project> = projectRepository.findAll()
 }
 

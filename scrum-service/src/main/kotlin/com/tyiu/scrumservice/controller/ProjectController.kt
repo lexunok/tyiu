@@ -1,11 +1,12 @@
 package com.tyiu.scrumservice.controller
 
-import com.tyiu.ideas.model.entities.User
+import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.scrumservice.model.*
 import com.tyiu.scrumservice.service.ProjectService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.*
 import java.math.BigInteger
+import java.time.LocalDate
 
 @RestController
 @RequestMapping("/api/v1/scrum-service/project")
@@ -33,17 +34,17 @@ class ProjectController (private val projectService: ProjectService) {
     fun getProjectLogs(@PathVariable projectId: String): Flow<TaskMovementLog> = projectService.getProjectLogs(projectId)
 
     @PostMapping("/send")
-    suspend fun createProject(@RequestBody project: ProjectDTO): ProjectDTO = projectService.createProject(project)
+    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO): Flow<Project> = projectService.createProject(ideaMarketDTO)
     @PostMapping("/add/members")
     fun addMembersInProject(): Flow<Project> = projectService.addMembersInProject()
 
     @PutMapping("/marks/{projectId}/update")
-    fun putProjectMarks(@PathVariable projectId: String): Flow<Project> = projectService.putProjectMarks()
+    fun putProjectMarks(@PathVariable projectId: BigInteger): Flow<Project> = projectService.putProjectMarks()
 
-    @PutMapping("/status/change/{projectStatus}")
-    fun putProjectStatus(@PathVariable projectStatus: String): Flow<Project> = projectService.putProjectStatus()
+    @PutMapping("/status/change/{projectId}")
+    fun putProjectStatus(@PathVariable projectId: BigInteger,@RequestBody projectStatus: ProjectStatus): Flow<ProjectDTO> = projectService.putProjectStatus(projectId,projectStatus)
 
     @PutMapping("/finish/change")
-    fun putFinishProject(): Flow<Project> = projectService.putFinishProject()
+    fun putFinishProject(@RequestBody projectDTO: ProjectDTO): Flow<Project> = projectService.putFinishProject(projectDTO)
 
 }

@@ -25,6 +25,10 @@ interface ProjectRepository: CoroutineCrudRepository<Project, String>{
 
         @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId")
         fun findProjectByUserId(userId: String): Flow<Project>
+
+        @Query("UPDATE project SET status = :projectStatus WHERE id =:projectId")
+        fun updateProjectStatus(projectId: BigInteger, projectStatus: ProjectStatus): Flow<Project>
+
 }
 @Table
 data class Project(
