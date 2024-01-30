@@ -5,10 +5,12 @@ import com.tyiu.ideas.model.dto.TeamDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Idea
 import com.tyiu.ideas.model.entities.Team
+import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import java.math.BigInteger
 import java.time.LocalDate
 
 interface IdeaRepository: CoroutineCrudRepository<Idea, String> {}
@@ -16,7 +18,10 @@ interface IdeaRepository: CoroutineCrudRepository<Idea, String> {}
 interface TeamRepository: CoroutineCrudRepository<Team, String> {}
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
         @Query("SELECT * FROM project WHERE id = :projectId")
-        fun findByProjectId(projectId: String): Project
+        fun findByProjectId(projectId: BigInteger): Flow<Project>
+
+        @Query("SELECT * FROM project WHERE status = 'ACTIVE'")
+        fun findByStatus(): Flow<Project>
 }
 @Table
 data class Project(

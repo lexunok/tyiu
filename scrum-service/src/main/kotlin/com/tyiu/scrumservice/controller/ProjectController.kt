@@ -1,11 +1,11 @@
 package com.tyiu.scrumservice.controller
 
 import com.tyiu.ideas.model.entities.User
-import com.tyiu.scrumservice.model.Project
-import com.tyiu.scrumservice.model.ProjectDTO
+import com.tyiu.scrumservice.model.*
 import com.tyiu.scrumservice.service.ProjectService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.*
+import java.math.BigInteger
 
 @RestController
 @RequestMapping("/api/v1/scrum-service/project")
@@ -15,19 +15,19 @@ class ProjectController (private val projectService: ProjectService) {
     fun getAllProjects(): Flow<ProjectDTO> = projectService.getAllProjects()
 
     @GetMapping("/private/all")
-    fun getYourProjects(): Flow<Project> = projectService.getYourProjects()
+    fun getYourProjects(): Flow<ProjectDTO> = projectService.getYourProjects()
 
     @GetMapping("/active/all")
-    fun getYourActiveProjects(): Flow<Project> = projectService.getYourActiveProjects()
+    fun getYourActiveProjects(): Flow<ProjectDTO> = projectService.getYourActiveProjects()
 
     @GetMapping("/{projectId}")
-    suspend fun getOneProject(@PathVariable projectId:String): ProjectDTO? = projectService.getOneProject(projectId)
+    suspend fun getOneProject(@PathVariable projectId: BigInteger): Flow<ProjectDTO> = projectService.getOneProject(projectId)
 
     @GetMapping("/members/{projectId}/all")
-    fun getProjectMembers(@PathVariable projectId: String): Flow<Project> = projectService.getProjectMembers()
+    fun getProjectMembers(@PathVariable projectId: String): Flow<ProjectMemberDTO> = projectService.getProjectMembers(projectId)
 
     @GetMapping("/marks/{projectId}/all")
-    fun getProjectMarks(@PathVariable projectId: String): Flow<Project> = projectService.getProjectMarks()
+    fun getProjectMarks(@PathVariable projectId: String): Flow<ProjectMarks> = projectService.getProjectMarks(projectId)
 
     @PostMapping("/send")
     suspend fun createProject(@RequestBody project: ProjectDTO): ProjectDTO = projectService.createProject(project)
