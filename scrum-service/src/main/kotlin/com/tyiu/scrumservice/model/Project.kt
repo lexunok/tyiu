@@ -22,6 +22,9 @@ interface ProjectRepository: CoroutineCrudRepository<Project, String>{
 
         @Query("SELECT * FROM project WHERE status = 'ACTIVE'")
         fun findByStatus(): Flow<Project>
+
+        @Query("SELECT * FROM project_member WHERE user_id = :userId")
+        fun findProjectByUserId(userId: String): Flow<Project>
 }
 @Table
 data class Project(

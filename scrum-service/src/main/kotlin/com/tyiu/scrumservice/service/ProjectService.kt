@@ -17,53 +17,38 @@ class ProjectService(
 ) {
 
     private val connections: MutableMap<String, MutableSharedFlow<Project>> = mutableMapOf()
+    fun ProjectToDTO(project: Project): ProjectDTO {
+    val projects = project.toDTO()
+    /*projects.name = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
+    projects.description = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
+    projects.customer = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
+    projects.initiator = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
+    projects.team = p.teamId?.let { teamRepository.findById(it) }?.toDTO()
+    projects.members = p.userId?.let { projectMemberRepository.findById(it) }?.toDTO()*/
+        return projects
+}
+
+
+
     fun getAllProjects(): Flow<ProjectDTO> =
-        projectRepository.findAll().map { p ->
-            val project = p.toDTO()
-            /*project.name = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.description = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.customer = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.initiator = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.team = p.teamId?.let { teamRepository.findById(it) }?.toDTO()
-            project.members = p.userId?.let { projectMemberRepository.findById(it) }?.toDTO()*/
-            return@map project
+        projectRepository.findAll().map {
+            p -> return@map ProjectToDTO(p)
         }
 
 
-    fun getYourProjects(): Flow<ProjectDTO> = //привязывается к ProjectMembers пока не готово
-        projectRepository.findAll().map { p ->
-            val project = p.toDTO()
-            /*project.name = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.description = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.customer = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.initiator = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.team = p.teamId?.let { teamRepository.findById(it) }?.toDTO()
-            project.members = p.userId?.let { projectMemberRepository.findById(it) }?.toDTO()*/
-            return@map project
+    fun getYourProjects(userId: String): Flow<ProjectDTO> = //привязывается к ProjectMembers
+        projectMemberRepository.findProjectByUserId(userId).map {
+            p -> return@map ProjectToDTO(p)
         }
 
     fun getYourActiveProjects(): Flow<ProjectDTO> = //привязывается к ProjectMembers пока не готово но выводит все ACTIVE
         projectRepository.findByStatus().map {
-            p -> val project = p.toDTO()
-            /*project.name = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.description = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.customer = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.initiator = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.team = p.teamId?.let { teamRepository.findById(it) }?.toDTO()
-            project.members = p.userId?.let { projectMemberRepository.findById(it) }?.toDTO()*/
-            return@map project
+            p -> return@map ProjectToDTO(p)
         }
 
     suspend fun getOneProject(projectId: BigInteger): Flow<ProjectDTO> =
         projectRepository.findByProjectId(projectId).map {
-            p -> val project =p.toDTO()
-            /*project.name = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.description = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.customer = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.initiator = p.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-            project.team = p.teamId?.let { teamRepository.findById(it) }?.toDTO()
-            project.members = p.userId?.let { projectMemberRepository.findById(it) }?.toDTO()*/
-            return@map project
+            p -> return@map ProjectToDTO(p)
         }
 
 
@@ -79,12 +64,7 @@ class ProjectService(
     fun getProjectMarks(projectId: String): Flow<ProjectMarks> = projectMarksRepository.findMarksByProjectId(projectId)
 
     suspend fun createProject(projectDTO: ProjectDTO): ProjectDTO {
-        val project = Project(
-            report = projectDTO.report,
-            startDate = projectDTO.startDate,
-            finishDate = projectDTO.finishDate,
-            status = projectDTO.status
-        )
+        val project = projectDTO.toEntity()
         return projectRepository.save(project).toDTO()
     }
 

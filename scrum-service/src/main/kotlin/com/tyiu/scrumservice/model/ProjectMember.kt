@@ -10,6 +10,10 @@ import java.time.LocalDate
 interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String>{
     @Query("SELECT * FROM project_member WHERE project_id = :projectId")
     fun findMemberByProjectId(projectId: String): Flow<ProjectMember>
+
+    @Query("SELECT * FROM project_member WHERE user_id = :userId")
+    fun findProjectByUserId(userId: String): Flow<Project>
+
 }
 
 

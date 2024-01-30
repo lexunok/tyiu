@@ -15,7 +15,7 @@ class ProjectController (private val projectService: ProjectService) {
     fun getAllProjects(): Flow<ProjectDTO> = projectService.getAllProjects()
 
     @GetMapping("/private/all")
-    fun getYourProjects(): Flow<ProjectDTO> = projectService.getYourProjects()
+    fun getYourProjects(@RequestBody userId: String): Flow<ProjectDTO> = projectService.getYourProjects(userId)
 
     @GetMapping("/active/all")
     fun getYourActiveProjects(): Flow<ProjectDTO> = projectService.getYourActiveProjects()
