@@ -1,13 +1,26 @@
 package com.tyiu.scrumservice.model
 
-import com.tyiu.scrumservice.model.TaskDTO
-import com.tyiu.scrumservice.model.TaskStatus
+
+import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import java.math.BigInteger
 import java.time.LocalDate
 
-interface SprintRepository: CoroutineCrudRepository<Sprint, String>
+interface SprintRepository: CoroutineCrudRepository<Sprint, String>{
+    @Query("SELECT * FROM sprint WHERE project_id =:projectId")
+    fun findAllSprintsByProject(projectId: String): Flow<Sprint>
+
+    @Query("SELECT * FROM sprint WHERE id =:id ")
+    fun findSprintById(id: BigInteger): Flow<Sprint>
+
+    @Query("SELECT * FROM sprint WHERE project_id =:projectId and status = 'ACTIVE'")
+    fun findActiveSprint(projectId: String): Flow<Sprint>
+
+
+}
 @Table
 
 data class Sprint(
