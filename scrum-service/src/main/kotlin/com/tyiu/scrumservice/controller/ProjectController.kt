@@ -6,7 +6,6 @@ import com.tyiu.scrumservice.service.ProjectService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.*
 import java.math.BigInteger
-import java.time.LocalDate
 
 @RestController
 @RequestMapping("/api/v1/scrum-service/project")
@@ -41,10 +40,10 @@ class ProjectController (private val projectService: ProjectService) {
     @PutMapping("/marks/{projectId}/update")
     fun putProjectMarks(@PathVariable projectId: BigInteger): Flow<Project> = projectService.putProjectMarks()
 
-    @PutMapping("/status/change/{projectId}")
-    fun putProjectStatus(@PathVariable projectId: BigInteger,@RequestBody projectStatus: ProjectStatus): Flow<ProjectDTO> = projectService.putProjectStatus(projectId,projectStatus)
+    @PutMapping("/status/change")
+    suspend fun putProjectStatus(@RequestBody projectStatusRequest: ProjectStatusRequest)= projectService.putProjectStatus(projectStatusRequest)
 
     @PutMapping("/finish/change")
-    fun putFinishProject(@RequestBody projectDTO: ProjectDTO): Flow<Project> = projectService.putFinishProject(projectDTO)
+    suspend fun putFinishProject(@RequestBody projectFinishDateRequest: ProjectFinishDateRequest)= projectService.putFinishProject(projectFinishDateRequest)
 
 }

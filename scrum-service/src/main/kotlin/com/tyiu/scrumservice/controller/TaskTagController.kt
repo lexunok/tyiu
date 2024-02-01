@@ -16,10 +16,10 @@ class TaskTagController(private val tagService: TaskTagService) {
     fun getAllTags(): Flow<TaskTagDTO> = tagService.getAllTags()
 
     @PostMapping("/add")
-    fun postTag(): Flow<TaskTag> = tagService.postTag()
+    suspend fun createTag(@RequestBody taskTagDTO: TaskTagDTO): TaskTagDTO = tagService.createTag(taskTagDTO)
 
     @PutMapping("/update/{tagId}")
-    fun updateTag(@PathVariable tagId: String): Flow<TaskTag> = tagService.updateTag()
+    suspend fun updateTag(@PathVariable tagId: BigInteger, @RequestBody taskTagDTO: TaskTagDTO) = tagService.updateTag(tagId,taskTagDTO)
 
     @DeleteMapping("/delete/{tagId}")
     suspend fun deleteTag(@PathVariable tagId: BigInteger): Flow<TaskTag> = tagService.deleteTag(tagId)
