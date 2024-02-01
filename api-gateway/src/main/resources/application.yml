@@ -7,4 +7,25 @@ spring:
         - id: ideas-service
           uri: ${IDEAS_PATH:http://localhost:8082}
           predicates:
-            - Path=/api/v1/ideas-service/**
+            - Path=/ap/v1/ideas-service/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+  security:
+    oauth2:
+      client:
+        registration:
+          gateway:
+            provider: spring
+            client-id: oidc-client
+            client-secret: secret
+            authorization-grant-type: authorization_code
+            redirect-uri: "http://127.0.0.1:7777/login/oauth2/code/oidc-client"
+            scope: openid, profile
+        provider:
+          spring:
+            issuer-uri: http://127.0.0.1:7777
+            token-uri: http://127.0.0.1:7777/oauth2/token
+            user-info-uri: http://127.0.0.1:7777/userinfo
+            user-name-attribute: sub
+            jwk-set-uri: http://127.0.0.1:7777/oauth2/jwks
