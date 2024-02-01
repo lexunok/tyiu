@@ -1,11 +1,16 @@
 package com.tyiu.scrumservice.model
 
-import org.springframework.data.annotation.Id
+import kotlinx.coroutines.flow.Flow
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
-import java.time.LocalDate
+import java.math.BigInteger
 
-interface ProjectMarksRepository: CoroutineCrudRepository<ProjectMarksRepository, String>
+
+interface ProjectMarksRepository: CoroutineCrudRepository<ProjectMarks, String>{
+        @Query("SELECT * FROM project_marks WHERE project_id = :projectId")
+        fun findMarksByProjectId(projectId: String): Flow<ProjectMarks>
+}
 @Table
 data class ProjectMarks(
         val projectId:String? = null,
