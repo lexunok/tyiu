@@ -12,16 +12,20 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.ProviderManager;
+import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.oidc.OidcScopes;
@@ -33,30 +37,29 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
-public class NormConfig {
+@RequiredArgsConstructor
+public class SecurityConfig {
 
     @Bean
     @Order(1)
-    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http)
-            throws Exception {
+    public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
         OAuth2AuthorizationServerConfiguration.applyDefaultSecurity(http);
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .oidc(Customizer.withDefaults());
         http
-                .exceptionHandling((exceptions) -> exceptions
+                .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint("/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
-                .oauth2ResourceServer((resourceServer) -> resourceServer
+                .oauth2ResourceServer(resourceServer -> resourceServer
                         .jwt(Customizer.withDefaults()));
 
         return http.build();
@@ -67,32 +70,34 @@ public class NormConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
             throws Exception {
         http
-                .authorizeHttpRequests((authorize) -> authorize
-                        .anyRequest().authenticated()
-                )
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers("/api/v1/authorization/register").permitAll()
+                        .anyRequest().authenticated())
+                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/authorization/register"))
                 .formLogin(Customizer.withDefaults());
-
         return http.build();
     }
-
     @Bean
-    public UserDetailsService userDetailsService() {
-        UserDetails userDetails = User.withDefaultPasswordEncoder()
-                .username("user")
-                .password("password")
-                .roles("USER")
-                .build();
-        return new InMemoryUserDetailsManager(userDetails);
+    public AuthenticationManager authenticationManager(
+            UserDetailsService userDetailsService, PasswordEncoder encoder) {
+        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider();
+        authenticationProvider.setUserDetailsService(userDetailsService);
+        authenticationProvider.setPasswordEncoder(encoder);
+        return new ProviderManager(authenticationProvider);
+    }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
     }
 
     @Bean
-    public RegisteredClientRepository registeredClientRepository() {
+    public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("oidc-client")
-                .clientSecret("{noop}secret")
+                .clientId("gateway")
+                .clientSecret(encoder.encode("secret"))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://127.0.0.1:7777/login/oauth2/code/oidc-client")
+                .redirectUri("https://hits.tyuiu.ru")
                 .scope(OidcScopes.OPENID)
                 .scope(OidcScopes.PROFILE)
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
@@ -135,5 +140,6 @@ public class NormConfig {
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().issuer("http://127.0.0.1:7777").build();
     }
+
 
 }

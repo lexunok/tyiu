@@ -7,7 +7,14 @@ spring:
         - id: ideas-service
           uri: ${IDEAS_PATH:http://localhost:8082}
           predicates:
-            - Path=/ap/v1/ideas-service/**
+            - Path=/api/v1/ideas-service/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
+        - id: scrum-service
+          uri: ${SCRUM_PATH:http://localhost:8081}
+          predicates:
+            - Path=/api/v1/scrum-service/**
           filters:
             - TokenRelay=
             - RemoveRequestHeader=Cookie
@@ -17,15 +24,11 @@ spring:
         registration:
           gateway:
             provider: spring
-            client-id: oidc-client
+            client-id: gateway
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://127.0.0.1:7777/login/oauth2/code/oidc-client"
+            redirect-uri: https://hits.tyuiu.ru
             scope: openid, profile
         provider:
           spring:
             issuer-uri: http://127.0.0.1:7777
-            token-uri: http://127.0.0.1:7777/oauth2/token
-            user-info-uri: http://127.0.0.1:7777/userinfo
-            user-name-attribute: sub
-            jwk-set-uri: http://127.0.0.1:7777/oauth2/jwks
