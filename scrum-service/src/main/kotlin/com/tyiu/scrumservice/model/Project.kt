@@ -2,7 +2,6 @@ package com.tyiu.scrumservice.model
 
 import com.tyiu.ideas.model.dto.IdeaDTO
 import com.tyiu.ideas.model.dto.TeamDTO
-import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Idea
 import com.tyiu.ideas.model.entities.Team
 import kotlinx.coroutines.flow.Flow
@@ -25,9 +24,6 @@ interface ProjectRepository: CoroutineCrudRepository<Project, String>{
 
         @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId")
         fun findProjectByUserId(userId: String): Flow<Project>
-
-        @Query("UPDATE project SET status = :projectStatus WHERE id =:projectId")
-        fun updateProjectStatus(projectId: BigInteger, projectStatus: ProjectStatus): Flow<Project>
 
 }
 @Table
@@ -59,6 +55,16 @@ data class ProjectDTO (
 enum class ProjectStatus{
         ACTIVE, DONE, FAILED
 }
+
+data class ProjectStatusRequest(
+        val projectId:BigInteger? = null,
+        val projectStatus:ProjectStatus? = null,
+)
+
+data class ProjectFinishDateRequest(
+        val projectId:BigInteger? = null,
+        val finishDate: LocalDate? = null,
+)
 
 fun Project.toDTO(): ProjectDTO=ProjectDTO(
         id = id,
