@@ -11,12 +11,25 @@ services:
       - 5432:5432
     volumes:
       - postgres:/data/postgres
-  rabbitmq:
-    container_name: rabbitmq
-    image: rabbitmq:3.12.12-management
+  postgres_auth:
+    container_name: postgres_auth
+    image: postgres
     restart: always
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: hits
     ports:
-      - 5672:5672
-      - 15672:15672
+      - 5433:5432
+    volumes:
+      - postgres_auth:/data/postgres_auth
+#  rabbitmq:
+#    container_name: rabbitmq
+#    image: rabbitmq:3.12.12-management
+#    restart: always
+#    ports:
+#      - 5672:5672
+#      - 15672:15672
 volumes:
   postgres:
+  postgres_auth:
