@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
-import org.springframework.r2dbc.core.bind
 import org.springframework.stereotype.Service
 import java.math.BigInteger
 
@@ -72,12 +71,23 @@ class ProjectService(
 
     fun getProjectLogs(projectId: String): Flow<TaskMovementLog> = taskMovementLogRepository.findLogByProjectId(projectId)
 
-    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): Flow<Project> = projectRepository.findAll()
+    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
+        val project = Project(
+            ideaId = ideaMarketDTO.ideaId
+            //teamId = ideaMarketDTO.
+        )
+        return projectToDTO(projectRepository.save(project))
 
-    fun addMembersInProject(): Flow<Project> = projectRepository.findAll()
+    }
 
-    fun putProjectMarks(): Flow<Project> = projectRepository.findAll()
+    fun addMembersInProject(): Flow<ProjectMember> = projectMemberRepository.findAll()
 
+    suspend fun putProjectMarks(projectMarks: ProjectMarks) {
+        val query = "UPDATE project_marks SET mark = :mark WHERE user_id = :userId"
+        return template.databaseClient.sql(query)
+            .bind("mark", projectMarks.mark!!)
+            .bind("userId", projectMarks.userId!!).await()
+    }
     suspend fun putProjectStatus(projectStatusRequest: ProjectStatusRequest) {
         val query = "UPDATE project SET status = :projectStatus WHERE id = :projectId"
         return template.databaseClient.sql(query)

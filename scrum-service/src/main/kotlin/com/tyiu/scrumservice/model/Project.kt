@@ -74,13 +74,6 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
         status = status,
 )
 
-fun ProjectDTO.toEntity(): Project = Project(
-        report = report,
-        startDate = startDate,
-        finishDate = finishDate,
-        status = status,
-)
-
 /*fun Idea.toDTO(): IdeaDTO = IdeaDTO(
         id,
         name,

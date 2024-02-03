@@ -32,12 +32,12 @@ class TaskTagService (
         return tagToDTO
     }
 
-    suspend fun updateTag(tagId: BigInteger, taskTagDTO: TaskTagDTO) {
-        val query = "UPDATE task_tag SET name = :name, color = :color, isConfirmed = :isConfirmed WHERE id = :tagId"
+    suspend fun updateTag(tagId: BigInteger, taskTagRequest: TaskTagRequest) {
+        val query = "UPDATE task_tag SET name = :tagName, color = :tagColor, is_confirmed = :tagConfirmed WHERE id = :tagId"
         return template.databaseClient.sql(query)
-            .bind("name",taskTagDTO.name!!)
-            .bind("color",taskTagDTO.color!!)
-            .bind("isConfirmed",taskTagDTO.isConfirmed!!)
+            .bind("tagName",taskTagRequest.tagName!!)
+            .bind("tagColor",taskTagRequest.tagColor!!)
+            .bind("tagConfirmed",taskTagRequest.tagConfirmed!!)
             .bind("tagId", tagId).await()
     }
 
