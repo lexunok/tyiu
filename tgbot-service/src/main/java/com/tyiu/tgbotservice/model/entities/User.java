@@ -1,6 +1,6 @@
-package com.tyiu.tgbotservice.model;
+package com.tyiu.tgbotservice.model.entities;
 
-import com.tyiu.tgbotservice.model.Role;
+import com.tyiu.tgbotservice.model.enums.Role;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;

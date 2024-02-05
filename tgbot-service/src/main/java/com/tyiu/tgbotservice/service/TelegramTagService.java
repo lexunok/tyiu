@@ -1,6 +1,6 @@
 package com.tyiu.tgbotservice.service;
 
-import com.tyiu.tgbotservice.model.UserTelegram;
+import com.tyiu.tgbotservice.model.entities.UserTelegram;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;

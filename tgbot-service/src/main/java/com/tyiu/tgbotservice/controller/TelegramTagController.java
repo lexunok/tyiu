@@ -1,7 +1,6 @@
 package com.tyiu.tgbotservice.controller;
 
-import com.tyiu.tgbotservice.model.User;
-import com.tyiu.tgbotservice.model.UserTelegram;
+import com.tyiu.tgbotservice.model.entities.UserTelegram;
 import com.tyiu.tgbotservice.service.TelegramTagService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

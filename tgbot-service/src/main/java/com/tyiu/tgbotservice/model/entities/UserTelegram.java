@@ -1,4 +1,4 @@
-package com.tyiu.tgbotservice.model;
+package com.tyiu.tgbotservice.model.entities;
 
 import lombok.Data;
 import org.springframework.data.relational.core.mapping.Table;

@@ -1,4 +1,4 @@
-package com.tyiu.tgbotservice.model;
+package com.tyiu.tgbotservice.model.request;
 
 import lombok.*;
 

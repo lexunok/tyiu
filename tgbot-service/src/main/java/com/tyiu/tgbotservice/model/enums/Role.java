@@ -1,4 +1,4 @@
-package com.tyiu.tgbotservice.model;
+package com.tyiu.tgbotservice.model.enums;
 
 public enum Role {
     INITIATOR,
