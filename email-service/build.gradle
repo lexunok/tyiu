@@ -25,6 +25,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation "org.springframework.boot:spring-boot-starter-freemarker"
 	implementation "org.springframework.boot:spring-boot-starter-amqp"
+	implementation project(path: ":library")
 
 	compileOnly 'org.projectlombok:lombok'
 

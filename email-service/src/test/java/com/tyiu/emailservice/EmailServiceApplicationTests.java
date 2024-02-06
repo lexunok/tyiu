@@ -1,22 +1,12 @@
 package com.tyiu.emailservice;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.annotation.DirtiesContext;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@SpringBootTest
+@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@DirtiesContext
 public class EmailServiceApplicationTests {
-
-	@Value("${test-mail.username}")
-	private String testEmail;
-	@Value("${test-mail.password}")
-	private String password;
-
-	@Test
-    void testApplicationYml() {
-
-	}
 
 }
