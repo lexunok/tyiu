@@ -1,11 +1,11 @@
-package com.tyiu.tgbotservice;
+package com.tyiu.tgbotservice.rabbitmq;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.RabbitMQContainer;
 import org.testcontainers.utility.DockerImageName;
 
-public abstract class TestContainers {
+public abstract class TestContainersRabbitMQ {
 
     static RabbitMQContainer container;
 

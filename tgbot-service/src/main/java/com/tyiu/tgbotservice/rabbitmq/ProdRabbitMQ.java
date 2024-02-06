@@ -1,36 +1,47 @@
 package com.tyiu.tgbotservice.rabbitmq;
 
-import com.tyiu.tgbotservice.model.request.NotificationTelegramResponse;
-import com.tyiu.tgbotservice.model.response.Response;
 import com.tyiu.tgbotservice.service.BotService;
+import interfaces.INotificationRabbitMQ;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
+import requests.NotificationRequest;
+import response.NotificationResponse;
 
 @Slf4j
 @Service
 @Component
 @EnableRabbit
 @RequiredArgsConstructor
-public class ProdRabbitMQ implements InterfaceRabbitMQ {
+public class ProdRabbitMQ implements INotificationRabbitMQ {
+
+    @Value("${rabbitmq.exchange}")
+    private String exchange;
+
+    @Value("${rabbitmq.routes.respond.to.notification}")
+    private String route;
 
     private final BotService bot;
+    private final RabbitTemplate rabbitTemplate;
 
     @Override
     @RabbitListener(queues = {"${rabbitmq.queue.receive.new}"})
-    public Response listenToNewNotification(NotificationTelegramResponse notification) {
+    public void makeNotification(NotificationRequest notificationRequest) {
 
         try {
             String answer = "Вам пришло уведомление от портале ВШЦТ!\n\n" +
-                    notification.getTitle() + "\n" +
-                    notification.getMessage() + "\n\n" +
+                    notificationRequest.getTitle() + "\n" +
+                    notificationRequest.getMessage() + "\n\n" +
                     "Подробнее можете ознакомиться здесь:\n" +
-                    notification.getLink();
+                    notificationRequest.getLink();
 
-            String tag = notification.getTag();
+            String tag = notificationRequest.getTag();
             if (tag != null) {
                 bot.sendNotificationToChat(tag, answer);
             } else {
@@ -39,9 +50,10 @@ public class ProdRabbitMQ implements InterfaceRabbitMQ {
         } catch (Exception e) {
             log.warn("Error sending notification " + e.fillInStackTrace());
         }
+    }
 
-        return Response.builder()
-                .message("Done")
-                .build();
+    @Override
+    public void validateResponse(ResponseEntity<NotificationResponse> response) {
+        rabbitTemplate.convertAndSend(exchange, route, response);
     }
 }

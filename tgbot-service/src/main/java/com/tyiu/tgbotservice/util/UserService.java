@@ -1,6 +1,6 @@
 package com.tyiu.tgbotservice.util;
 
-import com.tyiu.tgbotservice.model.entities.User;
+import com.tyiu.ideas.model.entities.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.security.core.userdetails.ReactiveUserDetailsService;

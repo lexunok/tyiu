@@ -1,4 +1,4 @@
-package com.tyiu.tgbotservice;
+package com.tyiu.tgbotservice.rabbitmq;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
@@ -13,7 +13,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 @Testcontainers
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class RabbitMQContainerTest extends TestContainers {
+class RabbitMQContainerTest extends TestContainersRabbitMQ {
 
 	@Value("${rabbitmq.queue.receive.new}")
 	private String queue;
