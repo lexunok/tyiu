@@ -1,6 +1,8 @@
 rootProject.name = 'tyiu'
 include('authorization-service')
+include('notification-service')
 include('ideas-service')
 include('scrum-service')
 include('tgbot-service')
 include('api-gateway')
+include('library')
