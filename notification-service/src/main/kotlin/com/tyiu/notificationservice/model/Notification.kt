@@ -18,8 +18,8 @@ interface NotificationRepository: CoroutineCrudRepository<Notification, String> 
     @Query("SELECT * FROM notification n WHERE n.consumer_tag = :tag AND n.is_read = :isRead ORDER BY n.created_at ASC")
     fun findAllUnreadNotificationsByTag(tag: String, isRead: Boolean = false): Flow<Notification>
 
-//    @Query("SELECT * FROM notification n WHERE n.consumer_email = :tag AND n.is_read = false ORDER BY n.created_at ASC")
-//    fun findAllUnreadNotificationsByEmail(email: String): Flow<Notification>
+    @Query("SELECT * FROM notification n WHERE n.consumer_email = :tag AND n.is_read = false ORDER BY n.created_at ASC")
+    fun findAllUnreadNotificationsByEmail(email: String): Flow<Notification>
 
     @Query("UPDATE notification n SET n.is_sent_by_telegram_service = true WHERE n.id = :id")
     fun setSentByTelegramServiceFieldTrue(id: String)

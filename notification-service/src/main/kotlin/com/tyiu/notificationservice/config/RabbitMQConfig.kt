@@ -70,7 +70,7 @@ open class RabbitMQConfig {
     open fun messageConverter(): MessageConverter {
         return Jackson2JsonMessageConverter()
     }
-
+    
     @Bean
     open fun getTemplate(connectionFactory: ConnectionFactory): AmqpTemplate {
         val rabbitTemplate = RabbitTemplate(connectionFactory)
