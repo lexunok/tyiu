@@ -1,6 +1,7 @@
 package com.tyiu.scrumservice.service
 
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
+import com.tyiu.ideas.model.toDTO
 import com.tyiu.scrumservice.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -76,7 +77,18 @@ class ProjectService(
 
     }
 
-    fun addMembersInProject(): Flow<ProjectMember> = projectMemberRepository.findAll()
+    suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMemberDTO {
+        val projectMember = ProjectMember(
+            projectId = projectId,
+            userId = teamMemberRequest.userId,
+            teamId = teamMemberRequest.teamId
+        )
+        val projectMemberToDTO = projectMemberRepository.save(projectMember).toDTO()
+        projectMemberToDTO.email = projectMember.userId?.let { userRepository.findById(it) }?.toDTO()?.email
+        projectMemberToDTO.firstName = projectMember.userId?.let { userRepository.findById(it) }?.toDTO()?.firstName
+        projectMemberToDTO.lastName = projectMember.userId?.let { userRepository.findById(it) }?.toDTO()?.lastName
+        return projectMemberToDTO
+    }
 
     suspend fun putProjectMarks(projectMarks: ProjectMarks) {
         val query = "UPDATE project_marks SET mark = :mark WHERE user_id = :userId"

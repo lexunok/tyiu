@@ -17,6 +17,7 @@ interface IdeaRepository: CoroutineCrudRepository<Idea, String> {}
 
 interface TeamRepository: CoroutineCrudRepository<Team, String> {}
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
+
         @Query("SELECT * FROM project WHERE id = :projectId")
         fun findByProjectId(projectId: BigInteger): Flow<Project>
 

@@ -25,17 +25,18 @@ data class ProjectMember (
     val projectId:String?=null,
     val userId:String?=null,
     val teamId:String?=null,
-    val projectRole: ProjectRole?=null,
+    val projectRole: ProjectRole?=ProjectRole.MEMBER,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = null
 )
 
 data class ProjectMemberDTO(
+    val userId:String?=null,
     val teamId:String?=null,
     var email:String? = null,
     var firstName:String? = null,
     var lastName:String? = null,
-    val projectRole:ProjectRole?=null,
+    val projectRole:ProjectRole?=ProjectRole.MEMBER,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = LocalDate.now(),
 )

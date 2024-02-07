@@ -35,7 +35,7 @@ class ProjectController (private val projectService: ProjectService) {
     @PostMapping("/send")
     suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO): ProjectDTO = projectService.createProject(ideaMarketDTO)
     @PostMapping("/{projectId}/add/members")
-    fun addMembersInProject(@PathVariable projectId: String, @RequestBody teamMemberDTO: TeamMemberDTO): Flow<ProjectMember> = projectService.addMembersInProject()
+    suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody teamMemberRequest: TeamMemberRequest): ProjectMemberDTO = projectService.addMembersInProject(projectId,teamMemberRequest)
 
     @PutMapping("/marks/update")
     suspend fun putProjectMarks(@RequestBody projectMarks: ProjectMarks) = projectService.putProjectMarks(projectMarks)
