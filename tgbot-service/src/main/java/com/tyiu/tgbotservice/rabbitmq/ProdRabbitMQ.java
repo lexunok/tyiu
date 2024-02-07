@@ -8,6 +8,7 @@ import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
@@ -43,12 +44,41 @@ public class ProdRabbitMQ implements INotificationRabbitMQ {
 
             String tag = notificationRequest.getTag();
             if (tag != null) {
+
                 bot.sendNotificationToChat(tag, answer);
+
+                String message = String.format("Notification (id = %s) was successfully sent to the user with the tag = %s",
+                        notificationRequest.getNotificationId(),
+                        notificationRequest.getTag());
+
+                ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
+                        .message(message)
+                        .notificationId(notificationRequest.getNotificationId())
+                        .build(),
+                        HttpStatusCode.valueOf(200));
+                validateResponse(response);
+
             } else {
-                log.error("Incorrect consumed object");
+
+                String message = String.format("Error when sending notification (id = %s) to user. Tag is null!",
+                        notificationRequest.getNotificationId());
+
+                ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
+                        .message(message)
+                        .notificationId(notificationRequest.getNotificationId())
+                        .build(),
+                        HttpStatusCode.valueOf(404));
+                validateResponse(response);
             }
+
         } catch (Exception e) {
-            log.warn("Error sending notification " + e.fillInStackTrace());
+
+            ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
+                    .message(e.getMessage())
+                    .notificationId(notificationRequest.getNotificationId())
+                    .build(),
+                    HttpStatusCode.valueOf(500));
+            validateResponse(response);
         }
     }
 
