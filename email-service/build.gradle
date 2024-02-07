@@ -26,6 +26,7 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-freemarker"
 	implementation "org.springframework.boot:spring-boot-starter-amqp"
 	implementation project(path: ":library")
+	implementation project(path: ":ideas-service")
 
 	compileOnly 'org.projectlombok:lombok'
 
@@ -33,6 +34,8 @@ dependencies {
 
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation project(path: ":library")
+	testImplementation project(path: ":ideas-service")
 }
 
 tasks.named('test') {

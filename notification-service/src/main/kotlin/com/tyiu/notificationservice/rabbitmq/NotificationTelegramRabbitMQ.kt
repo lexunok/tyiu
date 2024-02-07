@@ -1,7 +1,7 @@
 package com.tyiu.notificationservice.rabbitmq
 
 import com.tyiu.notificationservice.service.NotificationService
-import interfaces.INotificationRabbitMQ
+import interfaces.INotification
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import org.springframework.amqp.rabbit.annotation.RabbitListener
@@ -9,12 +9,16 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
-import requests.NotificationRequest
+import request.NotificationRequest
 import response.NotificationResponse
+
+abstract class AbstractNotificationTelegram: INotification
+
 
 @Component
 class NotificationTelegramRabbitMQ(private val rabbitTemplate: RabbitTemplate,
-                                   private val notificationService: NotificationService): INotificationRabbitMQ {
+                                   private val notificationService: NotificationService):
+    AbstractNotificationTelegram() {
     private val log: Logger = LoggerFactory.getLogger(NotificationTelegramRabbitMQ::class.java)
 
     @Value("\${rabbitmq.topic}")

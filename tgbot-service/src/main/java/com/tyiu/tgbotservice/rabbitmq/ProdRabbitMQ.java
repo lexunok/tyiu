@@ -1,7 +1,7 @@
 package com.tyiu.tgbotservice.rabbitmq;
 
 import com.tyiu.tgbotservice.service.BotService;
-import interfaces.INotificationRabbitMQ;
+import interfaces.INotification;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -11,14 +11,14 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
-import requests.NotificationRequest;
+import request.NotificationRequest;
 import response.NotificationResponse;
 
 @Service
 @Component
 @EnableRabbit
 @RequiredArgsConstructor
-public class ProdRabbitMQ implements INotificationRabbitMQ {
+public class ProdRabbitMQ implements INotification {
 
     @Value("${rabbitmq.exchange}")
     private String exchange;

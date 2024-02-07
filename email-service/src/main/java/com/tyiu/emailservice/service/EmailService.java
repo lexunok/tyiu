@@ -1,7 +1,7 @@
 package com.tyiu.emailservice.service;
 
 import com.tyiu.emailservice.config.FreeMarkerConfig;
-import com.tyiu.emailservice.config.exception.CustomHttpException;
+import com.tyiu.ideas.config.exception.CustomHttpException;
 import com.tyiu.emailservice.model.responses.ChangeDataEmailResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import reactor.core.publisher.Mono;
-import requests.NotificationRequest;
+import request.NotificationRequest;
 
 import java.util.Map;
 
@@ -54,7 +54,6 @@ public class EmailService {
     }
 
     public Mono<String> sendMailNotification(NotificationRequest notificationRequest) {
-        notificationRequest.setLink(notificationRequest.getLink());
         return Mono.just(javaMailSender.createMimeMessage())
                 .flatMap(mimeMessage -> getNotificationContext(notificationRequest)
                     .flatMap(html -> {

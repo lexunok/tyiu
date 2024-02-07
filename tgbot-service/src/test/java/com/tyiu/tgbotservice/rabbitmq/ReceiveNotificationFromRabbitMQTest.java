@@ -4,16 +4,15 @@ import com.tyiu.ideas.config.exception.CustomHttpException;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.tgbotservice.model.entities.UserTelegram;
-import com.tyiu.tgbotservice.telegram.TestContainersDB;
-import interfaces.INotificationRabbitMQ;
 import org.junit.jupiter.api.BeforeAll;
+import interfaces.INotification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import request.NotificationRequest;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import reactor.core.publisher.Mono;
-import requests.NotificationRequest;
 
 import java.util.List;
 
@@ -22,13 +21,13 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class ReceiveNotificationFromRabbitMQTest extends TestContainersDB {
+public class ReceiveNotificationFromRabbitMQTest {
 
     @Autowired
     private R2dbcEntityTemplate template;
 
     @Autowired
-    private INotificationRabbitMQ testRabbitMQ = new TestRabbitMQ();
+    private INotification testRabbitMQ;
 
     private Mono<Void> setUserTag(String email, String tag) {
 

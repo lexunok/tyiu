@@ -6,10 +6,12 @@ import com.tyiu.notificationservice.service.NotificationService
 import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.stereotype.Component
 
+
+
 @Component
 class NotificationRabbitMQ(private val notificationService: NotificationService,
-                           private val notificationEmailRabbitMQ: NotificationEmailRabbitMQ,
-                           private val notificationTelegramRabbitMQ: NotificationTelegramRabbitMQ)
+                           private val notificationEmailRabbitMQ: AbstractNotificationEmail,
+                           private val notificationTelegramRabbitMQ: AbstractNotificationTelegram)
 {
 
     private val path = "https://hits.tyuiu.ru/"

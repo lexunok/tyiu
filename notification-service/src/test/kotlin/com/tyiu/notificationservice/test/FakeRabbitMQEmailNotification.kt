@@ -1,11 +1,14 @@
 package com.tyiu.notificationservice.test
 
-import interfaces.INotificationRabbitMQ
+import com.tyiu.notificationservice.rabbitmq.AbstractNotificationEmail
 import org.springframework.http.ResponseEntity
-import requests.NotificationRequest
+import org.springframework.stereotype.Component
+import request.NotificationRequest
 import response.NotificationResponse
 
-class FakeRabbitMQEmailNotification: INotificationRabbitMQ {
+
+@Component
+class FakeRabbitMQEmailNotification: AbstractNotificationEmail() {
     override fun makeNotification(notificationRequest: NotificationRequest?) {
         TODO("Not yet implemented")
     }

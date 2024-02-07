@@ -7,7 +7,7 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
-import requests.NotificationRequest
+import request.NotificationRequest
 import java.time.LocalDateTime
 
 interface NotificationRepository: CoroutineCrudRepository<Notification, String> {

@@ -5,18 +5,18 @@ import com.tyiu.ideas.model.entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.HttpStatusCode;
+import interfaces.INotification;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import interfaces.INotificationRabbitMQ;
-import requests.NotificationRequest;
+import request.NotificationRequest;
 import response.NotificationResponse;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 
 @Component
-public class TestRabbitMQ implements INotificationRabbitMQ {
+public class TestRabbitMQ implements INotification {
 
     @Autowired
     private R2dbcEntityTemplate template;

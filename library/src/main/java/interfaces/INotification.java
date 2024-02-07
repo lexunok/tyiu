@@ -1,10 +1,10 @@
 package interfaces;
 
 import org.springframework.http.ResponseEntity;
-import requests.NotificationRequest;
+import request.NotificationRequest;
 import response.NotificationResponse;
 
-public interface INotificationRabbitMQ {
+public interface INotification {
     void makeNotification(NotificationRequest notificationRequest);
     void validateResponse(ResponseEntity<NotificationResponse> response);
 }

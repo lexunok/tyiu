@@ -1,7 +1,7 @@
 package com.tyiu.emailservice.rabbitmq;
 
 import com.tyiu.emailservice.service.EmailService;
-import interfaces.INotificationRabbitMQ;
+import interfaces.INotification;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
@@ -9,13 +9,15 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
+import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
-import requests.NotificationRequest;
+import request.NotificationRequest;
 import response.NotificationResponse;
 
 @RequiredArgsConstructor
 @Slf4j
-public class NotificationEmailRabbitMQ implements INotificationRabbitMQ {
+@Component
+public class NotificationEmailRabbitMQ implements INotification {
 
     private final EmailService emailService;
     private final RabbitTemplate rabbitTemplate;
@@ -25,6 +27,7 @@ public class NotificationEmailRabbitMQ implements INotificationRabbitMQ {
 
     @Value("${rabbitmq.notification-route.validate")
     private String validateRoute;
+
     @Override
     @RabbitListener(queues = {"${rabbitmq.notification-queue.make}"})
     public void makeNotification(NotificationRequest notificationRequest) {
