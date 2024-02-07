@@ -2,6 +2,7 @@ package com.tyiu.scrumservice.model
 
 import com.tyiu.ideas.model.dto.IdeaDTO
 import com.tyiu.ideas.model.dto.TeamDTO
+import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Idea
 import com.tyiu.ideas.model.entities.Team
 import kotlinx.coroutines.flow.Flow
@@ -40,7 +41,10 @@ data class Project(
 
 data class ProjectDTO (
         val id:String? = null,
-        var idea: IdeaDTO?=null,
+        var name: String?=null,
+        var description: String?=null,
+        var customer: String?=null,
+        var initiator: UserDTO? = null,
         var team: TeamDTO? = null,
         var members: List<ProjectMemberDTO>? = null,
         val report: String? = null,

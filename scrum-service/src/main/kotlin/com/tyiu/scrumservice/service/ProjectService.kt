@@ -23,7 +23,10 @@ class ProjectService(
 ) {
     suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
-        projects.idea = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
+        projects.name = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()?.name
+        projects.description = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()?.description
+        projects.customer = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()?.customer
+        projects.initiator = project.ideaId?.let { userRepository.findById(it) }?.toDTO()
         projects.team = project.teamId?.let { teamRepository.findById(it) }?.toDTO()
         projects.members = getProjectMembers(project.id.toString()).toList()
         return projects
@@ -52,7 +55,9 @@ class ProjectService(
     fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> =
         projectMemberRepository.findMemberByProjectId(projectId).map { p ->
             val projectMember = p.toDTO()
-            projectMember.user = p.userId?.let { userRepository.findById(it) }?.toDTO()
+            projectMember.email = p.userId?.let { userRepository.findById(it) }?.toDTO()?.email
+            projectMember.firstName = p.userId?.let { userRepository.findById(it) }?.toDTO()?.firstName
+            projectMember.lastName = p.userId?.let { userRepository.findById(it) }?.toDTO()?.lastName
             return@map projectMember
         }
 

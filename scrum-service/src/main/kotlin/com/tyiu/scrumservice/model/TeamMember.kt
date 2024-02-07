@@ -17,9 +17,9 @@ data class TeamMember(
 
 data class TeamMemberDTO(
     val userId: String? = null,
-    var email: UserDTO? = null,
-    val firstName:UserDTO? = null,
-    val lastName:UserDTO? = null,
+    var email:String? = null,
+    val firstName:String? = null,
+    val lastName:String? = null,
     var teamRole:TeamRole? = null,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = null,
