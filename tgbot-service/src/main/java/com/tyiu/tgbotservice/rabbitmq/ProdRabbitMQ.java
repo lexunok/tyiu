@@ -10,11 +10,9 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import request.NotificationRequest;
 import response.NotificationResponse;
 
-@Service
 @Component
 @EnableRabbit
 @RequiredArgsConstructor
