@@ -44,6 +44,6 @@ class ProjectController (private val projectService: ProjectService) {
     suspend fun putProjectStatus(@RequestBody projectStatusRequest: ProjectStatusRequest)= projectService.putProjectStatus(projectStatusRequest)
 
     @PutMapping("/finish/change")
-    suspend fun putFinishProject(@RequestBody projectFinishDateRequest: ProjectFinishDateRequest)= projectService.putFinishProject(projectFinishDateRequest)
+    suspend fun putFinishProject(@RequestBody projectFinishRequest: ProjectFinishRequest)= projectService.putFinishProject(projectFinishRequest)
 
 }

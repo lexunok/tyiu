@@ -61,8 +61,9 @@ data class ProjectStatusRequest(
         val projectStatus:ProjectStatus? = null,
 )
 
-data class ProjectFinishDateRequest(
+data class ProjectFinishRequest(
         val projectId:BigInteger? = null,
+        val projectReport: String? = null,
         val finishDate: LocalDate? = null,
 )
 
@@ -79,7 +80,7 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
         name,
         description,
         customer,
-        initiatorId
+        initiatorId,
 )
 
 fun Team.toDTO(): TeamDTO = TeamDTO(
