@@ -18,15 +18,13 @@ class ProjectService(
     private val projectMemberRepository: ProjectMemberRepository,
     private val projectMarksRepository: ProjectMarksRepository,
     private val taskMovementLogRepository: TaskMovementLogRepository,
-    val template: R2dbcEntityTemplate
+    val template: R2dbcEntityTemplate,
+    private val userRepository: UserRepository
 ) {
     suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
-        /*projects.name = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-        projects.description = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-        projects.customer = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-        projects.initiator = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
-        projects.team = project.teamId?.let { teamRepository.findById(it) }?.toDTO()*/
+        projects.idea = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()
+        projects.team = project.teamId?.let { teamRepository.findById(it) }?.toDTO()
         projects.members = getProjectMembers(project.id.toString()).toList()
         return projects
     }
@@ -54,9 +52,7 @@ class ProjectService(
     fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> =
         projectMemberRepository.findMemberByProjectId(projectId).map { p ->
             val projectMember = p.toDTO()
-            /*projectMember.email = p.userId?.let { ideaRepository.findById(it) }?.toDTO()
-            projectMember.firstName = p.userId?.let { ideaRepository.findById(it) }?.toDTO()
-            projectMember.lastName = p.userId?.let { ideaRepository.findById(it) }?.toDTO()*/
+            projectMember.user = p.userId?.let { userRepository.findById(it) }?.toDTO()
             return@map projectMember
         }
 

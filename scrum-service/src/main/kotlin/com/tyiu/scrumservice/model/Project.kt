@@ -40,10 +40,7 @@ data class Project(
 
 data class ProjectDTO (
         val id:String? = null,
-        var name: IdeaDTO? = null,
-        var description:IdeaDTO? = null,
-        var customer:IdeaDTO? = null,
-        var initiator: IdeaDTO? = null,
+        var idea: IdeaDTO?=null,
         var team: TeamDTO? = null,
         var members: List<ProjectMemberDTO>? = null,
         val report: String? = null,
@@ -75,7 +72,7 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
         status = status,
 )
 
-/*fun Idea.toDTO(): IdeaDTO = IdeaDTO(
+fun Idea.toDTO(): IdeaDTO = IdeaDTO(
         id,
         name,
         description,
@@ -86,4 +83,4 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
 fun Team.toDTO(): TeamDTO = TeamDTO(
         id,
         name,
-)*/
+)

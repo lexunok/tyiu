@@ -1,6 +1,7 @@
 package com.tyiu.scrumservice.model
 
 import com.tyiu.ideas.model.dto.UserDTO
+import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -16,6 +17,8 @@ interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String
 
 }
 
+interface UserRepository: CoroutineCrudRepository<User, String> {}
+
 
 @Table
 data class ProjectMember (
@@ -28,11 +31,8 @@ data class ProjectMember (
 )
 
 data class ProjectMemberDTO(
-    val userId:String?=null,
     val teamId:String?=null,
-    var email: UserDTO? = null,
-    var firstName:UserDTO? = null,
-    var lastName:UserDTO? = null,
+    var user: UserDTO? = null,
     val projectRole:ProjectRole?=null,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = LocalDate.now(),
@@ -43,9 +43,15 @@ enum class ProjectRole{
 }
 
 fun ProjectMember.toDTO():ProjectMemberDTO = ProjectMemberDTO(
-    userId = userId,
     teamId = teamId,
     projectRole = projectRole,
     startDate = startDate,
     finishDate = finishDate,
+)
+
+fun User.toDTO(): UserDTO = UserDTO(
+    id,
+    email,
+    firstName,
+    lastName,
 )
