@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import request.NotificationRequest;
 import response.NotificationResponse;
 
-@Component
+@Component("prodTelegramClient")
 @EnableRabbit
 @RequiredArgsConstructor
 public class ProdRabbitMQ implements INotification {

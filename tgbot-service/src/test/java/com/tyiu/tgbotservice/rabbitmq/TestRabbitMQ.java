@@ -15,7 +15,7 @@ import response.NotificationResponse;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 
-@Component
+@Component("testTelegramClient")
 public class TestRabbitMQ implements INotification {
 
     @Autowired

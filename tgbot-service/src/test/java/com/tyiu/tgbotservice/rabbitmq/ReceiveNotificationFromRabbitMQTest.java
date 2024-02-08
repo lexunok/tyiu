@@ -10,6 +10,7 @@ import interfaces.INotification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import request.NotificationRequest;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -28,6 +29,7 @@ public class ReceiveNotificationFromRabbitMQTest extends TestContainersDB {
     private R2dbcEntityTemplate template;
 
     @Autowired
+    @Qualifier("testTelegramClient")
     private INotification testRabbitMQ;
 
     private Mono<Void> setUserTag(String email, String tag) {
