@@ -1,0 +1,23 @@
+package com.tyiu.emailservice.model.entity;
+
+import lombok.*;
+import org.springframework.data.annotation.Id;
+import org.springframework.data.relational.core.mapping.Table;
+
+import java.time.LocalDateTime;
+
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+@Table
+public class ChangePasswordData {
+    @Id
+    private String id;
+    private String email;
+    private Integer code;
+    private Integer wrongTries;
+    private LocalDateTime dateExpired;
+
+}

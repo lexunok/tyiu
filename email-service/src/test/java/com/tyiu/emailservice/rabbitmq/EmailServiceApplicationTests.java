@@ -1,4 +1,4 @@
-package com.tyiu.emailservice;
+package com.tyiu.emailservice.rabbitmq;
 
 import com.tyiu.ideas.config.exception.CustomHttpException;
 import interfaces.INotification;
