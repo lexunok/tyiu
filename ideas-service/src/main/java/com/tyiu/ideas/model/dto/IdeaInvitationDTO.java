@@ -1,0 +1,21 @@
+package com.tyiu.ideas.model.dto;
+
+import com.tyiu.ideas.model.enums.IdeaInvitationStatus;
+import lombok.*;
+
+import java.util.List;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
+public class IdeaInvitationDTO {
+    private String id;
+    private String ideaId;
+    private String ideaName;
+    private String teamName;
+    private Short teamMembersCount;
+    private List<SkillDTO> skills;
+    private String teamId;
+    private IdeaInvitationStatus status;
+}
