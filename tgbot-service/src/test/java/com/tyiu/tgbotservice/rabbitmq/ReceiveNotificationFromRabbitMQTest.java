@@ -4,6 +4,7 @@ import com.tyiu.ideas.config.exception.CustomHttpException;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.tgbotservice.model.entities.UserTelegram;
+import com.tyiu.tgbotservice.telegram.TestContainersDB;
 import org.junit.jupiter.api.BeforeAll;
 import interfaces.INotification;
 import org.junit.jupiter.api.Test;
@@ -21,7 +22,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-public class ReceiveNotificationFromRabbitMQTest {
+public class ReceiveNotificationFromRabbitMQTest extends TestContainersDB {
 
     @Autowired
     private R2dbcEntityTemplate template;
@@ -40,16 +41,16 @@ public class ReceiveNotificationFromRabbitMQTest {
         return Mono.empty();
     }
 
-    private NotificationRequest createNotification(String email, String tag) {
+    private NotificationRequest createNotification(String id, String email, String tag, String something) {
 
         return NotificationRequest.builder()
-                .notificationId("1")
+                .notificationId(id)
                 .consumerEmail(email)
                 .tag(tag)
-                .title("title")
-                .message("message")
-                .link("link")
-                .buttonName("button")
+                .title(something)
+                .message(something)
+                .link(something)
+                .buttonName(something)
                 .build();
     }
 
@@ -66,31 +67,67 @@ public class ReceiveNotificationFromRabbitMQTest {
     }
 
     @Test
-    void testNotificationListener() {
+    void testNullNotificationException() {
 
-        NotificationRequest notification1 = createNotification("email", "tag");
+        CustomHttpException thrown = assertThrows(CustomHttpException.class, () ->
+                testRabbitMQ.makeNotification(null));
+        assertEquals("Notification is null", thrown.getMessage());
+        assertEquals(500, thrown.getStatusCode());
+    }
 
-        CustomHttpException thrown1 = assertThrows(CustomHttpException.class, () ->
-                testRabbitMQ.makeNotification(notification1));
-        assertEquals("Notification (id = 1) was successfully sent to the user with the tag = tag", thrown1.getMessage());
-        assertEquals(200, thrown1.getStatusCode());
+    @Test
+    void testSuccessSending() {
 
+        NotificationRequest notification = createNotification("1", "email", "tag", "bla-bla-bla");
 
+        CustomHttpException thrown = assertThrows(CustomHttpException.class, () ->
+                testRabbitMQ.makeNotification(notification));
+        assertEquals("Notification (id = 1) was successfully sent to the user with the tag = tag", thrown.getMessage());
+        assertEquals(200, thrown.getStatusCode());
+    }
 
-        NotificationRequest notification2 = createNotification("not-my-email", "not-my-tag");
+    @Test
+    void testNullIdException() {
 
-        CustomHttpException thrown2 = assertThrows(CustomHttpException.class, () ->
-                testRabbitMQ.makeNotification(notification2));
-        assertEquals("Error when sending notification (id = 1) to user", thrown2.getMessage());
-        assertEquals(404, thrown2.getStatusCode());
+        NotificationRequest notification = createNotification(null, "email", "tag", "bla-bla-bla");
 
+        CustomHttpException thrown = assertThrows(CustomHttpException.class, () ->
+                testRabbitMQ.makeNotification(notification));
+        assertEquals("Error when sending notification to telegram. Notification id must not be null", thrown.getMessage());
+        assertEquals(500, thrown.getStatusCode());
+    }
 
+    @Test
+    void testNotificationContentIsEmpty() {
 
-        NotificationRequest notification3 = createNotification("email", null);
+        NotificationRequest notification = createNotification("2", "email", "tag", null);
 
-        CustomHttpException thrown3 = assertThrows(CustomHttpException.class, () ->
-                testRabbitMQ.makeNotification(notification3));
-        assertEquals("Error when sending notification (id = 1) to user", thrown3.getMessage());
-        assertEquals(404, thrown3.getStatusCode());
+        CustomHttpException thrown = assertThrows(CustomHttpException.class, () ->
+                testRabbitMQ.makeNotification(notification));
+        assertEquals("Error when sending notification (id = 2). Notification content must not be null", thrown.getMessage());
+        assertEquals(500, thrown.getStatusCode());
+    }
+
+    @Test
+    void testNullTagException() {
+
+        NotificationRequest notification = createNotification("3", "email", null, "bla-bla-bla");
+
+        CustomHttpException thrown = assertThrows(CustomHttpException.class, () ->
+                testRabbitMQ.makeNotification(notification));
+        assertEquals("Error when sending notification (id = 3). Tag must not be null", thrown.getMessage());
+        assertEquals(404, thrown.getStatusCode());
+    }
+
+    @Test
+    void testNotificationForAnotherUserException() {
+
+        NotificationRequest notification = createNotification("4", "not-my-email", "not-my-tag", "bla-bla-bla");
+
+        CustomHttpException thrown = assertThrows(CustomHttpException.class, () ->
+                testRabbitMQ.makeNotification(notification));
+        assertEquals("Error when sending notification (id = 4) to user. " +
+                "This notification intended for another user", thrown.getMessage());
+        assertEquals(404, thrown.getStatusCode());
     }
 }
