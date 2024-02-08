@@ -38,19 +38,9 @@ class SendNotificationToTelegramTest(
     }
 
     @Test
-    fun testNullNotificationException() {
-
-        val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(null)
-        }
-        Assertions.assertEquals("Notification is null", thrown.message)
-        Assertions.assertEquals(500, thrown.statusCode)
-    }
-
-    @Test
     fun testSuccessfulSending() {
 
-        val notification = createNotification("1", "email", "tag", "bla-bla-bla")
+        val notification = createNotification("1", "email", "tag", "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
             testRabbitMQ.makeNotification(notification)
@@ -65,7 +55,7 @@ class SendNotificationToTelegramTest(
     @Test
     fun testNullNotificationIdException() {
 
-        val notification = createNotification(null, "email", "tag", "bla-bla-bla")
+        val notification = createNotification(null, "email", "tag", "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
             testRabbitMQ.makeNotification(notification)
@@ -91,14 +81,27 @@ class SendNotificationToTelegramTest(
     }
 
     @Test
-    fun testNullTagException() {
+    fun testWrongLinkException() {
 
-        val notification = createNotification("3", "email", null, "bla-bla-bla")
+        val notification = createNotification("3", "email", "tag", "https://hits.notTYUIU.ru/profile/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
             testRabbitMQ.makeNotification(notification)
         }
-        Assertions.assertEquals("Error when sending notification (id = 3) to user. Tag must be not null",
+        Assertions.assertEquals("Error when sending notification (id = 3). Link must starting with required path",
+            thrown.message)
+        Assertions.assertEquals(500, thrown.statusCode)
+    }
+
+    @Test
+    fun testNullTagException() {
+
+        val notification = createNotification("4", "email", null, "https://hits.tyuiu.ru/something/")
+
+        val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
+            testRabbitMQ.makeNotification(notification)
+        }
+        Assertions.assertEquals("Error when sending notification (id = 4) to user. Tag must be not null",
             thrown.message)
         Assertions.assertEquals(404, thrown.statusCode)
     }
