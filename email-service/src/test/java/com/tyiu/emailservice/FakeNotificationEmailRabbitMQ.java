@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
 import request.NotificationRequest;
 import response.NotificationResponse;
 
-@Component
+@Component("testEmailClient")
 public class FakeNotificationEmailRabbitMQ implements INotification {
 
     @Override

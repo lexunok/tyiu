@@ -14,10 +14,10 @@ import response.NotificationResponse
 
 abstract class AbstractNotificationEmail: INotification
 
-@Component
+@Component("prodEmailClient")
 class NotificationEmailRabbitMQ(private val rabbitTemplate: RabbitTemplate,
                                 private val notificationService: NotificationService
-): AbstractNotificationEmail() {
+): INotification {
 
     private val log: Logger = LoggerFactory.getLogger(NotificationEmailRabbitMQ::class.java)
 
@@ -35,7 +35,7 @@ class NotificationEmailRabbitMQ(private val rabbitTemplate: RabbitTemplate,
         )
     }
 
-    @RabbitListener(queues = ["\${rabbitmq.queues.email.validate"])
+    @RabbitListener(queues = ["\${rabbitmq.queues.email.validate}"])
     override fun validateResponse(response: ResponseEntity<NotificationResponse>) {
         if (response.statusCode.is2xxSuccessful){
             response.body?.let { notificationService.setSentByEmailServiceFieldTrue(it.notificationId) }

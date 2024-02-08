@@ -1,15 +1,13 @@
 package com.tyiu.notificationservice.rabbitmq.telegram
 
 import com.tyiu.ideas.config.exception.CustomHttpException
-import com.tyiu.notificationservice.rabbitmq.AbstractNotificationTelegram
-import com.tyiu.notificationservice.rabbitmq.telegram.config.TestTelegramConfig
+import interfaces.INotification
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
-import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.context.annotation.Import
 import org.springframework.test.annotation.DirtiesContext
 import org.testcontainers.junit.jupiter.Testcontainers
 import request.NotificationRequest
@@ -19,11 +17,10 @@ import request.NotificationRequest
 @DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @AutoConfigureWebTestClient
-@Import(TestTelegramConfig::class)
 class SendNotificationToTelegramTest(
 
-    @Autowired
-    private val testRabbitMQ: AbstractNotificationTelegram
+    @Qualifier("testTelegramClient")
+    private val testRabbitMQ: INotification
 
 ) {
 

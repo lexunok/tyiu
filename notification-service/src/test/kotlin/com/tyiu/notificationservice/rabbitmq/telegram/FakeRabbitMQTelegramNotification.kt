@@ -1,15 +1,15 @@
 package com.tyiu.notificationservice.rabbitmq.telegram
 
 import com.tyiu.ideas.config.exception.CustomHttpException
-import com.tyiu.notificationservice.rabbitmq.AbstractNotificationTelegram
+import interfaces.INotification
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import request.NotificationRequest
 import response.NotificationResponse
 
-@Component
-class FakeRabbitMQTelegramNotification: AbstractNotificationTelegram() {
+@Component("testTelegramClient")
+class FakeRabbitMQTelegramNotification: INotification {
 
     override fun makeNotification(notificationRequest: NotificationRequest?) {
 

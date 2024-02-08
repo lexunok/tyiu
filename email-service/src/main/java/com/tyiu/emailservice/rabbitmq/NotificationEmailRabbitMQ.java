@@ -16,7 +16,7 @@ import response.NotificationResponse;
 
 @RequiredArgsConstructor
 @Slf4j
-@Component
+@Component("prodEmailClient")
 public class NotificationEmailRabbitMQ implements INotification {
 
     private final EmailService emailService;

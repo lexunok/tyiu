@@ -5,6 +5,7 @@ import interfaces.INotification;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import request.NotificationRequest;
 
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class EmailServiceApplicationTests {
     @Autowired
+    @Qualifier("testEmailClient")
     private INotification fakeNotificationEmailRabbitMQ;
 
     @Test

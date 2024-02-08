@@ -3,15 +3,17 @@ package com.tyiu.notificationservice.rabbitmq
 import com.tyiu.notificationservice.model.NotificationDTO
 import com.tyiu.notificationservice.model.toNotificationRequest
 import com.tyiu.notificationservice.service.NotificationService
+import interfaces.INotification
 import org.springframework.amqp.rabbit.annotation.RabbitListener
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.stereotype.Component
 
 
 
 @Component
 class NotificationRabbitMQ(private val notificationService: NotificationService,
-                           private val notificationEmailRabbitMQ: AbstractNotificationEmail,
-                           private val notificationTelegramRabbitMQ: AbstractNotificationTelegram)
+                           @Qualifier("prodEmailClient") private val notificationEmailRabbitMQ: INotification,
+                           @Qualifier("prodTelegramClient") private val notificationTelegramRabbitMQ: INotification)
 {
 
     private val path = "https://hits.tyuiu.ru/"

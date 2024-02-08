@@ -1,23 +1,21 @@
 package com.tyiu.notificationservice.rabbitmq.email
 
 import com.tyiu.ideas.config.exception.CustomHttpException
-import com.tyiu.notificationservice.rabbitmq.AbstractNotificationEmail
+import interfaces.INotification
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
 import request.NotificationRequest
 import response.NotificationResponse
 
-@Component
-class FakeRabbitMQEmailNotification: AbstractNotificationEmail() {
+@Component("testEmailClient")
+class FakeRabbitMQEmailNotification(@Autowired private val template: R2dbcEntityTemplate): INotification {
 
-    override fun makeNotification(notificationRequest: NotificationRequest?) {
+    override fun makeNotification(notificationRequest: NotificationRequest) {
 
         val path = "https://hits.tyuiu.ru/"
-
-        if (notificationRequest == null) {
-            throw CustomHttpException("Notification is null", 500)
-        }
 
         if (notificationRequest.notificationId == null) {
 

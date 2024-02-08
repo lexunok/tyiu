@@ -79,7 +79,7 @@ open class RabbitMQConfig {
     }
 
     @Bean
-    open fun fanOutBindings(exchange: TopicExchange): List<Declarable> {
+    open fun fanoutBindings(exchange: TopicExchange): List<Declarable> {
         val notificationQueue = notificationQueue()
         val makeTelegramInvitationQueue = makeTelegramInvitationQueue()
         val makeEmailInvitationQueue = makeEmailInvitationQueue()

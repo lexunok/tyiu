@@ -15,10 +15,11 @@ import response.NotificationResponse
 abstract class AbstractNotificationTelegram: INotification
 
 
-@Component
+@Component("prodTelegramClient")
 class NotificationTelegramRabbitMQ(private val rabbitTemplate: RabbitTemplate,
                                    private val notificationService: NotificationService):
-    AbstractNotificationTelegram() {
+    INotification {
+
     private val log: Logger = LoggerFactory.getLogger(NotificationTelegramRabbitMQ::class.java)
 
     @Value("\${rabbitmq.topic}")
@@ -33,7 +34,7 @@ class NotificationTelegramRabbitMQ(private val rabbitTemplate: RabbitTemplate,
         )
     }
 
-    @RabbitListener(queues = ["\${rabbitmq.queues.telegram.validate"])
+    @RabbitListener(queues = ["\${rabbitmq.queues.telegram.validate}"])
     override fun validateResponse(response: ResponseEntity<NotificationResponse>) {
         if (response.statusCode.is2xxSuccessful){
             response.body?.let { notificationService.setSentByTelegramServiceFieldTrue(it.notificationId) }
