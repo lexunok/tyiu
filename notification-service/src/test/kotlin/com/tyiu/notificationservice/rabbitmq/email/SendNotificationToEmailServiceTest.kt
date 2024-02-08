@@ -38,19 +38,9 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testNullNotificationException() {
-
-        val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(null)
-        }
-        Assertions.assertEquals("Notification is null", thrown.message)
-        Assertions.assertEquals(500, thrown.statusCode)
-    }
-
-    @Test
     fun testSuccessfulSending() {
 
-        val notification = createNotification("1", "email", "tag", "bla-bla-bla")
+        val notification = createNotification("1", "email", "tag", "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
             testRabbitMQ.makeNotification(notification)
@@ -106,7 +96,7 @@ class SendNotificationToEmailServiceTest(
     @Test
     fun testNullEmailException() {
 
-        val notification = createNotification("4", null, "tag", "bla-bla-bla")
+        val notification = createNotification("4", null, "tag", "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
             testRabbitMQ.makeNotification(notification)

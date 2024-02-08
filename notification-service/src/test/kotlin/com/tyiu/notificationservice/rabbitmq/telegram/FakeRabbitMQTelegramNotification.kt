@@ -11,11 +11,9 @@ import response.NotificationResponse
 @Component("testTelegramClient")
 class FakeRabbitMQTelegramNotification: INotification {
 
-    override fun makeNotification(notificationRequest: NotificationRequest?) {
+    override fun makeNotification(notificationRequest: NotificationRequest) {
 
-        if (notificationRequest == null) {
-            throw CustomHttpException("Notification is null", 500)
-        }
+        val path = "https://hits.tyuiu.ru/"
 
         if (notificationRequest.notificationId == null) {
 
@@ -36,6 +34,22 @@ class FakeRabbitMQTelegramNotification: INotification {
 
             val message = String.format(
                 "Error when sending notification (id = %s). Notification content must not be null",
+                notificationRequest.notificationId
+            )
+
+            this.validateResponse(
+                ResponseEntity<NotificationResponse>(
+                    NotificationResponse.builder()
+                        .message(message)
+                        .notificationId(notificationRequest.notificationId)
+                        .build(),
+                    HttpStatusCode.valueOf(500)
+                )
+            )
+        } else if (!notificationRequest.link.startsWith(path)) {
+
+            val message = String.format(
+                "Error when sending notification (id = %s). Link must starting with required path",
                 notificationRequest.notificationId
             )
 
