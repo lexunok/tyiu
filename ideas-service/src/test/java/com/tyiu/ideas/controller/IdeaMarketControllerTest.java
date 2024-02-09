@@ -490,7 +490,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testCreateTeamMarketRequest() {
         String ideaMarketId = createMarketIdea().getId();
-        changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.CANCELED);
+        changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.REJECTED);
         changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.ACCEPTED);
         List<TeamDTO> teamDTOS = webTestClient
                 .get()
