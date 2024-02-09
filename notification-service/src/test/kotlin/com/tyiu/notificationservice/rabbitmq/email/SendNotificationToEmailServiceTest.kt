@@ -12,19 +12,13 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.test.annotation.DirtiesContext
-import org.testcontainers.junit.jupiter.Testcontainers
 import reactor.core.publisher.Mono
 import request.NotificationRequest
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-@DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@AutoConfigureWebTestClient
 class SendNotificationToEmailServiceTest(
 
     @Qualifier("testEmailClient")
@@ -35,15 +29,13 @@ class SendNotificationToEmailServiceTest(
 
 ): TestContainers() {
 
-    private fun setUserInfo(email: String, tag: String): Mono<Void> {
+    private fun setUserInfo(email: String, tag: String): Mono<UserTelegram> {
 
         val user: UserTelegram = UserTelegram.builder()
             .userEmail(email)
             .userTag(tag)
             .build()
-        template.insert<UserTelegram>(user)
-
-        return Mono.empty()
+        return template.insert<UserTelegram>(user)
     }
 
     private fun createNotification(id: String?, email: String?, tag: String, something: String?): NotificationRequest {
@@ -70,7 +62,7 @@ class SendNotificationToEmailServiceTest(
                     "password TEXT);")
             .fetch()
             .rowsUpdated()
-            .subscribe()
+            .block()
 
         val user = User.builder()
             .id("1")
@@ -81,7 +73,7 @@ class SendNotificationToEmailServiceTest(
 
         template.insert(user).flatMap { u: User ->
             setUserInfo(u.email, "tag")
-        }.subscribe()
+        }.block()
     }
 
     @Test

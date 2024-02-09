@@ -5,7 +5,7 @@ import org.springframework.test.context.DynamicPropertySource
 import org.testcontainers.containers.PostgreSQLContainer
 import org.testcontainers.junit.jupiter.Container
 
-open class TestContainers {
+abstract class TestContainers {
 
     companion object {
 
@@ -20,6 +20,7 @@ open class TestContainers {
                 start()
         }
 
+
         @JvmStatic
         @DynamicPropertySource
         fun properties(registry: DynamicPropertyRegistry) {
@@ -31,5 +32,6 @@ open class TestContainers {
             registry.add("spring.r2dbc.username") { container.username }
             registry.add("spring.r2dbc.password") { container.password }
         }
+
     }
 }

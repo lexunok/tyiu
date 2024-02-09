@@ -33,7 +33,7 @@ enum class NotificationType{
     ERROR,
 }
 
-@Table
+@Table("notification")
 @Getter
 @Setter
 data class Notification (
