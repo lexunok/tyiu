@@ -5,8 +5,8 @@ import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.IdeaInvitation;
 import com.tyiu.ideas.model.entities.IdeaMarket;
 import com.tyiu.ideas.model.entities.Team;
-import com.tyiu.ideas.model.enums.IdeaInvitationStatus;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
+import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaInvitationStatusRequest;
 import lombok.RequiredArgsConstructor;
@@ -47,7 +47,7 @@ public class IdeaInvitationService {
                                     .ideaName(row.get("idea_name", String.class))
                                     .skills(new ArrayList<>())
                                     .teamId(row.get("team_id", String.class))
-                                    .status(IdeaInvitationStatus.valueOf(row.get("status", String.class))).build());
+                                    .status(RequestStatus.valueOf(row.get("status", String.class))).build());
                     if (skillId!=null) {
                         SkillDTO skill = SkillDTO.builder()
                                 .name(row.get("skill_name", String.class))
@@ -84,7 +84,7 @@ public class IdeaInvitationService {
                                     .skills(new ArrayList<>())
                                     .teamMembersCount(row.get("team_members_count", Short.class))
                                     .teamId(row.get("team_id", String.class))
-                                    .status(IdeaInvitationStatus.valueOf(row.get("status", String.class))).build());
+                                    .status(RequestStatus.valueOf(row.get("status", String.class))).build());
                     if (skillId!=null) {
                         SkillDTO skill = SkillDTO.builder()
                                 .name(row.get("skill_name", String.class))
@@ -100,10 +100,10 @@ public class IdeaInvitationService {
     }
 
     public Mono<Void> changeInvitationStatus(IdeaInvitationStatusRequest request) {
-        if (request.getStatus().equals(IdeaInvitationStatus.ACCEPTED)) {
+        if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
             template.update(query(where("team_id").is(request.getTeamId())
                             .and(where("id").not(request.getId()))),
-                                    update("status", IdeaInvitationStatus.CANCELED), IdeaInvitation.class)
+                                    update("status", RequestStatus.CANCELED), IdeaInvitation.class)
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                                     update("team_id", request.getTeamId())
                                             .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
@@ -116,7 +116,7 @@ public class IdeaInvitationService {
     }
 
     public Mono<Void> inviteToIdea(String ideaId, String teamId) {
-        IdeaInvitation invitation = new IdeaInvitation(null, ideaId, teamId, IdeaInvitationStatus.NEW);
+        IdeaInvitation invitation = new IdeaInvitation(null, ideaId, teamId, RequestStatus.NEW);
         return template.insert(invitation).then();
     }
 }

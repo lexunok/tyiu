@@ -458,7 +458,7 @@ public class IdeaMarketService {
                 .flatMap(r -> {
                     String userId = user.getId();
                     r.setStatus(status);
-                    if (status.equals(RequestStatus.CANCELED)){
+                    if (status.equals(RequestStatus.REJECTED)){
                         return checkInitiator(r.getIdeaMarketId(),userId)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -475,7 +475,7 @@ public class IdeaMarketService {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(query(where("team_id").is(r.getTeamId())
                                                                 .and("status").is(RequestStatus.NEW)),
-                                                        update("status", RequestStatus.ANNULLED),
+                                                        update("status", RequestStatus.CANCELED),
                                                         TeamMarketRequest.class)
                                                 .then(template.update(r))
                                                 .then();
@@ -493,7 +493,7 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (user.getRoles().contains(Role.ADMIN) &&
-                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
+                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.CANCELED)))
                     {
                         return template.update(r).then();
                     }

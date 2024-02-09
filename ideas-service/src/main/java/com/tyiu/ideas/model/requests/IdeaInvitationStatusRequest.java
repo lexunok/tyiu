@@ -1,6 +1,6 @@
 package com.tyiu.ideas.model.requests;
 
-import com.tyiu.ideas.model.enums.IdeaInvitationStatus;
+import com.tyiu.ideas.model.enums.RequestStatus;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
@@ -10,5 +10,5 @@ public class IdeaInvitationStatusRequest {
     private String id;
     private String teamId;
     private String ideaId;
-    private IdeaInvitationStatus status;
+    private RequestStatus status;
 }

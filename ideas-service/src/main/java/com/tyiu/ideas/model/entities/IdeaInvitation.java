@@ -1,6 +1,6 @@
 package com.tyiu.ideas.model.entities;
 
-import com.tyiu.ideas.model.enums.IdeaInvitationStatus;
+import com.tyiu.ideas.model.enums.RequestStatus;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;
@@ -16,5 +16,5 @@ public class IdeaInvitation {
     private String id;
     private String ideaId;
     private String teamId;
-    private IdeaInvitationStatus status;
+    private RequestStatus status;
 }

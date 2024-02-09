@@ -1,6 +1,6 @@
 package com.tyiu.ideas.model.dto;
 
-import com.tyiu.ideas.model.enums.IdeaInvitationStatus;
+import com.tyiu.ideas.model.enums.RequestStatus;
 import lombok.*;
 
 import java.util.List;
@@ -17,5 +17,5 @@ public class IdeaInvitationDTO {
     private Short teamMembersCount;
     private List<SkillDTO> skills;
     private String teamId;
-    private IdeaInvitationStatus status;
+    private RequestStatus status;
 }
