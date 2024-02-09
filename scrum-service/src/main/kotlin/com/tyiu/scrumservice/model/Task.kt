@@ -86,12 +86,9 @@ data class TaskStatusRequest(
 
 data class taskInfoRequest(
     val taskId :BigInteger? = null,
-    var taskSprintId: String? = null,
     var taskName: String? = null,
     var taskDescription: String? = null,
-    var taskExecutor_id: String? = null,
     var taskWork_hour: Long? = null,
-    var taskFinish_date: LocalDate? = null,
     var taskStatus: String? = null,
 )
 
