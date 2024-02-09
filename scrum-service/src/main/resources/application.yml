@@ -12,3 +12,8 @@ spring:
     url: r2dbc:${postgres.url}
     username: admin
     password: admin
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8083

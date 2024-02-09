@@ -97,9 +97,9 @@ public class SecurityConfig {
                 .clientSecret(encoder.encode("secret"))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("https://hits.tyuiu.ru")
+                .redirectUri("http://localhost:80/login/oauth2/code/gateway")
                 .scope(OidcScopes.OPENID)
-                .scope(OidcScopes.PROFILE)
+                .scope("resource.read")
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
                 .build();
         return new InMemoryRegisteredClientRepository(oidcClient);
@@ -138,7 +138,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder().issuer("http://127.0.0.1:7777").build();
+        return AuthorizationServerSettings.builder().issuer("http://localhost:8083").build();
     }
 
 
