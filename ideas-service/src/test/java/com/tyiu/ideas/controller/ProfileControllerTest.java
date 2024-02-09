@@ -57,7 +57,7 @@ public class ProfileControllerTest extends TestContainers {
 
         IdeaDTO responseCreateIdea = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
@@ -122,7 +122,7 @@ public class ProfileControllerTest extends TestContainers {
                         Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -160,7 +160,7 @@ public class ProfileControllerTest extends TestContainers {
 
         expertGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(expertGroupDTO), GroupDTO.class)
                 .exchange()
@@ -175,7 +175,7 @@ public class ProfileControllerTest extends TestContainers {
 
         projectGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(projectGroupDTO), GroupDTO.class)
                 .exchange()
@@ -189,7 +189,7 @@ public class ProfileControllerTest extends TestContainers {
 
         skill = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -210,7 +210,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO responseGetProfileByOwner = webTestClient
                 .get()
-                .uri("/api/v1/profile/{userId}", userId)
+                .uri("/api/v1/ideas-service/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)
@@ -221,7 +221,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO responseGetProfileByRandomUser = webTestClient
                 .get()
-                .uri("/api/v1/profile/{userId}", userId)
+                .uri("/api/v1/ideas-service/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt_randomUser)
                 .exchange()
                 .expectBody(ProfileDTO.class)
@@ -234,7 +234,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO secondResponseGetProfileByRandomUser = webTestClient
                 .get()
-                .uri("/api/v1/profile/{userId}", userId)
+                .uri("/api/v1/ideas-service/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt_randomUser)
                 .exchange()
                 .expectBody(ProfileDTO.class)
@@ -252,7 +252,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO responseUploadAvatar = webTestClient
                 .post()
-                .uri("/api/v1/profile/avatar/upload")
+                .uri("/api/v1/ideas-service/profile/avatar/upload")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(profile), ProfileDTO.class)
                 .exchange()
@@ -269,7 +269,7 @@ public class ProfileControllerTest extends TestContainers {
 
         webTestClient
                 .post()
-                .uri("/api/v1/profile/avatar/upload")
+                .uri("/api/v1/ideas-service/profile/avatar/upload")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(profile), ProfileDTO.class)
                 .exchange()
@@ -278,7 +278,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO responseGetAvatar = webTestClient
                 .get()
-                .uri("/api/v1/profile/{userId}", userId)
+                .uri("/api/v1/ideas-service/profile/{userId}", userId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)
@@ -292,7 +292,7 @@ public class ProfileControllerTest extends TestContainers {
 
         ProfileDTO responseSaveSkills = webTestClient
                 .post()
-                .uri("/api/v1/profile/skills/save")
+                .uri("/api/v1/ideas-service/profile/skills/save")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)

@@ -47,7 +47,7 @@ public class MarketControllerTest extends TestContainers {
         MarketDTO buildMarket = buildMarket("Зимняя биржа 2024", LocalDate.now());
         MarketDTO market = webTestClient
                 .post()
-                .uri("/api/v1/market/create")
+                .uri("/api/v1/ideas-service/market/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(buildMarket), MarketDTO.class)
                 .exchange()
@@ -60,7 +60,7 @@ public class MarketControllerTest extends TestContainers {
     }
 
     private void getActiveMarkets(){
-        List<MarketDTO> market = getRequest("/api/v1/market/active")
+        List<MarketDTO> market = getRequest("/api/v1/ideas-service/market/active")
                 .expectBodyList(MarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(market);
@@ -70,7 +70,7 @@ public class MarketControllerTest extends TestContainers {
     private MarketDTO updateStatus(String marketId){
         MarketDTO marketDTO = webTestClient
                 .put()
-                .uri("/api/v1/market/status/{marketId}/{status}", marketId, MarketStatus.ACTIVE)
+                .uri("/api/v1/ideas-service/market/status/{marketId}/{status}", marketId, MarketStatus.ACTIVE)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(MarketDTO.class)
@@ -98,7 +98,7 @@ public class MarketControllerTest extends TestContainers {
 
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -119,7 +119,7 @@ public class MarketControllerTest extends TestContainers {
     void testGetAll() {
         createMarket();
         createMarket();
-        List<MarketDTO> markets = getRequest("/api/v1/market/all")
+        List<MarketDTO> markets = getRequest("/api/v1/ideas-service/market/all")
                 .expectBodyList(MarketDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(markets);
@@ -139,7 +139,7 @@ public class MarketControllerTest extends TestContainers {
         MarketDTO marketDTO = createMarket();
         MarketDTO market = webTestClient
                 .get()
-                .uri("/api/v1/market/{marketId}", marketDTO.getId())
+                .uri("/api/v1/ideas-service/market/{marketId}", marketDTO.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(MarketDTO.class)
@@ -171,7 +171,7 @@ public class MarketControllerTest extends TestContainers {
     void testDeleteMarket(){
         InfoResponse infoResponse = webTestClient
                 .delete()
-                .uri("/api/v1/market/delete/{marketId}", createMarket().getId())
+                .uri("/api/v1/ideas-service/market/delete/{marketId}", createMarket().getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(InfoResponse.class)
@@ -193,7 +193,7 @@ public class MarketControllerTest extends TestContainers {
         MarketDTO buildMarket = buildMarket("Весенняя биржа 2024", LocalDate.now());
         MarketDTO market = webTestClient
                 .put()
-                .uri("/api/v1/market/update/{marketId}", createMarket().getId())
+                .uri("/api/v1/ideas-service/market/update/{marketId}", createMarket().getId())
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(buildMarket), MarketDTO.class)
                 .exchange()

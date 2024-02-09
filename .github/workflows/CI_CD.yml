@@ -24,8 +24,7 @@ jobs:
         uses: docker/setup-buildx-action@v3
 
       - name: Build containers
-        run: |
-          docker-compose up -d
+        run: docker-compose up -d
 
       - name: Change wrapper permissions
         run: chmod +x ./ideas-service/gradlew

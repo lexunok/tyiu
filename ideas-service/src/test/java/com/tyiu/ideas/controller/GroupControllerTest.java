@@ -40,7 +40,7 @@ class GroupControllerTest extends TestContainers{
                 .build();
         return webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(group), GroupDTO.class)
                 .exchange()
@@ -60,7 +60,7 @@ class GroupControllerTest extends TestContainers{
                         Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -94,7 +94,7 @@ class GroupControllerTest extends TestContainers{
                 .build();
         GroupDTO response4 = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(group5), GroupDTO.class)
                 .exchange()
@@ -110,7 +110,7 @@ class GroupControllerTest extends TestContainers{
                 .build();
         webTestClient
                 .put()
-                .uri("/api/v1/group/update/{id}", id)
+                .uri("/api/v1/ideas-service/group/update/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(group5), GroupDTO.class)
                 .exchange()
@@ -126,7 +126,7 @@ class GroupControllerTest extends TestContainers{
                 .build();
         GroupDTO response6 = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(group6), GroupDTO.class)
                 .exchange()
@@ -137,7 +137,7 @@ class GroupControllerTest extends TestContainers{
         String id = response6.getId();
         webTestClient
                 .delete()
-                .uri("/api/v1/group/delete/{id}", id)
+                .uri("/api/v1/ideas-service/group/delete/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
@@ -152,7 +152,7 @@ class GroupControllerTest extends TestContainers{
                 .build();
         GroupDTO addGroupResponse = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(group), GroupDTO.class)
                 .exchange()
@@ -164,7 +164,7 @@ class GroupControllerTest extends TestContainers{
 
         GroupDTO responseGet = webTestClient
                 .get()
-                .uri("/api/v1/group/{id}", id)
+                .uri("/api/v1/ideas-service/group/{id}", id)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBody(GroupDTO.class)
@@ -182,7 +182,7 @@ class GroupControllerTest extends TestContainers{
                 .build();
         webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(group1), GroupDTO.class)
                 .exchange()
@@ -197,7 +197,7 @@ class GroupControllerTest extends TestContainers{
 
         webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(group), GroupDTO.class)
                 .exchange()
@@ -206,7 +206,7 @@ class GroupControllerTest extends TestContainers{
 
         List<GroupDTO> allGroup = webTestClient
                 .get()
-                .uri("api/v1/group/all")
+                .uri("api/v1/ideas-service/group/all")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(GroupDTO.class)
@@ -219,7 +219,7 @@ class GroupControllerTest extends TestContainers{
         RegisterRequest request = new RegisterRequest("user@mail.com", "firstname", "lastname", "password", List.of(Role.ADMIN));
         AuthenticationResponse user = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -242,7 +242,7 @@ class GroupControllerTest extends TestContainers{
 
         webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(expectedGroup), GroupDTO.class)
                 .exchange();
@@ -254,14 +254,14 @@ class GroupControllerTest extends TestContainers{
 
         webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(groupWithOutUser), GroupDTO.class)
                 .exchange();
 
         webTestClient
                 .get()
-                .uri("/api/v1/group/all/{userId}", user.getId())
+                .uri("/api/v1/ideas-service/group/all/{userId}", user.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(GroupDTO.class)

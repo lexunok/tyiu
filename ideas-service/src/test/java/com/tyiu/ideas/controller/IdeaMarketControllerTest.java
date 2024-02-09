@@ -40,7 +40,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private String marketId;
     private TeamDTO createdTeam;
 
-    private final String path = "/api/v1/market/idea";
+    private final String path = "/api/v1/ideas-service/market/idea";
 
     private IdeaSkillRequest buildSkillRequest(String id, List<SkillDTO> skills){
         return IdeaSkillRequest.builder().ideaId(id).skills(skills).build();
@@ -80,7 +80,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private IdeaDTO createIdea(IdeaDTO ideaDTO){
         IdeaDTO createdIdea = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -140,7 +140,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private SkillDTO createSkill(SkillDTO skillDTO){
         SkillDTO createdSkill = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -154,7 +154,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private GroupDTO createGroup(GroupDTO groupDTO){
         GroupDTO createdGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(groupDTO), GroupDTO.class)
                 .exchange()
@@ -182,7 +182,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private IdeaDTO getIdea(String id, String name){
         IdeaDTO idea = webTestClient
                 .get()
-                .uri("/api/v1/idea/{ideaId}", id)
+                .uri("/api/v1/ideas-service/idea/{ideaId}", id)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(IdeaDTO.class)
@@ -221,7 +221,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private TeamDTO getTeam(String teamId){
         TeamDTO team = webTestClient
                 .get()
-                .uri("/api/v1/team/{teamId}", teamId)
+                .uri("/api/v1/ideas-service/team/{teamId}", teamId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(TeamDTO.class)
@@ -243,7 +243,7 @@ public class IdeaMarketControllerTest extends TestContainers {
     private void addSkills(IdeaSkillRequest ideaSkillRequest){
         InfoResponse skillRequest = webTestClient
                 .post()
-                .uri("/api/v1/idea/skills/add")
+                .uri("/api/v1/ideas-service/idea/skills/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaSkillRequest), IdeaSkillRequest.class)
                 .exchange()
@@ -302,7 +302,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -327,7 +327,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
         webTestClient
                 .post()
-                .uri("/api/v1/profile/skills/save")
+                .uri("/api/v1/ideas-service/profile/skills/save")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Flux.just(skill1, skill2), SkillDTO.class)
                 .exchange()
@@ -340,7 +340,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .build();
         MarketDTO market = webTestClient
                 .post()
-                .uri("/api/v1/market/create")
+                .uri("/api/v1/ideas-service/market/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(buildMarket), MarketDTO.class)
                 .exchange()
@@ -352,7 +352,7 @@ public class IdeaMarketControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/market/status/{marketId}/{status}", market.getId(), MarketStatus.ACTIVE)
+                .uri("/api/v1/ideas-service/market/status/{marketId}/{status}", market.getId(), MarketStatus.ACTIVE)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
@@ -370,7 +370,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .build();
         createdTeam = webTestClient
                 .post()
-                .uri("/api/v1/team/add")
+                .uri("/api/v1/ideas-service/team/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(teamDTO), TeamDTO.class)
                 .exchange()
@@ -494,7 +494,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         changeRequestStatus(createMarketTeamRequest(ideaMarketId).getId(), RequestStatus.ACCEPTED);
         List<TeamDTO> teamDTOS = webTestClient
                 .get()
-                .uri("/api/v1/team/owner/all/{ideaMarketId}", ideaMarketId)
+                .uri("/api/v1/ideas-service/team/owner/all/{ideaMarketId}", ideaMarketId)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(TeamDTO.class)

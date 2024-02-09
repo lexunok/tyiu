@@ -42,7 +42,7 @@ class RatingControllerTest extends TestContainers {
                         Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -66,7 +66,7 @@ class RatingControllerTest extends TestContainers {
 
         expertGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(expertGroupDTO), GroupDTO.class)
                 .exchange()
@@ -81,7 +81,7 @@ class RatingControllerTest extends TestContainers {
 
         projectGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(projectGroupDTO), GroupDTO.class)
                 .exchange()
@@ -103,7 +103,7 @@ class RatingControllerTest extends TestContainers {
 
         IdeaDTO ideaResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(idea), IdeaDTO.class)
                 .exchange()
@@ -117,7 +117,7 @@ class RatingControllerTest extends TestContainers {
     void testGetIdea() {
         IdeaDTO getResponse = webTestClient
                 .get()
-                .uri("/api/v1/idea/{ideaId}", ideaId)
+                .uri("/api/v1/ideas-service/idea/{ideaId}", ideaId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBody(IdeaDTO.class)
@@ -137,7 +137,7 @@ class RatingControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/rating/confirm")
+                .uri("/api/v1/ideas-service/rating/confirm")
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(ratingDTO), RatingDTO.class)
                 .exchange()
@@ -158,7 +158,7 @@ class RatingControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/rating/save")
+                .uri("/api/v1/ideas-service/rating/save")
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(ratingDTO), RatingDTO.class)
                 .exchange()
@@ -170,7 +170,7 @@ class RatingControllerTest extends TestContainers {
     void testGetAllIdeasRatings() {
         List<RatingDTO> rating = webTestClient
                 .get()
-                .uri("/api/v1/rating/all/{ideaId}", ideaId)
+                .uri("/api/v1/ideas-service/rating/all/{ideaId}", ideaId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBodyList(RatingDTO.class)
@@ -183,7 +183,7 @@ class RatingControllerTest extends TestContainers {
     void testGetExpertRatingForIdea() {
         RatingDTO rating = webTestClient
                 .get()
-                .uri("/api/v1/rating/{ideaId}", ideaId)
+                .uri("/api/v1/ideas-service/rating/{ideaId}", ideaId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBody(RatingDTO.class)

@@ -39,7 +39,7 @@ public class SkillControllerTest extends TestContainers {
                         Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -57,7 +57,7 @@ public class SkillControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse = webTestClient
                 .post()
-                .uri("/api/v1/skill/add/no-confirmed")
+                .uri("/api/v1/ideas-service/skill/add/no-confirmed")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -76,7 +76,7 @@ public class SkillControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -90,7 +90,7 @@ public class SkillControllerTest extends TestContainers {
     void testGetAllConfirmedSkills(){
         List<SkillDTO> skills = webTestClient
                 .get()
-                .uri("api/v1/skill/all-confirmed-or-creator")
+                .uri("api/v1/ideas-service/skill/all-confirmed-or-creator")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(SkillDTO.class)
@@ -104,7 +104,7 @@ public class SkillControllerTest extends TestContainers {
     void testGetAllSkills() {
         List<SkillDTO> skills = webTestClient
                 .get()
-                .uri("api/v1/skill/all")
+                .uri("api/v1/ideas-service/skill/all")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(SkillDTO.class)
@@ -123,7 +123,7 @@ public class SkillControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse = webTestClient
                 .post()
-                .uri("/api/v1/skill/add/no-confirmed")
+                .uri("/api/v1/ideas-service/skill/add/no-confirmed")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -135,7 +135,7 @@ public class SkillControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("api/v1/skill/confirm/{skillId}", skillId)
+                .uri("api/v1/ideas-service/skill/confirm/{skillId}", skillId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
@@ -150,7 +150,7 @@ public class SkillControllerTest extends TestContainers {
                 .build();
         SkillDTO skillResponse = webTestClient
                 .put()
-                .uri("/api/v1/skill/update/{skillId}", skillId)
+                .uri("/api/v1/ideas-service/skill/update/{skillId}", skillId)
                 .header("Authorization","Bearer " + jwt)
                 .body(Mono.just(skillUpdateDTO), SkillDTO.class)
                 .exchange()
@@ -166,7 +166,7 @@ public class SkillControllerTest extends TestContainers {
         SkillType skillType = SkillType.LANGUAGE;
         List<SkillDTO> skills = webTestClient
                 .get()
-                .uri("api/v1/skills/{skillType}", skillType)
+                .uri("api/v1/ideas-service/skills/{skillType}", skillType)
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(SkillDTO.class)
@@ -180,7 +180,7 @@ public class SkillControllerTest extends TestContainers {
     void testDeleteSkills(){
         webTestClient
                 .delete()
-                .uri("/api/v1/group/delete/{skillId}", skillId)
+                .uri("/api/v1/ideas-service/group/delete/{skillId}", skillId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();

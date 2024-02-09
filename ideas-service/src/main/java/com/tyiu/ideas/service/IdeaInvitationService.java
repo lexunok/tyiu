@@ -2,7 +2,6 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.model.dto.IdeaInvitationDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.dto.TeamMemberDTO;
 import com.tyiu.ideas.model.entities.IdeaInvitation;
 import com.tyiu.ideas.model.entities.IdeaMarket;
 import com.tyiu.ideas.model.entities.Team;
@@ -11,7 +10,6 @@ import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaInvitationStatusRequest;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -105,14 +103,13 @@ public class IdeaInvitationService {
         if (request.getStatus().equals(IdeaInvitationStatus.ACCEPTED)) {
             template.update(query(where("team_id").is(request.getTeamId())
                             .and(where("id").not(request.getId()))),
-                    update("status", IdeaInvitationStatus.CANCELED), IdeaInvitation.class).subscribe();
-            template.update(query(where("idea_id").is(request.getIdeaId())),
-                            update("team_id", request.getTeamId())
-                                    .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
-                            IdeaMarket.class)
-                    .then(template.update(query(where("id").is(request.getTeamId())),
-                            update("has_active_project", true),
-                            Team.class)).subscribe();
+                                    update("status", IdeaInvitationStatus.CANCELED), IdeaInvitation.class)
+                            .then(template.update(query(where("idea_id").is(request.getIdeaId())),
+                                    update("team_id", request.getTeamId())
+                                            .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
+                                    IdeaMarket.class))
+                            .then(template.update(query(where("id").is(request.getTeamId())),
+                                    update("has_active_project", true), Team.class)).subscribe();
         }
         return template.update(query(where("id").is(request.getId())),
                 update("status",request.getStatus()), IdeaInvitation.class).then();

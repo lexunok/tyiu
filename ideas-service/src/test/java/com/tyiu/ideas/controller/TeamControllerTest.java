@@ -58,7 +58,7 @@ public class TeamControllerTest extends TestContainers {
     private AuthenticationResponse register(String email, String firstName, String lastName, List<Role> roles) {
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(new RegisterRequest(email, firstName, lastName, "bla-bla-bla", roles)), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -124,14 +124,14 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private TeamDTO getTeam(String teamId) {
-        TeamDTO responseGetTeam = getRequest("/api/v1/team/{teamId}", teamId, "Bearer " + jwt_randomUser)
+        TeamDTO responseGetTeam = getRequest("/api/v1/ideas-service/team/{teamId}", teamId, "Bearer " + jwt_randomUser)
                 .expectBody(TeamDTO.class).returnResult().getResponseBody();
         assertNotNull(responseGetTeam);
         return responseGetTeam;
     }
 
     private List<TeamDTO> getTeamsByVacancies(List<SkillDTO> skills, String jwt) {
-        List<TeamDTO> allTeamsByVacancies = postRequest("api/v1/team/vacancy-filter", jwt)
+        List<TeamDTO> allTeamsByVacancies = postRequest("api/v1/ideas-service/team/vacancy-filter", jwt)
                 .body(Flux.fromIterable(skills), SkillDTO.class)
                 .exchange()
                 .expectBodyList(TeamDTO.class)
@@ -143,7 +143,7 @@ public class TeamControllerTest extends TestContainers {
     private List<TeamDTO> getTeamsBySkills(List<SkillDTO> skills, Role role, String jwt) {
         List<TeamDTO> allTeamsByVacancies = webTestClient
                 .post()
-                .uri("api/v1/team/skill-filter/{role}", role)
+                .uri("api/v1/ideas-service/team/skill-filter/{role}", role)
                 .header("Authorization",jwt)
                 .body(Flux.fromIterable(skills), SkillDTO.class)
                 .exchange()
@@ -154,7 +154,7 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private List<SkillDTO> getSkillsByInvitations(List<TeamInvitation> users) {
-        List<SkillDTO> allSkillsByInvitation = postRequest("api/v1/team/skills/invitations", "Bearer " + jwt_owner)
+        List<SkillDTO> allSkillsByInvitation = postRequest("api/v1/ideas-service/team/skills/invitations", "Bearer " + jwt_owner)
                 .body(Flux.fromIterable(users), SkillDTO.class)
                 .exchange()
                 .expectBodyList(SkillDTO.class)
@@ -164,7 +164,7 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private List<SkillDTO> getSkillsByRequests(List<TeamRequest> users) {
-        List<SkillDTO> allSkillsByRequests = postRequest("api/v1/team/skills/requests", "Bearer " + jwt_owner)
+        List<SkillDTO> allSkillsByRequests = postRequest("api/v1/ideas-service/team/skills/requests", "Bearer " + jwt_owner)
                 .body(Flux.fromIterable(users), SkillDTO.class)
                 .exchange()
                 .expectBodyList(SkillDTO.class)
@@ -174,7 +174,7 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private IdeaDTO getIdea(String id, String name) {
-        IdeaDTO idea = getRequest("/api/v1/idea/{ideaId}", id, "Bearer " + jwt_admin)
+        IdeaDTO idea = getRequest("/api/v1/ideas-service/idea/{ideaId}", id, "Bearer " + jwt_admin)
                 .expectBody(IdeaDTO.class).returnResult().getResponseBody();
         assertNotNull(idea);
         assertEquals(name, idea.getName());
@@ -186,7 +186,7 @@ public class TeamControllerTest extends TestContainers {
                 .name(name)
                 .type(type)
                 .build();
-        SkillDTO responseCreateSkill = postRequest("/api/v1/skill/add","Bearer " + jwt_admin)
+        SkillDTO responseCreateSkill = postRequest("/api/v1/ideas-service/skill/add","Bearer " + jwt_admin)
                 .body(Mono.just(skill), SkillDTO.class)
                 .exchange()
                 .expectBody(SkillDTO.class)
@@ -198,7 +198,7 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private GroupDTO createGroup(GroupDTO groupDTO) {
-        GroupDTO createdGroup = postRequest("/api/v1/group/create","Bearer " + jwt_admin)
+        GroupDTO createdGroup = postRequest("/api/v1/ideas-service/group/create","Bearer " + jwt_admin)
                 .body(Mono.just(groupDTO), GroupDTO.class)
                 .exchange()
                 .expectBody(GroupDTO.class)
@@ -209,7 +209,7 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private IdeaDTO createIdea(IdeaDTO ideaDTO) {
-        IdeaDTO createdIdea = postRequest("/api/v1/idea/add","Bearer " + jwt_admin)
+        IdeaDTO createdIdea = postRequest("/api/v1/ideas-service/idea/add","Bearer " + jwt_admin)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
                 .expectBody(IdeaDTO.class)
@@ -225,7 +225,7 @@ public class TeamControllerTest extends TestContainers {
                 .startDate(LocalDate.now())
                 .finishDate(LocalDate.now().plusDays(30))
                 .build();
-        MarketDTO market = postRequest("/api/v1/market/create","Bearer " + jwt_admin)
+        MarketDTO market = postRequest("/api/v1/ideas-service/market/create","Bearer " + jwt_admin)
                 .body(Mono.just(buildMarket), MarketDTO.class)
                 .exchange()
                 .expectBody(MarketDTO.class)
@@ -236,7 +236,7 @@ public class TeamControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/market/status/{marketId}/{status}", market.getId(), MarketStatus.ACTIVE)
+                .uri("/api/v1/ideas-service/market/status/{marketId}/{status}", market.getId(), MarketStatus.ACTIVE)
                 .header("Authorization", "Bearer " + jwt_admin)
                 .exchange()
                 .expectStatus().isOk();
@@ -250,7 +250,7 @@ public class TeamControllerTest extends TestContainers {
         addSkills(buildSkillRequest(idea1.getId(),List.of(skill1, skill2)));
         addSkills(buildSkillRequest(idea2.getId(),List.of(skill1, skill2)));
 
-        List<IdeaMarketDTO> createdMarketIdea = postRequest("/api/v1/market/idea/send/{marketId}",market.getId(),"Bearer " + jwt_admin)
+        List<IdeaMarketDTO> createdMarketIdea = postRequest("/api/v1/ideas-service/market/idea/send/{marketId}",market.getId(),"Bearer " + jwt_admin)
                 .body(Flux.just(idea1, idea2), IdeaDTO.class)
                 .exchange()
                 .expectBodyList(IdeaMarketDTO.class)
@@ -289,7 +289,7 @@ public class TeamControllerTest extends TestContainers {
                 .createdAt(LocalDate.now())
                 .status(RequestStatus.NEW)
                 .build();
-        TeamRequest responseSendRequest = postRequest("/api/v1/team/request/send/{teamId}",teamId,"Bearer " + jwt)
+        TeamRequest responseSendRequest = postRequest("/api/v1/ideas-service/team/request/send/{teamId}",teamId,"Bearer " + jwt)
                 .body(Mono.just(request), TeamRequest.class)
                 .exchange()
                 .expectBody(TeamRequest.class)
@@ -305,7 +305,7 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private List<TeamInvitation> sendInvites(List<TeamInvitation> user) {
-        List<TeamInvitation> invites = postRequest("/api/v1/team/send-invites","Bearer " + jwt_owner)
+        List<TeamInvitation> invites = postRequest("/api/v1/ideas-service/team/send-invites","Bearer " + jwt_owner)
                 .body(Flux.fromIterable(user), TeamMemberDTO.class)
                 .exchange()
                 .expectBodyList(TeamInvitation.class)
@@ -318,7 +318,7 @@ public class TeamControllerTest extends TestContainers {
     private TeamInvitation inviteUserInTeam(String teamId, String userId) {
         TeamInvitation responseInviteInTeam = webTestClient
                 .post()
-                .uri("/api/v1/team/invite/{teamId}/{userId}", teamId, userId)
+                .uri("/api/v1/ideas-service/team/invite/{teamId}/{userId}", teamId, userId)
                 .header("Authorization", "Bearer " + jwt_owner)
                 .exchange()
                 .expectBody(TeamInvitation.class)
@@ -342,7 +342,7 @@ public class TeamControllerTest extends TestContainers {
                 .build();
         TeamDTO responseUpdateTeam = webTestClient
                 .put()
-                .uri("/api/v1/team/update/{teamId}", teamId)
+                .uri("/api/v1/ideas-service/team/update/{teamId}", teamId)
                 .header("Authorization", "Bearer " + jwt_owner)
                 .body(Mono.just(team), TeamDTO.class)
                 .exchange()
@@ -355,7 +355,7 @@ public class TeamControllerTest extends TestContainers {
     private WebTestClient.ResponseSpec changeLeader(String teamId, String userId, String jwt){
         return webTestClient
                 .put()
-                .uri("/api/v1/team/change/leader/{teamId}/{userId}", teamId, userId)
+                .uri("/api/v1/ideas-service/team/change/leader/{teamId}/{userId}", teamId, userId)
                 .header("Authorization", jwt)
                 .exchange();
     }
@@ -363,14 +363,14 @@ public class TeamControllerTest extends TestContainers {
     private WebTestClient.ResponseSpec updateSkills(String teamId, Flux<SkillDTO> skills, String jwt){
         return webTestClient
                 .put()
-                .uri("/api/v1/team/skills/update/{teamId}", teamId)
+                .uri("/api/v1/ideas-service/team/skills/update/{teamId}", teamId)
                 .header("Authorization", jwt)
                 .body(skills, SkillDTO.class)
                 .exchange();
     }
 
     private WebTestClient.ResponseSpec createTeamRequest(TeamDTO teamDTO){
-        return postRequest("/api/v1/team/add","Bearer " + jwt_owner)
+        return postRequest("/api/v1/ideas-service/team/add","Bearer " + jwt_owner)
                 .body(Mono.just(teamDTO), TeamDTO.class)
                 .exchange();
     }
@@ -407,7 +407,7 @@ public class TeamControllerTest extends TestContainers {
                 .name(createdTeam.getName())
                 .letter("letter")
                 .build();
-        TeamMarketRequestDTO createdTeamMarketRequest = postRequest("/api/v1/market/idea/declare",
+        TeamMarketRequestDTO createdTeamMarketRequest = postRequest("/api/v1/ideas-service/market/idea/declare",
                 "Bearer " + jwt_owner)
                 .body(Mono.just(teamMarketRequest), TeamMarketRequestDTO.class)
                 .exchange()
@@ -418,14 +418,14 @@ public class TeamControllerTest extends TestContainers {
     }
 
     private void saveSkillToUser(List<SkillDTO> skills, String jwt) {
-        postRequest("/api/v1/profile/skills/save","Bearer " + jwt)
+        postRequest("/api/v1/ideas-service/profile/skills/save","Bearer " + jwt)
                 .body(Mono.just(skills), SkillDTO.class)
                 .exchange()
                 .expectStatus().isOk();
     }
 
     private void addSkills(IdeaSkillRequest ideaSkillRequest) {
-        InfoResponse skillRequest = postRequest("/api/v1/idea/skills/add","Bearer " + jwt_admin)
+        InfoResponse skillRequest = postRequest("/api/v1/ideas-service/idea/skills/add","Bearer " + jwt_admin)
                 .body(Mono.just(ideaSkillRequest), IdeaSkillRequest.class)
                 .exchange()
                 .expectBody(InfoResponse.class)
@@ -436,25 +436,25 @@ public class TeamControllerTest extends TestContainers {
     private void kickUserFromTeam(String teamId, String userId) {
         webTestClient
                 .delete()
-                .uri("/api/v1/team/kick/{teamId}/{userId}", teamId, userId)
+                .uri("/api/v1/ideas-service/team/kick/{teamId}/{userId}", teamId, userId)
                 .header("Authorization", "Bearer " + jwt_randomUser)
                 .exchange()
                 .expectStatus().isOk();
     }
 
     private void getOwnerTeams(String ideaMarketId){
-        List<TeamDTO> ownerTeams = getRequest("api/v1/team/owner/all/{ideaMarketId}", ideaMarketId,"Bearer " + jwt_owner)
+        List<TeamDTO> ownerTeams = getRequest("api/v1/ideas-service/team/owner/all/{ideaMarketId}", ideaMarketId,"Bearer " + jwt_owner)
                 .expectBodyList(TeamDTO.class).returnResult().getResponseBody();
         assertNotNull(ownerTeams);
         assertEquals(2, ownerTeams.size());
     }
 
     private void leaveFromTeam(String teamId, String jwt){
-        deleteRequest("/api/v1/team/leave/{teamId}", teamId, jwt).expectStatus().isOk();
+        deleteRequest("/api/v1/ideas-service/team/leave/{teamId}", teamId, jwt).expectStatus().isOk();
     }
 
     private void checkSkills(List<UserDTO> users ,Integer checkNum){
-        List<SkillDTO> empty = postRequest("api/v1/team/skills/users","Bearer " + jwt_owner)
+        List<SkillDTO> empty = postRequest("api/v1/ideas-service/team/skills/users","Bearer " + jwt_owner)
                 .body(Flux.fromIterable(users), UserDTO.class)
                 .exchange()
                 .expectBodyList(SkillDTO.class)
@@ -466,7 +466,7 @@ public class TeamControllerTest extends TestContainers {
     private void changeStatusRequest(String requestId, RequestStatus status, String jwt){
         webTestClient
                 .put()
-                .uri("/api/v1/team/request/{requestId}/update/{newStatus}",
+                .uri("/api/v1/ideas-service/team/request/{requestId}/update/{newStatus}",
                         requestId, status)
                 .header("Authorization", jwt)
                 .exchange()
@@ -487,7 +487,7 @@ public class TeamControllerTest extends TestContainers {
         changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
                 RequestStatus.ACCEPTED, jwt, status1);
         changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
-                RequestStatus.CANCELED, jwt, status2);
+                RequestStatus.REJECTED, jwt, status2);
         changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
                 RequestStatus.WITHDRAWN, jwt, status3);
     }
@@ -495,7 +495,7 @@ public class TeamControllerTest extends TestContainers {
     private void changeStatusInvitation(String invitationId, RequestStatus status, String jwt){
         webTestClient
                 .put()
-                .uri("/api/v1/team/invitation/{invitationId}/update/{newStatus}",
+                .uri("/api/v1/ideas-service/team/invitation/{invitationId}/update/{newStatus}",
                         invitationId, status)
                 .header("Authorization", jwt)
                 .exchange()
@@ -516,7 +516,7 @@ public class TeamControllerTest extends TestContainers {
         changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
                 RequestStatus.ACCEPTED, jwt, status1);
         changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
-                RequestStatus.CANCELED, jwt, status2);
+                RequestStatus.REJECTED, jwt, status2);
         changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
                 RequestStatus.WITHDRAWN, jwt, status3);
     }
@@ -594,7 +594,7 @@ public class TeamControllerTest extends TestContainers {
         createTeam(List.of(leader));
         createTeam(List.of(leader, member));
 
-        List<TeamDTO> allTeams = getRequest("api/v1/team/all","Bearer " + jwt_randomUser)
+        List<TeamDTO> allTeams = getRequest("api/v1/ideas-service/team/all","Bearer " + jwt_randomUser)
                 .expectBodyList(TeamDTO.class).returnResult().getResponseBody();
         assertNotNull(allTeams);
         assertTrue(allTeams.size() > 1);
@@ -611,7 +611,7 @@ public class TeamControllerTest extends TestContainers {
 
         TeamDTO team3 = buildTeam("Не моя команда","Хз кто это",1,
                 randomUser,owner,List.of(owner),List.of());
-        postRequest("/api/v1/team/add","Bearer " + jwt_randomUser)
+        postRequest("/api/v1/ideas-service/team/add","Bearer " + jwt_randomUser)
                 .body(Mono.just(team3), TeamDTO.class)
                 .exchange();
 
@@ -620,7 +620,7 @@ public class TeamControllerTest extends TestContainers {
 
     @Test
     void testGetAllUsersWithSkills() {
-        List<TeamMemberDTO> allUsersWithSkills = getRequest("api/v1/team/users","Bearer " + jwt_randomUser)
+        List<TeamMemberDTO> allUsersWithSkills = getRequest("api/v1/ideas-service/team/users","Bearer " + jwt_randomUser)
                 .expectBodyList(TeamMemberDTO.class).returnResult().getResponseBody();
         assertNotNull(allUsersWithSkills);
 
@@ -639,7 +639,7 @@ public class TeamControllerTest extends TestContainers {
     @Test
     void testGetInvitations() {
         sendInvites(List.of(buildInvitation(createTeam(List.of(leader)).getId(), kostya), buildInvitation(createTeam(List.of(leader, member)).getId(), kostya)));
-        List<TeamInvitation> invitations = getRequest("api/v1/team/invites","Bearer " + jwt_kostya)
+        List<TeamInvitation> invitations = getRequest("api/v1/ideas-service/team/invites","Bearer " + jwt_kostya)
                 .expectBodyList(TeamInvitation.class)
                 .returnResult().getResponseBody();
         assertNotNull(invitations);
@@ -653,7 +653,7 @@ public class TeamControllerTest extends TestContainers {
         sendTeamRequest(teamId, member, jwt_member);
         sendTeamRequest(teamId, randomUser, jwt_randomUser);
 
-        List<TeamRequest> allTeamRequests = getRequest("api/v1/team/users/requests/{teamId}",
+        List<TeamRequest> allTeamRequests = getRequest("api/v1/ideas-service/team/users/requests/{teamId}",
                 teamId, "Bearer " + jwt_owner).expectBodyList(TeamRequest.class)
                 .returnResult().getResponseBody();
         assertNotNull(allTeamRequests);
@@ -664,7 +664,7 @@ public class TeamControllerTest extends TestContainers {
     void testGetInvitationsByTeam() {
         String teamId = createTeam(List.of(leader)).getId();
         sendInvites(List.of(buildInvitation(teamId, kostya), buildInvitation(teamId, randomUser)));
-        List<TeamInvitation> invitationsByTeam = getRequest("api/v1/team/invitations/{teamId}",
+        List<TeamInvitation> invitationsByTeam = getRequest("api/v1/ideas-service/team/invitations/{teamId}",
                 teamId,"Bearer " + jwt_owner).expectBodyList(TeamInvitation.class)
                 .returnResult().getResponseBody();
         assertNotNull(invitationsByTeam);
@@ -675,12 +675,12 @@ public class TeamControllerTest extends TestContainers {
     void testGetTeamMarketRequests(){
         createMarketIdea();
         TeamDTO team = createTeam(List.of(kostya, member));
-        List<IdeaMarketDTO> marketIdeas = getRequest("/api/v1/market/idea/all", "Bearer " + jwt_owner)
+        List<IdeaMarketDTO> marketIdeas = getRequest("/api/v1/ideas-service/market/idea/all", "Bearer " + jwt_owner)
                 .expectBodyList(IdeaMarketDTO.class).returnResult().getResponseBody();
         assertNotNull(marketIdeas);
         createMarketTeamRequest(marketIdeas.get(0).getId(), team);
         createMarketTeamRequest(marketIdeas.get(1).getId(), team);
-        List<TeamMarketRequestDTO> requestDTOS = getRequest("/api/v1/team/idea/requests/{teamId}", team.getId(),
+        List<TeamMarketRequestDTO> requestDTOS = getRequest("/api/v1/ideas-service/team/idea/requests/{teamId}", team.getId(),
                 "Bearer " + jwt_owner).expectBodyList(TeamMarketRequestDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(requestDTOS);
@@ -693,7 +693,7 @@ public class TeamControllerTest extends TestContainers {
         createTeam(List.of(leader));
         createTeam(List.of(member));
         createTeam(List.of(leader, member));
-        List<TeamMemberDTO> usersInTeam = getRequest("/api/v1/team/users/consist","Bearer " + jwt_owner)
+        List<TeamMemberDTO> usersInTeam = getRequest("/api/v1/ideas-service/team/users/consist","Bearer " + jwt_owner)
                 .expectBodyList(TeamMemberDTO.class).returnResult().getResponseBody();
         assertNotNull(usersInTeam);
         assertTrue(usersInTeam.size() >= 2);
@@ -715,12 +715,12 @@ public class TeamControllerTest extends TestContainers {
     void testGetTeamsBySkills() {
         TeamDTO team1 = buildTeam("Богатыри", "Слава Руси!",1,
                 owner,leader,List.of(leader),List.of(skill3, skill4));
-        postRequest("/api/v1/team/add", "Bearer " + jwt_owner)
+        postRequest("/api/v1/ideas-service/team/add", "Bearer " + jwt_owner)
                 .body(Mono.just(team1), TeamDTO.class)
                 .exchange();
         TeamDTO team2 = buildTeam("Богатыри", "Слава Руси!",1,
                 owner,leader,List.of(member),List.of(skill1, skill4));
-        postRequest("/api/v1/team/add", "Bearer " + jwt_owner)
+        postRequest("/api/v1/ideas-service/team/add", "Bearer " + jwt_owner)
                 .body(Mono.just(team2), TeamDTO.class)
                 .exchange();
 
@@ -813,13 +813,13 @@ public class TeamControllerTest extends TestContainers {
 
     @Test
     void testDeleteTeam() {
-        InfoResponse response1 = deleteRequest("/api/v1/team/delete/{teamId}",
+        InfoResponse response1 = deleteRequest("/api/v1/ideas-service/team/delete/{teamId}",
                 createTeam(List.of(leader)).getId(),"Bearer " + jwt_owner)
                 .expectBody(InfoResponse.class)
                 .returnResult().getResponseBody();
         assertNotNull(response1);
         assertEquals("Успешное удаление", response1.getMessage());
-        InfoResponse response2 = deleteRequest("/api/v1/team/delete/{teamId}",
+        InfoResponse response2 = deleteRequest("/api/v1/ideas-service/team/delete/{teamId}",
                 createTeam(List.of(leader)).getId(),"Bearer " + jwt_leader)
                 .expectBody(InfoResponse.class)
                 .returnResult().getResponseBody();
@@ -827,8 +827,8 @@ public class TeamControllerTest extends TestContainers {
         assertEquals("Ошибка при удалении", response2.getMessage());
 
         String teamId = createTeam(List.of(leader, member)).getId();
-        deleteRequest("/api/v1/team/delete/{teamId}", teamId,"Bearer " + jwt_member).expectStatus().isForbidden();
-        deleteRequest("/api/v1/team/delete/{teamId}", teamId,"Bearer " + jwt_randomUser).expectStatus().isForbidden();
+        deleteRequest("/api/v1/ideas-service/team/delete/{teamId}", teamId,"Bearer " + jwt_member).expectStatus().isForbidden();
+        deleteRequest("/api/v1/ideas-service/team/delete/{teamId}", teamId,"Bearer " + jwt_randomUser).expectStatus().isForbidden();
     }
 
     @Test

@@ -76,7 +76,7 @@ public class AccountChangeControllerTest extends TestContainers {
     private void createObjectsWithUserReference(UserDTO userDTO, String userToken){
         TeamDTO team = buildTeam("Богатыри","Слава Руси!",1,
                 userDTO,userDTO,List.of(userDTO),List.of());
-        TeamDTO responseAddTeam = webTestClient.post().uri("/api/v1/team/add")
+        TeamDTO responseAddTeam = webTestClient.post().uri("/api/v1/ideas-service/team/add")
                 .header("Authorization", "Bearer " + userToken)
                 .body(Mono.just(team), TeamDTO.class)
                 .exchange().expectBody(TeamDTO.class).returnResult().getResponseBody();
@@ -107,7 +107,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
         IdeaDTO ideaResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/draft/add")
+                .uri("/api/v1/ideas-service/idea/draft/add")
                 .header("Authorization", "Bearer " + userToken)
                 .body(Mono.just(ideaDTOinDraft), IdeaDTO.class)
                 .exchange()
@@ -126,7 +126,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
         expertGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(expertGroupDTO), GroupDTO.class)
                 .exchange()
@@ -141,7 +141,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
         projectGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(projectGroupDTO), GroupDTO.class)
                 .exchange()
@@ -163,7 +163,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -190,7 +190,7 @@ public class AccountChangeControllerTest extends TestContainers {
     void testGetNotExistedInvitation() {
         ErrorResponse errorResponse = webTestClient
                 .get()
-                .uri("/api/v1/profile/get/invitation/not-existed")
+                .uri("/api/v1/ideas-service/profile/get/invitation/not-existed")
                 .exchange()
                 .expectBody(ErrorResponse.class)
                 .returnResult().getResponseBody();
@@ -207,7 +207,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
         InfoResponse infoResponse = webTestClient
                 .post()
-                .uri("/api/v1/profile/send/email")
+                .uri("/api/v1/ideas-service/profile/send/email")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(invitationDTO), InvitationDTO.class)
                 .exchange()
@@ -238,7 +238,7 @@ public class AccountChangeControllerTest extends TestContainers {
         }).as(StepVerifier::create).expectComplete().verify();
 
         InvitationResponse invitationResponse = webTestClient
-                .get().uri("/api/v1/profile/get/invitation/{url}", invitationId)
+                .get().uri("/api/v1/ideas-service/profile/get/invitation/{url}", invitationId)
                 .exchange().expectBody(InvitationResponse.class).returnResult().getResponseBody();
 
         assertNotNull(invitationResponse);
@@ -254,7 +254,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
         InfoResponse infoResponse = webTestClient
                 .post()
-                .uri("/api/v1/profile/send/email")
+                .uri("/api/v1/ideas-service/profile/send/email")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(invitationDTO), InvitationDTO.class)
                 .exchange()
@@ -283,7 +283,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -312,7 +312,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
         Void result = webTestClient
                 .post()
-                .uri("/api/v1/profile/send/emails")
+                .uri("/api/v1/ideas-service/profile/send/emails")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(invitations), InvitationsDTO.class)
                 .exchange().expectBody(Void.class).returnResult().getResponseBody();
@@ -339,7 +339,7 @@ public class AccountChangeControllerTest extends TestContainers {
                         Role.TEAM_OWNER));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -358,7 +358,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
         InfoResponse changerUrl = webTestClient
                 .post()
-                .uri("/api/v1/profile/send/change/email")
+                .uri("/api/v1/ideas-service/profile/send/change/email")
                 .header("Authorization", "Bearer " + response.getToken())
                 .body(Mono.just(changeEmailDataDTO), ChangeEmailDataDTO.class)
                 .exchange()
@@ -377,7 +377,7 @@ public class AccountChangeControllerTest extends TestContainers {
 
         ChangeResponse changeResponse = webTestClient
                 .get()
-                .uri("/api/v1/profile/change/email/{url}", changeDataId)
+                .uri("/api/v1/ideas-service/profile/change/email/{url}", changeDataId)
                 .header("Authorization", "Bearer " + response.getToken())
                 .exchange().expectBody(ChangeResponse.class).returnResult().getResponseBody();
 
@@ -392,7 +392,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setOldEmail(response.getEmail());
 
         InfoResponse infoResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/email")
+                .uri("/api/v1/ideas-service/profile/change/email")
                 .header("Authorization", "Bearer " + response.getToken())
                 .body(Mono.just(changeRequest), ChangeRequest.class).exchange()
                 .expectBody(InfoResponse.class).returnResult().getResponseBody();
@@ -413,7 +413,7 @@ public class AccountChangeControllerTest extends TestContainers {
     void testFailLinkChangeEmail() {
         ErrorResponse errorResponse = webTestClient
                 .get()
-                .uri("/api/v1/profile/change/email/not-existed-letter")
+                .uri("/api/v1/ideas-service/profile/change/email/not-existed-letter")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
 
@@ -440,7 +440,7 @@ public class AccountChangeControllerTest extends TestContainers {
         Stream.of("r3g3g3g", "123456", "12345etnetbne").forEach(code -> {
             changeRequest.setCode(code);
             ErrorResponse errorResponse = webTestClient.put()
-                    .uri("/api/v1/profile/change/email")
+                    .uri("/api/v1/ideas-service/profile/change/email")
                     .header("Authorization", "Bearer " + jwt)
                     .body(Mono.just(changeRequest), ChangeRequest.class)
                     .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -453,7 +453,7 @@ public class AccountChangeControllerTest extends TestContainers {
                     .as(StepVerifier::create).expectComplete().verify();
         });
         ErrorResponse firstErrorResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/email")
+                .uri("/api/v1/ideas-service/profile/change/email")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -464,7 +464,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setCode("123533");
 
         ErrorResponse secondErrorResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/email")
+                .uri("/api/v1/ideas-service/profile/change/email")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -495,7 +495,7 @@ public class AccountChangeControllerTest extends TestContainers {
                         Role.INITIATOR));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -507,7 +507,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
         String changerUrl = webTestClient
                 .post()
-                .uri("/api/v1/profile/send/change/password")
+                .uri("/api/v1/ideas-service/profile/send/change/password")
                 .body(Mono.just(changePasswordDataDTO), ChangePasswordDataDTO.class)
                 .exchange()
                 .expectBody(String.class)
@@ -528,7 +528,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setPassword("1234");
 
         InfoResponse infoResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/password")
+                .uri("/api/v1/ideas-service/profile/change/password")
                 .body(Mono.just(changeRequest), ChangeRequest.class).exchange()
                 .expectBody(InfoResponse.class).returnResult().getResponseBody();
 
@@ -538,7 +538,7 @@ public class AccountChangeControllerTest extends TestContainers {
         LoginRequest loginRequest = new LoginRequest(response.getEmail(), request.getPassword());
         ErrorResponse errorResponse = webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(loginRequest), LoginRequest.class)
                 .exchange()
                 .expectBody(ErrorResponse.class)
@@ -549,7 +549,7 @@ public class AccountChangeControllerTest extends TestContainers {
         loginRequest.setPassword(changeRequest.getPassword());
         AuthenticationResponse authenticationResponse = webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(loginRequest), LoginRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -565,7 +565,7 @@ public class AccountChangeControllerTest extends TestContainers {
                 .build();
         ErrorResponse changerUrl = webTestClient
                 .post()
-                .uri("/api/v1/profile/send/change/password")
+                .uri("/api/v1/ideas-service/profile/send/change/password")
                 .body(Mono.just(changePasswordDataDTO), ChangePasswordDataDTO.class)
                 .exchange()
                 .expectBody(ErrorResponse.class)
@@ -597,7 +597,7 @@ public class AccountChangeControllerTest extends TestContainers {
         Stream.of("wrg3wrgwr", "3153", "wegwrhwr").forEach(code -> {
             changeRequest.setCode(code.toString());
             ErrorResponse errorResponse = webTestClient.put()
-                    .uri("/api/v1/profile/change/password")
+                    .uri("/api/v1/ideas-service/profile/change/password")
                     .header("Authorization", "Bearer " + jwt)
                     .body(Mono.just(changeRequest), ChangeRequest.class)
                     .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -610,7 +610,7 @@ public class AccountChangeControllerTest extends TestContainers {
                     .as(StepVerifier::create).expectComplete().verify();
         });
         ErrorResponse firstErrorResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/password")
+                .uri("/api/v1/ideas-service/profile/change/password")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -621,7 +621,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setCode("123533");
 
         ErrorResponse secondErrorResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/password")
+                .uri("/api/v1/ideas-service/profile/change/password")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -636,7 +636,7 @@ public class AccountChangeControllerTest extends TestContainers {
         LoginRequest loginRequest = new LoginRequest(userDTO.getEmail(), changeRequest.getPassword());
         ErrorResponse failLogin = webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(loginRequest), LoginRequest.class)
                 .exchange()
                 .expectBody(ErrorResponse.class)
@@ -647,7 +647,7 @@ public class AccountChangeControllerTest extends TestContainers {
         loginRequest.setPassword(userPassword);
         AuthenticationResponse authenticationResponse = webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(loginRequest), LoginRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -675,7 +675,7 @@ public class AccountChangeControllerTest extends TestContainers {
         changeRequest.setCode(changePasswordData.getCode().toString());
 
         ErrorResponse errorResponse = webTestClient.put()
-                .uri("/api/v1/profile/change/password")
+                .uri("/api/v1/ideas-service/profile/change/password")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(changeRequest), ChangeRequest.class)
                 .exchange().expectBody(ErrorResponse.class).returnResult().getResponseBody();
@@ -692,7 +692,7 @@ public class AccountChangeControllerTest extends TestContainers {
     void testGetUsersInfoByAdmin() {
         List<UserDTO> users = webTestClient
                 .get()
-                .uri("/api/v1/profile/get/users")
+                .uri("/api/v1/ideas-service/profile/get/users")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(UserDTO.class)
@@ -711,7 +711,7 @@ public class AccountChangeControllerTest extends TestContainers {
     void testGetUsersEmailsByAdmin() {
         List<String> emails = webTestClient
                 .get()
-                .uri("/api/v1/profile/get/emails")
+                .uri("/api/v1/ideas-service/profile/get/emails")
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBodyList(String.class)

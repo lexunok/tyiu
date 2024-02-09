@@ -43,7 +43,7 @@ class IdeaControllerTest extends TestContainers {
                         Role.MEMBER));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -67,7 +67,7 @@ class IdeaControllerTest extends TestContainers {
 
         expertGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(expertGroupDTO), GroupDTO.class)
                 .exchange()
@@ -82,7 +82,7 @@ class IdeaControllerTest extends TestContainers {
 
         projectGroup = webTestClient
                 .post()
-                .uri("/api/v1/group/create")
+                .uri("/api/v1/ideas-service/group/create")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(projectGroupDTO), GroupDTO.class)
                 .exchange()
@@ -109,7 +109,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -138,7 +138,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/draft/add")
+                .uri("/api/v1/ideas-service/idea/draft/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTOinDraft), IdeaDTO.class)
                 .exchange()
@@ -153,7 +153,7 @@ class IdeaControllerTest extends TestContainers {
     void testGetIdea(){
         IdeaDTO ideaResponse = webTestClient
                 .get()
-                .uri("/api/v1/idea/{ideaId}", ideaId)
+                .uri("/api/v1/ideas-service/idea/{ideaId}", ideaId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBody(IdeaDTO.class)
@@ -166,7 +166,7 @@ class IdeaControllerTest extends TestContainers {
     void testShowListIdea(){
         List<IdeaDTO> ideaList = webTestClient
                 .get()
-                .uri("/api/v1/idea/all")
+                .uri("/api/v1/ideas-service/idea/all")
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBodyList(IdeaDTO.class)
@@ -179,7 +179,7 @@ class IdeaControllerTest extends TestContainers {
     void testShowListIdeaByInitiator(){
         List<IdeaDTO> ideaList = webTestClient
                 .get()
-                .uri("/api/v1/idea/initiator/all")
+                .uri("/api/v1/ideas-service/idea/initiator/all")
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBodyList(IdeaDTO.class)
@@ -203,7 +203,7 @@ class IdeaControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -214,7 +214,7 @@ class IdeaControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse1 = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO1), SkillDTO.class)
                 .exchange()
@@ -230,7 +230,7 @@ class IdeaControllerTest extends TestContainers {
 
         webTestClient
                 .post()
-                .uri("/api/v1/idea/skills/add")
+                .uri("/api/v1/ideas-service/idea/skills/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaSkill), IdeaSkillRequest.class)
                 .exchange()
@@ -251,7 +251,7 @@ class IdeaControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO), SkillDTO.class)
                 .exchange()
@@ -262,7 +262,7 @@ class IdeaControllerTest extends TestContainers {
 
         SkillDTO addSkillResponse1 = webTestClient
                 .post()
-                .uri("/api/v1/skill/add")
+                .uri("/api/v1/ideas-service/skill/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(skillDTO1), SkillDTO.class)
                 .exchange()
@@ -288,7 +288,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaAddResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -302,7 +302,7 @@ class IdeaControllerTest extends TestContainers {
                 .build();
         webTestClient
                 .put()
-                .uri("/api/v1/idea/skills/update")
+                .uri("/api/v1/ideas-service/idea/skills/update")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaSkill), IdeaSkillRequest.class)
                 .exchange()
@@ -313,7 +313,7 @@ class IdeaControllerTest extends TestContainers {
     void testGetIdeaSkills(){
         IdeaSkillRequest skillResponse = webTestClient
                 .get()
-                .uri("/api/v1/idea/skills/{ideaId}", ideaId)
+                .uri("/api/v1/ideas-service/idea/skills/{ideaId}", ideaId)
                 .header("Authorization","Bearer " + jwt)
                 .exchange()
                 .expectBody(IdeaSkillRequest.class)
@@ -341,7 +341,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaAddResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -361,7 +361,7 @@ class IdeaControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/idea/admin/update/{ideaId}", ideaAddResponse.getId())
+                .uri("/api/v1/ideas-service/idea/admin/update/{ideaId}", ideaAddResponse.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(updatedIdea), IdeaDTO.class)
                 .exchange()
@@ -387,7 +387,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaAddResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -397,7 +397,7 @@ class IdeaControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/idea/initiator/send/{ideaId}", ideaAddResponse.getId())
+                .uri("/api/v1/ideas-service/idea/initiator/send/{ideaId}", ideaAddResponse.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();
@@ -421,7 +421,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaAddResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -434,7 +434,7 @@ class IdeaControllerTest extends TestContainers {
 
         webTestClient
                 .put()
-                .uri("/api/v1/idea/status/update/{ideaId}", ideaAddResponse.getId())
+                .uri("/api/v1/ideas-service/idea/status/update/{ideaId}", ideaAddResponse.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(statusIdeaRequest), StatusIdeaRequest.class)
                 .exchange()
@@ -460,7 +460,7 @@ class IdeaControllerTest extends TestContainers {
 
         IdeaDTO ideaAddResponse = webTestClient
                 .post()
-                .uri("/api/v1/idea/add")
+                .uri("/api/v1/ideas-service/idea/add")
                 .header("Authorization", "Bearer " + jwt)
                 .body(Mono.just(ideaDTO), IdeaDTO.class)
                 .exchange()
@@ -470,7 +470,7 @@ class IdeaControllerTest extends TestContainers {
 
         webTestClient
                 .delete()
-                .uri("/api/v1/idea/delete/{ideaId}", ideaAddResponse.getId())
+                .uri("/api/v1/ideas-service/idea/delete/{ideaId}", ideaAddResponse.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectStatus().isOk();

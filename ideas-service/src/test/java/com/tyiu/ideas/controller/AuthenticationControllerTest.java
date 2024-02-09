@@ -29,7 +29,7 @@ class AuthenticationControllerTest extends TestContainers{
                 "auth","password", List.of(Role.ADMIN,Role.EXPERT));
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class)
@@ -48,7 +48,7 @@ class AuthenticationControllerTest extends TestContainers{
                 "auth","password", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectStatus().isOk();
@@ -66,7 +66,7 @@ class AuthenticationControllerTest extends TestContainers{
                 "notregistered","password");
         webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectStatus().isBadRequest();
@@ -78,14 +78,14 @@ class AuthenticationControllerTest extends TestContainers{
                 "auth","password", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(registerRequest), RegisterRequest.class)
                 .exchange()
                 .expectStatus().isOk();
         LoginRequest request = new LoginRequest("authentication3","password");
         AuthenticationResponse response = webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectBody(AuthenticationResponse.class).returnResult().getResponseBody();
@@ -99,14 +99,14 @@ class AuthenticationControllerTest extends TestContainers{
                 "password", List.of(Role.ADMIN,Role.EXPERT));
         webTestClient
                 .post()
-                .uri("/api/v1/auth/register")
+                .uri("/api/v1/ideas-service/auth/register")
                 .body(Mono.just(registerRequest), RegisterRequest.class)
                 .exchange()
                 .expectStatus().isOk();
         LoginRequest request = new LoginRequest("authentication4","passwordnotcorrect");
         webTestClient
                 .post()
-                .uri("/api/v1/auth/login")
+                .uri("/api/v1/ideas-service/auth/login")
                 .body(Mono.just(request), RegisterRequest.class)
                 .exchange()
                 .expectStatus()
