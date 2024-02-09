@@ -22,6 +22,13 @@ class ProjectService(
     val template: R2dbcEntityTemplate,
     private val userRepository: UserRepository
 ) {
+    //suspend везде но не там где GET
+    //не делать много запросов в бд, лучше получить один раз модель и вставить ее в дто
+    //не делать много преобразований из дто и в дто
+    //return map можно убрать
+    //статус Paused  запрос чтобы его поменять
+    //отдельная модель
+    //по названию функции в репозитории формируется запрос автоматически
     suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
         projects.name = project.ideaId?.let { ideaRepository.findById(it) }?.toDTO()?.name
@@ -39,16 +46,14 @@ class ProjectService(
         }
 
     fun getYourProjects(userId: String): Flow<ProjectDTO> =
-        projectRepository.findProjectByUserId(userId).map { p ->
-            return@map projectToDTO(p)
-        }
+        projectRepository.findProjectByUserId(userId).map { projectToDTO(it) }
 
     fun getYourActiveProjects(userId: String): Flow<ProjectDTO> =
         projectRepository.findByStatus(userId).map { p ->
             return@map projectToDTO(p)
         }
 
-    suspend fun getOneProject(projectId: BigInteger): Flow<ProjectDTO> =
+    fun getOneProject(projectId: BigInteger): Flow<ProjectDTO> =
         projectRepository.findByProjectId(projectId).map { p ->
             return@map projectToDTO(p)
         }
@@ -74,7 +79,6 @@ class ProjectService(
             //teamId = ideaMarketDTO.
         )
         return projectToDTO(projectRepository.save(project))
-
     }
 
     suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMemberDTO {

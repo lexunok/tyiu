@@ -11,7 +11,7 @@ import java.math.BigInteger
 @RequestMapping("/api/v1/scrum-service/task")
 class TaskController (private val taskService: TaskService  ) {
 
-    @GetMapping("projects/{projectId}/all")
+    @GetMapping("/projects/{projectId}/all")
     fun getAllTaskByProject(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksByProject(projectId)
 
     @GetMapping("projects/{projectId}")

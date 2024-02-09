@@ -33,7 +33,8 @@ data class Task (
     val id: String? = null,
     val sprintId: String? = null,
     val projectId: String? = null,
-
+    //поле
+    val isInBacklog
     val name: String? = null,
     val description: String? = null,
 

@@ -42,7 +42,7 @@ class TaskService
         }
 
     fun getAllTasks(): Flow<Task> = repository.findAll() // ВЫВОД ВСЕХ СОЗДАННЫХ ТАСКОВ ВО ВСЕХ ПРОЕКТАХ. НУЖНО НА ВРЕМЯ РАЗРАБОТКИ
-
+    //можно сделать функцию под случай в спринте и под случай в бэклог
     suspend fun createTask(taskDTO:TaskDTO):TaskDTO {
         val task = Task(
             name = taskDTO.name,
@@ -71,7 +71,7 @@ class TaskService
             .bind("taskId", TaskStatusRequest.taskId!!).await()
     }
 
-    fun deleteTask(id: BigInteger) = repository.deleteTaskById(id)
+    suspend fun deleteTask(id: BigInteger) = repository.deleteTaskById(id)
 
 
 }

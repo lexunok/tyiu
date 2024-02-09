@@ -1,6 +1,5 @@
 package com.tyiu.scrumservice.controller
 
-import com.tyiu.scrumservice.model.Sprint
 import com.tyiu.scrumservice.model.SprintDTO
 import com.tyiu.scrumservice.model.SprintMarks
 import com.tyiu.scrumservice.service.SprintService

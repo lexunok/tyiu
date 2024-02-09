@@ -10,12 +10,8 @@ import org.springframework.stereotype.Service
 import java.math.BigInteger
 
 @Service
-class TaskTagService (
-    private val taskTagRepository: TaskTagRepository,
-    val template: R2dbcEntityTemplate
-) {
+class TaskTagService (private val taskTagRepository: TaskTagRepository, val template: R2dbcEntityTemplate) {
 
-    private val connections:MutableMap<String, MutableSharedFlow<TaskTag>> = mutableMapOf()
 
     fun getAllTags(): Flow<TaskTagDTO> =
         taskTagRepository.findAll().map { tag ->

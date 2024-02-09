@@ -13,13 +13,10 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.math.BigInteger
 import java.time.LocalDate
 
-interface IdeaRepository: CoroutineCrudRepository<Idea, String> {}
+interface IdeaRepository: CoroutineCrudRepository<Idea, String>
+interface TeamRepository: CoroutineCrudRepository<Team, String>
 
-interface TeamRepository: CoroutineCrudRepository<Team, String> {}
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
-
-        @Query("SELECT * FROM project WHERE id = :projectId")
-        fun findByProjectId(projectId: BigInteger): Flow<Project>
 
         @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId and status = 'ACTIVE'")
         fun findByStatus(userId: String): Flow<Project>
@@ -49,9 +46,9 @@ data class ProjectDTO (
         var team: TeamDTO? = null,
         var members: List<ProjectMemberDTO>? = null,
         val report: String? = null,
-        val startDate:LocalDate? = LocalDate.now(),
-        val finishDate:LocalDate? = LocalDate.now(),
-        var status: ProjectStatus? = ProjectStatus.ACTIVE,
+        val startDate:LocalDate?,
+        val finishDate:LocalDate?,
+        var status: ProjectStatus?,
 )
 
 enum class ProjectStatus{

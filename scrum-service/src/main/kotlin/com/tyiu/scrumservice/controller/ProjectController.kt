@@ -21,7 +21,7 @@ class ProjectController (private val projectService: ProjectService) {
     fun getYourActiveProjects(@PathVariable userId: String): Flow<ProjectDTO> = projectService.getYourActiveProjects(userId)
 
     @GetMapping("/{projectId}")
-    suspend fun getOneProject(@PathVariable projectId: BigInteger): Flow<ProjectDTO> = projectService.getOneProject(projectId)
+    fun getOneProject(@PathVariable projectId: BigInteger): Flow<ProjectDTO> = projectService.getOneProject(projectId)
 
     @GetMapping("/members/{projectId}/all")
     fun getProjectMembers(@PathVariable projectId: String): Flow<ProjectMemberDTO> = projectService.getProjectMembers(projectId)
