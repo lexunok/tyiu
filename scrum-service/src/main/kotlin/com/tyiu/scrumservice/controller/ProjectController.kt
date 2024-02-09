@@ -21,10 +21,10 @@ class ProjectController (private val projectService: ProjectService) {
     fun getYourActiveProjects(@PathVariable userId: String): Flow<ProjectDTO> = projectService.getYourActiveProjects(userId)
 
     @GetMapping("/{projectId}")
-    fun getOneProject(@PathVariable projectId: BigInteger): Flow<ProjectDTO> = projectService.getOneProject(projectId)
+    suspend fun getOneProject(@PathVariable projectId: String): ProjectDTO? = projectService.getOneProject(projectId)
 
     @GetMapping("/members/{projectId}/all")
-    fun getProjectMembers(@PathVariable projectId: String): Flow<ProjectMemberDTO> = projectService.getProjectMembers(projectId)
+    fun getProjectMembers(@PathVariable projectId: String): Flow<ProjectMemberDTO>? = projectService.getProjectMembers(projectId)
 
     @GetMapping("/marks/{projectId}/all")
     fun getProjectMarks(@PathVariable projectId: String): Flow<ProjectMarks> = projectService.getProjectMarks(projectId)
@@ -34,16 +34,18 @@ class ProjectController (private val projectService: ProjectService) {
 
     @PostMapping("/send")
     suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO): ProjectDTO = projectService.createProject(ideaMarketDTO)
+
     @PostMapping("/{projectId}/add/members")
     suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody teamMemberRequest: TeamMemberRequest): ProjectMemberDTO = projectService.addMembersInProject(projectId,teamMemberRequest)
 
     @PutMapping("/marks/update")
     suspend fun putProjectMarks(@RequestBody projectMarks: ProjectMarks) = projectService.putProjectMarks(projectMarks)
 
-    @PutMapping("/status/change")
-    suspend fun putProjectStatus(@RequestBody projectStatusRequest: ProjectStatusRequest)= projectService.putProjectStatus(projectStatusRequest)
 
-    @PutMapping("/finish/change")
-    suspend fun putFinishProject(@RequestBody projectFinishRequest: ProjectFinishRequest)= projectService.putFinishProject(projectFinishRequest)
+    @PutMapping("/{projectId}/status/change")
+    suspend fun pauseProject(@PathVariable projectId: String)= projectService.pauseProject(projectId)
+
+    @PutMapping("/{projectId}/finish/change")
+    suspend fun putFinishProject(@PathVariable projectId: String,@RequestBody projectFinishRequest: ProjectFinishRequest)= projectService.putFinishProject(projectId,projectFinishRequest)
 
 }

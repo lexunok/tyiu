@@ -1,27 +1,22 @@
 package com.tyiu.scrumservice.model
 
-import com.tyiu.ideas.model.dto.IdeaDTO
 import com.tyiu.ideas.model.dto.TeamDTO
 import com.tyiu.ideas.model.dto.UserDTO
-import com.tyiu.ideas.model.entities.Idea
-import com.tyiu.ideas.model.entities.Team
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
+import org.springframework.data.r2dbc.repository.Modifying
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.math.BigInteger
 import java.time.LocalDate
 
-interface IdeaRepository: CoroutineCrudRepository<Idea, String>
-interface TeamRepository: CoroutineCrudRepository<Team, String>
-
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
 
-        @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId and status = 'ACTIVE'")
+        @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId and status = 'ACTIVE'")
         fun findByStatus(userId: String): Flow<Project>
 
-        @Query("SELECT * FROM project JOIN project_member ON project.id = CAST(project_member.project_id as BIGINT) WHERE project_member.user_id = :userId")
+        @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId")
         fun findProjectByUserId(userId: String): Flow<Project>
 
 }
@@ -52,16 +47,10 @@ data class ProjectDTO (
 )
 
 enum class ProjectStatus{
-        ACTIVE, DONE, FAILED
+        ACTIVE, DONE, PAUSED
 }
 
-data class ProjectStatusRequest(
-        val projectId:BigInteger? = null,
-        val projectStatus:ProjectStatus? = null,
-)
-
 data class ProjectFinishRequest(
-        val projectId:BigInteger? = null,
         val projectReport: String? = null,
         val finishDate: LocalDate? = null,
 )
@@ -72,17 +61,4 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
         startDate = startDate,
         finishDate = finishDate,
         status = status,
-)
-
-fun Idea.toDTO(): IdeaDTO = IdeaDTO(
-        id,
-        name,
-        description,
-        customer,
-        initiatorId,
-)
-
-fun Team.toDTO(): TeamDTO = TeamDTO(
-        id,
-        name,
 )

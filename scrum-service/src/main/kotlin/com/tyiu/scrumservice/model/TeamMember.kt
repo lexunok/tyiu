@@ -1,10 +1,16 @@
 package com.tyiu.scrumservice.model
 
 import com.tyiu.ideas.model.dto.UserDTO
+import kotlinx.coroutines.flow.Flow
+import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
-interface TeamMemberRepository: CoroutineCrudRepository<TeamMember, String>
+interface TeamMemberRepository: CoroutineCrudRepository<TeamMember, String>{
+
+    @Query("SELECT * FROM team_member WHERE team_id = :teamId")
+    fun findMemberByTeamId(teamId: String): Flow<ProjectMember>
+}
 
 @Table
 data class TeamMember(

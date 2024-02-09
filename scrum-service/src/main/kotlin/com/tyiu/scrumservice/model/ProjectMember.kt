@@ -9,16 +9,10 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
 interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String>{
+
     @Query("SELECT * FROM project_member WHERE project_id = :projectId")
     fun findMemberByProjectId(projectId: String): Flow<ProjectMember>
-
-    @Query("SELECT * FROM project_member WHERE user_id = :userId")
-    fun findProjectByUserId(userId: String): Flow<Project>
-
 }
-
-interface UserRepository: CoroutineCrudRepository<User, String> {}
-
 
 @Table
 data class ProjectMember (
@@ -36,9 +30,9 @@ data class ProjectMemberDTO(
     var email:String? = null,
     var firstName:String? = null,
     var lastName:String? = null,
-    val projectRole:ProjectRole?=ProjectRole.MEMBER,
-    val startDate:LocalDate? = LocalDate.now(),
-    val finishDate:LocalDate? = LocalDate.now(),
+    val projectRole:ProjectRole?,
+    val startDate:LocalDate?,
+    val finishDate:LocalDate?,
 )
 
 enum class ProjectRole{
@@ -50,11 +44,4 @@ fun ProjectMember.toDTO():ProjectMemberDTO = ProjectMemberDTO(
     projectRole = projectRole,
     startDate = startDate,
     finishDate = finishDate,
-)
-
-fun User.toDTO(): UserDTO = UserDTO(
-    id,
-    email,
-    firstName,
-    lastName,
 )
