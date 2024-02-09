@@ -1,12 +1,16 @@
 package com.tyiu.notificationservice.rabbitmq.email
 
 import com.tyiu.ideas.config.exception.CustomHttpException
+import com.tyiu.ideas.model.entities.User
 import interfaces.INotification
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.data.relational.core.query.Criteria.where
+import org.springframework.data.relational.core.query.Query.query
 import org.springframework.http.HttpStatusCode
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Component
+import reactor.core.publisher.Mono
 import request.NotificationRequest
 import response.NotificationResponse
 
@@ -83,21 +87,49 @@ class FakeRabbitMQEmailNotification(@Autowired private val template: R2dbcEntity
             )
         } else {
 
-            val message = String.format(
-                "Notification (id = %s) was successfully sent to the user with the email = %s",
-                notificationRequest.notificationId,
-                notificationRequest.consumerEmail
-            )
+            Mono.just(notificationRequest.consumerEmail)
+                .flatMap { dbFind: String? ->
+                    template.exists(query(where("email").`is`(dbFind!!)), User::class.java)
+                }
+                .flatMap { userExists: Boolean ->
 
-            this.validateResponse(
-                ResponseEntity<NotificationResponse>(
-                    NotificationResponse.builder()
-                        .message(message)
-                        .notificationId(notificationRequest.notificationId)
-                        .build(),
-                    HttpStatusCode.valueOf(200)
-                )
-            )
+                    if (java.lang.Boolean.TRUE == userExists && notificationRequest.consumerEmail != null) {
+
+                        val message = String.format(
+                            "Notification (id = %s) was successfully sent to the user with the email = %s",
+                            notificationRequest.notificationId,
+                            notificationRequest.consumerEmail
+                        )
+
+                        this.validateResponse(
+                            ResponseEntity(
+                                NotificationResponse.builder()
+                                    .message(message)
+                                    .notificationId(notificationRequest.notificationId)
+                                    .build(),
+                                HttpStatusCode.valueOf(200)
+                            )
+                        )
+                    } else {
+
+                        val message = String.format(
+                            "Error when sending notification (id = %s) to user. " +
+                                    "This notification intended for another user",
+                            notificationRequest.notificationId
+                        )
+
+                        this.validateResponse(
+                            ResponseEntity(
+                                NotificationResponse.builder()
+                                    .message(message)
+                                    .notificationId(notificationRequest.notificationId)
+                                    .build(),
+                                HttpStatusCode.valueOf(404)
+                            )
+                        )
+                    }
+                    Mono.empty<Any?>()
+                }.block()
         }
     }
 

@@ -23,13 +23,13 @@ services:
       - 5433:5432
     volumes:
       - postgres_auth:/data/postgres_auth
-#  rabbitmq:
-#    container_name: rabbitmq
-#    image: rabbitmq:3.12.12-management
-#    restart: always
-#    ports:
-#      - 5672:5672
-#      - 15672:15672
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.12.12-management
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
 volumes:
   postgres:
   postgres_auth:
