@@ -1,6 +1,6 @@
 package com.tyiu.tgbotservice.config;
 
-import com.tyiu.tgbotservice.service.CornBot;
+import com.tyiu.tgbotservice.service.BotService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.event.ContextRefreshedEvent;
@@ -15,7 +15,7 @@ import org.telegram.telegrambots.updatesreceivers.DefaultBotSession;
 public class BotInitializer {
 
     @Autowired
-    CornBot bot;
+    BotService bot;
 
     @EventListener({ContextRefreshedEvent.class})
     public void init() throws TelegramApiException {

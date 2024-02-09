@@ -1,6 +1,6 @@
 package com.tyiu.tgbotservice.util;
 
-import com.tyiu.tgbotservice.model.Role;
+import com.tyiu.ideas.model.enums.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;

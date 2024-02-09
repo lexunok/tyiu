@@ -22,4 +22,9 @@ public class Team {
     private LocalDate createdAt;
     private String ownerId;
     private String leaderId;
+
+    public String getName() {
+        return name;
+    }
+    public String getId() { return id; }
 }

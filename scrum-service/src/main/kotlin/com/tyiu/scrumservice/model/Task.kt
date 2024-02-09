@@ -1,7 +1,5 @@
 package com.tyiu.scrumservice.model
 
-
-import com.tyiu.ideas.model.Comment
 import com.tyiu.ideas.model.dto.UserDTO
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
@@ -24,12 +22,9 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
     fun findTaskById(id: BigInteger): Flow<Task>
 
-    // УДАЛЕНИЕ ТАСКА ПО ЕГО АЙДИ. СДЕЛАЛ ОТДЕЛЬНЫЙ ЗАПРОС, ПОТОМУ ЧТО У НАС ID: STRING А В ТАБЛИЦЕ ID: BIGINTEGER. НЕ ПОНИМАЮ ПОЧЕМУ МЫ СДЕЛАЛИ ID = STRING
+    // УДАЛЕНИЕ ТАСКА ПО ЕГО АЙДИ. СДЕЛАЛ ОТДЕЛЬНЫЙ ЗАПРОС, ПОТОМУ ЧТО У НАС ID: STRING А В ТАБЛИЦЕ ID: BIGINTEGER.
     @Query("delete FROM task WHERE id = :id ")
     fun deleteTaskById(id: BigInteger): Flow<Task>
-
-    /*@Query("SELECT * FROM task WHERE status = :status")  ПОИСК ТАСКА ПО ТЕГУ может пригодится в будущем
-    fun findAllInBacklog(status: String): Flow<Task>*/
 }
 
 @Table
@@ -48,9 +43,9 @@ data class Task (
     val workHour: Long? = null,
 
     val startDate: LocalDate? = LocalDate.now(),
-    val finishDate: LocalDate? = LocalDate.now(),
+    val finishDate: LocalDate? = null,
 
-    var status: TaskStatus
+    var status: TaskStatus? = TaskStatus.InBacklog,
 )
 
 data class Task2Sprint (
@@ -72,16 +67,32 @@ data class TaskDTO (
     val workHour: Long? = null,
 
     val startDate: LocalDate? = LocalDate.now(),
-    val finishDate: LocalDate? = LocalDate.now(),
+    val finishDate: LocalDate? = null,
 
     var tag: TaskTagDTO? = null,
-    var status: TaskStatus
+    var status: TaskStatus? = TaskStatus.InBacklog,
 )
 
 enum class TaskStatus
 {
     InBacklog, OnModification, New, InProgress, OnVerification, Done
 }
+
+data class TaskStatusRequest(
+    val taskId :BigInteger? = null,
+    val taskStatus: TaskStatus? = null,
+)
+
+data class taskInfoRequest(
+    val taskId :BigInteger? = null,
+    var taskSprintId: String? = null,
+    var taskName: String? = null,
+    var taskDescription: String? = null,
+    var taskExecutor_id: String? = null,
+    var taskWork_hour: Long? = null,
+    var taskFinish_date: LocalDate? = null,
+    var taskStatus: String? = null,
+)
 
 
 fun Task.toDTO(): TaskDTO = TaskDTO (

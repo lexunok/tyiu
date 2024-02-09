@@ -43,6 +43,13 @@ public class Idea {
         CONFIRMED,
         ON_MARKET
     }
+    public String getName() {
+        return name;
+    }
+    public String getId() { return id; }
+    public String description() { return description; }
+    public String customer() { return customer; }
+    public String initiatorId() { return initiatorId; }
 
 
 }

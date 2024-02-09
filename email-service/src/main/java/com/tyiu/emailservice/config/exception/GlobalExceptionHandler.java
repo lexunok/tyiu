@@ -1,6 +1,7 @@
 package com.tyiu.emailservice.config.exception;
 
-import com.tyiu.emailservice.model.responses.ErrorResponse;
+import com.tyiu.ideas.model.responses.ErrorResponse;
+import com.tyiu.ideas.config.exception.CustomHttpException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;

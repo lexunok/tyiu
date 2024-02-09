@@ -1,9 +1,8 @@
 package com.tyiu.emailservice.service;
 
 import com.tyiu.emailservice.config.FreeMarkerConfig;
-import com.tyiu.emailservice.config.exception.CustomHttpException;
+import com.tyiu.ideas.config.exception.CustomHttpException;
 import com.tyiu.emailservice.model.responses.ChangeDataEmailResponse;
-import com.tyiu.emailservice.model.responses.NotificationEmailResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -12,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.ui.freemarker.FreeMarkerTemplateUtils;
 import reactor.core.publisher.Mono;
+import request.NotificationRequest;
 
 import java.util.Map;
 
@@ -23,9 +23,8 @@ public class EmailService {
     private final FreeMarkerConfig freeMarkerConfig;
     private final JavaMailSender javaMailSender;
 
-    private final String path = "https://hits.tyuiu.ru/";
 
-    private Mono<String> getNotificationContext(NotificationEmailResponse notification) {
+    private Mono<String> getNotificationContext(NotificationRequest notification) {
         return Mono.just(freeMarkerConfig
                 .freemarkerClassLoaderConfig().getConfiguration()).flatMap(conf -> {
             try {
@@ -54,15 +53,14 @@ public class EmailService {
         });
     }
 
-    public Mono<String> sendMailNotification(NotificationEmailResponse notificationEmailRequest) {
-        notificationEmailRequest.setLink(path + notificationEmailRequest.getLink());
+    public Mono<String> sendMailNotification(NotificationRequest notificationRequest) {
         return Mono.just(javaMailSender.createMimeMessage())
-                .flatMap(mimeMessage -> getNotificationContext(notificationEmailRequest)
+                .flatMap(mimeMessage -> getNotificationContext(notificationRequest)
                     .flatMap(html -> {
                         try {
                             MimeMessageHelper helper = new MimeMessageHelper(mimeMessage, true);
-                            helper.setSubject("Уведомление от портала HITS");
-                            helper.setTo(notificationEmailRequest.getTo());
+                            helper.setSubject(notificationRequest.getTitle());
+                            helper.setTo(notificationRequest.getConsumerEmail());
                             helper.setText(html, true);
                             helper.setFrom("HITS@hits1.tyuiu.ru");
                             javaMailSender.send(mimeMessage);
@@ -70,7 +68,7 @@ public class EmailService {
                         }
                         catch (Exception e) {
                             log.error("Failed to send email {} with subject 'Уведомление от портала HITS', due to {}",
-                                    notificationEmailRequest.getTo(), e.getMessage());
+                                    notificationRequest.getConsumerEmail(), e.getMessage());
                             return Mono.error(new CustomHttpException(e.getMessage(),
                                     HttpStatus.INTERNAL_SERVER_ERROR.value()));
 

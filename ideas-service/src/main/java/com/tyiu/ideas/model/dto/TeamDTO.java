@@ -28,4 +28,9 @@ public class TeamDTO {
     private List<SkillDTO> skills;
     private List<SkillDTO> wantedSkills;
 
+    public TeamDTO(String id, String name) {
+        this.id = id;
+        this.name = name;
+    }
+
 }

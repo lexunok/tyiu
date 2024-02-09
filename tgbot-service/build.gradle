@@ -18,6 +18,9 @@ dependencies {
 	
 	compileOnly 'io.jsonwebtoken:jjwt-api:0.11.5'
 
+	implementation project(path: ':library')
+	implementation project(path: ':ideas-service')
+
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
 

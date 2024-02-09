@@ -16,16 +16,20 @@ data class TeamMember(
 )
 
 data class TeamMemberDTO(
+    val teamId:String? = null,
     val userId: String? = null,
-    var email: UserDTO? = null,
-    val firstName:UserDTO? = null,
-    val lastName:UserDTO? = null,
+    var email:String? = null,
+    val firstName:String? = null,
+    val lastName:String? = null,
     var teamRole:TeamRole? = null,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = null,
-
     )
 
+data class TeamMemberRequest(
+    val userId: String? = null,
+    val teamId:String? = null,
+)
 enum class TeamRole{
     TEAM_LEADER, MEMBER
 }

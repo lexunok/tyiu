@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.1.2'
@@ -23,19 +25,20 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
-	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation "org.springframework.boot:spring-boot-starter-freemarker"
 	implementation "org.springframework.boot:spring-boot-starter-amqp"
+	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.modelmapper:modelmapper:3.1.1'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
-	implementation 'org.flywaydb:flyway-core:9.21.0'
 	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core"
 	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactive"
 	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor"
 	implementation "org.jetbrains.kotlin:kotlin-reflect"
-
-
+	implementation "org.testcontainers:testcontainers-bom:1.19.3"
+	implementation "org.projectlombok:lombok"
+	implementation project(path: ':library')
+	implementation project(path: ':ideas-service')
+	implementation project(path: ':tgbot-service')
 	compileOnly 'org.projectlombok:lombok'
 
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
@@ -46,6 +49,11 @@ dependencies {
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.testcontainers:postgresql:1.18.3'
+	testImplementation 'org.testcontainers:rabbitmq'
+	testImplementation "org.testcontainers:junit-jupiter"
+
+
+
 	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 
@@ -53,6 +61,14 @@ tasks.named('test') {
 	systemProperties['spring.profiles.active'] = project.properties['profile']
 	useJUnitPlatform()
 }
+
+tasks.withType(KotlinCompile) {
+	kotlinOptions {
+		freeCompilerArgs += '-Xjsr305=strict'
+		jvmTarget = '17'
+	}
+}
+
 kotlin {
 	jvmToolchain(17)
 }

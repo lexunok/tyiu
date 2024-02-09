@@ -35,4 +35,12 @@ public class IdeaDTO {
     private Double rating;
     private Short maxTeamSize;
     private Short minTeamSize;
+
+    public IdeaDTO(String id, String name, String description, String customer, String initiatorId) {
+        this.id = id;
+        this.name = name;
+        this.description = description;
+        this.customer = customer;
+        this.initiator = initiator;
+    }
 }

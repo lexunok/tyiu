@@ -41,5 +41,12 @@ fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
     isConfirmed = isConfirmed
 )
 
+data class TaskTagRequest(
+    var tagName: String? = null,
+    var tagColor: String? = null,
+    var tagConfirmed: Boolean? = false
+)
+
+
 
 

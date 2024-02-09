@@ -2,6 +2,7 @@ package com.tyiu.scrumservice.model
 
 import com.tyiu.ideas.model.dto.IdeaDTO
 import com.tyiu.ideas.model.dto.TeamDTO
+import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Idea
 import com.tyiu.ideas.model.entities.Team
 import kotlinx.coroutines.flow.Flow
@@ -16,6 +17,7 @@ interface IdeaRepository: CoroutineCrudRepository<Idea, String> {}
 
 interface TeamRepository: CoroutineCrudRepository<Team, String> {}
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
+
         @Query("SELECT * FROM project WHERE id = :projectId")
         fun findByProjectId(projectId: BigInteger): Flow<Project>
 
@@ -40,10 +42,10 @@ data class Project(
 
 data class ProjectDTO (
         val id:String? = null,
-        var name: IdeaDTO? = null,
-        var description:IdeaDTO? = null,
-        var customer:IdeaDTO? = null,
-        var initiator: IdeaDTO? = null,
+        var name: String?=null,
+        var description: String?=null,
+        var customer: String?=null,
+        var initiator: UserDTO? = null,
         var team: TeamDTO? = null,
         var members: List<ProjectMemberDTO>? = null,
         val report: String? = null,
@@ -61,8 +63,9 @@ data class ProjectStatusRequest(
         val projectStatus:ProjectStatus? = null,
 )
 
-data class ProjectFinishDateRequest(
+data class ProjectFinishRequest(
         val projectId:BigInteger? = null,
+        val projectReport: String? = null,
         val finishDate: LocalDate? = null,
 )
 
@@ -74,22 +77,15 @@ fun Project.toDTO(): ProjectDTO=ProjectDTO(
         status = status,
 )
 
-fun ProjectDTO.toEntity(): Project = Project(
-        report = report,
-        startDate = startDate,
-        finishDate = finishDate,
-        status = status,
-)
-
-/*fun Idea.toDTO(): IdeaDTO = IdeaDTO(
+fun Idea.toDTO(): IdeaDTO = IdeaDTO(
         id,
         name,
         description,
         customer,
-        initiatorId
+        initiatorId,
 )
 
 fun Team.toDTO(): TeamDTO = TeamDTO(
         id,
         name,
-)*/
+)

@@ -1,13 +1,9 @@
 package com.tyiu.scrumservice.controller
 
-import com.tyiu.ideas.model.CommentDTO
-import com.tyiu.ideas.model.entities.User
-import com.tyiu.ideas.model.toDTO
-import com.tyiu.scrumservice.model.Task
-import com.tyiu.scrumservice.model.TaskDTO
+import com.tyiu.scrumservice.model.*
 import com.tyiu.scrumservice.service.TaskService
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import org.springframework.util.StopWatch.TaskInfo
 import org.springframework.web.bind.annotation.*
 import java.math.BigInteger
 
@@ -21,7 +17,7 @@ class TaskController (private val taskService: TaskService  ) {
     @GetMapping("projects/{projectId}")
     fun getAllTasksInBackLog(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksInBacklog(projectId)
 
-    @GetMapping("projects/{projectId}/sprint/{sprintId}") // ПОКА ЧТО НЕ РАБОТАЕТ.
+    @GetMapping("projects/{projectId}/sprint/{sprintId}")
     fun getAllTasksInSprint(@PathVariable projectId: String, @PathVariable sprintId: String): Flow<TaskDTO> = taskService.getAllTasksInSprint(projectId, sprintId)
 
     @GetMapping("{id}")
@@ -30,10 +26,14 @@ class TaskController (private val taskService: TaskService  ) {
     @GetMapping("/all")  // ВЫВОД ВСЕХ СОЗДАННЫХ ТАСКОВ ВО ВСЕХ ПРОЕКТАХ. НУЖНО НА ВРЕМЯ РАЗРАБОТКИ
     fun getAllTasks(): Flow<Task> = taskService.getAllTasks()
 
-    /*@GetMapping("{status}")
-    fun getAllTasksInBackLog(@PathVariable status: String): Flow<TaskDTO> = taskService.getAllTasksInBacklog(status)
-    ПОИСК ТАСКА ПО ТЕГУ может пригодится в будущем
-    */
+    @PostMapping("/add")
+    suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO): TaskDTO = taskService.createTask(taskDTO)
+
+    @PutMapping("/status/change")
+    suspend fun putTaskStatus (@RequestBody taskStatusRequest: TaskStatusRequest) = taskService.putTaskStatus(taskStatusRequest)
+
+    @PutMapping("/{taskId}/update")
+    suspend fun putUpdateTask (@PathVariable taskId: BigInteger,@RequestBody taskInfoRequest: taskInfoRequest) = taskService.putUpdateTask(taskId, taskInfoRequest)
 
     @DeleteMapping("{id}/delete")
     suspend fun deleteTask(@PathVariable id: BigInteger) = taskService.deleteTask(id)

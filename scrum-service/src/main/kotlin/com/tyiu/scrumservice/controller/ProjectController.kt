@@ -33,17 +33,17 @@ class ProjectController (private val projectService: ProjectService) {
     fun getProjectLogs(@PathVariable projectId: String): Flow<TaskMovementLog> = projectService.getProjectLogs(projectId)
 
     @PostMapping("/send")
-    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO): Flow<Project> = projectService.createProject(ideaMarketDTO)
-    @PostMapping("/add/members")
-    fun addMembersInProject(): Flow<Project> = projectService.addMembersInProject()
+    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO): ProjectDTO = projectService.createProject(ideaMarketDTO)
+    @PostMapping("/{projectId}/add/members")
+    suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody teamMemberRequest: TeamMemberRequest): ProjectMemberDTO = projectService.addMembersInProject(projectId,teamMemberRequest)
 
-    @PutMapping("/marks/{projectId}/update")
-    fun putProjectMarks(@PathVariable projectId: BigInteger): Flow<Project> = projectService.putProjectMarks()
+    @PutMapping("/marks/update")
+    suspend fun putProjectMarks(@RequestBody projectMarks: ProjectMarks) = projectService.putProjectMarks(projectMarks)
 
     @PutMapping("/status/change")
     suspend fun putProjectStatus(@RequestBody projectStatusRequest: ProjectStatusRequest)= projectService.putProjectStatus(projectStatusRequest)
 
     @PutMapping("/finish/change")
-    suspend fun putFinishProject(@RequestBody projectFinishDateRequest: ProjectFinishDateRequest)= projectService.putFinishProject(projectFinishDateRequest)
+    suspend fun putFinishProject(@RequestBody projectFinishRequest: ProjectFinishRequest)= projectService.putFinishProject(projectFinishRequest)
 
 }
