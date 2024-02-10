@@ -20,11 +20,12 @@ import java.util.List;
 
 @Configuration
 @EnableWebFluxSecurity
-@EnableReactiveMethodSecurity
 @RequiredArgsConstructor
+@EnableReactiveMethodSecurity
 public class SecurityConfig {
 
     private final AuthenticationManager authenticationManager;
+
     private final SecurityContextRepository securityContextRepository;
 
     @Bean

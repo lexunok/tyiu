@@ -9,12 +9,13 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 
-@Component
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public class AuthenticationManager implements ReactiveAuthenticationManager {
 
     private final JwtCore jwtCore;
+
     private final UserService userService;
 
     @Override

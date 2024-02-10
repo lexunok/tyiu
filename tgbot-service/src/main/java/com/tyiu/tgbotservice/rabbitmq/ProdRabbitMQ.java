@@ -13,9 +13,9 @@ import org.springframework.stereotype.Component;
 import request.NotificationRequest;
 import response.NotificationResponse;
 
-@Component("prodTelegramClient")
 @EnableRabbit
 @RequiredArgsConstructor
+@Component("prodTelegramClient")
 public class ProdRabbitMQ implements INotification {
 
     @Value("${rabbitmq.exchange}")
@@ -25,31 +25,33 @@ public class ProdRabbitMQ implements INotification {
     private String route;
 
     private final BotService bot;
+
     private final RabbitTemplate rabbitTemplate;
 
     @Override
     @RabbitListener(queues = {"${rabbitmq.queue.receive.new}"})
-    public void makeNotification(NotificationRequest notificationRequest) {
+    public void makeNotification(NotificationRequest notification) {
 
         try {
             String answer = "Вам пришло уведомление от портале ВШЦТ!\n\n" +
-                    notificationRequest.getTitle() + "\n" +
-                    notificationRequest.getMessage() + "\n\n" +
+                    notification.getTitle() + "\n" +
+                    notification.getMessage() + "\n\n" +
                     "Подробнее можете ознакомиться здесь:\n" +
-                    notificationRequest.getLink();
+                    notification.getLink();
 
-            String tag = notificationRequest.getTag();
+            String tag = notification.getTag();
+
             if (tag != null) {
 
                 bot.sendNotificationToChat(tag, answer);
 
                 String message = String.format("Notification (id = %s) was successfully sent to the user with the tag = %s",
-                        notificationRequest.getNotificationId(),
-                        notificationRequest.getTag());
+                        notification.getNotificationId(),
+                        notification.getTag());
 
                 ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                         .message(message)
-                        .notificationId(notificationRequest.getNotificationId())
+                        .notificationId(notification.getNotificationId())
                         .build(),
                         HttpStatusCode.valueOf(200));
                 validateResponse(response);
@@ -57,11 +59,11 @@ public class ProdRabbitMQ implements INotification {
             } else {
 
                 String message = String.format("Error when sending notification (id = %s) to user",
-                        notificationRequest.getNotificationId());
+                        notification.getNotificationId());
 
                 ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                         .message(message)
-                        .notificationId(notificationRequest.getNotificationId())
+                        .notificationId(notification.getNotificationId())
                         .build(),
                         HttpStatusCode.valueOf(404));
                 validateResponse(response);
@@ -71,7 +73,7 @@ public class ProdRabbitMQ implements INotification {
 
             ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                     .message(e.getMessage())
-                    .notificationId(notificationRequest.getNotificationId())
+                    .notificationId(notification.getNotificationId())
                     .build(),
                     HttpStatusCode.valueOf(500));
             validateResponse(response);

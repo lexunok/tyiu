@@ -17,6 +17,7 @@ import java.util.Map;
 
 @Component
 public class JwtCore {
+
     @Value("${jwt.secret}")
     String secret;
 

@@ -14,18 +14,12 @@ public class RabbitMQConfig {
 
     @Value("${rabbitmq.queue.receive.new}")
     private String queueReceiveNew;
-//    @Value("${rabbitmq.queue.receive.unread}")
-//    private String queueReceiveUnread;
-//    @Value("${rabbitmq.queue.send}")
-//    private String queueSend;
+
     @Value("${rabbitmq.exchange}")
     private String exchange;
+
     @Value("${rabbitmq.routes.receive.new}")
     private String routeReceivingNew;
-//    @Value("${rabbitmq.routes.receive.unread}")
-//    private String routeReceiveUnread;
-//    @Value("${rabbitmq.routes.send}")
-//    private String routeSend;
 
     @Bean
     public TopicExchange exchange() {
