@@ -1,9 +1,12 @@
 package com.tyiu.ideas.controller;
 
+import com.tyiu.ideas.model.dto.IdeaDTO;
 import com.tyiu.ideas.model.dto.IdeaInvitationDTO;
+import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.requests.IdeaInvitationStatusRequest;
 import com.tyiu.ideas.service.IdeaInvitationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -14,6 +17,11 @@ import reactor.core.publisher.Mono;
 public class IdeaInvitationController {
 
     private final IdeaInvitationService ideaInvitationService;
+
+    @GetMapping("/all/initiator")
+    public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(@AuthenticationPrincipal User user) {
+        return ideaInvitationService.getAllInvitationsByInitiator(user.getId());
+    }
 
     @GetMapping("/team/all/{teamId}")
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(@PathVariable String teamId) {

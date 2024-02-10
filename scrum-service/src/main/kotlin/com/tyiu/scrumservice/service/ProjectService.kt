@@ -37,9 +37,10 @@ class ProjectService(
         projects.customer = ideaToProject?.customer
         projects.initiator = ideaToProject?.initiatorId?.let { userRepository.findById(it)?.toDTO()}
         projects.team = project.teamId?.let { teamRepository.findById(it) }?.toDTO()
-        projects.members = getProjectMembers(project.id.toString())?.toList()
+        projects.members = project.id?.let{ getProjectMembers(it) }?.toList()
         return projects
     }
+
     fun getAllProjects(): Flow<ProjectDTO> = projectRepository.findAll().map { projectToDTO(it) }
 
     fun getYourProjects(userId: String): Flow<ProjectDTO> = projectRepository.findProjectByUserId(userId).map { projectToDTO(it) }
@@ -47,7 +48,6 @@ class ProjectService(
     fun getYourActiveProjects(userId: String): Flow<ProjectDTO> = projectRepository.findByStatus(userId).map { projectToDTO(it) }
 
     suspend fun getOneProject(projectId: String): ProjectDTO? = projectRepository.findById(projectId)?.let { projectToDTO(it) }
-
 
     fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO>? =
         projectMemberRepository.findMemberByProjectId(projectId).map { p ->
@@ -68,7 +68,18 @@ class ProjectService(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id
         )
-        return projectToDTO(projectRepository.save(project))
+        val prjSave = projectRepository.save(project)
+        prjSave.teamId?.let {
+            teamMemberRepository.findMemberByTeamId(it).map {m->
+                val projectMember = ProjectMember(
+                projectId = prjSave.id,
+                userId = m.userId,
+                teamId = m.teamId
+                )
+                projectMemberRepository.save(projectMember)
+            }
+        }
+        return projectToDTO(prjSave)
     }
 
     suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMemberDTO {
@@ -77,12 +88,7 @@ class ProjectService(
             userId = teamMemberRequest.userId,
             teamId = teamMemberRequest.teamId
         )
-        val projectMemberToDTO = projectMemberRepository.save(projectMember).toDTO()
-        val userToProject = projectMemberToDTO.userId?.let { userRepository.findById(it) }?.toDTO()
-        projectMemberToDTO.email = userToProject?.email
-        projectMemberToDTO.firstName = userToProject?.firstName
-        projectMemberToDTO.lastName = userToProject?.lastName
-        return projectMemberToDTO
+        return projectMemberRepository.save(projectMember).toDTO()
     }
 
     suspend fun putProjectMarks(projectMarks: ProjectMarks) {
