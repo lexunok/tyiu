@@ -1,5 +1,6 @@
 package com.tyiu.ideas.service;
 
+import com.tyiu.ideas.model.dto.IdeaDTO;
 import com.tyiu.ideas.model.dto.IdeaInvitationDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.IdeaInvitation;
@@ -29,7 +30,7 @@ public class IdeaInvitationService {
     private final R2dbcEntityTemplate template;
 
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(String teamId) {
-        String query = "SELECT inv.*, idea.name idea_name, " +
+        String query = "SELECT inv.*, idea.name idea_name, idea.initiator_id initiator_id " +
                 "ids.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
                 "LEFT JOIN idea ON idea.id = inv.idea_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = inv.idea_id LEFT JOIN skill s ON s.id = skill_id " +
@@ -43,6 +44,7 @@ public class IdeaInvitationService {
                     IdeaInvitationDTO invitation = map.getOrDefault(id,
                             IdeaInvitationDTO.builder()
                                     .id(id)
+                                    .initiatorId(row.get("initiator_id",String.class))
                                     .ideaId(row.get("idea_id", String.class))
                                     .ideaName(row.get("idea_name", String.class))
                                     .skills(new ArrayList<>())
@@ -118,5 +120,28 @@ public class IdeaInvitationService {
     public Mono<Void> inviteToIdea(String ideaId, String teamId) {
         IdeaInvitation invitation = new IdeaInvitation(null, ideaId, teamId, RequestStatus.NEW);
         return template.insert(invitation).then();
+    }
+
+    public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(String userId) {
+        String query = """
+                SELECT i.id idea_id, i.name idea_name, i.initiator_id initiator_id,
+                inv.id invitation_id, inv.status status ,inv.team_id team_id, t.name team_name FROM idea i
+                RIGHT JOIN idea_invitation inv ON inv.idea_id = i.id
+                LEFT JOIN team t ON t.id = inv.team_id
+                WHERE i.initiator_id = :userId
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("userId",userId)
+                .map((row, rowMetadata) ->
+                    IdeaInvitationDTO.builder()
+                            .id(row.get("invitation_id",String.class))
+                            .ideaId(row.get("idea_id",String.class))
+                            .ideaName(row.get("idea_name",String.class))
+                            .initiatorId(row.get("initiator_id",String.class))
+                            .teamId(row.get("team_id",String.class))
+                            .teamName(row.get("team_name",String.class))
+                            .status(RequestStatus.valueOf(row.get("status", String.class)))
+                            .build())
+                .all();
     }
 }

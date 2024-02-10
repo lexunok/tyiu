@@ -148,6 +148,22 @@ public class IdeaMarketService {
     //\___/  /___/  /_/
     ///////////////////////
 
+    public Flux<IdeaDTO> getAllInitiatorMarketIdeasForInvitations(String userId) {
+        String query = """
+                SELECT i.name name, i.id id, im.market_id mid, m.status status FROM idea i
+                LEFT JOIN idea_market im ON im.idea_id = i.id
+                LEFT JOIN market m ON m.id = im.market_id
+                WHERE i.initiator_id = :userId AND m.status = 'ACTIVE'
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", userId)
+                .map((row, rowMetadata) ->
+                        IdeaDTO.builder()
+                                .id(row.get("id",String.class))
+                                .name(row.get("name", String.class)).build())
+                .all();
+    }
+
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,

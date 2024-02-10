@@ -27,6 +27,10 @@ public class IdeaMarketController {
     /// (_ /  / _/   / /
     //\___/  /___/  /_/
     ///////////////////////
+    @GetMapping("/initiator")
+    public Flux<IdeaDTO> getAllInitiatorMarketIdeasForInvitations(@AuthenticationPrincipal User user) {
+        return ideaMarketService.getAllInitiatorMarketIdeasForInvitations(user.getId());
+    }
 
     @GetMapping("/all")
     public Flux<IdeaMarketDTO> getAllMarketIdeas(@AuthenticationPrincipal User user) {

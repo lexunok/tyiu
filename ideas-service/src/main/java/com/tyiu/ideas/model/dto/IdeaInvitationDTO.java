@@ -13,6 +13,7 @@ public class IdeaInvitationDTO {
     private String id;
     private String ideaId;
     private String ideaName;
+    private String initiatorId;
     private String teamName;
     private Short teamMembersCount;
     private List<SkillDTO> skills;
