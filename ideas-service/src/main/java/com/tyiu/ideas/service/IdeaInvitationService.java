@@ -30,9 +30,10 @@ public class IdeaInvitationService {
     private final R2dbcEntityTemplate template;
 
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(String teamId) {
-        String query = "SELECT inv.*, idea.name idea_name, idea.initiator_id initiator_id, " +
+        String query = "SELECT inv.*, team.name team_name,idea.name idea_name, idea.initiator_id initiator_id, " +
                 "ids.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
                 "LEFT JOIN idea ON idea.id = inv.idea_id " +
+                "LEFT JOIN team ON team.id = inv.team_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = inv.idea_id LEFT JOIN skill s ON s.id = skill_id " +
                 "WHERE inv.team_id = :teamId";
         ConcurrentHashMap<String, IdeaInvitationDTO> map = new ConcurrentHashMap<>();
@@ -48,6 +49,7 @@ public class IdeaInvitationService {
                                     .ideaId(row.get("idea_id", String.class))
                                     .ideaName(row.get("idea_name", String.class))
                                     .skills(new ArrayList<>())
+                                    .teamName(row.get("team_name", String.class))
                                     .teamId(row.get("team_id", String.class))
                                     .status(RequestStatus.valueOf(row.get("status", String.class))).build());
                     if (skillId!=null) {
