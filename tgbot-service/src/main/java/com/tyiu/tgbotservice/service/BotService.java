@@ -22,8 +22,8 @@ import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
 
 @Slf4j
-@Component
 @Service
+@Component
 @EnableRabbit
 @Configuration
 @RequiredArgsConstructor
@@ -31,10 +31,13 @@ public class BotService extends TelegramLongPollingBot {
 
     @Value("${bot.name}")
     private String botName;
+
     @Value("${bot.token}")
     private String botToken;
+
     @Value("${rabbitmq.exchange}")
     private String exchange;
+
     @Value("${rabbitmq.routes.respond.to.notification}")
     private String routeRespond;
 
