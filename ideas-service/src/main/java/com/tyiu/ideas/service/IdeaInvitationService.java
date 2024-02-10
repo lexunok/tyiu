@@ -105,7 +105,7 @@ public class IdeaInvitationService {
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
             template.update(query(where("team_id").is(request.getTeamId())
                             .and(where("id").not(request.getId()))),
-                                    update("status", RequestStatus.CANCELED), IdeaInvitation.class)
+                                    update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                                     update("team_id", request.getTeamId())
                                             .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
