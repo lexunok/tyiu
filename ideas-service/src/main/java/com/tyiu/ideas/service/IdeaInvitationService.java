@@ -30,7 +30,7 @@ public class IdeaInvitationService {
     private final R2dbcEntityTemplate template;
 
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(String teamId) {
-        String query = "SELECT inv.*, idea.name idea_name, idea.initiator_id initiator_id " +
+        String query = "SELECT inv.*, idea.name idea_name, idea.initiator_id initiator_id, " +
                 "ids.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
                 "LEFT JOIN idea ON idea.id = inv.idea_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = inv.idea_id LEFT JOIN skill s ON s.id = skill_id " +
