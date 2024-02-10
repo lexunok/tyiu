@@ -10,7 +10,7 @@ import java.math.BigInteger
 
 interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String>{
     @Query("DELETE FROM task_tag WHERE id=:tagId")
-    fun deleteTagById(tagId: BigInteger): Flow<TaskTag>
+    fun deleteTagById(tagId: String): Flow<TaskTag>
 }
 
 @Table
@@ -31,7 +31,7 @@ data class TaskTagDTO (
     val id: String? = null,
     var name: String? = null,
     var color: String? = null,
-    var isConfirmed: Boolean? = false
+    var isConfirmed: Boolean?
 )
 
 fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
@@ -44,7 +44,6 @@ fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
 data class TaskTagRequest(
     var tagName: String? = null,
     var tagColor: String? = null,
-    var tagConfirmed: Boolean? = false
 )
 
 

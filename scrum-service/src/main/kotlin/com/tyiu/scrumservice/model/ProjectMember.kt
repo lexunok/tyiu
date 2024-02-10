@@ -40,6 +40,7 @@ enum class ProjectRole{
 }
 
 fun ProjectMember.toDTO():ProjectMemberDTO = ProjectMemberDTO(
+    userId = userId,
     teamId = teamId,
     projectRole = projectRole,
     startDate = startDate,
