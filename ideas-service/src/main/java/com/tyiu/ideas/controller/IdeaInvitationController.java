@@ -17,7 +17,10 @@ import reactor.core.publisher.Mono;
 public class IdeaInvitationController {
 
     private final IdeaInvitationService ideaInvitationService;
-
+    @GetMapping("/idea-market")
+    public Flux<IdeaDTO> getAllInitiatorMarketIdeasForInvitations(@AuthenticationPrincipal User user) {
+        return ideaInvitationService.getAllInitiatorMarketIdeasForInvitations(user.getId());
+    }
     @GetMapping("/all/initiator")
     public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(@AuthenticationPrincipal User user) {
         return ideaInvitationService.getAllInvitationsByInitiator(user.getId());
