@@ -32,7 +32,7 @@ public class ReceiveNotificationFromRabbitMQTest extends TestContainersDB {
     @Qualifier("testTelegramClient")
     private INotification testRabbitMQ;
 
-    private Mono<Void> setUserTag(String email, String tag) {
+    private Mono<Void> setUserInfo(String email, String tag) {
 
         UserTelegram user = UserTelegram.builder()
                 .userEmail(email)
@@ -65,7 +65,7 @@ public class ReceiveNotificationFromRabbitMQTest extends TestContainersDB {
                 .roles(List.of(Role.MEMBER))
                 .build();
 
-        template.insert(user).flatMap(u -> setUserTag(u.getEmail(), "tag")).block();
+        template.insert(user).flatMap(u -> setUserInfo(u.getEmail(), "tag")).block();
     }
 
     @Test

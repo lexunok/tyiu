@@ -1,28 +1,44 @@
 package com.tyiu.notificationservice.rabbitmq.telegram
 
 import com.tyiu.ideas.config.exception.CustomHttpException
+import com.tyiu.ideas.model.entities.User
+import com.tyiu.ideas.model.enums.Role
+import com.tyiu.notificationservice.rabbitmq.TestContainers
+import com.tyiu.tgbotservice.model.entities.UserTelegram
 import interfaces.INotification
 import org.junit.jupiter.api.Assertions
+import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.TestInstance
+import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
-import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient
 import org.springframework.boot.test.context.SpringBootTest
-import org.springframework.test.annotation.DirtiesContext
-import org.testcontainers.junit.jupiter.Testcontainers
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import reactor.core.publisher.Mono
 import request.NotificationRequest
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Testcontainers
-@DirtiesContext
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@AutoConfigureWebTestClient
 class SendNotificationToTelegramTest(
 
     @Qualifier("testTelegramClient")
-    private val testRabbitMQ: INotification
+    private val testRabbitMQ: INotification,
 
-) {
+    @Autowired
+    private val template: R2dbcEntityTemplate
+
+): TestContainers() {
+
+    private fun setUserInfo(email: String, tag: String): Mono<Void> {
+
+        val user: UserTelegram = UserTelegram.builder()
+            .userEmail(email)
+            .userTag(tag)
+            .build()
+        template.insert<UserTelegram>(user)
+
+        return Mono.empty()
+    }
 
     private fun createNotification(id: String?, email: String, tag: String?, something: String?): NotificationRequest {
 
@@ -37,6 +53,30 @@ class SendNotificationToTelegramTest(
             .build()
     }
 
+    @BeforeAll
+    fun setUp() {
+
+        template.databaseClient
+            .sql("CREATE TABLE IF NOT EXISTS users " +
+                    "(id TEXT DEFAULT gen_random_uuid()::TEXT PRIMARY KEY, " +
+                    "email TEXT, " +
+                    "roles TEXT[], " +
+                    "password TEXT);")
+            .fetch()
+            .rowsUpdated()
+            .block()
+
+        val user = User.builder()
+            .email("email")
+            .password("password")
+            .roles(listOf(Role.MEMBER))
+            .build()
+
+        template.insert(user).flatMap { u: User ->
+            setUserInfo(u.email, "tag")
+        }.block()
+    }
+    
     @Test
     fun testSuccessfulSending() {
 
@@ -103,6 +143,21 @@ class SendNotificationToTelegramTest(
         }
         Assertions.assertEquals("Error when sending notification (id = 4) to user. Tag must be not null",
             thrown.message)
+        Assertions.assertEquals(404, thrown.statusCode)
+    }
+
+    @Test
+    fun testNotificationForAnotherUserException() {
+
+        val notification = createNotification("5", "not-my-email", "not-my-tag", "https://hits.tyuiu.ru/something")
+
+        val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
+            testRabbitMQ.makeNotification(notification)
+        }
+        Assertions.assertEquals(
+            "Error when sending notification (id = 5) to user. " +
+                    "This notification intended for another user", thrown.message
+        )
         Assertions.assertEquals(404, thrown.statusCode)
     }
 }
