@@ -114,5 +114,6 @@ fun NotificationDTO.toNotificationRequest(): NotificationRequest = NotificationR
     title,
     message,
     link,
-    buttonName
+    buttonName,
+    publisherEmail
 )

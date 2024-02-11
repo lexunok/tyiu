@@ -18,6 +18,13 @@ spring:
           filters:
             - TokenRelay=
             - RemoveRequestHeader=Cookie
+        - id: notification-service
+          uri: ${NOTIFICATION_PATH:http://localhost:1337}
+          predicates:
+            - Path=/api/v1/notification-service/**
+          filters:
+            - TokenRelay=
+            - RemoveRequestHeader=Cookie
   security:
     oauth2:
       client:

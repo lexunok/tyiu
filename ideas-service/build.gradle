@@ -9,7 +9,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-rsocket'
 	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation "org.springframework.boot:spring-boot-starter-security"
+
+	implementation project(path: ":library")
+
 	implementation "org.springframework.boot:spring-boot-starter-freemarker"
 	implementation 'org.modelmapper:modelmapper:3.1.1'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'

@@ -15,4 +15,5 @@ public class NotificationRequest {
     private String message;
     private String link;
     private String buttonName;
+    private String publisherEmail;
 }

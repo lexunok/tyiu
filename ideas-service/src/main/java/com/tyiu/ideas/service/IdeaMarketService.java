@@ -6,10 +6,8 @@ import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.entities.mappers.IdeaMarketMapper;
 import com.tyiu.ideas.model.entities.relations.Favorite2Idea;
 import com.tyiu.ideas.model.entities.relations.IdeaMarket2Refused;
-import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
-import com.tyiu.ideas.model.enums.RequestStatus;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.enums.SkillType;
+import com.tyiu.ideas.model.enums.*;
+import com.tyiu.ideas.publisher.NotificationPublisher;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +16,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import request.NotificationRequest;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -37,6 +36,7 @@ public class IdeaMarketService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
+    private final NotificationPublisher notificationPublisher;
 
     private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
         String QUERY = "SELECT im.*, " +
@@ -362,6 +362,32 @@ public class IdeaMarketService {
                         TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
                         return template.insert(teamMarketRequest).flatMap(r -> {
                             teamMarketRequestDTO.setId(r.getId());
+                            template.selectOne(query(where("id").is(teamMarketRequestDTO.getIdeaMarketId())), IdeaMarket.class)
+                                .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class))
+                                .flatMap(idea -> template.selectOne(query(where("id").is(userId)), User.class)
+                                    .flatMap(declarator -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                                            .flatMap(initiator -> notificationPublisher.makeNotification(
+                                                    NotificationRequest.builder()
+                                                            .consumerEmail(initiator.getEmail())
+                                                            .buttonName("Перейти к идее в бирже")
+                                                            .title("Ваша идея была оценена")
+                                                            .message(String
+                                                                    .format("Владелец команды %s %s подал заявку" +
+                                                                                    " на вашу идею в бирже \"%s\"." +
+                                                                                    "Перейдите по ссылке, чтобы посмотреть заявку",
+                                                                            declarator.getFirstName(),
+                                                                            declarator.getLastName(),
+                                                                            idea.getName()
+                                                            ))
+                                                            .publisherEmail(declarator.getEmail())
+                                                            .link(PortalLinks.IDEAS_MARKET
+                                                                    + teamMarketRequest.getIdeaMarketId()
+                                                                    + "/"
+                                                                    + idea.getId())
+                                                            .build()
+                                            ))
+                                    )
+                                ).subscribe();
                             return Mono.just(teamMarketRequestDTO);
                         });
                     }

@@ -87,9 +87,12 @@ public class IdeaController {
 
     @PutMapping("/status/update/{ideaId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN') ")
-    public Mono<InfoResponse> updateStatusIdea(@PathVariable String ideaId,
-                                                              @RequestBody StatusIdeaRequest status){
-        return ideaService.updateStatusIdea(ideaId, status)
+    public Mono<InfoResponse> updateStatusIdea(
+            @PathVariable String ideaId,
+            @RequestBody StatusIdeaRequest status,
+            @AuthenticationPrincipal User user
+    ){
+        return ideaService.updateStatusIdea(ideaId, status, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Статус идеи обновлен"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Статус не обновлен"));
     }
@@ -97,8 +100,9 @@ public class IdeaController {
     @PutMapping("/admin/update/{ideaId}")
     @PreAuthorize("hasAuthority('ADMIN')")
     public Mono<InfoResponse> updateIdeaByAdmin(@PathVariable String ideaId,
-                                                @RequestBody IdeaDTO updatedIdea) {
-        return ideaService.updateIdeaByAdmin(ideaId, updatedIdea)
+                                                @RequestBody IdeaDTO updatedIdea,
+                                                @AuthenticationPrincipal User user) {
+        return ideaService.updateIdeaByAdmin(ideaId, updatedIdea, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Идея обновлена"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Идея не обновлена"));
     }
