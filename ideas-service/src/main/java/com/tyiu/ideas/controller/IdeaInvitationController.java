@@ -43,7 +43,7 @@ public class IdeaInvitationController {
     }
 
     @PostMapping("/{teamId}/{ideaId}")
-    public Mono<Void> inviteToIdea(@PathVariable String ideaId, @PathVariable String teamId){
+    public Mono<IdeaInvitationDTO> inviteToIdea(@PathVariable String ideaId, @PathVariable String teamId){
         return ideaInvitationService.inviteToIdea(ideaId, teamId);
     }
 }

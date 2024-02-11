@@ -17,6 +17,9 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -48,7 +51,7 @@ public class IdeaInvitationService {
                                     .initiatorId(row.get("initiator_id",String.class))
                                     .ideaId(row.get("idea_id", String.class))
                                     .ideaName(row.get("idea_name", String.class))
-                                    .skills(new ArrayList<>())
+                                    .skills(new HashSet<>())
                                     .teamName(row.get("team_name", String.class))
                                     .teamId(row.get("team_id", String.class))
                                     .status(RequestStatus.valueOf(row.get("status", String.class))).build());
@@ -85,7 +88,7 @@ public class IdeaInvitationService {
                                     .id(id)
                                     .ideaId(row.get("idea_id", String.class))
                                     .teamName(row.get("team_name", String.class))
-                                    .skills(new ArrayList<>())
+                                    .skills(new HashSet<>())
                                     .teamMembersCount(row.get("team_members_count", Short.class))
                                     .teamId(row.get("team_id", String.class))
                                     .status(RequestStatus.valueOf(row.get("status", String.class))).build());
@@ -105,8 +108,9 @@ public class IdeaInvitationService {
 
     public Mono<Void> changeInvitationStatus(IdeaInvitationStatusRequest request) {
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
-            template.update(query(where("team_id").is(request.getTeamId())
-                            .and(where("id").not(request.getId()))),
+            template.update(query(where("idea_id").is(request.getIdeaId())
+                                    .and(where("id").not(request.getId()))
+                                    .and(where("status").is(RequestStatus.NEW))),
                                     update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                                     update("team_id", request.getTeamId())
@@ -119,9 +123,41 @@ public class IdeaInvitationService {
                 update("status",request.getStatus()), IdeaInvitation.class).then();
     }
 
-    public Mono<Void> inviteToIdea(String ideaId, String teamId) {
+    public Mono<IdeaInvitationDTO> inviteToIdea(String ideaId, String teamId) {
+        String query = """
+                SELECT inv.*, team.name team_name,idea.name idea_name, idea.initiator_id initiator_id,
+                ts.skill_id skill_id, s.name skill_name, s.type skill_type,
+                (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id) team_members_count FROM idea_invitation inv
+                LEFT JOIN idea ON idea.id = inv.idea_id
+                LEFT JOIN team ON team.id = inv.team_id
+                LEFT JOIN team_skill ts ON ts.team_id = inv.team_id LEFT JOIN skill s ON s.id = skill_id
+                WHERE inv.team_id = :teamId AND inv.idea_id = :ideaId""";
         IdeaInvitation invitation = new IdeaInvitation(null, ideaId, teamId, RequestStatus.NEW);
-        return template.insert(invitation).then();
+        return template.insert(invitation)
+                .then(template.getDatabaseClient().sql(query)
+                        .bind("teamId", teamId)
+                        .bind("ideaId", ideaId)
+                        .flatMap(r -> {
+                            Set<SkillDTO> skills = new HashSet<>();
+                            return r.map((row, rowMetadata) -> {
+                                SkillDTO skill = SkillDTO.builder()
+                                        .name(row.get("skill_name", String.class))
+                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                        .id(row.get("skill_id", String.class))
+                                        .build();
+                                skills.add(skill);
+                                return IdeaInvitationDTO.builder()
+                                        .id(row.get("id", String.class))
+                                        .initiatorId(row.get("initiator_id", String.class))
+                                        .ideaId(row.get("idea_id", String.class))
+                                        .ideaName(row.get("idea_name", String.class))
+                                        .teamMembersCount(row.get("team_members_count", Short.class))
+                                        .skills(skills)
+                                        .teamName(row.get("team_name", String.class))
+                                        .teamId(row.get("team_id", String.class))
+                                        .status(RequestStatus.valueOf(row.get("status", String.class))).build();
+                                });
+                            }).last());
     }
 
     public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(String userId) {
