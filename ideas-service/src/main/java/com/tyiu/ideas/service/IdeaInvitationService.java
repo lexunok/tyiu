@@ -108,16 +108,22 @@ public class IdeaInvitationService {
 
     public Mono<Void> changeInvitationStatus(IdeaInvitationStatusRequest request) {
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
-            template.update(query(where("idea_id").is(request.getIdeaId())
+            return template.update(query(where("idea_id").is(request.getIdeaId())
                                     .and(where("id").not(request.getId()))
                                     .and(where("status").is(RequestStatus.NEW))),
                                     update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
+                            .then(template.update(query(where("team_id").is(request.getTeamId())
+                                            .and(where("id").not(request.getId()))
+                                            .and(where("status").is(RequestStatus.NEW))),
+                                    update("status", RequestStatus.ANNULLED), IdeaInvitation.class))
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                                     update("team_id", request.getTeamId())
                                             .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
                                     IdeaMarket.class))
                             .then(template.update(query(where("id").is(request.getTeamId())),
-                                    update("has_active_project", true), Team.class)).subscribe();
+                                    update("has_active_project", true), Team.class))
+                            .then(template.update(query(where("id").is(request.getId())),
+                                    update("status",request.getStatus()), IdeaInvitation.class)).then();
         }
         return template.update(query(where("id").is(request.getId())),
                 update("status",request.getStatus()), IdeaInvitation.class).then();
