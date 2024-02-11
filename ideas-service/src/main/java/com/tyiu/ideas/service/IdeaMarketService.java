@@ -148,21 +148,6 @@ public class IdeaMarketService {
     //\___/  /___/  /_/
     ///////////////////////
 
-    public Flux<IdeaDTO> getAllInitiatorMarketIdeasForInvitations(String userId) {
-        String query = """
-                SELECT i.name name, i.id id, im.market_id mid, m.status status FROM idea i
-                LEFT JOIN idea_market im ON im.idea_id = i.id
-                LEFT JOIN market m ON m.id = im.market_id
-                WHERE i.initiator_id = :userId AND m.status = 'ACTIVE'
-                """;
-        return template.getDatabaseClient().sql(query)
-                .bind("userId", userId)
-                .map((row, rowMetadata) ->
-                        IdeaDTO.builder()
-                                .id(row.get("id",String.class))
-                                .name(row.get("name", String.class)).build())
-                .all();
-    }
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
         String QUERY = """
@@ -474,7 +459,7 @@ public class IdeaMarketService {
                 .flatMap(r -> {
                     String userId = user.getId();
                     r.setStatus(status);
-                    if (status.equals(RequestStatus.REJECTED)){
+                    if (status.equals(RequestStatus.CANCELED)){
                         return checkInitiator(r.getIdeaMarketId(),userId)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -491,7 +476,7 @@ public class IdeaMarketService {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(query(where("team_id").is(r.getTeamId())
                                                                 .and("status").is(RequestStatus.NEW)),
-                                                        update("status", RequestStatus.CANCELED),
+                                                        update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
                                                 .then(template.update(r))
                                                 .then();
@@ -509,7 +494,7 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (user.getRoles().contains(Role.ADMIN) &&
-                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.CANCELED)))
+                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
                     {
                         return template.update(r).then();
                     }

@@ -487,7 +487,7 @@ public class TeamControllerTest extends TestContainers {
         changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
                 RequestStatus.ACCEPTED, jwt, status1);
         changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
-                RequestStatus.REJECTED, jwt, status2);
+                RequestStatus.CANCELED, jwt, status2);
         changeStatusRequestCheck(sendTeamRequest(teamId, randomUser, jwt_randomUser).getId(),
                 RequestStatus.WITHDRAWN, jwt, status3);
     }
@@ -516,7 +516,7 @@ public class TeamControllerTest extends TestContainers {
         changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
                 RequestStatus.ACCEPTED, jwt, status1);
         changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
-                RequestStatus.REJECTED, jwt, status2);
+                RequestStatus.CANCELED, jwt, status2);
         changeStatusInvitationCheck(sendInvites(invitations).get(0).getId(),
                 RequestStatus.WITHDRAWN, jwt, status3);
     }
