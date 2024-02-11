@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.map
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import java.math.BigInteger
 
 @Service
 class TaskTagService (private val taskTagRepository: TaskTagRepository, val template: R2dbcEntityTemplate) {
@@ -16,8 +15,7 @@ class TaskTagService (private val taskTagRepository: TaskTagRepository, val temp
     suspend fun createTag(taskTagDTO: TaskTagDTO): TaskTagDTO {
         val tag = TaskTag(
             name = taskTagDTO.name,
-            color = taskTagDTO.color,
-            isConfirmed = taskTagDTO.isConfirmed,
+            color = taskTagDTO.color
         )
         return taskTagRepository.save(tag).toDTO()
     }
