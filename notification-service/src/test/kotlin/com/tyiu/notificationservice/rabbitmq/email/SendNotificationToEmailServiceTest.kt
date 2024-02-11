@@ -3,9 +3,14 @@ package com.tyiu.notificationservice.rabbitmq.email
 import com.tyiu.ideas.config.exception.CustomHttpException
 import com.tyiu.ideas.model.entities.User
 import com.tyiu.ideas.model.enums.Role
+import com.tyiu.notificationservice.model.Notification
+import com.tyiu.notificationservice.model.NotificationDTO
+import com.tyiu.notificationservice.model.NotificationType
 import com.tyiu.notificationservice.rabbitmq.TestContainers
+import com.tyiu.notificationservice.service.NotificationService
 import com.tyiu.tgbotservice.model.entities.UserTelegram
 import interfaces.INotification
+import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
@@ -14,8 +19,11 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.relational.core.query.Criteria.where
+import org.springframework.data.relational.core.query.Query.query
 import reactor.core.publisher.Mono
 import request.NotificationRequest
+import java.time.LocalDateTime
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
@@ -25,9 +33,58 @@ class SendNotificationToEmailServiceTest(
     private val testRabbitMQ: INotification,
 
     @Autowired
-    private val template: R2dbcEntityTemplate
+    private val template: R2dbcEntityTemplate,
+
+    @Autowired
+    private val notificationService: NotificationService
 
 ): TestContainers() {
+
+    private fun createSQLTables() {
+
+        template.databaseClient
+            .sql("CREATE TABLE IF NOT EXISTS users " +
+                        "(id TEXT DEFAULT gen_random_uuid()::TEXT PRIMARY KEY, " +
+                        "email TEXT, " +
+                        "first_name TEXT, " +
+                        "last_name TEXT, " +
+                        "roles TEXT[], " +
+                        "password TEXT);")
+            .fetch()
+            .rowsUpdated()
+            .block()
+
+        template.databaseClient
+            .sql("CREATE TABLE IF NOT EXISTS users_telegram " +
+                        "(user_email TEXT, " +
+                        "user_tag TEXT, " +
+                        "chat_id BIGINT, " +
+                        "is_visible BOOLEAN DEFAULT false::BOOLEAN);")
+            .fetch()
+            .rowsUpdated()
+            .block()
+
+        template.databaseClient
+            .sql("CREATE TABLE IF NOT EXISTS notification " +
+                    "(id TEXT, " +
+                    "publisher_email TEXT, " +
+                    "consumer_email TEXT, " +
+                    "consumer_tag TEXT, " +
+                    "title TEXT, " +
+                    "message TEXT, " +
+                    "link TEXT, " +
+                    "is_showed BOOLEAN, " +
+                    "is_read BOOLEAN, " +
+                    "is_favourite BOOLEAN, " +
+                    "created_at TEXT, " +
+                    "button_name TEXT, " +
+                    "notification_type TEXT, " +
+                    "is_sent_by_email_service BOOLEAN DEFAULT FALSE, " +
+                    "is_sent_by_telegram_service BOOLEAN DEFAULT FALSE);")
+            .fetch()
+            .rowsUpdated()
+            .block()
+    }
 
     private fun setUserInfo(email: String, tag: String): Mono<UserTelegram> {
 
@@ -35,38 +92,88 @@ class SendNotificationToEmailServiceTest(
             .userEmail(email)
             .userTag(tag)
             .build()
+
         return template.insert<UserTelegram>(user)
     }
 
-    private fun createNotification(id: String?, email: String?, tag: String, something: String?): NotificationRequest {
+    private fun assertThatNotificationIsSentToEmail(id: String?) {
+
+        id?.let {
+
+            Mono.just<String>(it)
+                .flatMap { dbFind: String? -> template.selectOne(query(where("id").`is`(dbFind!!)),
+                    Notification::class.java) }
+                .flatMap<Void?> { currentNotification: Notification ->
+
+                    if (!currentNotification.isSentByEmailService!!)
+                        return@flatMap Mono.error(Exception("Неудачная отправка"))
+
+                    else return@flatMap Mono.empty()
+
+                }.then()
+        }
+    }
+
+    private suspend fun createNotification(id: String?, email: String?, tag: String, something: String?): NotificationRequest {
+
+        val notificationDTO = NotificationDTO(
+            id,
+            "1",
+            email,
+            tag,
+            something,
+            something,
+            something,
+            false,
+            false,
+            false,
+            LocalDateTime.now(),
+            something,
+            NotificationType.SUCCESS,
+            false,
+            false
+        )
+
+        val notification = notificationService.createNotification(notificationDTO)
+
+        notificationDTO.consumerEmail?.let {
+
+            Mono.just<String>(it)
+                .flatMap { dbFind: String? -> template.exists(query(where("consumer_email").`is`(dbFind!!)),
+                    Notification::class.java) }
+                .flatMap { notificationExists: Boolean ->
+
+                    if (java.lang.Boolean.FALSE == notificationExists)
+                        return@flatMap Mono.error<Any>(Exception("Уведолмение не найдено"))
+
+                    else notificationDTO.id?.let { notificationService.setSentByEmailServiceFieldTrue(it) }
+
+                    Mono.empty<Any?>()
+                }.then()
+        }
+
+        assertThatNotificationIsSentToEmail(notification.id)
 
         return NotificationRequest.builder()
-            .notificationId(id)
-            .consumerEmail(email)
-            .tag(tag)
-            .title(something)
-            .message(something)
-            .link(something)
-            .buttonName(something)
+            .notificationId(notificationDTO.id)
+            .consumerEmail(notificationDTO.consumerEmail)
+            .tag(notificationDTO.consumerTag)
+            .title(notificationDTO.title)
+            .message(notificationDTO.message)
+            .link(notificationDTO.link)
+            .buttonName(notificationDTO.buttonName)
             .build()
     }
 
     @BeforeAll
     fun setUp() {
 
-        template.databaseClient
-            .sql("CREATE TABLE IF NOT EXISTS users " +
-                    "(id TEXT DEFAULT gen_random_uuid()::TEXT PRIMARY KEY, " +
-                    "email TEXT, " +
-                    "roles TEXT[], " +
-                    "password TEXT);")
-            .fetch()
-            .rowsUpdated()
-            .block()
+        createSQLTables()
 
         val user = User.builder()
-            .id("1")
             .email("email")
+            .firstName("name")
+            .lastName("surname")
             .roles(listOf(Role.MEMBER))
             .password("password")
             .build()
@@ -77,7 +184,7 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testSuccessfulSending() {
+    fun testSuccessfulSending() = runBlocking {
 
         val notification = createNotification("1", "email", "tag", "https://hits.tyuiu.ru/something/")
 
@@ -92,7 +199,7 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testNullNotificationIdException() {
+    fun testNullNotificationIdException() = runBlocking {
 
         val notification = createNotification(null, "email", "tag", "bla-bla-bla")
 
@@ -107,7 +214,7 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testNotificationContentIsEmpty() {
+    fun testNotificationContentIsEmpty() = runBlocking {
 
         val notification = createNotification("2", "email", "tag", null)
 
@@ -120,7 +227,7 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testWrongLinkException() {
+    fun testWrongLinkException() = runBlocking {
 
         val notification = createNotification("3", "email", "tag", "https://hits.notTYUIU.ru/profile/")
 
@@ -133,7 +240,7 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testNullEmailException() {
+    fun testNullEmailException() = runBlocking {
 
         val notification = createNotification("4", null, "tag", "https://hits.tyuiu.ru/something/")
 
@@ -146,7 +253,7 @@ class SendNotificationToEmailServiceTest(
     }
 
     @Test
-    fun testNotificationForAnotherUserException() {
+    fun testNotificationForAnotherUserException() = runBlocking {
 
         val notification = createNotification("5", "not-my-email", "not-my-tag", "https://hits.tyuiu.ru/something/")
 
