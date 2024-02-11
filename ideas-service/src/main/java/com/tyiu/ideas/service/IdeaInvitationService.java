@@ -119,14 +119,13 @@ public class IdeaInvitationService {
                                             .and(where("status").is(RequestStatus.NEW))),
                                     update("status", RequestStatus.ANNULLED), IdeaInvitation.class))
                             .then(template.update(query(where("team_id").is(request.getTeamId())
-                                            .and(where("id").not(request.getId()))
                                             .and(where("status").is(RequestStatus.NEW))),
                                     update("status", RequestStatus.ANNULLED), TeamMarketRequest.class))
                             .then(template.getDatabaseClient().sql("""
                                     UPDATE team_market_request SET status = :status WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId)
                                     """)
                                     .bind("status", "NEW")
-                                    .bind("ideaId", request.getIdeaId()).then())
+                                    .bind("ideaId", request.getIdeaId()).fetch().all().then())
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                                     update("team_id", request.getTeamId())
                                             .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
