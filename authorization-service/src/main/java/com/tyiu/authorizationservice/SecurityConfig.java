@@ -97,7 +97,7 @@ public class SecurityConfig {
                 .clientSecret(encoder.encode("secret"))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://localhost:80/login/oauth2/code/gateway")
+                .redirectUri("http://localhost/login/oauth2/code/gateway")
                 .scope(OidcScopes.OPENID)
                 .scope("resource.read")
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(true).build())
@@ -138,7 +138,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder().issuer("http://localhost:8083").build();
+        return AuthorizationServerSettings.builder().issuer("http://127.0.0.1:7777").build();
     }
 
 
