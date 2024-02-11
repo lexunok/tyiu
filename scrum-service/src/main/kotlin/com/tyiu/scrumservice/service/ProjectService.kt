@@ -61,34 +61,32 @@ class ProjectService(
 
     fun getProjectMarks(projectId: String): Flow<ProjectMarks> = projectMarksRepository.findMarksByProjectId(projectId)
 
-    fun getProjectLogs(projectId: String): Flow<TaskMovementLog> = taskMovementLogRepository.findLogByProjectId(projectId)
-
     suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id
         )
         val prjSave = projectRepository.save(project)
-        prjSave.teamId?.let {
-            teamMemberRepository.findMemberByTeamId(it).map {m->
-                val projectMember = ProjectMember(
-                projectId = prjSave.id,
-                userId = m.userId,
-                teamId = m.teamId
-                )
-                projectMemberRepository.save(projectMember)
+        ideaMarketDTO.team.id?.let {
+            teamMemberRepository.findMemberByTeamId(it).map { m ->
+                projectMemberRepository.save( ProjectMember(
+                    projectId = prjSave.id,
+                    userId = m.userId,
+                    teamId = m.teamId
+                ))
             }
         }
+        //projectMemberRepository.saveAll()
         return projectToDTO(prjSave)
     }
 
-    suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMemberDTO {
+    suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMember {
         val projectMember = ProjectMember(
             projectId = projectId,
             userId = teamMemberRequest.userId,
             teamId = teamMemberRequest.teamId
         )
-        return projectMemberRepository.save(projectMember).toDTO()
+        return projectMemberRepository.save(projectMember)
     }
 
     suspend fun putProjectMarks(projectMarks: ProjectMarks) {

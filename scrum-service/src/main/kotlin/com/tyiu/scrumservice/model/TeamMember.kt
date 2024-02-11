@@ -5,6 +5,7 @@ import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
+
 interface TeamMemberRepository: CoroutineCrudRepository<TeamMember, String>{
 
     @Query("SELECT * FROM team_member WHERE team_id = :teamId")
