@@ -37,13 +37,9 @@ public class IdeaInvitationController {
         return ideaInvitationService.getAllInvitationInIdea(ideaId);
     }
 
-    @PutMapping("/status/team")
-    public Mono<Void> changeInvitationStatusByTeam(@RequestBody IdeaInvitationStatusRequest request){
-        return ideaInvitationService.changeInvitationStatusByTeam(request);
-    }
-    @PutMapping("/status/initiator")
-    public Mono<Void> changeInvitationStatusByInitiator(@RequestBody IdeaInvitationStatusRequest request){
-        return ideaInvitationService.changeInvitationStatusByInitiator(request);
+    @PutMapping("/status")
+    public Mono<Void> changeInvitationStatus(@RequestBody IdeaInvitationStatusRequest request){
+        return ideaInvitationService.changeInvitationStatus(request);
     }
 
 

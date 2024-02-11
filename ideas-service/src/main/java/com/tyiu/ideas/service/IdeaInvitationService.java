@@ -2,6 +2,7 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.model.dto.IdeaDTO;
 import com.tyiu.ideas.model.dto.IdeaInvitationDTO;
+import com.tyiu.ideas.model.dto.IdeaMarketDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.IdeaInvitation;
 import com.tyiu.ideas.model.entities.IdeaMarket;
@@ -188,9 +189,9 @@ public class IdeaInvitationService {
                             .build())
                 .all();
     }
-    public Flux<IdeaDTO> getAllInitiatorMarketIdeasForInvitations(String userId) {
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeasForInvitations(String userId) {
         String query = """
-                SELECT i.name name, i.id id, im.market_id mid, m.status status FROM idea i
+                SELECT i.name name, i.id id, im.status status ,im.market_id market_id, m.status status FROM idea i
                 LEFT JOIN idea_market im ON im.idea_id = i.id
                 LEFT JOIN market m ON m.id = im.market_id
                 WHERE i.initiator_id = :userId AND m.status = 'ACTIVE'
@@ -198,8 +199,9 @@ public class IdeaInvitationService {
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) ->
-                        IdeaDTO.builder()
+                        IdeaMarketDTO.builder()
                                 .id(row.get("id",String.class))
+                                .status(IdeaMarketStatusType.valueOf(row.get("status",String.class)))
                                 .name(row.get("name", String.class)).build())
                 .all();
     }
