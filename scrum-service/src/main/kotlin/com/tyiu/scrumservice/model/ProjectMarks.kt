@@ -16,3 +16,23 @@ data class ProjectMarks(
         val userId:String? = null,
         val mark:Double? = null,
 )
+
+data class ProjectMarksDTO(
+        val projectId:String? = null,
+        val userId: String? = null,
+        var firstName: String? = null,
+        var lastName: String? = null,
+        var projectRole: ProjectRole = ProjectRole.MEMBER,
+        val mark:Double? = null,
+        val tasks: List<TaskDTO>? = null,
+)
+
+data class projectMarksRequest(
+        val userId:String? = null,
+        val mark:Double? = null,
+)
+fun ProjectMarks.toDTO(): ProjectMarksDTO = ProjectMarksDTO(
+        projectId = projectId,
+        userId = userId,
+        mark = mark
+)
