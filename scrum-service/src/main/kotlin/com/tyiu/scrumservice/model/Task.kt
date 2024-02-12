@@ -11,6 +11,7 @@ import java.time.LocalDate
 
 interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
+    //убрать лишние запросы ( изучить документацию )
     @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC") // ПОИСК ТАСКА ПО ПРОЕКТУ. СОРТИРОВКА ПО СОЗДАНИЮ ТАСКА
     fun findAllByProjectId(projectId: String): Flow<Task>
     @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
@@ -20,11 +21,7 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     fun findAllTaskBySprint(projectId: String, sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
-    fun findTaskById(id: BigInteger): Flow<Task>
-
-    // УДАЛЕНИЕ ТАСКА ПО ЕГО АЙДИ. СДЕЛАЛ ОТДЕЛЬНЫЙ ЗАПРОС, ПОТОМУ ЧТО У НАС ID: STRING А В ТАБЛИЦЕ ID: BIGINTEGER.
-    @Query("delete FROM task WHERE id = :id ")
-    fun deleteTaskById(id: BigInteger): Flow<Task>
+    fun findTaskById(id: String): Flow<Task>
 }
 
 @Table
@@ -34,7 +31,7 @@ data class Task (
     val sprintId: String? = null,
     val projectId: String? = null,
     //поле
-    //val isInBacklog
+    //val isInBacklog: Boolean? = true,
     val name: String? = null,
     val description: String? = null,
 
@@ -56,6 +53,7 @@ data class Task2Sprint (
 
 data class TaskDTO (
     val id: String? = null,
+    
     val sprintId: String? = null, // Если можно сделать нулевое значение у ссылочного типа, иначе Task2Sprint
     val projectId: String? = null,
 
@@ -96,6 +94,7 @@ data class taskInfoRequest(
 fun Task.toDTO(): TaskDTO = TaskDTO (
     id = id,
     sprintId = sprintId,
+
     projectId = projectId,
 
     name = name,
@@ -109,9 +108,4 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     status = status,
 )
 
-/*fun User.toDTO(): UserDTO = UserDTO (
-    id,
-    email,
-    firstName,
-    lastName,
-)*/
+//СВЯЗАТЬ С User И TaskTag
