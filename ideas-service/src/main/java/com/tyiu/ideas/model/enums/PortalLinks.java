@@ -1,8 +1,13 @@
 package com.tyiu.ideas.model.enums;
 
 public enum PortalLinks {
+
     IDEAS_LIST("ideas/list/"),
-    IDEAS_MARKET("market/");
+    IDEAS_MARKET("market/"),
+    TEAM("team/"),
+    TEAM_LIST("team/all/"),
+    TEAM_INVITES("team/invites/"),
+    TEAM_REQUESTS("team/users/requests/");
 
     private final String val;
 

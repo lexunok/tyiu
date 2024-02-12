@@ -2,16 +2,17 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.config.exception.AccessException;
 import com.tyiu.ideas.model.dto.*;
-import com.tyiu.ideas.model.email.requests.NotificationEmailRequest;
 import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.entities.mappers.TeamMapper;
 import com.tyiu.ideas.model.entities.relations.Team2Member;
 import com.tyiu.ideas.model.entities.relations.Team2Refused;
 import com.tyiu.ideas.model.entities.relations.Team2Skill;
 import com.tyiu.ideas.model.entities.relations.Team2WantedSkill;
+import com.tyiu.ideas.model.enums.PortalLinks;
 import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
+import com.tyiu.ideas.publisher.NotificationPublisher;
 import io.r2dbc.spi.Batch;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import request.NotificationRequest;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -37,8 +39,7 @@ public class TeamService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
-    private final EmailService emailService;
-    private final String path = "https://hits.tyuiu.ru/";
+    private final NotificationPublisher notificationPublisher;
 
     private Mono<Void> updateSkills(String teamId) {
         String QUERY = "SELECT user_skill.*, team_member.* " +
@@ -54,23 +55,6 @@ public class TeamService {
                         .all()
                         .distinct()
                         .flatMap(skill -> template.insert(new Team2Skill(teamId, skill))).then());
-    }
-
-    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
-        return template.selectOne(query(where("id").is(teamId)), Team.class)
-                .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
-                        .flatMap(u -> {
-                            String message = String.format("Вас пригласил(-а) %s %s в команду \"%s\" в качестве участника.",
-                                    userInviter.getFirstName(), userInviter.getLastName(), t.getName());
-                            return Mono.just(NotificationEmailRequest.builder()
-                                    .to(u.getEmail())
-                                    .title("Приглашение в команду")
-                                    .message(message)
-                                    .link("teams/list/" + t.getId())
-                                    .buttonName("Перейти в команду")
-                                    .build());
-                        })
-                        .flatMap(emailService::sendMailNotification));
     }
 
     private Flux<SkillDTO> getSkillsByList(List<String> skills) {
@@ -139,7 +123,7 @@ public class TeamService {
                         TeamInvitation.class)).then();
     }
 
-    private Mono<Boolean> checkOwner(String teamId, String userId){
+    private Mono<Boolean> checkOwner(String teamId, String userId) {
         return template.exists(query(where("id").is(teamId)
                 .and("owner_id").is(userId)), Team.class);
     }
@@ -288,7 +272,7 @@ public class TeamService {
                                 .build();
                         member.getSkills().add(skill);
                     }
-                    map.put(userId,member);
+                    map.put(userId, member);
                     return member;
                 })
                 .all().thenMany(Flux.fromIterable(map.values()));
@@ -445,17 +429,42 @@ public class TeamService {
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, User userInviter) {
-        return users.flatMap(user -> {
-            user.setStatus(RequestStatus.NEW);
-            return template.insert(user)
-                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, user.getTeamId())
-                            .thenReturn(teamInvitation));
+    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> invites, String userInviterId) {
+
+        return invites.flatMap(invite -> {
+            invite.setStatus(RequestStatus.NEW);
+            return template.insert(invite)
+                    .flatMap(sendInvites -> {
+
+                        template.selectOne(query(where("id").is(invite.getTeamId())), Team.class)
+                                .flatMap(team -> template.selectOne(query(where("id").is(userInviterId)), User.class)
+                                        .flatMap(inviter -> template.selectOne(query(where("id").is(invite.getUserId())), User.class)
+                                                .flatMap(invitedUser -> notificationPublisher.makeNotification(
+
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(inviter.getEmail())
+                                                                .consumerEmail(invitedUser.getEmail())
+                                                                .title("Вас пригласили в команду")
+                                                                .message(
+                                                                        String.format("%s %s пригласил вас в команду \"%s\". " +
+                                                                                        "Перейдите по ссылке, чтобы ответить на приглашение",
+                                                                                inviter.getFirstName(),
+                                                                                inviter.getLastName(),
+                                                                                team.getName()
+                                                                        ))
+                                                                .link(String.valueOf(PortalLinks.TEAM_INVITES))
+                                                                .buttonName("Перейти к приглашениям")
+                                                                .build())))
+                                ).subscribe();
+
+                        return Mono.just(invite);
+                    });
         });
     }
 
     public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
-        return template.insert(TeamRequest.builder()
+
+        TeamRequest request = TeamRequest.builder()
                 .teamId(teamId)
                 .userId(user.getId())
                 .email(user.getEmail())
@@ -463,17 +472,43 @@ public class TeamService {
                 .lastName(user.getLastName())
                 .createdAt(LocalDate.now())
                 .status(RequestStatus.NEW)
-                .build());
+                .build();
+
+        return template.insert(request)
+                .flatMap(sendRequest -> {
+                    template.selectOne(query(where("id").is(request.getTeamId())), Team.class)
+                            .flatMap(team -> template.selectOne(query(where("id").is(user.getId())), User.class)
+                                    .flatMap(requestSender -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
+                                            .flatMap(teamOwner -> notificationPublisher.makeNotification(
+
+                                                    NotificationRequest.builder()
+                                                            .publisherEmail(requestSender.getEmail())
+                                                            .consumerEmail(teamOwner.getEmail())
+                                                            .title("В вашу команду желает вступит пользователь")
+                                                            .message(
+                                                                    String.format("%s %s просит вас принять его в вашу команду \"%s\". " +
+                                                                                    "Перейдите по ссылке, чтобы ответить на запрос",
+                                                                            requestSender.getFirstName(),
+                                                                            requestSender.getLastName(),
+                                                                            team.getName()
+                                                                    ))
+                                                            .link(PortalLinks.TEAM_REQUESTS + teamId)
+                                                            .buttonName("Перейти к команде")
+                                                            .build())))
+                            ).subscribe();
+
+                    return Mono.just(request);
+                });
     }
 
     public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId) {
+
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type " +
                 "FROM users u " +
                 "LEFT JOIN user_skill us ON u.id = us.user_id " +
                 "LEFT JOIN skill s ON us.skill_id = s.id " +
                 "WHERE u.id = :userId";
-
 
         return template.insert(new Team2Member(teamId, userId))
                 .then(updateSkills(teamId))
@@ -483,6 +518,7 @@ public class TeamService {
                         .flatMap(t -> {
                             List<SkillDTO> skills = new ArrayList<>();
                             return t.map((row, rowMetadata) -> {
+
                                 TeamMemberDTO teamMemberDTO = TeamMemberDTO.builder()
                                         .userId(userId)
                                         .email(row.get("email", String.class))
@@ -490,8 +526,30 @@ public class TeamService {
                                         .lastName(row.get("last_name", String.class))
                                         .build();
 
+                                template.selectOne(query(where("id").is(teamId)), Team.class)
+                                        .flatMap(team -> template.selectOne(query(where("id").is(userId)), User.class)
+                                                .flatMap(user -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
+                                                        .flatMap(teamOwner -> notificationPublisher.makeNotification(
+
+                                                                NotificationRequest.builder()
+                                                                        .publisherEmail(user.getEmail())
+                                                                        .consumerEmail(teamOwner.getEmail())
+                                                                        .title("Пополнение в команде")
+                                                                        .message(
+                                                                                String.format("%s %s принял ваше приглашение в команду \"%s\". " +
+                                                                                                "Перейдите по ссылке, чтобы просмотреть команду",
+                                                                                        user.getFirstName(),
+                                                                                        user.getLastName(),
+                                                                                        team.getName()
+                                                                                ))
+                                                                        .link(PortalLinks.TEAM + teamId)
+                                                                        .buttonName("Перейти к команде")
+                                                                        .build())))
+                                        ).subscribe();
+
                                 String skillId = row.get("skill_id", String.class);
                                 if (skillId != null) {
+
                                     skills.add(SkillDTO.builder()
                                             .id(skillId)
                                             .name(row.get("skill_name", String.class))
@@ -533,17 +591,96 @@ public class TeamService {
                 }).then();
     }
 
-    public Mono<Void> kickFromTeam(String teamId, String userId) {
-        return template.delete(query(where("team_id").is(teamId)
-                        .and("member_id").is(userId)),Team2Member.class)
-                .then(updateSkills(teamId))
-                .then(template.insert(new Team2Refused(teamId, userId)))
-                .then();
+    public Mono<Void> kickFromTeam(String teamId, String userToKickId, User userThatKicks) {
+
+        return checkOwner(teamId, userThatKicks.getId())
+                .flatMap(userThatKicksIsOwnerOfThisTeam -> {
+
+                    if (Boolean.TRUE.equals(userThatKicksIsOwnerOfThisTeam)) {
+
+                        template.selectOne(query(where("id").is(teamId)), Team.class)
+                                .flatMap(team -> template.selectOne(query(where("id").is(userToKickId)), User.class)
+                                        .flatMap(userToKick -> notificationPublisher.makeNotification(
+
+                                                NotificationRequest.builder()
+                                                        .publisherEmail(userThatKicks.getEmail())
+                                                        .consumerEmail(userToKick.getEmail())
+                                                        .title("Вы были исключены из команды")
+                                                        .message(
+                                                                String.format("%s %s исключил вас из команды \"%s\". " +
+                                                                                "Перейдите по ссылке, чтобы ознакомиться",
+                                                                        userThatKicks.getFirstName(),
+                                                                        userThatKicks.getLastName(),
+                                                                        team.getName()
+                                                                ))
+                                                        .link(PortalLinks.TEAM + teamId)
+                                                        .buttonName("Перейти к команде")
+                                                        .build()))
+                                ).subscribe();
+
+                        return template.delete(query(where("team_id").is(teamId)
+                                        .and("member_id").is(userToKickId)),Team2Member.class)
+                                .then(updateSkills(teamId))
+                                .then(template.insert(new Team2Refused(teamId, userToKickId)))
+                                .then();
+                    }
+                    else if (userThatKicks.getRoles().contains(Role.ADMIN)) {
+
+                        template.selectOne(query(where("id").is(teamId)), Team.class)
+                                .flatMap(team -> template.selectOne(query(where("id").is(userThatKicks.getId())), User.class)
+                                        .flatMap(userToKick -> notificationPublisher.makeNotification(
+
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(userThatKicks.getEmail())
+                                                                .consumerEmail(userToKick.getEmail())
+                                                                .title("Вы были исключены из команды")
+                                                                .message(
+                                                                        String.format("Админ %s %s исключил вас из команды \"%s\". " +
+                                                                                        "Перейдите по ссылке, чтобы ознакомиться",
+                                                                                userThatKicks.getFirstName(),
+                                                                                userThatKicks.getLastName(),
+                                                                                team.getName()
+                                                                        ))
+                                                                .link(PortalLinks.TEAM + teamId)
+                                                                .buttonName("Перейти к команде")
+                                                                .build()))
+                                ).subscribe();
+
+                        return template.delete(query(where("team_id").is(teamId)
+                                        .and("member_id").is(userToKickId)),Team2Member.class)
+                                .then(updateSkills(teamId))
+                                .then(template.insert(new Team2Refused(teamId, userToKickId)))
+                                .then();
+                    }
+                    else return Mono.error(new Exception("Нет прав!"));
+                });
     }
 
-    public Mono<Void> leaveFromTeam(String teamId, String userId) {
+    public Mono<Void> leaveFromTeam(String teamId, String userThatLeavesId) {
+
+        template.selectOne(query(where("id").is(teamId)), Team.class)
+                .flatMap(team -> template.selectOne(query(where("id").is(userThatLeavesId)), User.class)
+                        .flatMap(userThatLeaves -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
+                                .flatMap(teamOwner -> notificationPublisher.makeNotification(
+
+                                        NotificationRequest.builder()
+                                                .publisherEmail(userThatLeaves.getEmail())
+                                                .consumerEmail(teamOwner.getEmail())
+                                                .title("Пользователь покинул вашу команду")
+                                                .message(
+                                                        String.format("%s %s покинул вашу команду \"%s\". " +
+                                                                        "Перейдите по ссылке, чтобы ознакомиться",
+                                                                userThatLeaves.getFirstName(),
+                                                                userThatLeaves.getLastName(),
+                                                                team.getName()
+                                                        ))
+                                                .link(PortalLinks.TEAM + teamId)
+                                                .buttonName("Перейти к команде")
+                                                .build())))
+                ).subscribe();
+
         return template.delete(query(where("team_id").is(teamId)
-                        .and("member_id").is(userId)),Team2Member.class)
+                        .and("member_id").is(userThatLeavesId)),Team2Member.class)
                 .then(updateSkills(teamId))
                 .then();
     }

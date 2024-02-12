@@ -370,7 +370,7 @@ public class IdeaMarketService {
                                                     NotificationRequest.builder()
                                                             .consumerEmail(initiator.getEmail())
                                                             .buttonName("Перейти к идее в бирже")
-                                                            .title("Ваша идея была оценена")
+                                                            .title("Команда подала заявку на вступление в вашу идею")
                                                             .message(String
                                                                     .format("Владелец команды %s %s подал заявку" +
                                                                                     " на вашу идею в бирже \"%s\"." +

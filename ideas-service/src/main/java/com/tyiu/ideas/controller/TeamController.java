@@ -119,8 +119,8 @@ public class TeamController {
 
     @PostMapping("/send-invites")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
-        return teamService.sendInvitesToUsers(users, user);
+    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> invites, @AuthenticationPrincipal User user) {
+        return teamService.sendInvitesToUsers(invites, user.getId());
     }
 
     @PostMapping("/invite/{teamId}/{userId}")
@@ -159,8 +159,9 @@ public class TeamController {
     }
 
     @DeleteMapping("/kick/{teamId}/{userId}")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId) {
-        return teamService.kickFromTeam(teamId, userId);
+    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId, @AuthenticationPrincipal User user) {
+        return teamService.kickFromTeam(teamId, userId, user);
     }
 
     @DeleteMapping("/leave/{teamId}")
