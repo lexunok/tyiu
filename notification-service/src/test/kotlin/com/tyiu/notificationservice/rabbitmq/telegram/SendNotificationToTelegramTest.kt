@@ -30,7 +30,7 @@ import java.time.LocalDateTime
 class SendNotificationToTelegramTest(
 
     @Qualifier("testTelegramClient")
-    private val testRabbitMQ: INotification,
+    private val testNotification: INotification,
 
     @Autowired
     private val template: R2dbcEntityTemplate,
@@ -187,7 +187,7 @@ class SendNotificationToTelegramTest(
         val notification = createNotification("1", "email", "tag", "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(notification)
+            testNotification.makeNotification(notification)
         }
         Assertions.assertEquals(
             "Notification (id = 1) was successfully sent to the user with the tag = tag",
@@ -202,7 +202,7 @@ class SendNotificationToTelegramTest(
         val notification = createNotification(null, "email", "tag", "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(notification)
+            testNotification.makeNotification(notification)
         }
         Assertions.assertEquals(
             "Error when sending notification to telegram. Notification id must not be null",
@@ -217,7 +217,7 @@ class SendNotificationToTelegramTest(
         val notification = createNotification("2", "email", "tag", null)
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(notification)
+            testNotification.makeNotification(notification)
         }
         Assertions.assertEquals("Error when sending notification (id = 2). Notification content must not be null",
             thrown.message)
@@ -230,7 +230,7 @@ class SendNotificationToTelegramTest(
         val notification = createNotification("3", "email", "tag", "https://hits.notTYUIU.ru/profile/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(notification)
+            testNotification.makeNotification(notification)
         }
         Assertions.assertEquals("Error when sending notification (id = 3). Link must starting with required path",
             thrown.message)
@@ -243,7 +243,7 @@ class SendNotificationToTelegramTest(
         val notification = createNotification("4", "email", null, "https://hits.tyuiu.ru/something/")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(notification)
+            testNotification.makeNotification(notification)
         }
         Assertions.assertEquals("Error when sending notification (id = 4) to user. Tag must be not null",
             thrown.message)
@@ -256,7 +256,7 @@ class SendNotificationToTelegramTest(
         val notification = createNotification("5", "not-my-email", "not-my-tag", "https://hits.tyuiu.ru/something")
 
         val thrown = Assertions.assertThrows(CustomHttpException::class.java) {
-            testRabbitMQ.makeNotification(notification)
+            testNotification.makeNotification(notification)
         }
         Assertions.assertEquals(
             "Error when sending notification (id = 5) to user. " +

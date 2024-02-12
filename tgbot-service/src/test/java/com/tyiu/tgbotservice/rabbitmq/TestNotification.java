@@ -16,7 +16,7 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 
 @Component("testTelegramClient")
-public class TestRabbitMQ implements INotification {
+public class TestNotification implements INotification {
 
     @Autowired
     private R2dbcEntityTemplate template;

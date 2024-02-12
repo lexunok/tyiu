@@ -15,13 +15,13 @@ import request.NotificationRequest
 import response.NotificationResponse
 
 @Component("testTelegramClient")
-class FakeRabbitMQTelegramNotification(@Autowired private val template: R2dbcEntityTemplate): INotification {
+class TestTelegramNotification(@Autowired private val template: R2dbcEntityTemplate): INotification {
 
-    override fun makeNotification(notificationRequest: NotificationRequest) {
+    override fun makeNotification(notification: NotificationRequest) {
 
         val path = "https://hits.tyuiu.ru/"
 
-        if (notificationRequest.notificationId == null) {
+        if (notification.notificationId == null) {
 
             val message = "Error when sending notification to telegram. Notification id must not be null"
 
@@ -29,82 +29,82 @@ class FakeRabbitMQTelegramNotification(@Autowired private val template: R2dbcEnt
                 ResponseEntity<NotificationResponse>(
                     NotificationResponse.builder()
                         .message(message)
-                        .notificationId(notificationRequest.notificationId)
+                        .notificationId(notification.notificationId)
                         .build(),
                     HttpStatusCode.valueOf(500)
                 )
             )
-        } else if (notificationRequest.title == null
-            || notificationRequest.message == null
-            || notificationRequest.link == null) {
+        } else if (notification.title == null
+            || notification.message == null
+            || notification.link == null) {
 
             val message = String.format(
                 "Error when sending notification (id = %s). Notification content must not be null",
-                notificationRequest.notificationId
+                notification.notificationId
             )
 
             this.validateResponse(
                 ResponseEntity<NotificationResponse>(
                     NotificationResponse.builder()
                         .message(message)
-                        .notificationId(notificationRequest.notificationId)
+                        .notificationId(notification.notificationId)
                         .build(),
                     HttpStatusCode.valueOf(500)
                 )
             )
-        } else if (!notificationRequest.link.startsWith(path)) {
+        } else if (!notification.link.startsWith(path)) {
 
             val message = String.format(
                 "Error when sending notification (id = %s). Link must starting with required path",
-                notificationRequest.notificationId
+                notification.notificationId
             )
 
             this.validateResponse(
                 ResponseEntity<NotificationResponse>(
                     NotificationResponse.builder()
                         .message(message)
-                        .notificationId(notificationRequest.notificationId)
+                        .notificationId(notification.notificationId)
                         .build(),
                     HttpStatusCode.valueOf(500)
                 )
             )
-        } else if (notificationRequest.tag == null) {
+        } else if (notification.tag == null) {
 
             val message = String.format(
                 "Error when sending notification (id = %s) to user. Tag must be not null",
-                notificationRequest.notificationId
+                notification.notificationId
             )
 
             this.validateResponse(
                 ResponseEntity<NotificationResponse>(
                     NotificationResponse.builder()
                         .message(message)
-                        .notificationId(notificationRequest.notificationId)
+                        .notificationId(notification.notificationId)
                         .build(),
                     HttpStatusCode.valueOf(404)
                 )
             )
         } else {
 
-            Mono.just(notificationRequest.consumerEmail)
+            Mono.just(notification.consumerEmail)
                 .flatMap { dbFind: String? ->
                     template.exists(Query.query(Criteria.where("email").`is`(dbFind!!)), User::class.java)
                 }
                 .flatMap { userExists: Boolean ->
 
-                    if (java.lang.Boolean.TRUE == userExists && notificationRequest.tag != null) {
+                    if (java.lang.Boolean.TRUE == userExists && notification.tag != null) {
 
                         val message = String.format(
                             "Notification (id = %s) was successfully sent to the user with the tag = %s",
-                            notificationRequest.notificationId,
-                            notificationRequest.tag
+                            notification.notificationId,
+                            notification.tag
                         )
 
                         this.validateResponse(
                             ResponseEntity(
                                 NotificationResponse.builder()
                                     .message(message)
-                                    .notificationId(notificationRequest.notificationId)
+                                    .notificationId(notification.notificationId)
                                     .build(),
                                 HttpStatusCode.valueOf(200)
                             )
@@ -114,14 +114,14 @@ class FakeRabbitMQTelegramNotification(@Autowired private val template: R2dbcEnt
                         val message = String.format(
                             "Error when sending notification (id = %s) to user. " +
                                     "This notification intended for another user",
-                            notificationRequest.notificationId
+                            notification.notificationId
                         )
 
                         this.validateResponse(
                             ResponseEntity(
                                 NotificationResponse.builder()
                                     .message(message)
-                                    .notificationId(notificationRequest.notificationId)
+                                    .notificationId(notification.notificationId)
                                     .build(),
                                 HttpStatusCode.valueOf(404)
                             )
