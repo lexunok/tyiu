@@ -475,9 +475,17 @@ public class IdeaMarketService {
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(query(where("team_id").is(r.getTeamId())
+                                                                .or("idea_market_id").is(r.getIdeaMarketId())
                                                                 .and("status").is(RequestStatus.NEW)),
                                                         update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
+                                                .then(template.getDatabaseClient().sql("""
+                                                        UPDATE idea_invitation SET status = :status 
+                                                        WHERE idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) OR team_id = :teamId
+                                                        """)
+                                                        .bind("status", "ANNULLED")
+                                                        .bind("ideaMarketId", r.getIdeaMarketId())
+                                                        .bind("teamId", r.getTeamId()).fetch().all().then())
                                                 .then(template.update(r))
                                                 .then();
                                     }

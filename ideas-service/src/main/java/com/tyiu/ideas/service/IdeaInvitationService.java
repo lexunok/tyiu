@@ -1,13 +1,11 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.model.dto.IdeaDTO;
 import com.tyiu.ideas.model.dto.IdeaInvitationDTO;
 import com.tyiu.ideas.model.dto.IdeaMarketDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.IdeaInvitation;
 import com.tyiu.ideas.model.entities.IdeaMarket;
 import com.tyiu.ideas.model.entities.Team;
-import com.tyiu.ideas.model.entities.TeamMarketRequest;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.SkillType;
@@ -18,9 +16,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -110,22 +106,18 @@ public class IdeaInvitationService {
 
     public Mono<Void> changeInvitationStatus(IdeaInvitationStatusRequest request) {
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
-            return template.update(query(where("idea_id").is(request.getIdeaId())
+            return template.update(query(where("team_id").is(request.getTeamId())
+                                    .or("idea_id").is(request.getIdeaId())
                                     .and(where("id").not(request.getId()))
                                     .and(where("status").is(RequestStatus.NEW))),
-                                    update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
-                            .then(template.update(query(where("team_id").is(request.getTeamId())
-                                            .and(where("id").not(request.getId()))
-                                            .and(where("status").is(RequestStatus.NEW))),
-                                    update("status", RequestStatus.ANNULLED), IdeaInvitation.class))
-                            .then(template.update(query(where("team_id").is(request.getTeamId())
-                                            .and(where("status").is(RequestStatus.NEW))),
-                                    update("status", RequestStatus.ANNULLED), TeamMarketRequest.class))
+                            update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
                             .then(template.getDatabaseClient().sql("""
-                                    UPDATE team_market_request SET status = :status WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId)
+                                    UPDATE team_market_request SET status = :status 
+                                    WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId) OR team_id = :teamId
                                     """)
-                                    .bind("status", "NEW")
-                                    .bind("ideaId", request.getIdeaId()).fetch().all().then())
+                                    .bind("status", "ANNULLED")
+                                    .bind("ideaId", request.getIdeaId())
+                                    .bind("teamId", request.getTeamId()).fetch().all().then())
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                                     update("team_id", request.getTeamId())
                                             .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
