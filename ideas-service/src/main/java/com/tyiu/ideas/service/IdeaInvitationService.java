@@ -115,7 +115,7 @@ public class IdeaInvitationService {
                                     UPDATE team_market_request SET status = :status 
                                     WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId) OR team_id = :teamId
                                     """)
-                                    .bind("status", RequestStatus.ANNULLED)
+                                    .bind("status", "ANNULLED")
                                     .bind("ideaId", request.getIdeaId())
                                     .bind("teamId", request.getTeamId()).fetch().all().then())
                             .then(template.update(query(where("idea_id").is(request.getIdeaId())),
