@@ -61,23 +61,22 @@ class ProjectService(
 
     fun getProjectMarks(projectId: String): Flow<ProjectMarks> = projectMarksRepository.findMarksByProjectId(projectId)
 
-    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
+    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): Flow<ProjectMember> {
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id
         )
         val prjSave = projectRepository.save(project)
-        ideaMarketDTO.team.id?.let {
+        val members = ideaMarketDTO.team.id?.let {
             teamMemberRepository.findMemberByTeamId(it).map { m ->
-                projectMemberRepository.save( ProjectMember(
+                return@map ProjectMember(
                     projectId = prjSave.id,
                     userId = m.userId,
                     teamId = m.teamId
-                ))
+                )
             }
         }
-        //projectMemberRepository.saveAll()
-        return projectToDTO(prjSave)
+        return projectMemberRepository.saveAll(members!!)
     }
 
     suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMember {
