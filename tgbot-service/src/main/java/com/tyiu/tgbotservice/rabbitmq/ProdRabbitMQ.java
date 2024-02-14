@@ -53,8 +53,8 @@ public class ProdRabbitMQ implements INotification {
                         .build(),
                         HttpStatusCode.valueOf(200));
                 validateResponse(response);
-
-            } else {
+            }
+            else {
 
                 String message = String.format("Error when sending notification (id = %s) to user",
                         notificationRequest.getNotificationId());
@@ -66,7 +66,6 @@ public class ProdRabbitMQ implements INotification {
                         HttpStatusCode.valueOf(404));
                 validateResponse(response);
             }
-
         } catch (Exception e) {
 
             ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
