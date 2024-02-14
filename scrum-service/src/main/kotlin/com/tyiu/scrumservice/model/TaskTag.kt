@@ -9,12 +9,16 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String>{
     @Query("DELETE FROM task_tag WHERE id=:tagId")
     fun deleteTagById(tagId: String): Flow<TaskTag>
+
+    @Query("SELECT *  FROM task_tag WHERE project_id=:projectId")
+    fun findAllTagByProjectId(projectId: String): Flow<TaskTag>
 }
 
 @Table
 data class TaskTag (
     @Id
     val id: String? = null,
+    val projectId: String? = null,
     var name: String? = null,
     var color: String? = null,
     var isConfirmed: Boolean? = false
@@ -27,6 +31,7 @@ data class Task2Tag (
 
 data class TaskTagDTO (
     val id: String? = null,
+    val projectId: String? = null,
     var name: String? = null,
     var color: String? = null,
     var isConfirmed: Boolean?
@@ -34,6 +39,7 @@ data class TaskTagDTO (
 
 fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
     id = id,
+    projectId = projectId,
     name = name,
     color = color,
     isConfirmed = isConfirmed

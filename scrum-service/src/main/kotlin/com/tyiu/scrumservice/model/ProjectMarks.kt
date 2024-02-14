@@ -24,7 +24,7 @@ data class ProjectMarksDTO(
         var lastName: String? = null,
         var projectRole: ProjectRole = ProjectRole.MEMBER,
         val mark:Double? = null,
-        val tasks: List<TaskDTO>? = null,
+        var tasks: List<TaskDTO>? = null,
 )
 
 data class projectMarksRequest(

@@ -22,6 +22,9 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
 
     @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
     fun findTaskById(id: String): Flow<Task>
+
+    @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
+    fun findTaskByExecutorId(executorId: String): Flow<Task>
 }
 
 @Table
@@ -68,7 +71,7 @@ data class TaskDTO (
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
 
-    var tag: TaskTagDTO? = null,
+    var tag: List<TaskTagDTO>? = null,
     var status: TaskStatus? = TaskStatus.InBacklog,
 )
 
