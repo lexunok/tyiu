@@ -476,6 +476,7 @@ public class TeamService {
 
         return template.insert(request)
                 .flatMap(sendRequest -> {
+
                     template.selectOne(query(where("id").is(request.getTeamId())), Team.class)
                             .flatMap(team -> template.selectOne(query(where("id").is(user.getId())), User.class)
                                     .flatMap(requestSender -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
@@ -486,7 +487,7 @@ public class TeamService {
                                                             .consumerEmail(teamOwner.getEmail())
                                                             .title("В вашу команду желает вступит пользователь")
                                                             .message(
-                                                                    String.format("%s %s просит вас принять его в вашу команду \"%s\". " +
+                                                                    String.format("%s %s хочет вступить в вашу команду \"%s\". " +
                                                                                     "Перейдите по ссылке, чтобы ответить на заявку",
                                                                             requestSender.getFirstName(),
                                                                             requestSender.getLastName(),
@@ -534,7 +535,7 @@ public class TeamService {
                                                                 NotificationRequest.builder()
                                                                         .publisherEmail(user.getEmail())
                                                                         .consumerEmail(teamOwner.getEmail())
-                                                                        .title("Пользователь приянл ваше приглашение в команду")
+                                                                        .title("Пользователь принял ваше приглашение в команду")
                                                                         .message(
                                                                                 String.format("%s %s принял ваше приглашение в команду \"%s\". " +
                                                                                                 "Перейдите по ссылке, чтобы ознакомиться подробнее",
@@ -581,13 +582,79 @@ public class TeamService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteTeam(String id, String userId) {
-        return checkOwner(id, userId)
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists)){
-                        return template.delete(query(where("id").is(id)), Team.class);
+    public Mono<Void> deleteTeam(String teamId, User userThatDeletesTeam) {
+
+        return checkOwner(teamId, userThatDeletesTeam.getId())
+                .flatMap(userThatKicksIsOwnerOfThisTeam -> {
+
+                    if (Boolean.TRUE.equals(userThatKicksIsOwnerOfThisTeam)) {
+
+                        template.getDatabaseClient()
+                                .sql("SELECT member_id FROM team_member WHERE team_id = :teamId")
+                                .bind("teamId", teamId)
+                                .map((row, rowMetadata) -> row.get("member_id", String.class))
+                                .all()
+                                .flatMap(memberId -> template.selectOne(query(where("id").is(teamId)), Team.class)
+                                        .flatMap(team -> template.selectOne(query(where("member_id").is(memberId)), User.class)
+                                                .flatMap(teamMember -> notificationPublisher.makeNotification(
+
+                                                            NotificationRequest.builder()
+                                                                    .publisherEmail(userThatDeletesTeam.getEmail())
+                                                                    .consumerEmail(teamMember.getEmail())
+                                                                    .title("Команда, в который вы состояли, была удалена")
+                                                                    .message(
+                                                                            String.format("%s %s удалил команду \"%s\".",
+                                                                                    userThatDeletesTeam.getFirstName(),
+                                                                                    userThatDeletesTeam.getLastName(),
+                                                                                    team.getName()
+                                                                            ))
+                                                                    .build())))
+                                ).subscribe();
+
+                        return template.delete(query(where("id").is(teamId)), Team.class);
                     }
-                    return Mono.error(new AccessException("Нет Прав"));
+                    else if (userThatDeletesTeam.getRoles().contains(Role.ADMIN)) {
+
+                        template.selectOne(query(where("id").is(teamId)), Team.class)
+                                .flatMap(team -> template.selectOne(query(where("id").is(userThatDeletesTeam)), User.class)
+                                        .flatMap(teamOwner -> notificationPublisher.makeNotification(
+
+                                                NotificationRequest.builder()
+                                                        .publisherEmail(userThatDeletesTeam.getEmail())
+                                                        .consumerEmail(teamOwner.getEmail())
+                                                        .title("Ваша команда была удалена с портала")
+                                                        .message(
+                                                                String.format("Админ %s %s удалил вашу команду \"%s\".",
+                                                                        userThatDeletesTeam.getFirstName(),
+                                                                        userThatDeletesTeam.getLastName(),
+                                                                        team.getName()
+                                                                ))
+                                                        .build()
+
+                                        ).thenReturn(template.getDatabaseClient()
+                                                        .sql("SELECT member_id FROM team_member WHERE team_id = :teamId")
+                                                        .bind("teamId", teamId)
+                                                        .map((row, rowMetadata) -> row.get("member_id", String.class))
+                                                        .all()
+                                                        .flatMap(memberId -> template.selectOne(query(where("member_id").is(memberId)), User.class)
+                                                                        .flatMap(teamMember -> notificationPublisher.makeNotification(
+
+                                                                                NotificationRequest.builder()
+                                                                                        .publisherEmail(userThatDeletesTeam.getEmail())
+                                                                                        .consumerEmail(teamMember.getEmail())
+                                                                                        .title("Команда, в который вы состояли, была удалена")
+                                                                                        .message(
+                                                                                                String.format("Админ %s %s удалил команду \"%s\".",
+                                                                                                        userThatDeletesTeam.getFirstName(),
+                                                                                                        userThatDeletesTeam.getLastName(),
+                                                                                                        team.getName()
+                                                                                                ))
+                                                                                        .build())))))
+                                ).subscribe();
+
+                        return template.delete(query(where("id").is(teamId)), Team.class);
+                    }
+                    else return Mono.error(new AccessException("Нет Прав"));
                 }).then();
     }
 
@@ -861,28 +928,30 @@ public class TeamService {
                     }
                     else if (newStatus.equals(RequestStatus.REJECTED)) {
 
-                        template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
-                                .flatMap(teamInvitation -> template.selectOne(query(where("id").is(teamInvitation.getTeamId())), Team.class)
-                                        .flatMap(team -> template.selectOne(query(where("owner_id").is(team.getOwnerId())), User.class)
-                                                .flatMap(teamOwner -> notificationPublisher.makeNotification(
 
-                                                        NotificationRequest.builder()
-                                                                .publisherEmail(user.getEmail())
-                                                                .consumerEmail(teamOwner.getEmail())
-                                                                .title("Пользователь отклонил ваше приглашение в команду")
-                                                                .message(
-                                                                        String.format("%s %s отклонил ваше приглашение в команду \"%s\".",
-                                                                                user.getFirstName(),
-                                                                                user.getLastName(),
-                                                                                team.getName()
-                                                                        ))
-                                                                .build())))
-                                ).subscribe();
 
                         return checkInitiator(invitationId, user.getId())
                                 .flatMap(isInitiator -> {
 
                                     if (Boolean.TRUE.equals(isInitiator) || user.getRoles().contains(Role.ADMIN)) {
+
+                                        template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
+                                                .flatMap(teamInvitation -> template.selectOne(query(where("id").is(teamInvitation.getTeamId())), Team.class)
+                                                        .flatMap(team -> template.selectOne(query(where("owner_id").is(team.getOwnerId())), User.class)
+                                                                .flatMap(teamOwner -> notificationPublisher.makeNotification(
+
+                                                                        NotificationRequest.builder()
+                                                                                .publisherEmail(user.getEmail())
+                                                                                .consumerEmail(teamOwner.getEmail())
+                                                                                .title("Пользователь отклонил ваше приглашение в команду")
+                                                                                .message(
+                                                                                        String.format("%s %s отклонил ваше приглашение в команду \"%s\".",
+                                                                                                user.getFirstName(),
+                                                                                                user.getLastName(),
+                                                                                                team.getName()
+                                                                                        ))
+                                                                                .build())))
+                                                ).subscribe();
 
                                         return template.update(invitation).thenReturn(invitation);
                                     }
