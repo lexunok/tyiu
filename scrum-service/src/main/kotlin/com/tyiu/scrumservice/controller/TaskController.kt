@@ -14,17 +14,14 @@ class TaskController (private val taskService: TaskService  ) {
     @GetMapping("/projects/{projectId}/all")
     fun getAllTaskByProject(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksByProject(projectId)
 
-    @GetMapping("projects/{projectId}")
+    @GetMapping("/projects/{projectId}")
     fun getAllTasksInBackLog(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksInBacklog(projectId)
 
-    @GetMapping("projects/{projectId}/sprint/{sprintId}")
+    @GetMapping("/projects/{projectId}/sprint/{sprintId}")
     fun getAllTasksInSprint(@PathVariable projectId: String, @PathVariable sprintId: String): Flow<TaskDTO> = taskService.getAllTasksInSprint(projectId, sprintId)
 
-    @GetMapping("{id}")
-    fun getOneTaskById(@PathVariable id: BigInteger): Flow<TaskDTO> = taskService.getOneTaskById(id)
-
-    @GetMapping("/all")  // ВЫВОД ВСЕХ СОЗДАННЫХ ТАСКОВ ВО ВСЕХ ПРОЕКТАХ. НУЖНО НА ВРЕМЯ РАЗРАБОТКИ
-    fun getAllTasks(): Flow<Task> = taskService.getAllTasks()
+    @GetMapping("/{id}")
+    fun getOneTaskById(@PathVariable id: String): Flow<TaskDTO> = taskService.getOneTaskById(id)
 
     @PostMapping("/add")
     suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO): TaskDTO = taskService.createTask(taskDTO)
@@ -33,8 +30,8 @@ class TaskController (private val taskService: TaskService  ) {
     suspend fun putTaskStatus (@RequestBody taskStatusRequest: TaskStatusRequest) = taskService.putTaskStatus(taskStatusRequest)
 
     @PutMapping("/{taskId}/update")
-    suspend fun putUpdateTask (@PathVariable taskId: BigInteger,@RequestBody taskInfoRequest: taskInfoRequest) = taskService.putUpdateTask(taskId, taskInfoRequest)
+    suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskInfoRequest: taskInfoRequest) = taskService.putUpdateTask(taskId, taskInfoRequest)
 
-    @DeleteMapping("{id}/delete")
-    suspend fun deleteTask(@PathVariable id: BigInteger) = taskService.deleteTask(id)
+    @DeleteMapping("/{id}/delete")
+    suspend fun deleteTask(@PathVariable id: String) = taskService.deleteTask(id)
 }

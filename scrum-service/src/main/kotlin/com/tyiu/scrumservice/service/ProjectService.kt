@@ -18,7 +18,6 @@ class ProjectService(
     private val teamRepository: TeamRepository,
     private val projectMemberRepository: ProjectMemberRepository,
     private val projectMarksRepository: ProjectMarksRepository,
-    private val taskMovementLogRepository: TaskMovementLogRepository,
     val template: R2dbcEntityTemplate,
     private val userRepository: UserRepository
 ) {
@@ -38,6 +37,7 @@ class ProjectService(
         projects.initiator = ideaToProject?.initiatorId?.let { userRepository.findById(it)?.toDTO()}
         projects.team = project.teamId?.let { teamRepository.findById(it) }?.toDTO()
         projects.members = project.id?.let{ getProjectMembers(it) }?.toList()
+        projects.report = ReportProject(project.id,project.id?.let { getProjectMarks(it)?.toList() },project.report)
         return projects
     }
 
@@ -56,28 +56,36 @@ class ProjectService(
             projectMember.email = userToProject?.email
             projectMember.firstName = userToProject?.firstName
             projectMember.lastName = userToProject?.lastName
+            //projectMember.projectRole
             return@map projectMember
         }
 
-    fun getProjectMarks(projectId: String): Flow<ProjectMarks> = projectMarksRepository.findMarksByProjectId(projectId)
+    fun getProjectMarks(projectId: String): Flow<ProjectMarksDTO>? =
+        projectMarksRepository.findMarksByProjectId(projectId).map{ m ->
+            val projectMarks = m.toDTO()
+            val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
+            projectMarks.firstName = userToProject?.firstName
+            projectMarks.lastName = userToProject?.lastName
+            //projectMarks.projectRole =
+            return@map projectMarks
+        }
 
-    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
+    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): Flow<ProjectMember> {
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id
         )
         val prjSave = projectRepository.save(project)
-        ideaMarketDTO.team.id?.let {
+        val members = ideaMarketDTO.team.id?.let {
             teamMemberRepository.findMemberByTeamId(it).map { m ->
-                projectMemberRepository.save( ProjectMember(
+                return@map ProjectMember(
                     projectId = prjSave.id,
                     userId = m.userId,
                     teamId = m.teamId
-                ))
+                )
             }
         }
-        //projectMemberRepository.saveAll()
-        return projectToDTO(prjSave)
+        return projectMemberRepository.saveAll(members!!)
     }
 
     suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMember {
@@ -89,11 +97,13 @@ class ProjectService(
         return projectMemberRepository.save(projectMember)
     }
 
-    suspend fun putProjectMarks(projectMarks: ProjectMarks) {
-        val query = "UPDATE project_marks SET mark = :mark WHERE user_id = :userId"
-        return template.databaseClient.sql(query)
-            .bind("mark", projectMarks.mark!!)
-            .bind("userId", projectMarks.userId!!).await()
+    suspend fun addMarksInProject(projectId: String, projectMarkRequest: projectMarksRequest): ProjectMarks{
+        val projectMarks = ProjectMarks(
+            projectId = projectId,
+            userId = projectMarkRequest.userId,
+            mark = projectMarkRequest.mark
+        )
+        return projectMarksRepository.save(projectMarks)
     }
 
     suspend fun pauseProject(projectId: String) {
