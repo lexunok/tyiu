@@ -1,5 +1,6 @@
 package com.tyiu.notificationservice.model
 
+import com.tyiu.tgbotservice.model.entities.UserTelegram
 import kotlinx.coroutines.flow.Flow
 import lombok.Getter
 import lombok.Setter
@@ -26,6 +27,12 @@ interface NotificationRepository: CoroutineCrudRepository<Notification, String> 
 
     @Query("UPDATE notification n SET n.is_sent_by_email_service = true WHERE n.id = :id")
     fun setSentByEmailServiceFieldTrue(id: String)
+}
+
+interface UserTagRepository: CoroutineCrudRepository<UserTelegram, String> {
+
+    @Query("SELECT consumer_tag FROM users_telegram WHERE consumer_email = :email LIMIT 1")
+    fun findUserTelegramTag(email: String): String
 }
 
 enum class NotificationType{
