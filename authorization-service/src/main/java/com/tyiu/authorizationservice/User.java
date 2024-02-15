@@ -13,9 +13,9 @@ import java.util.List;
 @Entity
 @Data
 public class User implements UserDetails {
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID)
     @Id
-    private Long id;
+    private String id;
     @Enumerated(EnumType.STRING)
     private List<Role> roles;
     private String username;

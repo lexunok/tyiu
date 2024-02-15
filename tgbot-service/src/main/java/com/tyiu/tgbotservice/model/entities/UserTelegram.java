@@ -4,9 +4,9 @@ import lombok.*;
 import org.springframework.data.relational.core.mapping.Table;
 
 @Data
-@Builder
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @Table("users_telegram")

@@ -1,7 +1,5 @@
 package com.tyiu.scrumservice.model
 
-import com.tyiu.ideas.model.dto.UserDTO
-import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -40,6 +38,7 @@ enum class ProjectRole{
 }
 
 fun ProjectMember.toDTO():ProjectMemberDTO = ProjectMemberDTO(
+    userId = userId,
     teamId = teamId,
     projectRole = projectRole,
     startDate = startDate,

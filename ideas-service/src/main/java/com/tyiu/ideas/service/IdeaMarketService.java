@@ -148,6 +148,7 @@ public class IdeaMarketService {
     //\___/  /___/  /_/
     ///////////////////////
 
+
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
@@ -484,7 +485,7 @@ public class IdeaMarketService {
                 .flatMap(r -> {
                     String userId = user.getId();
                     r.setStatus(status);
-                    if (status.equals(RequestStatus.REJECTED)){
+                    if (status.equals(RequestStatus.CANCELED)){
                         return checkInitiator(r.getIdeaMarketId(),userId)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -500,9 +501,17 @@ public class IdeaMarketService {
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(query(where("team_id").is(r.getTeamId())
+                                                                .or("idea_market_id").is(r.getIdeaMarketId())
                                                                 .and("status").is(RequestStatus.NEW)),
-                                                        update("status", RequestStatus.CANCELED),
+                                                        update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
+                                                .then(template.getDatabaseClient().sql("""
+                                                        UPDATE idea_invitation SET status = :status 
+                                                        WHERE idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) OR team_id = :teamId
+                                                        """)
+                                                        .bind("status", "ANNULLED")
+                                                        .bind("ideaMarketId", r.getIdeaMarketId())
+                                                        .bind("teamId", r.getTeamId()).fetch().all().then())
                                                 .then(template.update(r))
                                                 .then();
                                     }
@@ -519,7 +528,7 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (user.getRoles().contains(Role.ADMIN) &&
-                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.CANCELED)))
+                            (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
                     {
                         return template.update(r).then();
                     }

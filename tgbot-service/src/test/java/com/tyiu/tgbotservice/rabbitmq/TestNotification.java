@@ -16,73 +16,73 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 
 @Component("testTelegramClient")
-public class TestRabbitMQ implements INotification {
+public class TestNotification implements INotification {
 
     @Autowired
     private R2dbcEntityTemplate template;
 
     @Override
-    public void makeNotification(NotificationRequest notificationRequest) throws CustomHttpException {
+    public void makeNotification(NotificationRequest notification) throws CustomHttpException {
 
-        if (notificationRequest == null) {
+        if (notification == null) {
             throw new CustomHttpException("Notification is null", 500);
         }
 
-        if (notificationRequest.getNotificationId() == null) {
+        if (notification.getNotificationId() == null) {
 
             String message = "Error when sending notification to telegram. Notification id must not be null";
 
             this.validateResponse(
                     new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                             .message(message)
-                            .notificationId(notificationRequest.getNotificationId())
+                            .notificationId(notification.getNotificationId())
                             .build(),
                             HttpStatusCode.valueOf(500))
             );
         }
-        else if (notificationRequest.getTitle() == null
-                || notificationRequest.getMessage() == null
-                || notificationRequest.getLink() == null) {
+        else if (notification.getTitle() == null
+                || notification.getMessage() == null
+                || notification.getLink() == null) {
 
             String message = String.format("Error when sending notification (id = %s). Notification content must not be null",
-                    notificationRequest.getNotificationId());
+                    notification.getNotificationId());
 
             this.validateResponse(
                     new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                             .message(message)
-                            .notificationId(notificationRequest.getNotificationId())
+                            .notificationId(notification.getNotificationId())
                             .build(),
                             HttpStatusCode.valueOf(500))
             );
         }
-        else if (notificationRequest.getTag() == null) {
+        else if (notification.getTag() == null) {
 
             String message = String.format("Error when sending notification (id = %s). Tag must not be null",
-                    notificationRequest.getNotificationId());
+                    notification.getNotificationId());
 
             this.validateResponse(
                     new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                             .message(message)
-                            .notificationId(notificationRequest.getNotificationId())
+                            .notificationId(notification.getNotificationId())
                             .build(),
                             HttpStatusCode.valueOf(404))
             );
         }
         else {
-            Mono.just(notificationRequest.getConsumerEmail())
+            Mono.just(notification.getConsumerEmail())
                     .flatMap(dbFind -> template.exists(query(where("email").is(dbFind)), User.class))
                     .flatMap(userExists -> {
 
-                        if (Boolean.TRUE.equals(userExists) && notificationRequest.getTag() != null) {
+                        if (Boolean.TRUE.equals(userExists) && notification.getTag() != null) {
 
                             String message = String.format("Notification (id = %s) was successfully sent to the user with the tag = %s",
-                                    notificationRequest.getNotificationId(),
-                                    notificationRequest.getTag());
+                                    notification.getNotificationId(),
+                                    notification.getTag());
 
                             this.validateResponse(
                                     new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                                             .message(message)
-                                            .notificationId(notificationRequest.getNotificationId())
+                                            .notificationId(notification.getNotificationId())
                                             .build(),
                                             HttpStatusCode.valueOf(200))
                             );
@@ -91,12 +91,12 @@ public class TestRabbitMQ implements INotification {
 
                             String message = String.format("Error when sending notification (id = %s) to user. " +
                                             "This notification intended for another user",
-                                    notificationRequest.getNotificationId());
+                                    notification.getNotificationId());
 
                             this.validateResponse(
                                     new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                                             .message(message)
-                                            .notificationId(notificationRequest.getNotificationId())
+                                            .notificationId(notification.getNotificationId())
                                             .build(),
                                             HttpStatusCode.valueOf(404))
                             );

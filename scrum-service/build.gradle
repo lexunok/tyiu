@@ -14,7 +14,6 @@ dependencies {
 	implementation 'org.jetbrains.kotlin:kotlin-reflect'
 	implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-reactor'
 	implementation project(path: ':ideas-service')
-	implementation 'org.springframework.boot:spring-boot-starter-security'
 	compileOnly 'org.projectlombok:lombok'
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'

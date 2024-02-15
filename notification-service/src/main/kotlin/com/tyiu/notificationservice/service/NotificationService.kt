@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service
 
 @Service
 class NotificationService(private val notificationRepository: NotificationRepository) {
+
     fun getAllNotificationsByEmail(email: String): Flow<NotificationDTO> =
         notificationRepository.findAllByPublisherEmailOrConsumerEmail(email).map { notification -> notification.toDTO() }
 
@@ -25,7 +26,6 @@ class NotificationService(private val notificationRepository: NotificationReposi
         val notification = notificationDTO.toEntity()
         notification.link = notification.link
         return notificationRepository.save(notification).toDTO()
-
     }
 
     fun setSentByTelegramServiceFieldTrue(id: String){

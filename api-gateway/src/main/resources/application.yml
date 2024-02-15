@@ -34,8 +34,8 @@ spring:
             client-id: gateway
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost:80/login/oauth2/code/{registrationId}"
+            redirect-uri: "http://localhost/login/oauth2/code/{registrationId}"
             scope: openid, resource.read
         provider:
           spring:
-            issuer-uri: http://localhost:8083
+            issuer-uri: http://127.0.0.1:7777

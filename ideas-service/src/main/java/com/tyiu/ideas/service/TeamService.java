@@ -116,11 +116,11 @@ public class TeamService {
     private Mono<Void> annul(String userId) {
         return template.update(query(where("user_id").is(userId)
                                 .and("status").is(RequestStatus.NEW)),
-                        update("status", RequestStatus.CANCELED),
+                        update("status", RequestStatus.ANNULLED),
                         TeamRequest.class)
                 .then(template.update(query(where("user_id").is(userId)
                                 .and("status").is(RequestStatus.NEW)),
-                        update("status", RequestStatus.CANCELED),
+                        update("status", RequestStatus.ANNULLED),
                         TeamInvitation.class)).then();
     }
 
@@ -796,6 +796,7 @@ public class TeamService {
                         )
                 ).then(updateSkills(id)).thenReturn(teamDTO);
     }
+
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
@@ -949,10 +950,7 @@ public class TeamService {
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
-                    else if (newStatus.equals(RequestStatus.REJECTED)) {
-
-
-
+                    else if (newStatus.equals(RequestStatus.CANCELED)){
                         return checkInitiator(invitationId, user.getId())
                                 .flatMap(isInitiator -> {
 
@@ -993,7 +991,7 @@ public class TeamService {
                                 });
                     }
                     else if (user.getRoles().contains(Role.ADMIN) &&
-                            (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.CANCELED))) {
+                            (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.ANNULLED))) {
                         return template.update(invitation).thenReturn(invitation);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -1006,8 +1004,7 @@ public class TeamService {
                 .flatMap(request -> {
 
                     request.setStatus(newStatus);
-                    if (newStatus.equals(RequestStatus.REJECTED)) {
-
+                    if (newStatus.equals(RequestStatus.CANCELED)){
                         return checkOwner(request.getTeamId(), user.getId())
                                 .flatMap(isOwner -> {
 
@@ -1088,7 +1085,7 @@ public class TeamService {
                                 });
                     }
                     else if (user.getRoles().contains(Role.ADMIN) &&
-                            (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.CANCELED))){
+                            (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.ANNULLED))){
                         return template.update(request).thenReturn(request);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
