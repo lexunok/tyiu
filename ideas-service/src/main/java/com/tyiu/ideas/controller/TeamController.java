@@ -178,8 +178,10 @@ public class TeamController {
 
     @PutMapping("/update/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
-        return teamService.updateTeam(teamId, team)
+    public Mono<TeamDTO> updateTeam(@PathVariable String teamId,
+                                    @RequestBody TeamDTO team,
+                                    @AuthenticationPrincipal User updater) {
+        return teamService.updateTeam(teamId, team, updater)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при обновлении команды")));
     }
 

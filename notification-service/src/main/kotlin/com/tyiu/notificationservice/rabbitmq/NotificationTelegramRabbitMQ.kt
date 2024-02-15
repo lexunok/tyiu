@@ -13,8 +13,6 @@ import org.springframework.stereotype.Component
 import request.NotificationRequest
 import response.NotificationResponse
 
-abstract class AbstractNotificationTelegram: INotification
-
 
 @Component("prodTelegramClient")
 class NotificationTelegramRabbitMQ(private val rabbitTemplate: RabbitTemplate,

@@ -12,8 +12,6 @@ import org.springframework.stereotype.Component
 import request.NotificationRequest
 import response.NotificationResponse
 
-abstract class AbstractNotificationEmail: INotification
-
 @Component("prodEmailClient")
 class NotificationEmailRabbitMQ(private val rabbitTemplate: RabbitTemplate,
                                 private val notificationService: NotificationService

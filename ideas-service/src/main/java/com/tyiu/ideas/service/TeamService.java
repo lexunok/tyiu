@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -753,7 +754,7 @@ public class TeamService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<TeamDTO> updateTeam(String id, TeamDTO teamDTO) {
+    public Mono<TeamDTO> updateTeam(String id, TeamDTO teamDTO, User updater) {
 
         Team team = mapper.map(teamDTO, Team.class);
         team.setId(id);
@@ -764,15 +765,37 @@ public class TeamService {
             team.setLeaderId(teamDTO.getLeader().getId());
         }
         return template.update(team)
-                .flatMap(t -> template.delete(query(where("team_id").is(id)), Team2Member.class)
-                                .thenReturn(teamDTO.getMembers()).mapNotNull(list -> {
-                                    if (list != null) {
-                                        list.forEach(member -> template.insert(new Team2Member(id, member.getId())).subscribe());
-                                    }
-                                    return list;
-                                })).then(updateSkills(id)).thenReturn(teamDTO);
+                .flatMap(t -> template.select(query(where("team_id").is(id)), Team2Member.class)
+                        .flatMap(team2Member -> template.selectOne(query(where("id").is(team2Member.getMemberId())), User.class))
+                        .flatMap(user -> Mono.just(user.getId()))
+                        .collectList()
+                        .flatMap(oldMembers -> template.delete(query(where("team_id").is(id)), Team2Member.class)
+                                .then(Mono.fromRunnable(() -> {
+                                    List<String> newId = teamDTO.getMembers().stream().map(UserDTO::getId).toList();
+                                    Flux.fromIterable(oldMembers.stream().distinct()
+                                            .filter(newId::contains).collect(Collectors.toSet())
+                                    ).flatMap(idToStay ->  template.insert(new Team2Member(id, idToStay))).subscribe();
+                                    Flux.fromIterable(oldMembers.stream().distinct()
+                                            .filter(userId -> !newId.contains(userId)).collect(Collectors.toSet())
+                                    ).flatMap(idToDelete -> template.selectOne(query(where("id").is(idToDelete)), User.class))
+                                            .flatMap(user -> notificationPublisher.makeNotification(
+                                                    NotificationRequest.builder()
+                                                            .consumerEmail(user.getEmail())
+                                                            .title("Вас исключили из команды на портале HITS")
+                                                            .message(String.format(
+                                                                    "%s %s исключил вас из команды " +
+                                                                            "\"%s\"",
+                                                                    updater.getFirstName(),
+                                                                    updater.getLastName(),
+                                                                    teamDTO.getName()
+                                                            ))
+                                                            .publisherEmail(updater.getEmail())
+                                                            .build()
+                                            )).subscribe();
+                                }))
+                        )
+                ).then(updateSkills(id)).thenReturn(teamDTO);
     }
-
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
