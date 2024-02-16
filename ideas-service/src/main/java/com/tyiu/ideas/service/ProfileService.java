@@ -148,8 +148,9 @@ public class ProfileService {
                         })
                         .then()
                 )
-                .thenMany(skills);
+                .thenMany(skills.map(s -> s));
     }
+
     public Mono<Void> updateFullName(String userId, ProfileUpdateRequest request){
         return template.update(query(where("id").is(userId)),
                 update("first_name", request.getFirstName()).set("last_name", request.getLastName()), User.class).then();
