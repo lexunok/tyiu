@@ -2,7 +2,8 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.entities.*;
+import com.tyiu.ideas.model.entities.Idea;
+import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.ProfileMapper;
 import com.tyiu.ideas.model.entities.relations.Team2Member;
 import com.tyiu.ideas.model.entities.relations.Team2Skill;
@@ -126,27 +127,28 @@ public class ProfileService {
 
     public Flux<SkillDTO> saveSkills(String userId, Flux<SkillDTO> skills) {
         return template.delete(query(where("user_id").is(userId)), User2Skill.class)
-                .thenMany(skills.flatMap(s ->
-                        template.insert(new User2Skill(userId,s.getId()))
-                                .thenMany(template.select(query(where("user_id").is(userId)), Team2Member.class)
-                                        .flatMap(t -> {
-                                            String QUERY = "SELECT user_skill.*, team_member.* " +
-                                                    "FROM team_member " +
-                                                    "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
-                                                    "WHERE team_member.team_id = :teamId AND user_skill.user_id IS NOT NULL";
+                .then(skills.flatMap(s ->
+                        template.insert(new User2Skill(userId,s.getId()))).then()
+                )
+                .then(template.select(query(where("user_id").is(userId)), Team2Member.class)
+                        .flatMap(t -> {
+                            String QUERY = "SELECT user_skill.*, team_member.* " +
+                                    "FROM team_member " +
+                                    "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
+                                    "WHERE team_member.team_id = :teamId AND user_skill.user_id IS NOT NULL";
 
-                                            return template.delete(query(where("team_id").is(t.getTeamId())), Team2Skill.class)
-                                                    .then(template.getDatabaseClient()
-                                                            .sql(QUERY)
-                                                            .bind("teamId", t.getTeamId())
-                                                            .map((row, rowMetadata) -> Objects.requireNonNull(row.get("skill_id", String.class)))
-                                                            .all()
-                                                            .distinct()
-                                                            .flatMap(skill -> template.insert(new Team2Skill(t.getTeamId(), skill))).then());
-                                        }))
-                                .then()
-                                .thenReturn(s))
-                );
+                            return template.delete(query(where("team_id").is(t.getTeamId())), Team2Skill.class)
+                                    .then(template.getDatabaseClient()
+                                            .sql(QUERY)
+                                            .bind("teamId", t.getTeamId())
+                                            .map((row, rowMetadata) -> Objects.requireNonNull(row.get("skill_id", String.class)))
+                                            .all()
+                                            .distinct()
+                                            .flatMap(skill -> template.insert(new Team2Skill(t.getTeamId(), skill))).then());
+                        })
+                        .then()
+                )
+                .thenMany(skills);
     }
     public Mono<Void> updateFullName(String userId, ProfileUpdateRequest request){
         return template.update(query(where("id").is(userId)),
