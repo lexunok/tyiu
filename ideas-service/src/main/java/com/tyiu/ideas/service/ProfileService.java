@@ -126,11 +126,12 @@ public class ProfileService {
 
 
     public Flux<SkillDTO> saveSkills(String userId, Flux<SkillDTO> skills) {
-        return template.delete(query(where("user_id").is(userId)), User2Skill.class)
+        template.delete(query(where("user_id").is(userId)), User2Skill.class)
                 .then(skills.flatMap(s ->
-                        template.insert(new User2Skill(userId,s.getId()))).then()
+                        template.insert(new User2Skill(userId,s.getId())))
+                        .then()
                 )
-                .then(template.select(query(where("user_id").is(userId)), Team2Member.class)
+                .then(template.select(query(where("member_id").is(userId)), Team2Member.class)
                         .flatMap(t -> {
                             String QUERY = "SELECT user_skill.*, team_member.* " +
                                     "FROM team_member " +
@@ -144,11 +145,12 @@ public class ProfileService {
                                             .map((row, rowMetadata) -> Objects.requireNonNull(row.get("skill_id", String.class)))
                                             .all()
                                             .distinct()
-                                            .flatMap(skill -> template.insert(new Team2Skill(t.getTeamId(), skill))).then());
+                                            .flatMap(skill -> template.insert(new Team2Skill(t.getTeamId(), skill)))
+                                            .then());
                         })
                         .then()
-                )
-                .thenMany(skills.map(s -> s));
+                ).subscribe();
+        return skills;
     }
 
     public Mono<Void> updateFullName(String userId, ProfileUpdateRequest request){
