@@ -3,21 +3,18 @@ server:
 spring:
   cloud:
     gateway:
+      default-filters:
+        - TokenRelay=
+        - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
-          uri: ${IDEAS_PATH:http://localhost:8082}
+          uri: http://localhost:8082
           predicates:
             - Path=/api/v1/ideas-service/**
-          filters:
-            - TokenRelay=
-            - RemoveRequestHeader=Cookie
         - id: scrum-service
-          uri: ${SCRUM_PATH:http://localhost:8081}
+          uri: http://localhost:8081
           predicates:
             - Path=/api/v1/scrum-service/**
-          filters:
-            - TokenRelay=
-            - RemoveRequestHeader=Cookie
   security:
     oauth2:
       client:
@@ -27,8 +24,9 @@ spring:
             client-id: gateway
             client-secret: secret
             authorization-grant-type: authorization_code
-            redirect-uri: "http://localhost/login/oauth2/code/{registrationId}"
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid, resource.read
         provider:
           spring:
             issuer-uri: http://127.0.0.1:7777
+
