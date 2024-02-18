@@ -30,6 +30,12 @@ services:
     ports:
       - 5672:5672
       - 15672:15672
+  redis:
+    container_name: redis
+    image: redis
+    restart: always
+    ports:
+      - 6379:6379
 volumes:
   postgres:
   postgres_auth:

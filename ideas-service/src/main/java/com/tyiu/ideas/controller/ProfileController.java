@@ -8,7 +8,7 @@ import com.tyiu.ideas.model.responses.InfoResponse;
 import com.tyiu.ideas.service.ProfileService;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.core.io.Resource;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -28,14 +28,6 @@ import java.util.Base64;
 public class ProfileController {
 
     private final ProfileService profileService;
-
-
-    @GetMapping("/{userId}")
-    public Mono<ProfileDTO> getUserProfile(@PathVariable String userId,
-                                           @AuthenticationPrincipal User user) {
-        return profileService.getUserProfile(userId, user.getId());
-    }
-
     @GetMapping("/avatar/get/{userId}")
     public Mono<ResponseEntity<String>> getAvatar(@PathVariable String userId) {
         return profileService.getAvatar(userId)
@@ -54,12 +46,18 @@ public class ProfileController {
     }
 
     @PostMapping("/avatar/upload")
-    public Mono<ResponseEntity<Resource>> uploadAvatar(@AuthenticationPrincipal User user,
-                                                       @RequestPart("file") FilePart file) {
+    public Mono<ResponseEntity<Mono<FileSystemResource>>> uploadAvatar(@AuthenticationPrincipal User user,
+                                                                       @RequestPart("file") FilePart file) {
         return Mono.just(ResponseEntity
-                        .ok()
-                        .contentType(MediaType.IMAGE_JPEG)
-                        .body(profileService.uploadAvatar(user.getId(),file)));
+                .ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(profileService.uploadAvatar(user.getId(),file)));
+    }
+
+    @GetMapping("/{userId}")
+    public Mono<ProfileDTO> getUserProfile(@PathVariable String userId,
+                                           @AuthenticationPrincipal User user) {
+        return profileService.getUserProfile(userId, user.getId());
     }
 
     @PostMapping("/skills/save")

@@ -19,7 +19,9 @@ class ProjectService(
     private val projectMemberRepository: ProjectMemberRepository,
     private val projectMarksRepository: ProjectMarksRepository,
     val template: R2dbcEntityTemplate,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val taskRepository: TaskRepository,
+    private val taskService: TaskService
 ) {
     //suspend везде но не там где GET
     //не делать много запросов в бд, лучше получить один раз модель и вставить ее в дто
@@ -56,7 +58,7 @@ class ProjectService(
             projectMember.email = userToProject?.email
             projectMember.firstName = userToProject?.firstName
             projectMember.lastName = userToProject?.lastName
-            //projectMember.projectRole
+            //projectMember.projectRole =
             return@map projectMember
         }
 
@@ -67,6 +69,7 @@ class ProjectService(
             projectMarks.firstName = userToProject?.firstName
             projectMarks.lastName = userToProject?.lastName
             //projectMarks.projectRole =
+            projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
             return@map projectMarks
         }
 
