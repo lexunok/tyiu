@@ -10,10 +10,11 @@ import org.springframework.stereotype.Service
 @Service
 class TaskTagService (private val taskTagRepository: TaskTagRepository, val template: R2dbcEntityTemplate) {
 
-    fun getAllTags(): Flow<TaskTagDTO> = taskTagRepository.findAll().map { it.toDTO() }
+    fun getAllTags(projectId: String): Flow<TaskTagDTO> = taskTagRepository.findAllTagByProjectId(projectId).map { it.toDTO() }
 
-    suspend fun createTag(taskTagDTO: TaskTagDTO): TaskTagDTO {
+    suspend fun createTag(projectId: String, taskTagDTO: TaskTagDTO): TaskTagDTO {
         val tag = TaskTag(
+            projectId = projectId,
             name = taskTagDTO.name,
             color = taskTagDTO.color
         )

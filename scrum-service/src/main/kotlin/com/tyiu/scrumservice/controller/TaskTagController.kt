@@ -12,11 +12,11 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/scrum-service/tag")
 class TaskTagController(private val tagService: TaskTagService) {
 
-    @GetMapping("/all")
-    fun getAllTags(): Flow<TaskTagDTO> = tagService.getAllTags()
+    @GetMapping("/{projectId}/all")
+    fun getAllTags(@PathVariable projectId: String): Flow<TaskTagDTO> = tagService.getAllTags(projectId)
 
-    @PostMapping("/add")
-    suspend fun createTag(@RequestBody taskTagDTO: TaskTagDTO): TaskTagDTO = tagService.createTag(taskTagDTO)
+    @PostMapping("/{projectId}/add")
+    suspend fun createTag(@PathVariable projectId: String,@RequestBody taskTagDTO: TaskTagDTO): TaskTagDTO = tagService.createTag(projectId, taskTagDTO)
 
     @PutMapping("/{tagId}/update")
     suspend fun updateTag(@PathVariable tagId: String, @RequestBody taskTagRequest: TaskTagRequest) = tagService.updateTag(tagId,taskTagRequest)
