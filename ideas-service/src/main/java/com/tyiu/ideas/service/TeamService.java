@@ -3,11 +3,13 @@ package com.tyiu.ideas.service;
 import com.tyiu.ideas.config.exception.AccessException;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.email.requests.NotificationEmailRequest;
-import com.tyiu.ideas.model.entities.*;
+import com.tyiu.ideas.model.entities.Team;
+import com.tyiu.ideas.model.entities.TeamInvitation;
+import com.tyiu.ideas.model.entities.TeamRequest;
+import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.TeamMapper;
 import com.tyiu.ideas.model.entities.relations.Team2Member;
 import com.tyiu.ideas.model.entities.relations.Team2Refused;
-import com.tyiu.ideas.model.entities.relations.Team2Skill;
 import com.tyiu.ideas.model.entities.relations.Team2WantedSkill;
 import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.Role;
@@ -39,22 +41,6 @@ public class TeamService {
     private final ModelMapper mapper;
     private final EmailService emailService;
     private final String path = "https://hits.tyuiu.ru/";
-
-    private Mono<Void> updateSkills(String teamId) {
-        String QUERY = "SELECT user_skill.*, team_member.* " +
-                "FROM team_member " +
-                "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
-                "WHERE team_member.team_id = :teamId AND user_skill.user_id IS NOT NULL";
-
-        return template.delete(query(where("team_id").is(teamId)), Team2Skill.class)
-                .then(template.getDatabaseClient()
-                        .sql(QUERY)
-                        .bind("teamId", teamId)
-                        .map((row, rowMetadata) -> Objects.requireNonNull(row.get("skill_id", String.class)))
-                        .all()
-                        .distinct()
-                        .flatMap(skill -> template.insert(new Team2Skill(teamId, skill))).then());
-    }
 
     private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
         return template.selectOne(query(where("id").is(teamId)), Team.class)
@@ -173,8 +159,8 @@ public class TeamService {
                 "LEFT JOIN users l ON t.leader_id = l.id " +
                 "LEFT JOIN team_member tm ON t.id = tm.team_id " +
                 "LEFT JOIN users m ON tm.member_id = m.id " +
-                "LEFT JOIN team_skill ts ON ts.team_id = t.id " +
-                "LEFT JOIN skill s ON ts.skill_id = s.id " +
+                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
+                "LEFT JOIN skill s ON us.skill_id = s.id " +
                 "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
                 "LEFT JOIN skill ws ON tws.skill_id = ws.id " +
                 "WHERE t.id = :teamId";
@@ -383,7 +369,6 @@ public class TeamService {
                                 return Mono.from(batch.execute());
 
                             })
-                            .then(updateSkills(t.getId()))
                             .then(template.getDatabaseClient().inConnection(connection -> {
                                 Batch batch = connection.createBatch();
                                 teamDTO.getWantedSkills().forEach(s -> batch.add(
@@ -400,26 +385,29 @@ public class TeamService {
     }
 
     public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role, String userId) {
-        String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
-                "tr.team_id as refused_team_id, " +
-                "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
-                "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member, " +
-                "team_skill.* " +
-                "FROM team t " +
-                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
-                "LEFT JOIN users o ON t.owner_id = o.id " +
-                "LEFT JOIN users l ON t.leader_id = l.id ";
+        String QUERY = """
+                SELECT
+                    t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed,
+                    t.created_at as team_created_at, t.has_active_project as team_has_active_project,
+                    tr.team_id as refused_team_id,
+                    o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name,
+                    l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name,
+                    (SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count,
+                    (SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member
+                FROM team t
+                    LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id
+                    LEFT JOIN users o ON t.owner_id = o.id
+                    LEFT JOIN users l ON t.leader_id = l.id
+                    LEFT JOIN team_member tm ON tm.team_id = t.id
+                    LEFT JOIN user_skill us ON us.user_id = tm.member_id
+                """;
         if (role == Role.INITIATOR)
         {
-            QUERY = QUERY + "INNER JOIN team_skill ON team_skill.team_id = t.id AND team_skill.skill_id IN (:skills)";
+            QUERY = QUERY + "WHERE us.skill_id IN (:skills)";
         }
         else {
-            QUERY = QUERY + "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
-                    "LEFT JOIN team_wanted_skill ON team_wanted_skill.team_id = t.id " +
-                    "WHERE team_skill.skill_id IN (:skills) OR team_wanted_skill.skill_id IN (:skills)";
+            QUERY = QUERY + "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
+                    "WHERE us.skill_id IN (:skills) OR tws.skill_id IN (:skills)";
         }
 
         return getFilteredTeam(QUERY, selectedSkills, userId);
@@ -432,15 +420,15 @@ public class TeamService {
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member, " +
-                "team_skill.*, team_wanted_skill.* " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_skill ON team_skill.team_id = t.id " +
-                "LEFT JOIN team_wanted_skill ON team_wanted_skill.team_id = t.id " +
-                "WHERE team_wanted_skill.skill_id IN (:skills) AND team_skill.skill_id NOT IN (:skills)";
+                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
+                "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
+                "WHERE tws.skill_id IN (:skills) AND us.skill_id NOT IN (:skills)";
 
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
@@ -476,7 +464,6 @@ public class TeamService {
 
 
         return template.insert(new Team2Member(teamId, userId))
-                .then(updateSkills(teamId))
                 .then(template.getDatabaseClient()
                         .sql(query)
                         .bind("userId", userId)
@@ -536,7 +523,6 @@ public class TeamService {
     public Mono<Void> kickFromTeam(String teamId, String userId) {
         return template.delete(query(where("team_id").is(teamId)
                         .and("member_id").is(userId)),Team2Member.class)
-                .then(updateSkills(teamId))
                 .then(template.insert(new Team2Refused(teamId, userId)))
                 .then();
     }
@@ -544,7 +530,6 @@ public class TeamService {
     public Mono<Void> leaveFromTeam(String teamId, String userId) {
         return template.delete(query(where("team_id").is(teamId)
                         .and("member_id").is(userId)),Team2Member.class)
-                .then(updateSkills(teamId))
                 .then();
     }
 
@@ -572,7 +557,7 @@ public class TeamService {
                                         list.forEach(member -> template.insert(new Team2Member(id, member.getId())).subscribe());
                                     }
                                     return list;
-                                })).then(updateSkills(id)).thenReturn(teamDTO);
+                                })).thenReturn(teamDTO);
     }
 
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
