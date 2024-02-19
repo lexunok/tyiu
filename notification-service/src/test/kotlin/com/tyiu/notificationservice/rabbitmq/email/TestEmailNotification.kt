@@ -8,7 +8,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.http.HttpStatusCode
-import org.springframework.http.ResponseEntity
+import response.ResponseEntity
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
 import request.NotificationRequest
@@ -136,7 +136,7 @@ class TestEmailNotification(@Autowired private val template: R2dbcEntityTemplate
     override fun validateResponse(response: ResponseEntity<NotificationResponse>?) {
 
         if (response?.body != null) {
-            throw CustomHttpException(response.body!!.message, response.statusCode.value())
+            throw CustomHttpException(response.body!!.message, response.status.value())
         } else {
             throw CustomHttpException("Response body is null", 404)
         }

@@ -6,7 +6,7 @@ import com.tyiu.ideas.model.entities.Rating;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.RatingMapper;
 import com.tyiu.ideas.model.entities.relations.Group2User;
-import com.tyiu.ideas.model.enums.PortalLinks;
+import enums.PortalLinks;
 import com.tyiu.ideas.publisher.NotificationPublisher;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

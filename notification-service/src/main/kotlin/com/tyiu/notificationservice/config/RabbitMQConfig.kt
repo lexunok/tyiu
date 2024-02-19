@@ -92,7 +92,6 @@ open class RabbitMQConfig {
         val validateTelegramResponseBinding = BindingBuilder.bind(validateTelegramResponseQueue).to(exchange).with(validateTelegramResponseRoute)
         val validateEmailResponseBinding = BindingBuilder.bind(validateEmailResponseQueue).to(exchange).with(validateEmailResponseRoute)
 
-
         return listOf(
             notificationBinding,
             makeTelegramInvitationBinding,

@@ -8,7 +8,7 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import response.ResponseEntity;
 import org.springframework.stereotype.Component;
 import request.NotificationRequest;
 import response.NotificationResponse;
@@ -33,11 +33,13 @@ public class ProdRabbitMQ implements INotification {
     public void makeNotification(NotificationRequest notification) {
 
         try {
-            String answer = "Вам пришло уведомление от портале ВШЦТ!\n\n" +
-                    notification.getTitle() + "\n" +
-                    notification.getMessage() + "\n\n" +
-                    "Подробнее можете ознакомиться здесь:\n" +
-                    notification.getLink();
+            String answer =
+                    notification.getTitle() + "\n\n" +
+                    notification.getMessage() + "\n\n";
+            if (notification.getLink() != null){
+                answer = answer + "Подробнее можете ознакомиться здесь:\n" +
+                        notification.getLink();
+            }
 
             String tag = notification.getTag();
 

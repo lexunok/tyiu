@@ -11,7 +11,7 @@ import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.relations.Group2User;
 import com.tyiu.ideas.model.entities.relations.Idea2Checked;
 import com.tyiu.ideas.model.entities.relations.Idea2Skill;
-import com.tyiu.ideas.model.enums.PortalLinks;
+import enums.PortalLinks;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaSkillRequest;
@@ -282,29 +282,34 @@ public class IdeaService {
                             } else {
                                 i.setCreatedAt(LocalDateTime.now());
                                 return template.insert(i).flatMap(savedIdea -> {
-                                    savedDTO.setId(savedIdea.getId());
-                                     if (savedIdea.getStatus().equals(Status.ON_APPROVAL))
-                                         Flux.fromIterable(savedDTO.getProjectOffice().getUsers())
-                                                 .flatMap(user -> notificationPublisher
-                                                         .makeNotification(NotificationRequest
-                                                                 .builder()
-                                                                 .consumerEmail(user.getEmail())
-                                                                 .buttonName("Перейти к идее")
-                                                                 .title("Идея была отправлена на согласование")
-                                                                 .message(
-                                                                         String.format(
-                                                                                 "Иниациатор %s %s отправил идею " +
-                                                                                         "\"%s\" на солгласование. " +
-                                                                                         "Просим вас согласовать ее " +
-                                                                                         "в ближайшее время.",
-                                                                                 savedDTO.getInitiator().getFirstName(),
-                                                                                 savedDTO.getInitiator().getLastName(),
-                                                                                 savedIdea.getName()
-                                                                         )
-                                                                 )
-                                                                 .publisherEmail(savedDTO.getInitiator().getEmail())
-                                                                 .link(PortalLinks.IDEAS_LIST + savedIdea.getId())
-                                                                 .build())).subscribe();
+                                     savedDTO.setId(savedIdea.getId());
+                                     if (savedIdea.getStatus().equals(Status.ON_APPROVAL)) {
+                                         template.select(query(where("group_id").is(savedDTO.getProjectOffice().getId())), Group2User.class)
+                                                 .flatMap(id -> template.selectOne(query(where("id").is(id.getUserId())), User.class))
+                                                 .flatMap(user -> {
+                                                     log.info(user.getEmail());
+                                                     return notificationPublisher
+                                                             .makeNotification(NotificationRequest
+                                                                     .builder()
+                                                                     .consumerEmail(user.getEmail())
+                                                                     .buttonName("Перейти к идее")
+                                                                     .title("Идея была отправлена на согласование")
+                                                                     .message(
+                                                                             String.format(
+                                                                                     "Иниациатор %s %s отправил идею " +
+                                                                                             "\"%s\" на солгласование. " +
+                                                                                             "Просим вас согласовать ее " +
+                                                                                             "в ближайшее время.",
+                                                                                     savedDTO.getInitiator().getFirstName(),
+                                                                                     savedDTO.getInitiator().getLastName(),
+                                                                                     savedIdea.getName()
+                                                                             )
+                                                                     )
+                                                                     .publisherEmail(savedDTO.getInitiator().getEmail())
+                                                                     .link(PortalLinks.IDEAS_LIST + savedIdea.getId())
+                                                                     .build());
+                                                 }).subscribe();
+                                     }
                                      return template.select(query(where("group_id")
                                                     .is(savedIdea.getGroupExpertId())), Group2User.class).collectList()
                                             .flatMap(list ->
@@ -371,7 +376,7 @@ public class IdeaService {
                                                                                     .title("Идея была отправлена на согласование")
                                                                                     .message(
                                                                                             String.format(
-                                                                                                    "Иниациатор %s %s отправил идею " +
+                                                                                                    "Инициатор %s %s отправил идею " +
                                                                                                             "\"%s\" на солгласование. " +
                                                                                                             "Просим вас согласовать ее " +
                                                                                                             "в ближайшее время.",

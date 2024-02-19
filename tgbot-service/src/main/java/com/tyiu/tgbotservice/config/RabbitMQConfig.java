@@ -14,6 +14,8 @@ public class RabbitMQConfig {
 
     @Value("${rabbitmq.queue.receive.new}")
     private String queueReceiveNew;
+    @Value("${rabbitmq.queue.respond.to.notification}")
+    private String queueValidateResponse;
 
     @Value("${rabbitmq.exchange}")
     private String exchange;
@@ -21,17 +23,28 @@ public class RabbitMQConfig {
     @Value("${rabbitmq.routes.receive.new}")
     private String routeReceivingNew;
 
+    @Value("${rabbitmq.routes.respond.to.notification}")
+    private String routeValidateResponse;
+
     @Bean
     public TopicExchange exchange() {
         return new TopicExchange(exchange);
     }
 
     @Bean
-    public Binding binding() {
+    public Binding makeNotificationBinding(TopicExchange exchange) {
         return BindingBuilder
                 .bind(new Queue(queueReceiveNew))
-                .to(exchange())
+                .to(exchange)
                 .with(routeReceivingNew);
+    }
+
+    @Bean
+    public Binding validateResponseBinding(TopicExchange exchange) {
+        return BindingBuilder
+                .bind(new Queue(queueValidateResponse))
+                .to(exchange)
+                .with(routeValidateResponse);
     }
 
     @Bean

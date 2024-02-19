@@ -3,7 +3,7 @@ package com.tyiu.emailservice.rabbitmq;
 import com.tyiu.ideas.config.exception.CustomHttpException;
 import interfaces.INotification;
 import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ResponseEntity;
+import response.ResponseEntity;
 import org.springframework.stereotype.Component;
 import request.NotificationRequest;
 import response.NotificationResponse;
@@ -61,7 +61,7 @@ public class FakeNotificationEmailRabbitMQ implements INotification {
     @Override
     public void validateResponse(ResponseEntity<NotificationResponse> response) {
         if (response.getBody() != null){
-            throw new CustomHttpException(response.getBody().getMessage(), response.getStatusCode().value());
+            throw new CustomHttpException(response.getBody().getMessage(), response.getStatus().value());
         } else {
             throw new CustomHttpException("Response body is null", 404);
         }

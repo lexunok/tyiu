@@ -6,7 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.HttpStatusCode;
 import interfaces.INotification;
-import org.springframework.http.ResponseEntity;
+import response.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import request.NotificationRequest;
@@ -110,7 +110,7 @@ public class TestNotification implements INotification {
     public void validateResponse(ResponseEntity<NotificationResponse> response) {
 
         if (response.getBody() != null) {
-            throw new CustomHttpException(response.getBody().getMessage(), response.getStatusCode().value());
+            throw new CustomHttpException(response.getBody().getMessage(), response.getStatus().value());
         } else {
             throw new CustomHttpException("Response body is null", 404);
         }

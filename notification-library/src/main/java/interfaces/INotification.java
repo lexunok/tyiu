@@ -1,7 +1,7 @@
 package interfaces;
 
-import org.springframework.http.ResponseEntity;
 import request.NotificationRequest;
+import response.ResponseEntity;
 import response.NotificationResponse;
 
 public interface INotification {

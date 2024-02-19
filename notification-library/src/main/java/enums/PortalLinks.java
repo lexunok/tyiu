@@ -1,4 +1,4 @@
-package com.tyiu.ideas.model.enums;
+package enums;
 
 public enum PortalLinks {
 

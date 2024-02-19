@@ -8,7 +8,7 @@ import com.tyiu.ideas.model.entities.relations.Team2Member;
 import com.tyiu.ideas.model.entities.relations.Team2Refused;
 import com.tyiu.ideas.model.entities.relations.Team2Skill;
 import com.tyiu.ideas.model.entities.relations.Team2WantedSkill;
-import com.tyiu.ideas.model.enums.PortalLinks;
+import enums.PortalLinks;
 import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
