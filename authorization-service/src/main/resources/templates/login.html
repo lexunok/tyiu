@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="ru" xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Авторизация</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+  </head>
+  <body>
+  <div class="page-layout">
+    <div class="page-layout__content-wrapper w-100 overflow-y-scroll">
+      <div class="page-layout__content page-layout__content--no-header login-page__content p-3">
+        <form class="form-layout p-3 rounded-3 shadow" method="post" th:action="@{/login}">
+          <span class="fs-3 text-primary text-center">Авторизация</span>
+          <div class="w-100">
+            <div class="input-group">
+              <span class="input-group-text fs-6">@ <i class=""></i></span>
+              <input
+                      class="form-control rounded-end"
+                      type="text"
+                      name="username"
+                      placeholder="Введите логин"
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+          <div class="w-100">
+            <div class="input-group">
+                  <span class="input-group-text fs-6">
+                    <i class="bi bi-key"></i>
+                  </span>
+              <input
+                      class="form-control rounded-end"
+                      name="password"
+                      type="password"
+                      placeholder="Введите пароль"
+              />
+              <div class="invalid-feedback"></div>
+            </div>
+          </div>
+          <a href="/forgot-password" class="text-center"> Забыли пароль? </a>
+          <button
+                  data-v-5bd6bdd4=""
+                  type="submit"
+                  class="btn d-flex btn-primary"
+          >
+            Войти
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+  </body>
+</html>

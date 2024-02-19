@@ -1,19 +1,10 @@
 package com.tyiu.authorizationservice;
 
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.time.Duration;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
-
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -40,13 +31,18 @@ import org.springframework.security.oauth2.server.authorization.config.annotatio
 import org.springframework.security.oauth2.server.authorization.config.annotation.web.configurers.OAuth2AuthorizationServerConfigurer;
 import org.springframework.security.oauth2.server.authorization.settings.AuthorizationServerSettings;
 import org.springframework.security.oauth2.server.authorization.settings.ClientSettings;
-import org.springframework.security.oauth2.server.authorization.settings.OAuth2TokenFormat;
-import org.springframework.security.oauth2.server.authorization.settings.TokenSettings;
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.*;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
@@ -78,12 +74,18 @@ public class SecurityConfig {
             throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/authorization/register").permitAll()
+                        .requestMatchers("/api/v1/authorization/register", "/css/**").permitAll()
                         .anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/authorization/register"))
-                .formLogin(Customizer.withDefaults());
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/v1/authorization/register"))
+                .formLogin(formLogin ->
+                        formLogin
+                                .loginPage("/login")
+                                .permitAll()
+                );
         return http.build();
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService, PasswordEncoder encoder) {
@@ -151,10 +153,15 @@ public class SecurityConfig {
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
         return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-                String userId = repository.findByUsername(context.getPrincipal().getName()).getId();
+                String userId = repository.findByEmail(context.getPrincipal().getName()).getId();
                 context.getClaims().id(userId);
             }
         };
+    }
+
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
 
