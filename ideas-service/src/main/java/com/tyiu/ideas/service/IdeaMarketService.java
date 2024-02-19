@@ -262,7 +262,7 @@ public class IdeaMarketService {
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id) AS member_count " +
                 "FROM team_market_request tmr " +
-                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN team_member tm ON tm.team_id = tmr.team_id " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill s ON s.id = us.skill_id " +
                 "WHERE tmr.idea_id = :ideaId";
