@@ -265,7 +265,7 @@ public class IdeaMarketService {
                 "LEFT JOIN team_member tm ON tm.team_id = tmr.team_id " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill s ON s.id = us.skill_id " +
-                "WHERE tmr.idea_id = :ideaId";
+                "WHERE tmr.idea_market_id = :ideaId";
         ConcurrentHashMap<String, TeamMarketRequestDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
                 .sql(QUERY)
