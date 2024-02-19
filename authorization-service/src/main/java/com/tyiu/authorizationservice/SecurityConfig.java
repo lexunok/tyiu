@@ -151,7 +151,7 @@ public class SecurityConfig {
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
         return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-                String userId = repository.findByUsername(context.getPrincipal().getName()).getId();
+                String userId = repository.findByEmail(context.getPrincipal().getName()).getId();
                 context.getClaims().id(userId);
             }
         };

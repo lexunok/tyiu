@@ -11,6 +11,7 @@ public class UserDTO {
     private String email;
     private String lastName;
     private String firstName;
+    private String password;
     private List<Role> roles;
     private LocalDateTime createdAt;
 
