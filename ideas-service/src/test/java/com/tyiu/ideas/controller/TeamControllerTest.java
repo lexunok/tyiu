@@ -529,7 +529,7 @@ public class TeamControllerTest extends TestContainers {
         AuthenticationResponse response3 = register("member.team@gmail.com", "Member", "Memberov", List.of(Role.MEMBER));
         AuthenticationResponse response4 = register("randomUser.team@gmail.com", "Random", "User", List.of(Role.MEMBER));
         AuthenticationResponse response5 = register("initiator.team@gmail.com", "Init", "Idea", List.of(Role.INITIATOR));
-        AuthenticationResponse response6 = register("kostagarifullin275@gmail.com", "a", "a", List.of(Role.MEMBER));
+        AuthenticationResponse response6 = register("kostya@gmail.com", "kostya", "da", List.of(Role.MEMBER));
 
         jwt_admin = response.getToken();
         jwt_owner = response1.getToken();
