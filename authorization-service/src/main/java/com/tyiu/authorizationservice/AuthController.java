@@ -1,5 +1,6 @@
 package com.tyiu.authorizationservice;
 
+import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;

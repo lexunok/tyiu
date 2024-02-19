@@ -50,7 +50,7 @@ public class ReceiveNotificationTest extends TestContainersDB {
 
         template.getDatabaseClient()
                 .sql("CREATE TABLE IF NOT EXISTS users_telegram " +
-                        "(user_email TEXT REFERENCES users (email) ON UPDATE CASCADE, " +
+                        "(user_email TEXT, " +
                         "user_tag TEXT, " +
                         "chat_id BIGINT, " +
                         "is_visible BOOLEAN DEFAULT false::BOOLEAN);")
@@ -61,8 +61,8 @@ public class ReceiveNotificationTest extends TestContainersDB {
         template.getDatabaseClient()
                 .sql("CREATE TABLE IF NOT EXISTS notification_request " +
                         "(id TEXT, " +
-                        "consumer_email TEXT REFERENCES users (email) ON UPDATE CASCADE, " +
-                        "consumer_tag TEXT REFERENCES users_telegram (user_tag) ON UPDATE CASCADE, " +
+                        "consumer_email TEXT, " +
+                        "consumer_tag TEXT, " +
                         "title TEXT, " +
                         "message TEXT, " +
                         "link TEXT, " +

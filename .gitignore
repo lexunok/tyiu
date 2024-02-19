@@ -39,7 +39,7 @@ out/
 docker-compose-prod.yml
 ### recourses ###
 /ideas-service/src/main/resources/application.yml
-/authorization-service/src/main/resources/application.yml
 # Ignore Gradle build output directory
 build
+/tgbot-service/src/test/resources/application.yml
 /tgbot-service/src/main/resources/application.yml

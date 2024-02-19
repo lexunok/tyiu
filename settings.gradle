@@ -7,3 +7,5 @@ include('scrum-service')
 include('notification-service')
 include('api-gateway')
 include('notification-library')
+include 'client'
+

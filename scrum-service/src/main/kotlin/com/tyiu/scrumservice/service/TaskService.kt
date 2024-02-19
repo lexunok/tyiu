@@ -1,25 +1,24 @@
 package com.tyiu.scrumservice.service
 
-import com.tyiu.ideas.model.toDTO
 import com.tyiu.scrumservice.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import org.springframework.web.bind.annotation.RequestBody
-import java.math.BigInteger
 
 @Service
 class TaskService
     (
     private val repository: TaskRepository,
+    private val userRepository: UserRepository,
     val template: R2dbcEntityTemplate
     )
 {
     suspend fun taskToDTO(task: Task): TaskDTO {
         val tasks = task.toDTO()
+        tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
+        tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
         return tasks
     }
 
@@ -33,17 +32,22 @@ class TaskService
     fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
 
     //post
-    suspend fun createTask(taskDTO:TaskDTO):TaskDTO {
+    suspend fun createTask(taskCreateRequest: TaskCreateRequest):TaskDTO {
         val task = Task(
-            name = taskDTO.name,
-            description = taskDTO.description,
-            projectId = taskDTO.projectId,
-            sprintId = taskDTO.sprintId,
-            //status, sprintId = null -> status = InBackLog else: status = New;
-            workHour = taskDTO.workHour
+            name = taskCreateRequest.name,
+            description = taskCreateRequest.description,
+            projectId = taskCreateRequest.projectId,
+            workHour = taskCreateRequest.workHour,
+            initiatorId = taskCreateRequest.initiatorId
         )
-        val taskToDTO = repository.save(task).toDTO()
-        return taskToDTO
+        if (taskCreateRequest.sprintId ==null){
+            task.status = TaskStatus.InBacklog
+        }
+        else{
+            task.sprintId = taskCreateRequest.sprintId
+            task.status = TaskStatus.New
+        }
+        return taskToDTO(repository.save(task))
     }
 
     //put
@@ -58,9 +62,10 @@ class TaskService
     }
 
     suspend fun putTaskStatus(TaskStatusRequest: TaskStatusRequest) {
-        val query = "UPDATE task SET status = :taskStatus WHERE id = :taskId"
+        val query = "UPDATE task SET status = :taskStatus, executor_Id = taskExecutor WHERE id = :taskId"
         return template.databaseClient.sql(query)
             .bind("taskStatus", TaskStatusRequest.taskStatus.toString())
+            .bind("taskExecutor", TaskStatusRequest.taskExecutor.toString())
             .bind("taskId", TaskStatusRequest.taskId!!).await()
     }
 

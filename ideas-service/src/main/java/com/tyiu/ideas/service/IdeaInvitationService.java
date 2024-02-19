@@ -70,10 +70,12 @@ public class IdeaInvitationService {
     public Flux<IdeaInvitationDTO> getAllInvitationInIdea(String ideaId) {
         String query = "SELECT inv.*, team.name team_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = team.id) " +
-                "team_members_count, ts.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
+                "team_members_count, s.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
                 "LEFT JOIN team ON team.id = inv.team_id " +
                 "LEFT JOIN idea ON idea.id = inv.idea_id " +
-                "LEFT JOIN team_skill ts ON ts.team_id = inv.team_id LEFT JOIN skill s ON s.id = skill_id " +
+                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
+                "LEFT JOIN skill s ON s.id = skill_id " +
                 "WHERE inv.idea_id = :ideaId";
         ConcurrentHashMap<String, IdeaInvitationDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient().sql(query)
@@ -134,11 +136,13 @@ public class IdeaInvitationService {
     public Mono<IdeaInvitationDTO> inviteToIdea(String ideaId, String teamId) {
         String query = """
                 SELECT inv.*, team.name team_name,idea.name idea_name, idea.initiator_id initiator_id,
-                ts.skill_id skill_id, s.name skill_name, s.type skill_type,
+                s.skill_id skill_id, s.name skill_name, s.type skill_type,
                 (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id) team_members_count FROM idea_invitation inv
                 LEFT JOIN idea ON idea.id = inv.idea_id
                 LEFT JOIN team ON team.id = inv.team_id
-                LEFT JOIN team_skill ts ON ts.team_id = inv.team_id LEFT JOIN skill s ON s.id = skill_id
+                LEFT JOIN team_member tm ON tm.team_id = t.id
+                LEFT JOIN user_skill us ON us.user_id = tm.member_id
+                LEFT JOIN skill s ON s.id = us.skill_id
                 WHERE inv.team_id = :teamId AND inv.idea_id = :ideaId""";
         IdeaInvitation invitation = new IdeaInvitation(null, ideaId, teamId, RequestStatus.NEW);
         return template.insert(invitation)

@@ -6,11 +6,9 @@ import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
-import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -36,7 +34,8 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
+import org.springframework.security.web.authentication.*;
+import org.springframework.security.web.session.HttpSessionEventPublisher;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
 
 import java.security.KeyPair;
@@ -49,12 +48,7 @@ import java.util.UUID;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-
     private final UserRepository repository;
-
-    @Autowired
-    private final RedisTemplate<String, String> redisTemplate;
-
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -80,12 +74,18 @@ public class SecurityConfig {
             throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/authorization/register").permitAll()
+                        .requestMatchers("/api/v1/authorization/register", "/css/**").permitAll()
                         .anyRequest().authenticated())
-                .csrf(csrf -> csrf.ignoringRequestMatchers("/api/v1/authorization/register"))
-                .formLogin(Customizer.withDefaults());
+                .csrf(csrf -> csrf
+                        .ignoringRequestMatchers("/api/v1/authorization/register"))
+                .formLogin(formLogin ->
+                        formLogin
+                                .loginPage("/login")
+                                .permitAll()
+                );
         return http.build();
     }
+
     @Bean
     public AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService, PasswordEncoder encoder) {
@@ -149,24 +149,19 @@ public class SecurityConfig {
     public AuthorizationServerSettings authorizationServerSettings() {
         return AuthorizationServerSettings.builder().issuer("http://127.0.0.1:7777").build();
     }
-
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
         return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-                String username = context.getPrincipal().getName();
-                String userId;
-
-                if (Boolean.TRUE.equals(redisTemplate.hasKey(username))) {
-                    userId = redisTemplate.opsForValue().get(username);
-                } else {
-                    userId = repository.findByUsername(username).getId();
-                    redisTemplate.opsForValue().set(username, userId);
-                }
-
+                String userId = repository.findByEmail(context.getPrincipal().getName()).getId();
                 context.getClaims().id(userId);
             }
         };
+    }
+
+    @Bean
+    public HttpSessionEventPublisher httpSessionEventPublisher() {
+        return new HttpSessionEventPublisher();
     }
 
 

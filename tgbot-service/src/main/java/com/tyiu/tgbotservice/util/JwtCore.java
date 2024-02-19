@@ -1,6 +1,6 @@
 package com.tyiu.tgbotservice.util;
 
-import com.tyiu.ideas.model.enums.Role;
+import com.tyiu.client.models.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
@@ -37,6 +37,7 @@ public class JwtCore {
                 .signWith(getKey(),SignatureAlgorithm.HS256)
                 .compact();
     }
+
     private Key getKey() {
         return Keys.hmacShaKeyFor(secret.getBytes());
     }
