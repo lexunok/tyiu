@@ -8,15 +8,15 @@ spring:
         - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
-          uri: http://localhost:8082
+          uri: http://ideas-service
           predicates:
             - Path=/api/v1/ideas-service/**
         - id: scrum-service
-          uri: http://localhost:8081
+          uri: http://scrum-service
           predicates:
             - Path=/api/v1/scrum-service/**
         - id: authorization-service
-          uri: http://localhost:7777
+          uri: http://authorization-service
           predicates:
             - Path=/api/v1/authorization-service/**
   security:
@@ -26,11 +26,11 @@ spring:
           gateway:
             provider: spring
             client-id: gateway
-            client-secret: secret
+            client-secret: ${SERVICE_PASSWORD}
             authorization-grant-type: authorization_code
             redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
             scope: openid
         provider:
           spring:
-            issuer-uri: http://127.0.0.1:7777
+            issuer-uri: http://authorization-service
 
