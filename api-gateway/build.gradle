@@ -3,7 +3,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
 tasks.named("bootBuildImage") {
-	imageName.set("lexunok/authorization-service")
+	imageName.set("lexunok/gateway")
 	publish = true
 	docker {
 		publishRegistry {
