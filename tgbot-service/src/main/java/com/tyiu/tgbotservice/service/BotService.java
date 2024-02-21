@@ -35,12 +35,6 @@ public class BotService extends TelegramLongPollingBot {
     @Value("${bot.token}")
     private String botToken;
 
-    @Value("${rabbitmq.exchange}")
-    private String exchange;
-
-    @Value("${rabbitmq.routes.respond.to.notification}")
-    private String routeRespond;
-
     private final R2dbcEntityTemplate template;
 
     @Override
@@ -76,6 +70,10 @@ public class BotService extends TelegramLongPollingBot {
                     checkCommand(chatId);
                     break;
 
+                case "/stop":
+                    stopCommand(chatId);
+                    break;
+
                 default:
                     defaultMessage(chatId);
             }
@@ -99,7 +97,7 @@ public class BotService extends TelegramLongPollingBot {
 
     public void defaultMessage(long chatId) {
 
-        String answer = "Я тебя не понимаю. Воспользуйся командой /help";
+        String answer = "Я вас не понимаю. Воспользуйтесь командой /help";
         sendMessage(chatId, answer);
     }
 
@@ -126,35 +124,48 @@ public class BotService extends TelegramLongPollingBot {
 
                     if (Boolean.TRUE.equals(tagExists)) {
 
+                        String answer = "Здравствуйте, " + userFirstName + "! " +
+                                "Я буду вашим небольшим помощником в области нашего портала https://hits.tyuiu.ru";
+                        sendMessage(chatId, answer);
+
                         return template.update(query(where("user_tag").is(userTag)),
                                 update("chat_id", chatId),
                                 UserTelegram.class);
                     }
                     else {
-                        String answer = "Извини, " + userFirstName + ", я не смог найти тебя в списке пользователей. " +
-                                "Пожалуйста, убедись, что ты верно указал свой тег в профиле.\n" +
+                        String answer = "Извините, " + userFirstName + ", я не смог найти вас в списке пользователей. " +
+                                "Пожалуйста, убедитесь, что вы верно указали свой тег в профиле.\n" +
                                 "https://hits.tyuiu.ru";
                         sendMessage(chatId, answer);
                     }
 
                     return Mono.error(new Exception("Ошибка при дбавлении пользователя"));
                 }).subscribe();
-
-        String answer = "Привет, " + userFirstName + "! " +
-                "Я буду твоим небольшим помощником в области нашего портала https://hits.tyuiu.ru";
-        sendMessage(chatId, answer);
     }
 
     public void helpCommand(long chatId) {
 
-        String answer = "Первым делом убедись, что ты указал свой тег на сайте. Введи команду /start, чтобы удостовериться в этом." +
-                "Когда тебе придёт уведомления с портала, то я перешлю его тебе прямо в этот чат.\n" +
-                "А пока, ты можешь ознакомиться с другими моими командами:\n\n" +
-                "/check - просмотреть свои непрочитанне сообщения";
+        String answer = "Первым делом убедитесь, что указали свой тег на сайте. Введите команду /start, чтобы удостовериться в этом." +
+                "Когда вам придёт уведомления с портала, то я перешлю его вам прямо в этот чат.\n" +
+                "А пока, можете ознакомиться с другими моими командами:\n\n" +
+                "/start - начать/возобновить получение уведомлений с портала\n" +
+                "/check - просмотреть свои непрочитанне уведомления\n" +
+                "/stop - приостановить получение уведомлений с портала";
         sendMessage(chatId, answer);
     }
 
     public void checkCommand(long chatId) {
         sendMessage(chatId, "Команда недоступна. Мы ещё работаем над этим");
+    }
+
+    public void stopCommand(long chatId) {
+
+        String answer = "Получение уведомлений с портала приостановлено. " +
+                "Для повторного подключения уведомлений воспользуйтесь командой /start";
+        sendMessage(chatId, answer);
+
+        template.update(query(where("chat_id").is(chatId)),
+                update("chat_id", null),
+                UserTelegram.class);
     }
 }

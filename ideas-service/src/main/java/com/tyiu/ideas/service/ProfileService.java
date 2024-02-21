@@ -5,8 +5,6 @@ import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.Idea;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.ProfileMapper;
-import com.tyiu.ideas.model.entities.relations.Team2Member;
-import com.tyiu.ideas.model.entities.relations.Team2Skill;
 import com.tyiu.ideas.model.entities.relations.User2Skill;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.ProfileUpdateRequest;
@@ -28,7 +26,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -126,31 +123,12 @@ public class ProfileService {
 
 
     public Flux<SkillDTO> saveSkills(String userId, Flux<SkillDTO> skills) {
-        template.delete(query(where("user_id").is(userId)), User2Skill.class)
-                .then(skills.flatMap(s ->
-                        template.insert(new User2Skill(userId,s.getId())))
-                        .then()
-                )
-                .then(template.select(query(where("member_id").is(userId)), Team2Member.class)
-                        .flatMap(t -> {
-                            String QUERY = "SELECT user_skill.*, team_member.* " +
-                                    "FROM team_member " +
-                                    "LEFT JOIN user_skill ON user_skill.user_id = team_member.member_id " +
-                                    "WHERE team_member.team_id = :teamId AND user_skill.user_id IS NOT NULL";
-
-                            return template.delete(query(where("team_id").is(t.getTeamId())), Team2Skill.class)
-                                    .then(template.getDatabaseClient()
-                                            .sql(QUERY)
-                                            .bind("teamId", t.getTeamId())
-                                            .map((row, rowMetadata) -> Objects.requireNonNull(row.get("skill_id", String.class)))
-                                            .all()
-                                            .distinct()
-                                            .flatMap(skill -> template.insert(new Team2Skill(t.getTeamId(), skill)))
-                                            .then());
-                        })
-                        .then()
-                ).subscribe();
-        return skills;
+        return template.delete(query(where("user_id").is(userId)), User2Skill.class)
+                .thenMany(skills.flatMap(s ->
+                        template.insert(new User2Skill(userId,s.getId()))
+                                .then().thenReturn(s)
+                        )
+                );
     }
 
     public Mono<Void> updateFullName(String userId, ProfileUpdateRequest request){

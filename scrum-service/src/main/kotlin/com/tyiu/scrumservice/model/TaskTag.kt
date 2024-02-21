@@ -21,7 +21,6 @@ data class TaskTag (
     val projectId: String? = null,
     var name: String? = null,
     var color: String? = null,
-    var isConfirmed: Boolean? = false
 )
 
 data class Task2Tag (
@@ -34,7 +33,6 @@ data class TaskTagDTO (
     val projectId: String? = null,
     var name: String? = null,
     var color: String? = null,
-    var isConfirmed: Boolean?
 )
 
 fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
@@ -42,7 +40,6 @@ fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
     projectId = projectId,
     name = name,
     color = color,
-    isConfirmed = isConfirmed
 )
 
 data class TaskTagRequest(

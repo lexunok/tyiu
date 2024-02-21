@@ -55,9 +55,10 @@ public class IdeaMarketService {
                 "LEFT JOIN idea i ON i.id = im.idea_id " +
                 "LEFT JOIN team t ON t.id = im.team_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
-                "LEFT JOIN team_skill ts ON ts.team_id = im.team_id " +
+                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill si ON si.id = ids.skill_id " +
-                "LEFT JOIN skill st ON st.id = ts.skill_id " +
+                "LEFT JOIN skill st ON st.id = us.skill_id " +
                 "LEFT JOIN users u ON u.id = i.initiator_id " +
                 "LEFT JOIN users l ON l.id = t.leader_id " +
                 "WHERE im.id = :ideaMarketId";
@@ -261,8 +262,9 @@ public class IdeaMarketService {
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id) AS member_count " +
                 "FROM team_market_request tmr " +
-                "LEFT JOIN team_skill ts ON tmr.team_id = ts.team_id " +
-                "LEFT JOIN skill s ON s.id = ts.skill_id " +
+                "LEFT JOIN team_member tm ON tm.team_id = tmr.team_id " +
+                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
+                "LEFT JOIN skill s ON s.id = us.skill_id " +
                 "WHERE tmr.idea_market_id = :ideaId";
         ConcurrentHashMap<String, TeamMarketRequestDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
@@ -518,8 +520,9 @@ public class IdeaMarketService {
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
                 "FROM team t " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_skill ts ON ts.team_id = t.id " +
-                "LEFT JOIN skill s ON ts.skill_id = s.id " +
+                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
+                "LEFT JOIN skill s ON us.skill_id = s.id " +
                 "WHERE t.id = :teamId";
         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
         return checkInitiator(ideaMarketId,user.getId())
