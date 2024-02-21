@@ -17,5 +17,5 @@ class TaskMovementLogService
         return tasksLog
     }
 
-    fun getAllTaskLog(taskId: String): Flow<TaskMovementLogDTO> = repository.findAllBytaskId(taskId).map {TaskMovementLogToDTO(it)}
+    fun getAllTaskLog(taskId: String): Flow<TaskMovementLogDTO> = repository.findAllByTaskId(taskId).map {TaskMovementLogToDTO(it)}
 }

@@ -6,7 +6,7 @@ import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 
-interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String>{
+interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String> {
     @Query("DELETE FROM task_tag WHERE id=:tagId")
     fun deleteTagById(tagId: String): Flow<TaskTag>
 
@@ -39,12 +39,12 @@ fun TaskTag.toDTO(): TaskTagDTO = TaskTagDTO (
     id = id,
     projectId = projectId,
     name = name,
-    color = color,
+    color = color
 )
 
 data class TaskTagRequest(
     var tagName: String? = null,
-    var tagColor: String? = null,
+    var tagColor: String? = null
 )
 
 
