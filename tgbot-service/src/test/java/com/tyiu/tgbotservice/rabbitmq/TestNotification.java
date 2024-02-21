@@ -4,7 +4,7 @@ import com.tyiu.ideas.config.exception.CustomHttpException;
 import com.tyiu.ideas.model.entities.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import interfaces.INotification;
 import response.ResponseEntity;
 import org.springframework.stereotype.Component;
@@ -37,7 +37,7 @@ public class TestNotification implements INotification {
                             .message(message)
                             .notificationId(notification.getNotificationId())
                             .build(),
-                            HttpStatusCode.valueOf(500))
+                            HttpStatus.valueOf(500))
             );
         }
         else if (notification.getTitle() == null
@@ -52,7 +52,7 @@ public class TestNotification implements INotification {
                             .message(message)
                             .notificationId(notification.getNotificationId())
                             .build(),
-                            HttpStatusCode.valueOf(500))
+                            HttpStatus.valueOf(500))
             );
         }
         else if (notification.getTag() == null) {
@@ -65,7 +65,7 @@ public class TestNotification implements INotification {
                             .message(message)
                             .notificationId(notification.getNotificationId())
                             .build(),
-                            HttpStatusCode.valueOf(404))
+                            HttpStatus.valueOf(404))
             );
         }
         else {
@@ -84,7 +84,7 @@ public class TestNotification implements INotification {
                                             .message(message)
                                             .notificationId(notification.getNotificationId())
                                             .build(),
-                                            HttpStatusCode.valueOf(200))
+                                            HttpStatus.valueOf(200))
                             );
 
                         } else {
@@ -98,7 +98,7 @@ public class TestNotification implements INotification {
                                             .message(message)
                                             .notificationId(notification.getNotificationId())
                                             .build(),
-                                            HttpStatusCode.valueOf(404))
+                                            HttpStatus.valueOf(404))
                             );
                         }
                         return Mono.empty();
@@ -110,7 +110,7 @@ public class TestNotification implements INotification {
     public void validateResponse(ResponseEntity<NotificationResponse> response) {
 
         if (response.getBody() != null) {
-            throw new CustomHttpException(response.getBody().getMessage(), response.getStatus().value());
+            throw new CustomHttpException(response.getBody().getMessage(), response.getStatus());
         } else {
             throw new CustomHttpException("Response body is null", 404);
         }

@@ -7,7 +7,7 @@ import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import response.ResponseEntity;
 import org.springframework.stereotype.Component;
 import request.NotificationRequest;
@@ -55,7 +55,7 @@ public class ProdRabbitMQ implements INotification {
                         .message(message)
                         .notificationId(notification.getNotificationId())
                         .build(),
-                        HttpStatusCode.valueOf(200));
+                        HttpStatus.valueOf(200));
                 validateResponse(response);
             }
             else {
@@ -67,7 +67,7 @@ public class ProdRabbitMQ implements INotification {
                         .message(message)
                         .notificationId(notification.getNotificationId())
                         .build(),
-                        HttpStatusCode.valueOf(404));
+                        HttpStatus.valueOf(404));
                 validateResponse(response);
             }
         } catch (Exception e) {
@@ -76,7 +76,7 @@ public class ProdRabbitMQ implements INotification {
                     .message(e.getMessage())
                     .notificationId(notification.getNotificationId())
                     .build(),
-                    HttpStatusCode.valueOf(500));
+                    HttpStatus.valueOf(500));
             validateResponse(response);
         }
     }

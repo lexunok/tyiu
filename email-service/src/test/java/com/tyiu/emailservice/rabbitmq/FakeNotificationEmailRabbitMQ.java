@@ -2,7 +2,7 @@ package com.tyiu.emailservice.rabbitmq;
 
 import com.tyiu.ideas.config.exception.CustomHttpException;
 import interfaces.INotification;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import response.ResponseEntity;
 import org.springframework.stereotype.Component;
 import request.NotificationRequest;
@@ -21,7 +21,7 @@ public class FakeNotificationEmailRabbitMQ implements INotification {
             this.validateResponse(new ResponseEntity<>(NotificationResponse.builder()
                     .message("Validation isn't successful with subject: " + notificationRequest.getTitle()
                             + ". NotificationId must not be null")
-                    .build(), HttpStatusCode.valueOf(404)));
+                    .build(), HttpStatus.valueOf(404)));
 
         else if (notificationRequest.getMessage() == null
                 || notificationRequest.getButtonName() == null
@@ -32,7 +32,7 @@ public class FakeNotificationEmailRabbitMQ implements INotification {
                         + notificationRequest.getNotificationId()
                         + ". Message, title, button or link name must not be null")
                 .notificationId(notificationRequest.getNotificationId())
-                .build(), HttpStatusCode.valueOf(404))
+                .build(), HttpStatus.valueOf(404))
             );
 
         else if (!notificationRequest.getLink().contains(path))
@@ -41,7 +41,7 @@ public class FakeNotificationEmailRabbitMQ implements INotification {
                             + notificationRequest.getNotificationId()
                             + ". link must be start with \"https://hits.tyuiu.ru/\"")
                     .notificationId(notificationRequest.getNotificationId())
-                    .build(), HttpStatusCode.valueOf(404)));
+                    .build(), HttpStatus.valueOf(404)));
 
         else if (notificationRequest.getConsumerEmail() == null)
             this.validateResponse(new ResponseEntity<>(NotificationResponse.builder()
@@ -49,19 +49,19 @@ public class FakeNotificationEmailRabbitMQ implements INotification {
                             + notificationRequest.getNotificationId()
                             + ". ConsumerEmail must be defined")
                     .notificationId(notificationRequest.getNotificationId())
-                    .build(), HttpStatusCode.valueOf(500)));
+                    .build(), HttpStatus.valueOf(500)));
 
         else
             this.validateResponse(new ResponseEntity<>(NotificationResponse.builder()
                     .message("Validation is successful with notificationId: " + notificationRequest.getNotificationId())
                     .notificationId(notificationRequest.getNotificationId())
-                    .build(), HttpStatusCode.valueOf(200)));
+                    .build(), HttpStatus.valueOf(200)));
     }
 
     @Override
     public void validateResponse(ResponseEntity<NotificationResponse> response) {
         if (response.getBody() != null){
-            throw new CustomHttpException(response.getBody().getMessage(), response.getStatus().value());
+            throw new CustomHttpException(response.getBody().getMessage(), response.getStatus());
         } else {
             throw new CustomHttpException("Response body is null", 404);
         }

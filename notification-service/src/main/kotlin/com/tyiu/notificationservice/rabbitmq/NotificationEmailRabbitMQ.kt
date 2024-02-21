@@ -36,7 +36,7 @@ class NotificationEmailRabbitMQ(private val rabbitTemplate: RabbitTemplate,
 
     @RabbitListener(queues = ["\${rabbitmq.queues.email.validate}"])
     override fun validateResponse(response: ResponseEntity<NotificationResponse>) {
-        if (HttpStatus.valueOf(response.status.toString()).is2xxSuccessful){
+        if (HttpStatus.valueOf(response.status).is2xxSuccessful){
             response.body?.let { notificationService.setSentByEmailServiceFieldTrue(it.notificationId) }
         } else{
             log.error(response.body?.message)

@@ -7,7 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatusCode;
+import org.springframework.http.HttpStatus;
 import response.ResponseEntity;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
@@ -38,14 +38,14 @@ public class NotificationEmailRabbitMQ implements INotification {
             ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                     .message(message)
                     .notificationId(notificationRequest.getNotificationId())
-                    .build(), HttpStatusCode.valueOf(200));
+                    .build(), HttpStatus.valueOf(200));
             validateResponse(response);
             log.info(message);
         })).doOnError(throwable -> {
             ResponseEntity<NotificationResponse> response = new ResponseEntity<NotificationResponse>(NotificationResponse.builder()
                     .message(throwable.getMessage())
                     .notificationId(notificationRequest.getNotificationId())
-                    .build(), HttpStatusCode.valueOf(500));
+                    .build(), HttpStatus.valueOf(500));
             validateResponse(response);
             log.info(throwable.getMessage());
         }).subscribe();

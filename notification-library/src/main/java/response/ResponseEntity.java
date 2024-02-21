@@ -4,7 +4,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
 
 
 @Getter
@@ -12,15 +11,11 @@ import org.springframework.http.HttpStatusCode;
 @NoArgsConstructor
 public class ResponseEntity<T> {
     private T body;
-    private String status;
+    private int status;
 
-    public ResponseEntity(T build, HttpStatusCode httpStatusCode) {
+    public ResponseEntity(T build, HttpStatus httpStatusCode) {
         this.body = build;
-        this.status = httpStatusCode.toString();
-    }
-
-    public HttpStatusCode getStatus(){
-        return HttpStatus.valueOf(status);
+        this.status = httpStatusCode.value();
     }
 
 }

@@ -8,10 +8,10 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener
 import org.springframework.amqp.rabbit.core.RabbitTemplate
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
-import response.ResponseEntity
 import org.springframework.stereotype.Component
 import request.NotificationRequest
 import response.NotificationResponse
+import response.ResponseEntity
 
 
 @Component("prodTelegramClient")
@@ -35,7 +35,7 @@ class NotificationTelegramRabbitMQ(private val rabbitTemplate: RabbitTemplate,
 
     @RabbitListener(queues = ["\${rabbitmq.queues.telegram.validate}"])
     override fun validateResponse(response: ResponseEntity<NotificationResponse>) {
-        if (HttpStatus.valueOf(response.status.toString()).is2xxSuccessful){
+        if (HttpStatus.valueOf(response.status).is2xxSuccessful){
             response.body?.let { notificationService.setSentByTelegramServiceFieldTrue(it.notificationId) }
         } else {
             log.error(response.body?.message)

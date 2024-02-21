@@ -7,7 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
-import org.springframework.http.HttpStatusCode
+import org.springframework.http.HttpStatus
 import response.ResponseEntity
 import org.springframework.stereotype.Component
 import reactor.core.publisher.Mono
@@ -31,7 +31,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
                         .message(message)
                         .notificationId(notification.notificationId)
                         .build(),
-                    HttpStatusCode.valueOf(500)
+                    HttpStatus.valueOf(500)
                 )
             )
         } else if (notification.title == null
@@ -49,7 +49,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
                         .message(message)
                         .notificationId(notification.notificationId)
                         .build(),
-                    HttpStatusCode.valueOf(500)
+                    HttpStatus.valueOf(500)
                 )
             )
         } else if (!notification.link.startsWith(path)) {
@@ -65,7 +65,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
                         .message(message)
                         .notificationId(notification.notificationId)
                         .build(),
-                    HttpStatusCode.valueOf(500)
+                    HttpStatus.valueOf(500)
                 )
             )
         } else if (notification.tag == null) {
@@ -81,7 +81,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
                         .message(message)
                         .notificationId(notification.notificationId)
                         .build(),
-                    HttpStatusCode.valueOf(404)
+                    HttpStatus.valueOf(404)
                 )
             )
         } else {
@@ -106,7 +106,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
                                     .message(message)
                                     .notificationId(notification.notificationId)
                                     .build(),
-                                HttpStatusCode.valueOf(200)
+                                HttpStatus.valueOf(200)
                             )
                         )
                     } else {
@@ -123,7 +123,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
                                     .message(message)
                                     .notificationId(notification.notificationId)
                                     .build(),
-                                HttpStatusCode.valueOf(404)
+                                HttpStatus.valueOf(404)
                             )
                         )
                     }
@@ -135,7 +135,7 @@ class TestTelegramNotification(@Autowired private val template: R2dbcEntityTempl
     override fun validateResponse(response: ResponseEntity<NotificationResponse>?) {
 
         if (response?.body != null) {
-            throw CustomHttpException(response.body!!.message, response.status.value())
+            throw CustomHttpException(response.body!!.message, response.status)
         } else {
             throw CustomHttpException("Response body is null", 404)
         }
