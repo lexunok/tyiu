@@ -1,4 +1,4 @@
-name: CI/CD
+name: CI/CD/IDEAS
 
 on:
   workflow_dispatch:
@@ -70,5 +70,5 @@ jobs:
       - name: Build JAR file
         run:  | 
           cd ideas-service
-          ./gradlew -PspringProfile=prod -Dtoken=${{ secrets.DOCKERHUB_TOKEN }} bootBuildImage
+          ./gradlew -Dtoken=${{ secrets.DOCKERHUB_TOKEN }} bootBuildImage
 

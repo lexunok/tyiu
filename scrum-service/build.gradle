@@ -24,6 +24,16 @@ dependencies {
 tasks.withType(KotlinCompile) {
 	kotlinOptions {
 		freeCompilerArgs += '-Xjsr305=strict'
-		jvmTarget = '17'
+		jvmTarget = '19'
+	}
+}
+tasks.named("bootBuildImage") {
+	imageName.set("lexunok/scrum-service")
+	publish = true
+	docker {
+		publishRegistry {
+			username ='lexunok'
+			password = System.getProperty('token')
+		}
 	}
 }

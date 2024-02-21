@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/v1/authorization")
+@RequestMapping("/api/v1/authorization-service")
 @RequiredArgsConstructor
 public class AuthController {
     private final UserRepository repository;

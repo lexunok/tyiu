@@ -2,3 +2,13 @@ dependencies {
 	implementation 'org.springframework.cloud:spring-cloud-starter-gateway'
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 }
+tasks.named("bootBuildImage") {
+	imageName.set("lexunok/gateway")
+	publish = true
+	docker {
+		publishRegistry {
+			username ='lexunok'
+			password = System.getProperty('token')
+		}
+	}
+}

@@ -1,8 +1,7 @@
 package com.tyiu.authorizationservice;
 
+import com.tyiu.client.models.*;
 import jakarta.persistence.*;
-import lombok.Data;
-import com.tyiu.client.models.Role;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
