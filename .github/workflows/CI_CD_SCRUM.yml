@@ -1,4 +1,4 @@
-name: CI/CD/SCRUM
+name: SCRUM
 
 on:
   workflow_dispatch:

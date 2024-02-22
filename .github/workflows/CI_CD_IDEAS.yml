@@ -1,4 +1,4 @@
-name: CI/CD/IDEAS
+name: IDEAS
 
 on:
   workflow_dispatch:

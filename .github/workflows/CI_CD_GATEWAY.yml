@@ -1,4 +1,4 @@
-name: CI/CD/GATEWAY
+name: GATEWAY
 
 on:
   workflow_dispatch:
