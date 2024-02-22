@@ -15,5 +15,5 @@ spring:
 oauth:
     secret: ${SERVICE_PASSWORD}
     redirect: http://gateway/login/oauth2/code/gateway
-    issuer: http://authorization-service
+    issuer: http://${AUTH_URL}
 
