@@ -112,7 +112,7 @@ public class AccountChangeService {
     }
 
     public Flux<UserDTO> getUsersInfo(){
-        return template.select(User.class).all()
+        return template.select(User.class).matching(query(where("is_deleted").isFalse())).all()
                 .flatMap(u -> Mono.just(UserDTO.builder()
                             .id(u.getId())
                             .email(u.getEmail())
@@ -123,9 +123,14 @@ public class AccountChangeService {
                             .build())
         );
     }
+    public Mono<Void> deleteUser(String userId){
+        return template.update(query(where("id").is(userId)),
+                update("is_deleted", Boolean.TRUE), User.class).then();
+    }
 
     public Flux<String> getAllEmails(){
-        return template.select(User.class).all().flatMap(u -> Mono.just(u.getEmail()));
+        return template.select(User.class).matching(query(where("is_deleted").isFalse())).all()
+                .flatMap(u -> Mono.just(u.getEmail()));
     }
 
     //////////////////////////////
