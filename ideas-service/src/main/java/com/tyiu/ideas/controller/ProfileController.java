@@ -6,7 +6,6 @@ import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.requests.ProfileUpdateRequest;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import com.tyiu.ideas.service.ProfileService;
-
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.HttpStatus;
@@ -19,7 +18,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.io.IOException;
-import java.security.Principal;
 import java.util.Base64;
 
 @RestController
@@ -61,8 +59,8 @@ public class ProfileController {
     }
 
     @PostMapping("/skills/save")
-    public Flux<SkillDTO> saveUserSkills(Principal principal, @RequestBody Flux<SkillDTO> skills) {
-        return profileService.saveSkills(principal.getName(), skills);
+    public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal User user, @RequestBody Flux<SkillDTO> skills) {
+        return profileService.saveSkills(user.getId(), skills);
     }
     @PutMapping("/fullname/update")
     public Mono<InfoResponse> updateUserFullName(@AuthenticationPrincipal User user, @RequestBody ProfileUpdateRequest request) {

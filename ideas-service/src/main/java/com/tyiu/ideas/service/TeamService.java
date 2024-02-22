@@ -151,13 +151,13 @@ public class TeamService {
                 "m.id as member_id, m.email as member_email, m.first_name as member_first_name, m.last_name as member_last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
                 "ws.id as wanted_skill_id, ws.name as wanted_skill_name, ws.type as wanted_skill_type," +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count, " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_member tm ON t.id = tm.team_id " +
+                "LEFT JOIN team_member tm ON t.id = tm.team_id AND tm.finish_date IS NULL " +
                 "LEFT JOIN users m ON tm.member_id = m.id " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill s ON us.skill_id = s.id " +
@@ -184,8 +184,8 @@ public class TeamService {
                 "tr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count, " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -203,7 +203,7 @@ public class TeamService {
                 "imr.team_id AS refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count " +
                 "FROM team t " +
                 "LEFT JOIN idea_market_refused imr ON imr.team_id = t.id AND imr.idea_market_id = :ideaMarketId  " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
@@ -318,7 +318,8 @@ public class TeamService {
     public Flux<TeamMemberDTO> getAllUsersInTeams() {
         String QUERY = "SELECT tm.*, u.id, u.email, u.first_name, u.last_name " +
                 "FROM team_member tm " +
-                "LEFT JOIN users u ON u.id = tm.member_id";
+                "LEFT JOIN users u ON u.id = tm.member_id " +
+                "WHERE tm.finish_date IS NULL";
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .map((row, rowMetadata) -> TeamMemberDTO.builder()
@@ -361,8 +362,8 @@ public class TeamService {
                                 Batch batch = connection.createBatch();
                                 teamDTO.getMembers().forEach(u -> batch.add(
                                         String.format(
-                                                "INSERT INTO team_member (team_id, member_id) VALUES ('%s', '%s');",
-                                                t.getId(), u.getId()
+                                                "INSERT INTO team_member (team_id, member_id, is_active, start_date) VALUES ('%s', '%s', '%s', '%s');",
+                                                t.getId(), u.getId(), Boolean.TRUE, LocalDate.now()
                                         ))
                                 );
 
@@ -392,13 +393,13 @@ public class TeamService {
                     tr.team_id as refused_team_id,
                     o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name,
                     l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name,
-                    (SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count,
-                    (SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member
+                    (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count,
+                    (SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member
                 FROM team t
                     LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id
                     LEFT JOIN users o ON t.owner_id = o.id
                     LEFT JOIN users l ON t.leader_id = l.id
-                    LEFT JOIN team_member tm ON tm.team_id = t.id
+                    LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL
                     LEFT JOIN user_skill us ON us.user_id = tm.member_id
                 """;
         if (role == Role.INITIATOR)
@@ -419,13 +420,13 @@ public class TeamService {
                 "tr.team_id as refused_team_id, " +
                 "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count, " +
-                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId)) as existed_member " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count, " +
+                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member " +
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
                 "WHERE tws.skill_id IN (:skills) AND us.skill_id NOT IN (:skills)";
@@ -463,7 +464,7 @@ public class TeamService {
                 "WHERE u.id = :userId";
 
 
-        return template.insert(new Team2Member(teamId, userId))
+        return template.insert(new Team2Member(teamId, userId, Boolean.TRUE, LocalDate.now(), null))
                 .then(template.getDatabaseClient()
                         .sql(query)
                         .bind("userId", userId)
@@ -510,26 +511,32 @@ public class TeamService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteTeam(String id, String userId) {
-        return checkOwner(id, userId)
+    public Mono<Void> deleteTeam(String teamId, User user) {
+        return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists)){
-                        return template.delete(query(where("id").is(id)), Team.class);
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                        return template.delete(query(where("id").is(teamId)), Team.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
     }
 
     public Mono<Void> kickFromTeam(String teamId, String userId) {
-        return template.delete(query(where("team_id").is(teamId)
-                        .and("member_id").is(userId)),Team2Member.class)
+        return template.update(query(where("team_id").is(teamId)
+                                .and("member_id").is(userId)),
+                        update("is_active", Boolean.FALSE)
+                                .set("finish_date", LocalDate.now()),
+                        Team2Member.class)
                 .then(template.insert(new Team2Refused(teamId, userId)))
                 .then();
     }
 
     public Mono<Void> leaveFromTeam(String teamId, String userId) {
-        return template.delete(query(where("team_id").is(teamId)
-                        .and("member_id").is(userId)),Team2Member.class)
+        return template.update(query(where("team_id").is(teamId)
+                                .and("member_id").is(userId)),
+                        update("is_active", Boolean.FALSE)
+                                .set("finish_date", LocalDate.now()),
+                        Team2Member.class)
                 .then();
     }
 
@@ -540,24 +547,16 @@ public class TeamService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<TeamDTO> updateTeam(String id, TeamDTO teamDTO) {
-        Team team = mapper.map(teamDTO, Team.class);
-        team.setId(id);
-        if (teamDTO.getOwner() != null) {
-            team.setOwnerId(teamDTO.getOwner().getId());
-        }
-        if (teamDTO.getLeader() != null) {
-            team.setLeaderId(teamDTO.getLeader().getId());
-        }
-        return template.update(team)
-                .flatMap(t ->
-                        template.delete(query(where("team_id").is(id)), Team2Member.class)
-                                .thenReturn(teamDTO.getMembers()).mapNotNull(list -> {
-                                    if (list != null) {
-                                        list.forEach(member -> template.insert(new Team2Member(id, member.getId())).subscribe());
-                                    }
-                                    return list;
-                                })).thenReturn(teamDTO);
+    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, User user) {
+        return checkOwner(teamId, user.getId())
+                .flatMap(isExists -> {
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                        Team team = mapper.map(teamDTO, Team.class);
+                        team.setId(teamId);
+                        return template.update(team).thenReturn(teamDTO);
+                    }
+                    return Mono.error(new AccessException("Нет Прав"));
+                });
     }
 
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {

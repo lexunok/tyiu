@@ -16,6 +16,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.r2dbc.core.DatabaseClient;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.List;
@@ -290,13 +291,42 @@ public class ProfileControllerTest extends TestContainers {
     @Test
     void testSaveSkills() {
 
-        ProfileDTO responseSaveSkills = webTestClient
+        SkillDTO skillDTO = SkillDTO.builder()
+                .name("skill1")
+                .type(SkillType.LANGUAGE)
+                .build();
+
+        SkillDTO addSkillResponse = webTestClient
+                .post()
+                .uri("/api/v1/ideas-service/skill/add")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Mono.just(skillDTO), SkillDTO.class)
+                .exchange()
+                .expectBody(SkillDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(addSkillResponse);
+        List<SkillDTO> skills = List.of(addSkillResponse, skill);
+
+        List<SkillDTO> responseSaveSkills = webTestClient
                 .post()
                 .uri("/api/v1/ideas-service/profile/skills/save")
+                .header("Authorization", "Bearer " + jwt)
+                .body(Flux.fromIterable(skills), SkillDTO.class)
+                .exchange()
+                .expectBodyList(SkillDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(responseSaveSkills);
+        assertNotNull(responseSaveSkills.get(0).getId());
+
+        ProfileDTO responseGetProfileByOwner = webTestClient
+                .get()
+                .uri("/api/v1/ideas-service/profile/{userId}", userDTO.getId())
                 .header("Authorization", "Bearer " + jwt)
                 .exchange()
                 .expectBody(ProfileDTO.class)
                 .returnResult().getResponseBody();
-        assertNotNull(responseSaveSkills);
+        assertNotNull(responseGetProfileByOwner);
+        assertEquals(userDTO.getEmail(), responseGetProfileByOwner.getEmail());
+        assertTrue(responseSaveSkills.size() >= 2);
     }
 }
