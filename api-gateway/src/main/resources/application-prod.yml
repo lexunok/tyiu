@@ -12,11 +12,11 @@ spring:
           predicates:
             - Path=/api/v1/ideas-service/**
         - id: scrum-service
-          uri: http://scrum-service
+          uri: http://scrum-service:8081
           predicates:
             - Path=/api/v1/scrum-service/**
         - id: authorization-service
-          uri: http://authorization-service
+          uri: http://authorization-service:7777
           predicates:
             - Path=/api/v1/authorization-service/**
   security:
