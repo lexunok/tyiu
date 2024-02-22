@@ -45,6 +45,7 @@ public class TeamService {
     private final NotificationPublisher notificationPublisher;
 
     private Flux<SkillDTO> getSkillsByList(List<String> skills) {
+
         String QUERY = "SELECT user_skill.*, skill.id, skill.name, skill.type " +
                 "FROM user_skill " +
                 "LEFT JOIN skill ON skill.id = user_skill.skill_id " +
@@ -62,6 +63,7 @@ public class TeamService {
     }
 
     private Flux<TeamDTO> getFilteredTeam(String QUERY, List<SkillDTO> selectedSkills, String userId) {
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
@@ -70,6 +72,7 @@ public class TeamService {
     }
 
     private TeamDTO buildTeamDTO(Row row) {
+
         String teamId = row.get("team_id", String.class);
         TeamDTO teamDTO = TeamDTO.builder()
                 .id(teamId)
@@ -87,6 +90,7 @@ public class TeamService {
                         .build())
                 .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId) || Boolean.TRUE.equals(row.get("existed_member", Boolean.class)))
                 .build();
+
         String leaderId = row.get("leader_id", String.class);
         if (leaderId != null) {
             teamDTO.setLeader(UserDTO.builder()
@@ -100,6 +104,7 @@ public class TeamService {
     }
 
     private Mono<Void> annul(String userId) {
+
         return template.update(query(where("user_id").is(userId)
                                 .and("status").is(RequestStatus.NEW)),
                         update("status", RequestStatus.ANNULLED),
@@ -128,6 +133,7 @@ public class TeamService {
     ///////////////////////
 
     public Mono<TeamDTO> getTeam(String teamId, String userId) {
+
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "tr.team_id as refused_team_id, " +
@@ -164,6 +170,7 @@ public class TeamService {
 
 
     public Flux<TeamDTO> getTeams(String userId) {
+
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "tr.team_id AS refused_team_id, " +
@@ -183,6 +190,7 @@ public class TeamService {
     }
 
     public Flux<TeamDTO> getOwnerTeams(String ownerId, String ideaMarketId) {
+
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "imr.team_id AS refused_team_id, " +
@@ -217,6 +225,7 @@ public class TeamService {
                                     .build())
                             .isRefused(Objects.equals(row.get("refused_team_id", String.class), teamId))
                             .build();
+
                     String leaderId = row.get("leader_id", String.class);
                     if (leaderId != null) {
                         teamDTO.setLeader(UserDTO.builder()
@@ -231,6 +240,7 @@ public class TeamService {
     }
 
     public Flux<TeamMemberDTO> getAllUsersWithSkills() {
+
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id AS skill_id, s.name AS skill_name, s.type AS skill_type " +
                 "FROM users u " +
@@ -251,6 +261,7 @@ public class TeamService {
                             .email(row.get("email", String.class))
                             .skills(new ArrayList<>())
                             .build());
+
                     if (skillId!=null) {
                         SkillDTO skill = SkillDTO.builder()
                                 .name(row.get("skill_name", String.class))
@@ -279,12 +290,14 @@ public class TeamService {
     }
 
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
+
         String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.market_id, tmr.team_id, tmr.status, tmr.letter, " +
                 "i.name AS name " +
                 "FROM team_market_request tmr " +
                 "LEFT JOIN idea_market im ON im.id = tmr.idea_market_id " +
                 "LEFT JOIN idea i ON i.id = im.idea_id " +
                 "WHERE tmr.team_id = :teamId";
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId",teamId)
@@ -301,9 +314,11 @@ public class TeamService {
     }
 
     public Flux<TeamMemberDTO> getAllUsersInTeams() {
+
         String QUERY = "SELECT tm.*, u.id, u.email, u.first_name, u.last_name " +
                 "FROM team_member tm " +
                 "LEFT JOIN users u ON u.id = tm.member_id";
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .map((row, rowMetadata) -> TeamMemberDTO.builder()
@@ -323,6 +338,7 @@ public class TeamService {
     //////////////////////////////
 
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
+
         Team team = Team.builder()
                 .name(teamDTO.getName())
                 .description(teamDTO.getDescription())
@@ -370,6 +386,7 @@ public class TeamService {
     }
 
     public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role, String userId) {
+
         String QUERY = """
                 SELECT
                     t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed,
@@ -394,11 +411,11 @@ public class TeamService {
             QUERY = QUERY + "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
                     "WHERE us.skill_id IN (:skills) OR tws.skill_id IN (:skills)";
         }
-
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
     public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills, String userId) {
+
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
                 "tr.team_id as refused_team_id, " +
@@ -764,10 +781,9 @@ public class TeamService {
                                             .flatMap(user -> notificationPublisher.makeNotification(
                                                     NotificationRequest.builder()
                                                             .consumerEmail(user.getEmail())
-                                                            .title("Вас исключили из команды на портале HITS")
+                                                            .title("Вы были исключены из команды")
                                                             .message(String.format(
-                                                                    "%s %s исключил вас из команды " +
-                                                                            "\"%s\"",
+                                                                    "%s %s исключил вас из команды \"%s\".",
                                                                     updater.getFirstName(),
                                                                     updater.getLastName(),
                                                                     teamDTO.getName()
@@ -781,8 +797,10 @@ public class TeamService {
     }
 
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
+
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
+
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
                         return template.delete(query(where("team_id").is(teamId)), Team2WantedSkill.class)
                                 .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
