@@ -153,7 +153,7 @@ public class TeamController {
     @DeleteMapping("/delete/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> deleteTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.deleteTeam(teamId, user.getId())
+        return teamService.deleteTeam(teamId, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
     }
@@ -177,8 +177,8 @@ public class TeamController {
 
     @PutMapping("/update/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team) {
-        return teamService.updateTeam(teamId, team)
+    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team, @AuthenticationPrincipal User user) {
+        return teamService.updateTeam(teamId, team, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при обновлении команды")));
     }
 
