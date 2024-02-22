@@ -34,5 +34,5 @@ spring:
           spring:
             authorization-uri: ${AUTH_URL}/oauth2/authorize
             token-uri: ${AUTH_URL_TOKEN}/oauth2/token
-            jwk-set-uri: ${AUTH_URL}/oauth2/jwks
+            jwk-set-uri: ${AUTH_URL_TOKEN}/oauth2/jwks
 
