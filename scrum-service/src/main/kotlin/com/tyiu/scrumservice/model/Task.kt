@@ -11,6 +11,7 @@ import java.time.LocalDate
 
 interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
+    //вывод tasktagDTO как списка
     //убрать лишние запросы
     @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC") // ПОИСК ТАСКА ПО ПРОЕКТУ. СОРТИРОВКА ПО СОЗДАНИЮ ТАСКА
     fun findAllByProjectId(projectId: String): Flow<Task>
@@ -65,8 +66,25 @@ data class TaskDTO (
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
 
-    var tag: List<TaskTagDTO>? = null,
+    var tag: TaskTagDTO? = null,
     var status: TaskStatus? = TaskStatus.InBacklog
+)
+
+fun Task.toDTO(): TaskDTO = TaskDTO (
+    id = id,
+
+    sprintId = sprintId,
+    projectId = projectId,
+
+    name = name,
+    description = description,
+
+    workHour = workHour,
+
+    startDate = startDate,
+    finishDate = finishDate,
+
+    status = status
 )
 
 enum class TaskStatus
@@ -80,7 +98,7 @@ data class TaskStatusRequest(
     val taskExecutor: String? = null
 )
 
-data class taskInfoRequest(
+data class TaskInfoRequest(
     val taskId :String? = null,
     var taskName: String? = null,
     var taskDescription: String? = null,
@@ -94,23 +112,6 @@ data class TaskCreateRequest(
     val projectId: String? = null,
     val workHour: Long? = null,
     var initiatorId: String? = null,
-    var sprintId: String? = null
-)
-
-
-fun Task.toDTO(): TaskDTO = TaskDTO (
-    id = id,
-    sprintId = sprintId,
-
-    projectId = projectId,
-
-    name = name,
-    description = description,
-
-    workHour = workHour,
-
-    startDate = startDate,
-    finishDate = finishDate,
-
-    status = status
+    var sprintId: String? = null,
+    val taskTags: List<String>? = null
 )
