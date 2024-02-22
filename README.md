@@ -4,9 +4,6 @@
 и прописать команду
 docker-compose -f docker-compose-prod.yml up -d
 
-После первого запуска:    
-docker-compose -f docker-compose-prod.yml up --build hits
-
 ---------------------------------------
 
 В первую очередь запуск контейнеров Docker в cmd
