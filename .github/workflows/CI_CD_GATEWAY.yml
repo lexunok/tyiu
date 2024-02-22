@@ -7,8 +7,6 @@ on:
 jobs:
   build-and-push-gateway:
     runs-on: ubuntu-latest
-    env:
-      SERVICE_PASSWORD: ${{ secrets.SERVICE_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

@@ -7,9 +7,6 @@ on:
 jobs:
   build-and-push-authorization:
     runs-on: ubuntu-latest
-    env:
-      SERVICE_USERNAME: ${{ secrets.SERVICE_USERNAME }}
-      SERVICE_PASSWORD: ${{ secrets.SERVICE_PASSWORD }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3

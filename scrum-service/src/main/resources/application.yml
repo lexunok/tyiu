@@ -17,3 +17,4 @@ spring:
       resourceserver:
         jwt:
           issuer-uri: http://127.0.0.1:7777
+          jwk-set-uri: http://127.0.0.1:7777/oauth2/jwks
