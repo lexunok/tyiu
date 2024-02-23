@@ -112,15 +112,15 @@ public class TeamController {
 
     @PostMapping("/request/send/{teamId}")
     @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('ADMIN')")
-    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.sendTeamRequest(teamId, user)
+    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User userThatSendsRequest) {
+        return teamService.sendTeamRequest(teamId, userThatSendsRequest)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
 
     @PostMapping("/send-invites")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
-        return teamService.sendInvitesToUsers(users, user);
+    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> invites, @AuthenticationPrincipal User userThatInvites) {
+        return teamService.sendInvitesToUsers(invites, userThatInvites);
     }
 
     @PostMapping("/invite/{teamId}/{userId}")
@@ -159,13 +159,13 @@ public class TeamController {
     }
 
     @DeleteMapping("/kick/{teamId}/{userId}")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId) {
-        return teamService.kickFromTeam(teamId, userId);
+    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId, @AuthenticationPrincipal User userThatKicks) {
+        return teamService.kickFromTeam(teamId, userId, userThatKicks);
     }
 
     @DeleteMapping("/leave/{teamId}")
-    public Mono<Void> leaveFromTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.leaveFromTeam(teamId, user.getId());
+    public Mono<Void> leaveFromTeam(@PathVariable String teamId, @AuthenticationPrincipal User userThatLeaves) {
+        return teamService.leaveFromTeam(teamId, userThatLeaves.getId());
     }
 
     ////////////////////////
@@ -195,16 +195,16 @@ public class TeamController {
     @PutMapping("/request/{requestId}/update/{newStatus}")
     public Mono<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId,
                                                      @PathVariable RequestStatus newStatus,
-                                                     @AuthenticationPrincipal User user) {
-        return teamService.updateTeamRequestStatus(requestId, newStatus, user)
+                                                     @AuthenticationPrincipal User userThatUpdatesStatus) {
+        return teamService.updateTeamRequestStatus(requestId, newStatus, userThatUpdatesStatus)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/invitation/{invitationId}/update/{newStatus}")
     public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId,
                                                            @PathVariable RequestStatus newStatus,
-                                                           @AuthenticationPrincipal User user) {
-        return teamService.updateTeamInvitationStatus(invitationId, newStatus, user)
+                                                           @AuthenticationPrincipal User userThatUpdatesStatus) {
+        return teamService.updateTeamInvitationStatus(invitationId, newStatus, userThatUpdatesStatus)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
@@ -212,8 +212,8 @@ public class TeamController {
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<InfoResponse> changeLeader(@PathVariable String teamId,
                                            @PathVariable String userId,
-                                           @AuthenticationPrincipal User user) {
-        return teamService.changeTeamLeader(teamId, userId, user)
+                                           @AuthenticationPrincipal User userThatChangesTeamLeader) {
+        return teamService.changeTeamLeader(teamId, userId, userThatChangesTeamLeader)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное изменение лидера"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось назначить лидера"));
     }
