@@ -8,6 +8,7 @@ import com.tyiu.ideas.model.entities.ChangeEmailData;
 import com.tyiu.ideas.model.entities.ChangePasswordData;
 import com.tyiu.ideas.model.entities.Invitation;
 import com.tyiu.ideas.model.entities.User;
+import com.tyiu.ideas.model.entities.relations.Team2Member;
 import com.tyiu.ideas.model.enums.CodeStatus;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.requests.ChangeRequest;
@@ -125,7 +126,8 @@ public class AccountChangeService {
     }
     public Mono<Void> deleteUser(String userId){
         return template.update(query(where("id").is(userId)),
-                update("is_deleted", Boolean.TRUE), User.class).then();
+                update("is_deleted", Boolean.TRUE), User.class)
+                .then(template.delete(query(where("member_id").is(userId)), Team2Member.class)).then();
     }
 
     public Flux<String> getAllEmails(){
