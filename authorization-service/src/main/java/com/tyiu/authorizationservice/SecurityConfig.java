@@ -1,11 +1,21 @@
 package com.tyiu.authorizationservice;
 
+import java.security.KeyPair;
+import java.security.KeyPairGenerator;
+import java.security.interfaces.RSAPrivateKey;
+import java.security.interfaces.RSAPublicKey;
+import java.time.Duration;
+import java.time.temporal.ChronoUnit;
+import java.util.UUID;
+
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -34,21 +44,20 @@ import org.springframework.security.oauth2.server.authorization.settings.ClientS
 import org.springframework.security.oauth2.server.authorization.token.JwtEncodingContext;
 import org.springframework.security.oauth2.server.authorization.token.OAuth2TokenCustomizer;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.*;
-import org.springframework.security.web.session.HttpSessionEventPublisher;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
-
-import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.interfaces.RSAPrivateKey;
-import java.security.interfaces.RSAPublicKey;
-import java.util.UUID;
 
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final UserRepository repository;
+    @Value("${oauth.secret}")
+    String secret;
+    @Value("${oauth.redirect}")
+    String redirect;
+    @Value("${oauth.issuer}")
+    String issuer;
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -74,10 +83,10 @@ public class SecurityConfig {
             throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/api/v1/authorization/register", "/css/**").permitAll()
+                        .requestMatchers("/api/v1/authorization-service/register", "/css/**").permitAll()
                         .anyRequest().authenticated())
                 .csrf(csrf -> csrf
-                        .ignoringRequestMatchers("/api/v1/authorization/register"))
+                        .ignoringRequestMatchers("/api/v1/authorization-service/register"))
                 .formLogin(formLogin ->
                         formLogin
                                 .loginPage("/login")
@@ -85,7 +94,6 @@ public class SecurityConfig {
                 );
         return http.build();
     }
-
     @Bean
     public AuthenticationManager authenticationManager(
             UserDetailsService userDetailsService, PasswordEncoder encoder) {
@@ -103,12 +111,11 @@ public class SecurityConfig {
     public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
                 .clientId("gateway")
-                .clientSecret(encoder.encode("secret"))
+                .clientSecret(encoder.encode(secret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("http://localhost/login/oauth2/code/gateway")
+                .redirectUri(redirect)
                 .scope(OidcScopes.OPENID)
-                .scope("resource.read")
                 .clientSettings(ClientSettings.builder().requireAuthorizationConsent(false).build())
                 .build();
         return new InMemoryRegisteredClientRepository(oidcClient);
@@ -147,7 +154,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder().issuer("http://127.0.0.1:7777").build();
+        return AuthorizationServerSettings.builder().issuer(issuer).build();
     }
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
@@ -157,11 +164,6 @@ public class SecurityConfig {
                 context.getClaims().id(userId);
             }
         };
-    }
-
-    @Bean
-    public HttpSessionEventPublisher httpSessionEventPublisher() {
-        return new HttpSessionEventPublisher();
     }
 
 

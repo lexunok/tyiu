@@ -1,10 +1,8 @@
-postgres:
-    url: postgresql://localhost:5433/hits
 server:
     port: 7777
 spring:
     datasource:
-        url: jdbc:${postgres.url}
+        url: jdbc:postgresql://localhost:5433/hits
         username: admin
         password: admin
     jpa:
@@ -14,4 +12,8 @@ spring:
               dialect: org.hibernate.dialect.PostgreSQLDialect
         hibernate:
             ddl-auto: update
+oauth:
+    secret: secret
+    redirect: http://localhost/login/oauth2/code/gateway
+    issuer: http://127.0.0.1:7777
 

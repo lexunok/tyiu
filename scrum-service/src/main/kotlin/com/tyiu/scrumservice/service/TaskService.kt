@@ -12,13 +12,18 @@ class TaskService
     (
     private val repository: TaskRepository,
     private val userRepository: UserRepository,
+    private val tasktagrepository: TaskTagRepository,
     val template: R2dbcEntityTemplate
     )
 {
-    suspend fun taskToDTO(task: Task): TaskDTO {
+    suspend fun taskToDTO(task: Task): TaskDTO
+    {
         val tasks = task.toDTO()
+
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
+        tasks.tag = (task.id?.let {tasktagrepository.findById(it)})?.toDTO()
+
         return tasks
     }
 
@@ -33,25 +38,27 @@ class TaskService
 
     //post
     suspend fun createTask(taskCreateRequest: TaskCreateRequest):TaskDTO {
-        val task = Task(
+        val task = Task (
             name = taskCreateRequest.name,
             description = taskCreateRequest.description,
             projectId = taskCreateRequest.projectId,
             workHour = taskCreateRequest.workHour,
             initiatorId = taskCreateRequest.initiatorId
+
         )
-        if (taskCreateRequest.sprintId ==null){
+        if (taskCreateRequest.sprintId == null){
             task.status = TaskStatus.InBacklog
         }
-        else{
+        else {
             task.sprintId = taskCreateRequest.sprintId
             task.status = TaskStatus.New
         }
+
         return taskToDTO(repository.save(task))
     }
 
     //put
-    suspend fun putUpdateTask(taskId: String, taskInfoRequest: taskInfoRequest) {
+    suspend fun putUpdateTask(taskId: String, taskInfoRequest: TaskInfoRequest) {
         val query =
             "UPDATE task SET name = :taskName, description = :taskDescription, work_hour = :taskWork_hour WHERE id = :taskId"
         return template.databaseClient.sql(query)
