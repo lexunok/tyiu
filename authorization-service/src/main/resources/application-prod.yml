@@ -14,6 +14,6 @@ spring:
             ddl-auto: update
 oauth:
     secret: ${SERVICE_PASSWORD}
-    redirect: http://gateway/login/oauth2/code/gateway
-    issuer: http://${AUTH_URL}
+    redirect: ${GATEWAY_URL}/login/oauth2/code/gateway
+    issuer: ${AUTH_URL}
 

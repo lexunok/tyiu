@@ -419,7 +419,7 @@ public class TeamControllerTest extends TestContainers {
 
     private void saveSkillToUser(List<SkillDTO> skills, String jwt) {
         postRequest("/api/v1/ideas-service/profile/skills/save","Bearer " + jwt)
-                .body(Mono.just(skills), SkillDTO.class)
+                .body(Flux.fromIterable(skills), SkillDTO.class)
                 .exchange()
                 .expectStatus().isOk();
     }
@@ -587,6 +587,8 @@ public class TeamControllerTest extends TestContainers {
         assertEquals(leader.getId(), getTeam(teamId1).getLeader().getId());
         assertNotEquals(owner.getId(), getTeam(teamId1).getLeader().getId());
         assertNotEquals(member.getId(), getTeam(teamId2).getLeader().getId());
+        assertTrue(getTeam(teamId1).getSkills().size() >= 2);
+        assertTrue(getTeam(teamId2).getSkills().size() >= 3);
     }
 
     @Test

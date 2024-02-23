@@ -14,4 +14,4 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: http://authorization-service
+          jwk-set-uri: ${AUTH_URL}/oauth2/jwks

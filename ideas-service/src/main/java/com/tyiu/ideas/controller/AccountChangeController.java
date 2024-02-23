@@ -51,6 +51,11 @@ public class AccountChangeController {
         return accountChangeService.getUsersInfo()
                 .switchIfEmpty(Mono.error(new CustomHttpException("Not found!", HttpStatus.NOT_FOUND.value())));
     }
+    @DeleteMapping("/delete/user/{userId}")
+    @PreAuthorize("hasAuthority('ADMIN')")
+    public Mono<Void> deleteUser(@PathVariable String userId){
+        return accountChangeService.deleteUser(userId);
+    }
 
     @GetMapping("/get/emails")
     @PreAuthorize("hasAuthority('ADMIN')")

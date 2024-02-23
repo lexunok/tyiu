@@ -26,4 +26,5 @@ public class ProfileDTO {
     List<Role> roles;
     List<SkillDTO> skills;
     List<ProfileIdeaResponse> ideas;
+    List<TeamExperienceDTO> teams;
 }

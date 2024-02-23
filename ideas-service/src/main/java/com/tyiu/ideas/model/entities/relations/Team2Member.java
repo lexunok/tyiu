@@ -5,6 +5,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.data.relational.core.mapping.Table;
 
+import java.time.LocalDate;
+
 @Getter
 @NoArgsConstructor
 @AllArgsConstructor
@@ -12,4 +14,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class Team2Member {
     private String teamId;
     private String memberId;
+    private Boolean isActive;
+    private LocalDate startDate;
+    private LocalDate finishDate;
 }

@@ -50,13 +50,13 @@ public class IdeaMarketService {
                 "t.id AS t_id, t.name AS t_name, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
                 "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) AS member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) AS member_count " +
                 "FROM idea_market im " +
                 "LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im.id " +
                 "LEFT JOIN idea i ON i.id = im.idea_id " +
                 "LEFT JOIN team t ON t.id = im.team_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = im.idea_id " +
-                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill si ON si.id = ids.skill_id " +
                 "LEFT JOIN skill st ON st.id = us.skill_id " +
@@ -261,9 +261,9 @@ public class IdeaMarketService {
     public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
         String QUERY = "SELECT tmr.*, " +
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id) AS member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id AND finish_date IS NULL) AS member_count " +
                 "FROM team_market_request tmr " +
-                "LEFT JOIN team_member tm ON tm.team_id = tmr.team_id " +
+                "LEFT JOIN team_member tm ON tm.team_id = tmr.team_id AND tm.finish_date IS NULL " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill s ON s.id = us.skill_id " +
                 "WHERE tmr.idea_market_id = :ideaId";
@@ -544,10 +544,10 @@ public class IdeaMarketService {
                 "t.id as team_id, t.name as team_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id) as member_count " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count " +
                 "FROM team t " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_member tm ON tm.team_id = t.id " +
+                "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill s ON us.skill_id = s.id " +
                 "WHERE t.id = :teamId";

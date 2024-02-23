@@ -1,0 +1,7 @@
+ALTER TABLE team_member
+ADD COLUMN is_active BOOLEAN,
+ADD COLUMN start_date TIMESTAMP,
+ADD COLUMN finish_date TIMESTAMP;
+
+ALTER TABLE users
+ADD COLUMN is_deleted BOOLEAN DEFAULT FALSE;

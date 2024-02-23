@@ -119,8 +119,8 @@ public class TeamController {
 
     @PostMapping("/send-invites")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> invites, @AuthenticationPrincipal User user) {
-        return teamService.sendInvitesToUsers(invites, user.getId());
+    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
+        return teamService.sendInvitesToUsers(users, user);
     }
 
     @PostMapping("/invite/{teamId}/{userId}")
@@ -159,9 +159,8 @@ public class TeamController {
     }
 
     @DeleteMapping("/kick/{teamId}/{userId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId, @AuthenticationPrincipal User user) {
-        return teamService.kickFromTeam(teamId, userId, user);
+    public Mono<Void> kickFromTeam(@PathVariable String teamId, @PathVariable String userId) {
+        return teamService.kickFromTeam(teamId, userId);
     }
 
     @DeleteMapping("/leave/{teamId}")
@@ -178,10 +177,8 @@ public class TeamController {
 
     @PutMapping("/update/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<TeamDTO> updateTeam(@PathVariable String teamId,
-                                    @RequestBody TeamDTO team,
-                                    @AuthenticationPrincipal User updater) {
-        return teamService.updateTeam(teamId, team, updater)
+    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team, @AuthenticationPrincipal User user) {
+        return teamService.updateTeam(teamId, team, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при обновлении команды")));
     }
 

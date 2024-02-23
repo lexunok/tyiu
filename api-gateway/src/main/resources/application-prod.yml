@@ -32,7 +32,7 @@ spring:
             scope: openid
         provider:
           spring:
-            authorization-uri: http://${AUTH_URL}/oauth2/authorize
-            token-uri: http://${AUTH_URL}/oauth2/token
-            jwk-set-uri: http://${AUTH_URL}/oauth2/jwks
+            authorization-uri: ${AUTH_URL}/oauth2/authorize
+            token-uri: ${AUTH_URL_TOKEN}/oauth2/token
+            jwk-set-uri: ${AUTH_URL_TOKEN}/oauth2/jwks
 
