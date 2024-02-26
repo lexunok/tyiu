@@ -37,7 +37,7 @@ public class IdeaInvitationService {
                 "LEFT JOIN idea i ON i.id = inv.idea_id " +
                 "LEFT JOIN team t ON t.id = inv.team_id " +
                 "LEFT JOIN idea_skill ids ON ids.idea_id = inv.idea_id " +
-                "LEFT JOIN skill s ON s.id = us.skill_id " +
+                "LEFT JOIN skill s ON s.id = ids.skill_id " +
                 "WHERE inv.team_id = :teamId";
         ConcurrentHashMap<String, IdeaInvitationDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient().sql(query)
