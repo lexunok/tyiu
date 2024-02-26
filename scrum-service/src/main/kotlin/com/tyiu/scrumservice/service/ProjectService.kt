@@ -1,6 +1,7 @@
 package com.tyiu.scrumservice.service
 
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
+import com.tyiu.ideas.model.enums.Role
 import com.tyiu.ideas.model.toDTO
 import com.tyiu.scrumservice.model.*
 import kotlinx.coroutines.flow.Flow
@@ -58,7 +59,6 @@ class ProjectService(
             projectMember.email = userToProject?.email
             projectMember.firstName = userToProject?.firstName
             projectMember.lastName = userToProject?.lastName
-            //projectMember.projectRole =
             return@map projectMember
         }
 
@@ -68,7 +68,6 @@ class ProjectService(
             val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
             projectMarks.firstName = userToProject?.firstName
             projectMarks.lastName = userToProject?.lastName
-            //projectMarks.projectRole =
             projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
             return@map projectMarks
         }
@@ -79,13 +78,22 @@ class ProjectService(
             teamId = ideaMarketDTO.team.id
         )
         val prjSave = projectRepository.save(project)
+
         val members = ideaMarketDTO.team.id?.let {
             teamMemberRepository.findMemberByTeamId(it).map { m ->
-                return@map ProjectMember(
+                val projectMember =  ProjectMember(
                     projectId = prjSave.id,
                     userId = m.userId,
                     teamId = m.teamId
                 )
+                val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
+                if (userToProject?.roles?.contains(Role.TEAM_OWNER) == true) {
+                    projectMember.projectRole = ProjectRole.TEAM_LEADER
+                }
+                else{
+                    projectMember.projectRole = ProjectRole.MEMBER
+                }
+                return@map projectMember
             }
         }
         return projectMemberRepository.saveAll(members!!)
@@ -97,6 +105,14 @@ class ProjectService(
             userId = teamMemberRequest.userId,
             teamId = teamMemberRequest.teamId
         )
+        val userToProject = teamMemberRequest.userId?.let { userRepository.findById(it) }?.toDTO()
+        if (userToProject?.roles?.contains(Role.TEAM_OWNER) == true) {
+            projectMember.projectRole = ProjectRole.TEAM_LEADER
+        }
+        else{
+            projectMember.projectRole = ProjectRole.MEMBER
+        }
+
         return projectMemberRepository.save(projectMember)
     }
 
