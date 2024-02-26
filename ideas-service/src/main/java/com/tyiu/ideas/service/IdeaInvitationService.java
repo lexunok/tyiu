@@ -72,7 +72,7 @@ public class IdeaInvitationService {
     public Flux<IdeaInvitationDTO> getAllInvitationInIdea(String ideaId) {
         String query = "SELECT inv.*, t.name team_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) team_members_count, " +
-                "s.skill_id skill_id, s.name skill_name, s.type skill_type " +
+                "us.skill_id skill_id, s.name skill_name, s.type skill_type " +
                 "FROM idea_invitation inv " +
                 "LEFT JOIN team t ON t.id = inv.team_id " +
                 "LEFT JOIN idea i ON i.id = inv.idea_id " +
@@ -139,7 +139,7 @@ public class IdeaInvitationService {
     public Mono<IdeaInvitationDTO> inviteToIdea(String ideaId, String teamId) {
         String query = """
                 SELECT inv.*, t.name team_name, i.name idea_name, i.initiator_id initiator_id,
-                s.skill_id skill_id, s.name skill_name, s.type skill_type,
+                us.skill_id skill_id, s.name skill_name, s.type skill_type,
                 (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id AND finish_date IS NULL) team_members_count 
                 FROM idea_invitation inv
                 LEFT JOIN idea i ON i.id = inv.idea_id
