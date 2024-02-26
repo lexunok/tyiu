@@ -31,11 +31,13 @@ public class IdeaInvitationService {
     private final R2dbcEntityTemplate template;
 
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(String teamId) {
-        String query = "SELECT inv.*, team.name team_name,idea.name idea_name, idea.initiator_id initiator_id, " +
-                "ids.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
-                "LEFT JOIN idea ON idea.id = inv.idea_id " +
-                "LEFT JOIN team ON team.id = inv.team_id " +
-                "LEFT JOIN idea_skill ids ON ids.idea_id = inv.idea_id LEFT JOIN skill s ON s.id = skill_id " +
+        String query = "SELECT inv.*, t.name team_name, i.name idea_name, i.initiator_id initiator_id, " +
+                "ids.skill_id skill_id, s.name skill_name, s.type skill_type " +
+                "FROM idea_invitation inv " +
+                "LEFT JOIN idea i ON i.id = inv.idea_id " +
+                "LEFT JOIN team t ON t.id = inv.team_id " +
+                "LEFT JOIN idea_skill ids ON ids.idea_id = inv.idea_id " +
+                "LEFT JOIN skill s ON s.id = us.skill_id " +
                 "WHERE inv.team_id = :teamId";
         ConcurrentHashMap<String, IdeaInvitationDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient().sql(query)
@@ -68,14 +70,15 @@ public class IdeaInvitationService {
     }
 
     public Flux<IdeaInvitationDTO> getAllInvitationInIdea(String ideaId) {
-        String query = "SELECT inv.*, team.name team_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = team.id AND finish_date IS NULL) " +
-                "team_members_count, s.skill_id skill_id, s.name skill_name, s.type skill_type FROM idea_invitation inv " +
-                "LEFT JOIN team ON team.id = inv.team_id " +
-                "LEFT JOIN idea ON idea.id = inv.idea_id " +
+        String query = "SELECT inv.*, t.name team_name, " +
+                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) team_members_count, " +
+                "s.skill_id skill_id, s.name skill_name, s.type skill_type " +
+                "FROM idea_invitation inv " +
+                "LEFT JOIN team t ON t.id = inv.team_id " +
+                "LEFT JOIN idea i ON i.id = inv.idea_id " +
                 "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
-                "LEFT JOIN skill s ON s.id = skill_id " +
+                "LEFT JOIN skill s ON s.id = us.skill_id " +
                 "WHERE inv.idea_id = :ideaId";
         ConcurrentHashMap<String, IdeaInvitationDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient().sql(query)
@@ -135,11 +138,12 @@ public class IdeaInvitationService {
 
     public Mono<IdeaInvitationDTO> inviteToIdea(String ideaId, String teamId) {
         String query = """
-                SELECT inv.*, team.name team_name,idea.name idea_name, idea.initiator_id initiator_id,
+                SELECT inv.*, t.name team_name, i.name idea_name, i.initiator_id initiator_id,
                 s.skill_id skill_id, s.name skill_name, s.type skill_type,
-                (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id AND finish_date IS NULL) team_members_count FROM idea_invitation inv
-                LEFT JOIN idea ON idea.id = inv.idea_id
-                LEFT JOIN team ON team.id = inv.team_id
+                (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id AND finish_date IS NULL) team_members_count 
+                FROM idea_invitation inv
+                LEFT JOIN idea i ON i.id = inv.idea_id
+                LEFT JOIN team t ON t.id = inv.team_id
                 LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL
                 LEFT JOIN user_skill us ON us.user_id = tm.member_id
                 LEFT JOIN skill s ON s.id = us.skill_id
