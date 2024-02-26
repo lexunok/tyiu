@@ -286,6 +286,7 @@ public class IdeaMarketControllerTest extends TestContainers {
         TeamDTO ideaMarketTeam = getMarketIdea(ideaMarketId).getTeam();
         assertNotNull(ideaMarketTeam.getId());
         assertNotNull(ideaMarketTeam.getSkills().get(0).getId());
+        assertNotNull(ideaMarketTeam.getOwner());
         assertTrue(ideaMarketTeam.getSkills().size() >= 2);
         assertSame(getTeam(teamId).getHasActiveProject(), Boolean.TRUE);
     }
