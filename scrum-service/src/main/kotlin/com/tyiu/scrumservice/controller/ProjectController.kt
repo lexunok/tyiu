@@ -45,4 +45,7 @@ class ProjectController (private val projectService: ProjectService) {
     @PutMapping("/{projectId}/finish/change")
     suspend fun putFinishProject(@PathVariable projectId: String,@RequestBody projectFinishRequest: ProjectFinishRequest)= projectService.putFinishProject(projectId,projectFinishRequest)
 
+    @PutMapping("/leader/change")
+    suspend fun putTeamLeader(@RequestBody projectLeaderRequest: ProjectLeaderRequest)= projectService.putTeamLeader(projectLeaderRequest)
+
 }

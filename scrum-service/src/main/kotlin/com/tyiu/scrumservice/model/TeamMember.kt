@@ -16,7 +16,7 @@ interface TeamMemberRepository: CoroutineCrudRepository<TeamMember, String>{
 data class TeamMember(
     val teamId:String? = null,
     val userId:String? = null,
-    var teamRole:TeamRole?=null,
+    var teamRole:TeamRole?=TeamRole.MEMBER,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = null,
 )

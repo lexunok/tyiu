@@ -1,7 +1,6 @@
 package com.tyiu.scrumservice.service
 
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
-import com.tyiu.ideas.model.enums.Role
 import com.tyiu.ideas.model.toDTO
 import com.tyiu.scrumservice.model.*
 import kotlinx.coroutines.flow.Flow
@@ -78,22 +77,13 @@ class ProjectService(
             teamId = ideaMarketDTO.team.id
         )
         val prjSave = projectRepository.save(project)
-
         val members = ideaMarketDTO.team.id?.let {
             teamMemberRepository.findMemberByTeamId(it).map { m ->
-                val projectMember =  ProjectMember(
+                return@map ProjectMember(
                     projectId = prjSave.id,
                     userId = m.userId,
                     teamId = m.teamId
                 )
-                val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
-                if (userToProject?.roles?.contains(Role.TEAM_OWNER) == true) {
-                    projectMember.projectRole = ProjectRole.TEAM_LEADER
-                }
-                else{
-                    projectMember.projectRole = ProjectRole.MEMBER
-                }
-                return@map projectMember
             }
         }
         return projectMemberRepository.saveAll(members!!)
@@ -105,14 +95,6 @@ class ProjectService(
             userId = teamMemberRequest.userId,
             teamId = teamMemberRequest.teamId
         )
-        val userToProject = teamMemberRequest.userId?.let { userRepository.findById(it) }?.toDTO()
-        if (userToProject?.roles?.contains(Role.TEAM_OWNER) == true) {
-            projectMember.projectRole = ProjectRole.TEAM_LEADER
-        }
-        else{
-            projectMember.projectRole = ProjectRole.MEMBER
-        }
-
         return projectMemberRepository.save(projectMember)
     }
 
@@ -136,6 +118,13 @@ class ProjectService(
             .bind("finishDate", projectFinishRequest.finishDate!!)
             .bind("projectReport", projectFinishRequest.projectReport!!)
             .bind("projectId", projectId).await()
+    }
+
+    suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
+        val query = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
+        return template.databaseClient.sql(query)
+            .bind("userId", projectLeaderRequest.userId!!)
+            .bind("projectId",projectLeaderRequest.projectId!!).await()
     }
 }
 
