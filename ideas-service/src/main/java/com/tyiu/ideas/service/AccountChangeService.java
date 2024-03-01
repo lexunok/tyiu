@@ -118,6 +118,8 @@ public class AccountChangeService {
                             .id(u.getId())
                             .email(u.getEmail())
                             .roles(u.getRoles())
+                            .telephone(u.getTelephone())
+                            .studyGroup(u.getStudyGroup())
                             .firstName(u.getFirstName())
                             .lastName(u.getLastName())
                             .createdAt(u.getCreatedAt())

@@ -27,6 +27,8 @@ public class User implements UserDetails {
     private String firstName;
     private Boolean isDeleted;
     private List<Role> roles;
+    private String studyGroup;
+    private String telephone;
     private String password;
     private LocalDateTime createdAt;
 

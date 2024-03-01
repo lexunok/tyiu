@@ -9,6 +9,8 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 public class RegisterRequest {
+    private String studyGroup;
+    private String telephone;
     private String email;
     private String lastName;
     private String firstName;

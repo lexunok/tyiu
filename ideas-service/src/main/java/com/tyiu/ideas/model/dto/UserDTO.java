@@ -13,6 +13,8 @@ import lombok.*;
 public class UserDTO {
     private String id;
     private String email;
+    private String studyGroup;
+    private String telephone;
     private String lastName;
     private String firstName;
     private List<Role> roles;
