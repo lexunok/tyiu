@@ -58,7 +58,6 @@ class ProjectService(
             projectMember.email = userToProject?.email
             projectMember.firstName = userToProject?.firstName
             projectMember.lastName = userToProject?.lastName
-            //projectMember.projectRole =
             return@map projectMember
         }
 
@@ -68,7 +67,6 @@ class ProjectService(
             val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
             projectMarks.firstName = userToProject?.firstName
             projectMarks.lastName = userToProject?.lastName
-            //projectMarks.projectRole =
             projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
             return@map projectMarks
         }
@@ -120,6 +118,13 @@ class ProjectService(
             .bind("finishDate", projectFinishRequest.finishDate!!)
             .bind("projectReport", projectFinishRequest.projectReport!!)
             .bind("projectId", projectId).await()
+    }
+
+    suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
+        val query = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
+        return template.databaseClient.sql(query)
+            .bind("userId", projectLeaderRequest.userId!!)
+            .bind("projectId",projectLeaderRequest.projectId!!).await()
     }
 }
 
