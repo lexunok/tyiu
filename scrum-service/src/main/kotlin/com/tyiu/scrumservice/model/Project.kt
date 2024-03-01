@@ -4,7 +4,6 @@ import com.tyiu.ideas.model.dto.TeamDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
-import org.springframework.data.r2dbc.repository.Modifying
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
