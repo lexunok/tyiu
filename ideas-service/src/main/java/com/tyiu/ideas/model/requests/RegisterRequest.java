@@ -3,11 +3,13 @@ package com.tyiu.ideas.model.requests;
 import com.tyiu.ideas.model.enums.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class RegisterRequest {
     private String studyGroup;
     private String telephone;
