@@ -14,12 +14,7 @@ import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.requests.ChangeRequest;
 import com.tyiu.ideas.model.responses.ChangeResponse;
 import com.tyiu.ideas.model.responses.InvitationResponse;
-
-import java.security.SecureRandom;
-import java.time.LocalDateTime;
-
 import lombok.RequiredArgsConstructor;
-
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -31,6 +26,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.core.scheduler.Schedulers;
+
+import java.security.SecureRandom;
+import java.time.LocalDateTime;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -112,12 +110,12 @@ public class AccountChangeService {
                 );
     }
 
+    //на авторизационный сервер
     public Flux<UserDTO> getUsersInfo(){
         return template.select(User.class).matching(query(where("is_deleted").isFalse())).all()
                 .flatMap(u -> Mono.just(UserDTO.builder()
                             .id(u.getId())
                             .email(u.getEmail())
-                            .roles(u.getRoles())
                             .telephone(u.getTelephone())
                             .studyGroup(u.getStudyGroup())
                             .firstName(u.getFirstName())

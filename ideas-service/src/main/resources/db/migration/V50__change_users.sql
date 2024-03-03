@@ -1,0 +1,4 @@
+ALTER TABLE users
+DROP COLUMN password,
+DROP COLUMN roles,
+ALTER COLUMN id TYPE TEXT;
