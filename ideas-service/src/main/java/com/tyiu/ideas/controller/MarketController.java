@@ -2,7 +2,6 @@ package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.config.exception.NotFoundException;
 import com.tyiu.ideas.model.dto.MarketDTO;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.MarketStatus;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import com.tyiu.ideas.service.MarketService;
@@ -10,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -29,19 +29,19 @@ public class MarketController {
     ///////////////////////
 
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Flux<MarketDTO> getAll(){
         return marketService.getAll();
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Flux<MarketDTO> getActiveMarket(){
         return marketService.getActiveMarkets();
     }
 
     @GetMapping("/{marketId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<MarketDTO> getMarket(@PathVariable String marketId){
         return marketService.getMarket(marketId);
     }
@@ -54,7 +54,7 @@ public class MarketController {
     //////////////////////////////
 
     @PostMapping("/create")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<MarketDTO> createMarket(@RequestBody MarketDTO market){
         return marketService.createMarket(market)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать биржу")));
@@ -68,7 +68,7 @@ public class MarketController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{marketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<InfoResponse> deleteMarket(@PathVariable String marketId){
         return marketService.deleteMarket(marketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
@@ -83,18 +83,18 @@ public class MarketController {
     ////////////////////////
 
     @PutMapping("/update/{marketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<MarketDTO> updateMarket(@PathVariable String marketId, @RequestBody MarketDTO market){
         return marketService.updateMarket(marketId, market)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при редактировании")));
     }
 
     @PutMapping("/status/{marketId}/{status}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<MarketDTO> updateStatus(@PathVariable String marketId,
                                         @PathVariable MarketStatus status,
-                                        @AuthenticationPrincipal User user){
-        return marketService.updateStatus(marketId, status, user)
+                                        @AuthenticationPrincipal Jwt jwt){
+        return marketService.updateStatus(marketId, status, jwt)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 }

@@ -149,7 +149,8 @@ public class ProfileService {
         return template.delete(query(where("user_id").is(userId)), User2Skill.class)
                 .thenMany(skills.flatMap(s ->
                         template.insert(new User2Skill(userId,s.getId()))
-                                .then().thenReturn(s)
+                                .then()
+                                .thenReturn(s)
                         )
                 );
     }

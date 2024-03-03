@@ -2,7 +2,6 @@ package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.requests.ProfileUpdateRequest;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import com.tyiu.ideas.service.ProfileService;
@@ -13,6 +12,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.codec.multipart.FilePart;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -44,27 +44,27 @@ public class ProfileController {
     }
 
     @PostMapping("/avatar/upload")
-    public Mono<ResponseEntity<Mono<FileSystemResource>>> uploadAvatar(@AuthenticationPrincipal User user,
+    public Mono<ResponseEntity<Mono<FileSystemResource>>> uploadAvatar(@AuthenticationPrincipal Jwt jwt,
                                                                        @RequestPart("file") FilePart file) {
         return Mono.just(ResponseEntity
                 .ok()
                 .contentType(MediaType.IMAGE_JPEG)
-                .body(profileService.uploadAvatar(user.getId(),file)));
+                .body(profileService.uploadAvatar(jwt.getId(),file)));
     }
 
     @GetMapping("/{userId}")
     public Mono<ProfileDTO> getUserProfile(@PathVariable String userId,
-                                           @AuthenticationPrincipal User user) {
-        return profileService.getUserProfile(userId, user.getId());
+                                           @AuthenticationPrincipal Jwt jwt) {
+        return profileService.getUserProfile(userId, jwt.getId());
     }
 
     @PostMapping("/skills/save")
-    public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal User user, @RequestBody Flux<SkillDTO> skills) {
-        return profileService.saveSkills(user.getId(), skills);
+    public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal Jwt jwt, @RequestBody Flux<SkillDTO> skills) {
+        return profileService.saveSkills(jwt.getId(), skills);
     }
     @PutMapping("/update")
-    public Mono<InfoResponse> updateProfile(@AuthenticationPrincipal User user, @RequestBody ProfileUpdateRequest request) {
-        return profileService.updateProfile(user.getId(), request)
+    public Mono<InfoResponse> updateProfile(@AuthenticationPrincipal Jwt jwt, @RequestBody ProfileUpdateRequest request) {
+        return profileService.updateProfile(jwt.getId(), request)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное изменение"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Не удалось изменить"));
     }

@@ -18,7 +18,11 @@ import io.r2dbc.spi.Batch;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,12 +39,29 @@ import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "teams")
 public class TeamService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
     private final EmailService emailService;
-    private final String path = "https://hits.tyuiu.ru/";
+
+    private final String filterQUERY = """
+                SELECT
+                    t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, 
+                    t.created_at as team_created_at, t.has_active_project as team_has_active_project,
+                    tr.team_id as refused_team_id,
+                    o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name,
+                    l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name,
+                    (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count,
+                    (SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member
+                FROM team t
+                    LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id
+                    LEFT JOIN users o ON t.owner_id = o.id
+                    LEFT JOIN users l ON t.leader_id = l.id
+                    LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL
+                    LEFT JOIN user_skill us ON us.user_id = tm.member_id
+                """;
 
     private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
         return template.selectOne(query(where("id").is(teamId)), Team.class)
@@ -142,6 +163,7 @@ public class TeamService {
     //\___/  /___/  /_/
     ///////////////////////
 
+    @Cacheable
     public Mono<TeamDTO> getTeam(String teamId, String userId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
@@ -177,7 +199,7 @@ public class TeamService {
                 .map(t -> t.get(0));
     }
 
-
+    @Cacheable
     public Flux<TeamDTO> getTeams(String userId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
@@ -197,6 +219,7 @@ public class TeamService {
                 .map((row, rowMetadata) -> buildTeamDTO(row)).all();
     }
 
+    @Cacheable
     public Flux<TeamDTO> getOwnerTeams(String ownerId, String ideaMarketId) {
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
@@ -245,6 +268,7 @@ public class TeamService {
                 }).all();
     }
 
+    @Cacheable
     public Flux<TeamMemberDTO> getAllUsersWithSkills() {
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id AS skill_id, s.name AS skill_name, s.type AS skill_type " +
@@ -277,22 +301,27 @@ public class TeamService {
                     map.put(userId,member);
                     return member;
                 })
-                .all().thenMany(Flux.fromIterable(map.values()));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()));
 
     }
 
+    @Cacheable
     public Flux<TeamInvitation> getInvitations(String userId) {
         return template.select(query(where("user_id").is(userId)), TeamInvitation.class);
     }
 
+    @Cacheable
     public Flux<TeamRequest> getTeamRequests(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamRequest.class);
     }
 
+    @Cacheable
     public Flux<TeamInvitation> getInvitationByTeam(String teamId) {
         return template.select(query(where("team_id").is(teamId)), TeamInvitation.class);
     }
 
+    @Cacheable
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
         String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.market_id, tmr.team_id, tmr.status, tmr.letter, " +
                 "i.name AS name " +
@@ -315,6 +344,7 @@ public class TeamService {
                 .all();
     }
 
+    @Cacheable
     public Flux<TeamMemberDTO> getAllUsersInTeams() {
         String QUERY = "SELECT tm.*, u.id, u.email, u.first_name, u.last_name " +
                 "FROM team_member tm " +
@@ -338,6 +368,7 @@ public class TeamService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
+    @CacheEvict(allEntries = true)
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
         Team team = Team.builder()
                 .name(teamDTO.getName())
@@ -385,23 +416,9 @@ public class TeamService {
                 });
     }
 
+    @Cacheable
     public Flux<TeamDTO> getTeamsBySkills(List<SkillDTO> selectedSkills, Role role, String userId) {
-        String QUERY = """
-                SELECT
-                    t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed,
-                    t.created_at as team_created_at, t.has_active_project as team_has_active_project,
-                    tr.team_id as refused_team_id,
-                    o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name,
-                    l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name,
-                    (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count,
-                    (SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member
-                FROM team t
-                    LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id
-                    LEFT JOIN users o ON t.owner_id = o.id
-                    LEFT JOIN users l ON t.leader_id = l.id
-                    LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL
-                    LEFT JOIN user_skill us ON us.user_id = tm.member_id
-                """;
+        String QUERY = filterQUERY;
         if (role == Role.INITIATOR)
         {
             QUERY = QUERY + "WHERE us.skill_id IN (:skills)";
@@ -414,47 +431,41 @@ public class TeamService {
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
+    @Cacheable
     public Flux<TeamDTO> getTeamsByVacancies(List<SkillDTO> selectedSkills, String userId) {
-        String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, t.description as team_description, t.closed as team_closed, t.created_at as team_created_at, t.has_active_project as team_has_active_project, " +
-                "tr.team_id as refused_team_id, " +
-                "o.id as owner_id, o.email as owner_email, o.first_name as owner_first_name, o.last_name as owner_last_name, " +
-                "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count, " +
-                "(SELECT EXISTS (SELECT 1 FROM team_member WHERE member_id = :userId AND finish_date IS NULL)) as existed_member " +
-                "FROM team t " +
-                "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
-                "LEFT JOIN users o ON t.owner_id = o.id " +
-                "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
-                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
-                "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
+        String QUERY = filterQUERY + "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
                 "WHERE tws.skill_id IN (:skills) AND us.skill_id NOT IN (:skills)";
 
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, User userInviter) {
-        return users.flatMap(user -> {
-            user.setStatus(RequestStatus.NEW);
-            return template.insert(user)
-                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, user.getTeamId())
-                            .thenReturn(teamInvitation));
-        });
+    @CacheEvict(allEntries = true)
+    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, Jwt jwt) {
+        return template.selectOne(query(where("id").is(jwt.getId())), User.class)
+                .flatMapMany(u -> users.flatMap(user -> {
+                    user.setStatus(RequestStatus.NEW);
+                    return template.insert(user)
+                            .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), u, user.getTeamId())
+                                    .thenReturn(teamInvitation));
+                }));
     }
 
-    public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
-        return template.insert(TeamRequest.builder()
-                .teamId(teamId)
-                .userId(user.getId())
-                .email(user.getEmail())
-                .firstName(user.getFirstName())
-                .lastName(user.getLastName())
-                .createdAt(LocalDate.now())
-                .status(RequestStatus.NEW)
-                .build());
+    @CacheEvict(allEntries = true)
+    public Mono<TeamRequest> sendTeamRequest(String teamId, Jwt jwt) {
+        return template.selectOne(query(where("id").is(jwt.getId())), User.class)
+                .flatMap(u -> template.insert(TeamRequest.builder()
+                        .teamId(teamId)
+                        .userId(u.getId())
+                        .email(u.getEmail())
+                        .firstName(u.getFirstName())
+                        .lastName(u.getLastName())
+                        .createdAt(LocalDate.now())
+                        .status(RequestStatus.NEW)
+                        .build())
+                );
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<TeamMemberDTO> addTeamMember(String teamId, String userId) {
         String query = "SELECT u.id as user_id, u.email, u.first_name, u.last_name, " +
                 "s.id as skill_id, s.name as skill_name, s.type as skill_type " +
@@ -492,14 +503,17 @@ public class TeamService {
                         }).last());
     }
 
+    @CacheEvict(allEntries = true)
     public Flux<SkillDTO> getSkillsByUsers(List<UserDTO> users) {
         return getSkillsByList(users.stream().map(UserDTO::getId).toList());
     }
 
+    @CacheEvict(allEntries = true)
     public Flux<SkillDTO> getSkillsByInvitations(List<TeamInvitation> users) {
         return getSkillsByList(users.stream().map(TeamInvitation::getUserId).toList());
     }
 
+    @CacheEvict(allEntries = true)
     public Flux<SkillDTO> getSkillsByRequests(List<TeamRequest> users) {
         return getSkillsByList(users.stream().map(TeamRequest::getUserId).toList());
     }
@@ -511,16 +525,18 @@ public class TeamService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteTeam(String teamId, User user) {
-        return checkOwner(teamId, user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<Void> deleteTeam(String teamId, Jwt jwt) {
+        return checkOwner(teamId, jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                         return template.delete(query(where("id").is(teamId)), Team.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<Void> kickFromTeam(String teamId, String userId) {
         return template.update(query(where("team_id").is(teamId)
                                 .and("member_id").is(userId)),
@@ -531,6 +547,7 @@ public class TeamService {
                 .then();
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<Void> leaveFromTeam(String teamId, String userId) {
         return template.update(query(where("team_id").is(teamId)
                                 .and("member_id").is(userId)),
@@ -547,10 +564,11 @@ public class TeamService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, User user) {
-        return checkOwner(teamId, user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, Jwt jwt) {
+        return checkOwner(teamId, jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
                         Team team = mapper.map(teamDTO, Team.class);
                         team.setId(teamId);
                         return template.update(team).thenReturn(teamDTO);
@@ -559,10 +577,11 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
-        return checkOwner(teamId, user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, Jwt jwt) {
+        return checkOwner(teamId, jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
                         return template.delete(query(where("team_id").is(teamId)), Team2WantedSkill.class)
                                 .then(wantedSkills.flatMap(s -> template.insert(new Team2WantedSkill(teamId, s.getId()))).then());
                     }
@@ -570,26 +589,29 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> changeTeamLeader(String teamId, String userId, User user) {
-        return checkOwner(teamId, user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<Void> changeTeamLeader(String teamId, String userId, Jwt jwt) {
+        return checkOwner(teamId, jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
                         return template.update(query(where("id").is(teamId)),
                                 update("leader_id", userId),
                                 Team.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
-                }).then();
+                })
+                .then();
     }
 
-    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, User user) {
+    @CacheEvict(allEntries = true)
+    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, Jwt jwt) {
         return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
                 .flatMap(invitation -> {
                     invitation.setStatus(newStatus);
                     if (newStatus.equals(RequestStatus.ACCEPTED)) {
-                        return checkInitiator(invitationId, user.getId())
+                        return checkInitiator(invitationId, jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return annul(invitation.getUserId())
                                                 .then(template.update(invitation))
                                                 .thenReturn(invitation);
@@ -598,24 +620,24 @@ public class TeamService {
                                 });
                     }
                     else if (newStatus.equals(RequestStatus.CANCELED)){
-                        return checkInitiator(invitationId, user.getId())
+                        return checkInitiator(invitationId, jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.update(invitation).thenReturn(invitation);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
                     else if (newStatus.equals(RequestStatus.WITHDRAWN)) {
-                        return checkOwner(invitation.getTeamId(), user.getId())
+                        return checkOwner(invitation.getTeamId(), jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.update(invitation).thenReturn(invitation);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
-                    else if (user.getRoles().contains(Role.ADMIN) &&
+                    else if (jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN)) &&
                             (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.ANNULLED))) {
                         return template.update(invitation).thenReturn(invitation);
                     }
@@ -623,14 +645,15 @@ public class TeamService {
                 });
     }
 
-    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, User user) {
+    @CacheEvict(allEntries = true)
+    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, Jwt jwt) {
         return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
                     request.setStatus(newStatus);
                     if (newStatus.equals(RequestStatus.CANCELED)){
-                        return checkOwner(request.getTeamId(), user.getId())
+                        return checkOwner(request.getTeamId(), jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.insert(new Team2Refused(request.getTeamId(), request.getUserId()))
                                                 .then(template.update(request))
                                                 .thenReturn(request);
@@ -639,9 +662,9 @@ public class TeamService {
                                 });
                     }
                     else if (newStatus.equals(RequestStatus.ACCEPTED)){
-                        return checkOwner(request.getTeamId(), user.getId())
+                        return checkOwner(request.getTeamId(), jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return annul(request.getUserId())
                                                 .then(template.update(request))
                                                 .thenReturn(request);
@@ -650,16 +673,16 @@ public class TeamService {
                                 });
                     }
                     else if (newStatus.equals(RequestStatus.WITHDRAWN)) {
-                        return template.exists(query(where("user_id").is(user.getId())
+                        return template.exists(query(where("user_id").is(jwt.getId())
                                         .and("id").is(requestId)), TeamRequest.class)
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.update(request).thenReturn(request);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
-                    else if (user.getRoles().contains(Role.ADMIN) &&
+                    else if (jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN)) &&
                             (newStatus.equals(RequestStatus.NEW) || newStatus.equals(RequestStatus.ANNULLED))){
                         return template.update(request).thenReturn(request);
                     }

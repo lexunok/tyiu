@@ -24,13 +24,14 @@ import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 import java.time.LocalDateTime;
 
-import static com.tyiu.ideas.model.entities.Idea.*;
+import static com.tyiu.ideas.model.entities.Idea.Status;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
@@ -43,6 +44,18 @@ public class IdeaService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
+
+    private final String listQUERY = """
+                SELECT
+                    idea.*, i.first_name initiator_first_name,
+                    i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
+                    EXISTS (
+                        SELECT 1 FROM idea_checked ic
+                        WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+                    ) as is_checked
+                FROM idea
+                    LEFT JOIN users i ON idea.initiator_id = i.id
+                """;
 
     private IdeaDTO buildIdeaDTO(Row row){
         IdeaDTO ideaDTO = IdeaDTO.builder()
@@ -72,19 +85,39 @@ public class IdeaService {
         return ideaDTO;
     }
 
+    private Flux<IdeaDTO> getList(String query, String userId){
+        return template.getDatabaseClient()
+                .sql(query)
+                .bind("userId", userId)
+                .map((row, rowMetadata) -> {
+                    IdeaDTO ideaDTO = buildIdeaDTO(row);
+                    ideaDTO.setInitiator(UserDTO.builder()
+                            .email(row.get("initiator_email",String.class))
+                            .firstName(row.get("initiator_first_name",String.class))
+                            .lastName(row.get("initiator_last_name",String.class))
+                            .id(row.get("initiator_id",String.class))
+                            .build());
+                    return ideaDTO;
+                })
+                .all();
+    }
+
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId, String userId) {
         String query = """
-                SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id,
-                i.first_name initiator_first_name, i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
-                EXISTS (
-                            SELECT 1 FROM idea_checked ic
-                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
-                        ) as is_checked
-                FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id
-                LEFT JOIN groups p ON idea.group_project_office_id = p.id
-                LEFT JOIN users i ON idea.initiator_id = i.id
-                WHERE idea.id =:ideaId""";
+                SELECT 
+                    idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id,
+                    i.first_name initiator_first_name, i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
+                    EXISTS (
+                        SELECT 1 FROM idea_checked ic
+                        WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+                    ) as is_checked
+                FROM idea 
+                    LEFT JOIN groups e ON idea.group_expert_id = e.id
+                    LEFT JOIN groups p ON idea.group_project_office_id = p.id
+                    LEFT JOIN users i ON idea.initiator_id = i.id
+                WHERE idea.id =:ideaId
+                """;
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
@@ -109,109 +142,43 @@ public class IdeaService {
                 })
                 .first()
                 .flatMap(i -> template.exists(query(where("user_id").is(userId)
-                        .and("idea_id").is(i.getId())), Idea2Checked.class).flatMap(isExists -> {
-                    if (Boolean.FALSE.equals(isExists)){
-                        return template.insert(new Idea2Checked(userId, i.getId()));
-                    }
-                    return Mono.empty();
-                }).thenReturn(i))
+                                .and("idea_id").is(i.getId())), Idea2Checked.class)
+                        .flatMap(isExists -> {
+                            if (Boolean.FALSE.equals(isExists)){
+                                return template.insert(new Idea2Checked(userId, i.getId()));
+                            }
+                            return Mono.empty();
+                        })
+                        .thenReturn(i)
+                )
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea(String userId) {
-        String query = """
-                SELECT idea.*, i.first_name initiator_first_name,
-                i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
-                    EXISTS (
-                            SELECT 1 FROM idea_checked ic
-                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
-                        ) as is_checked
-                FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
-                """;
-        return template.getDatabaseClient().sql(query)
-                .bind("userId", userId)
-                .map((row, rowMetadata) -> {
-                    IdeaDTO ideaDTO = buildIdeaDTO(row);
-                    ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
-                    return ideaDTO;
-                })
-                .all();
-//        return template.select(Idea.class).all()
-//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(userId)), Idea2Checked.class)
-//                        .flatMap(isExists -> {
-//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-//                            ideaDTO.setIsChecked(isExists);
-//                            return Mono.just(ideaDTO);
-//                        }));
+        return getList(listQUERY, userId);
     }
 
     @Cacheable
-    public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
-        String query = """
-                SELECT idea.*, i.first_name initiator_first_name,
-                i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
-                       EXISTS (
-                            SELECT 1 FROM idea_checked
-                            WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
-                        ) as is_checked
-                FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
-                WHERE idea.initiator_id = :id
-                """;
-        return template.getDatabaseClient().sql(query)
-                .bind("userId", user.getId())
-                .bind("id", user.getId())
-                .map((row, rowMetadata) -> {
-                    IdeaDTO ideaDTO = buildIdeaDTO(row);
-                    ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
-                    return ideaDTO;
-                })
-                .all();
-//        return template.select(query(where("initiator_email").is(user.getEmail())), Idea.class)
-//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(user.getId())), Idea2Checked.class)
-//                        .flatMap(isExists -> {
-//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-//                            ideaDTO.setIsChecked(isExists);
-//                            return Mono.just(ideaDTO);
-//                        }));
+    public Flux<IdeaDTO> getListIdeaByInitiator(String userId) {
+        return getList(listQUERY + " WHERE idea.initiator_id = :userId", userId);
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
         String query = """
-                SELECT r.idea_id, r.is_confirmed, idea.*, i.first_name initiator_first_name,
-                i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
-                EXISTS (
-                            SELECT 1 FROM idea_checked
-                            WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
-                        ) as is_checked
+                SELECT
+                    r.idea_id, r.is_confirmed, idea.*, i.first_name initiator_first_name,
+                    i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
+                    EXISTS (
+                        SELECT 1 FROM idea_checked
+                        WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
+                    ) as is_checked
                 FROM rating r
-                JOIN idea ON idea.id = r.idea_id AND idea.status = 'ON_CONFIRMATION'
-                LEFT JOIN users i ON idea.initiator_id = i.id
+                    JOIN idea ON idea.id = r.idea_id AND idea.status = 'ON_CONFIRMATION'
+                    LEFT JOIN users i ON idea.initiator_id = i.id
                 WHERE expert_id = :userId AND r.is_confirmed IS FALSE
                 """;
-        return template.getDatabaseClient().sql(query)
-                .bind("userId", userId)
-                .map((row, rowMetadata) -> {
-                    IdeaDTO ideaDTO = buildIdeaDTO(row);
-                    ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
-                    return ideaDTO;
-                })
-                .all();
+        return getList(query, userId);
     }
 
     @CacheEvict(allEntries = true)
@@ -287,26 +254,31 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteIdea(String ideaId, User user) {
-        if (user.getRoles().contains(Role.ADMIN)) {
+    public Mono<Void> deleteIdea(String ideaId, Jwt jwt) {
+        if (jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
             return template.delete(query(where("id").is(ideaId)), Idea.class).then();
         }
         else return template.delete(query(where("id").is(ideaId)
-                .and("initiator_email").is(user.getEmail())), Idea.class).then()
+                        .and("initiator_email").is(jwt.getClaimAsString("sub"))), Idea.class)
+                .then()
                 .switchIfEmpty(Mono.error(new AccessException("Нет Прав!")));
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusByInitiator (String ideaId, String initiatorId){
-        return template.update(query(where("id").is(ideaId).and(where("initiator_id").is(initiatorId))),
-                update("status", Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()),Idea.class).then();
+        return template.update(query(where("id").is(ideaId)
+                        .and(where("initiator_id").is(initiatorId))),
+                update("status", Status.ON_APPROVAL)
+                        .set("modified_at", LocalDateTime.now()),
+                Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> updateStatusIdea(String ideaId, StatusIdeaRequest newStatus){
         return template.update(query(where("id").is(ideaId)),
-                        update("status", newStatus.getStatus())
-                                .set("modified_at", LocalDateTime.now()),Idea.class).then();
+                update("status", newStatus.getStatus())
+                        .set("modified_at", LocalDateTime.now()),
+                Idea.class).then();
     }
 
     @CacheEvict(allEntries = true)
@@ -318,8 +290,9 @@ public class IdeaService {
         return template.update(ideaToSave).then();
     }
 
-    public Mono<Void> addIdeaSkills(IdeaSkillRequest request, User user) {
-        if (user.getRoles().contains(Role.ADMIN)) {
+    @CacheEvict(allEntries = true)
+    public Mono<Void> addIdeaSkills(IdeaSkillRequest request, Jwt jwt) {
+        if (jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
             return template.getDatabaseClient().inConnection(connection -> {
                 Batch batch = connection.createBatch();
                 request.getSkills().forEach(s -> batch.add(
@@ -329,8 +302,8 @@ public class IdeaService {
                 return Mono.from(batch.execute());
             }).then();
         }
-        return template.exists(query(where("initiator_id").is(user.getId())
-                .and(where("id").is(request.getIdeaId()))),Idea.class)
+        return template.exists(query(where("initiator_id").is(jwt.getId())
+                        .and(where("id").is(request.getIdeaId()))),Idea.class)
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)) {
                         return template.getDatabaseClient().inConnection(connection -> {
@@ -346,45 +319,49 @@ public class IdeaService {
                 }).then();
     }
 
-    public Mono<Void> updateIdeaSkills(IdeaSkillRequest request, User user) {
-        if (user.getRoles().contains(Role.ADMIN)) {
+    @CacheEvict(allEntries = true)
+    public Mono<Void> updateIdeaSkills(IdeaSkillRequest request, Jwt jwt) {
+        if (jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
             return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
-                    .flatMap(r ->
-                            template.getDatabaseClient().inConnection(connection -> {
-                                Batch batch = connection.createBatch();
-                                request.getSkills().forEach(s -> batch.add(
-                                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
-                                                request.getIdeaId(),s.getId())
-                                ));
-                                return Mono.from(batch.execute());
-                            })
-                    ).then(template.update(query(where("id").is(request.getIdeaId())),
-                            update("modified_at",LocalDateTime.now()), Idea.class))
+                    .flatMap(r -> template.getDatabaseClient().inConnection(connection -> {
+                        Batch batch = connection.createBatch();
+                        request.getSkills().forEach(s -> batch.add(
+                                String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
+                                        request.getIdeaId(),s.getId())
+                        ));
+                        return Mono.from(batch.execute());
+                    })
+                    )
+                    .then(template.update(query(where("id").is(request.getIdeaId())),
+                            update("modified_at",LocalDateTime.now()),
+                            Idea.class))
                     .then();
         }
-        return template.exists(query(where("initiator_id").is(user.getId())
-                .and("id").is(request.getIdeaId())),Idea.class)
+        return template.exists(query(where("initiator_id").is(jwt.getId())
+                        .and("id").is(request.getIdeaId())),Idea.class)
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)) {
                         return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
-                                .flatMap(r ->
-                                        template.getDatabaseClient().inConnection(connection -> {
-                                            Batch batch = connection.createBatch();
-                                            request.getSkills().forEach(s -> batch.add(
-                                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
-                                                            request.getIdeaId(),s.getId())
-                                            ));
-                                            return Mono.from(batch.execute());
-                                        }).then()
-                                ).then(template.update(query(where("id").is(request.getIdeaId())),
-                                        update("modified_at",LocalDateTime.now()), Idea.class))
+                                .flatMap(r -> template.getDatabaseClient().inConnection(connection -> {
+                                    Batch batch = connection.createBatch();
+                                    request.getSkills().forEach(s -> batch.add(
+                                            String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
+                                                    request.getIdeaId(),s.getId())
+                                    ));
+                                    return Mono.from(batch.execute());
+                                }).then()
+                                )
+                                .then(template.update(query(where("id").is(request.getIdeaId())),
+                                        update("modified_at",LocalDateTime.now()),
+                                        Idea.class))
                                 .then();
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
     }
 
-    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, User user) {
+    @Cacheable
+    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, Jwt jwt) {
         String query = """
                 SELECT skill.*, i.skill_id skill_id FROM idea_skill i
                 LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId""";
@@ -397,23 +374,24 @@ public class IdeaService {
                             .type(SkillType.valueOf(row.get("type",String.class)))
                             .confirmed(row.get("confirmed",Boolean.class))
                             .build()
-                ).all().collectList()
-                .flatMap(list ->
-                    template.exists(query(where("initiator_id").is(user.getId())
-                            .and("id").is(ideaId)),Idea.class)
-                                    .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists)
-                                                || user.getRoles().contains(Role.ADMIN)
-                                                || user.getRoles().contains(Role.EXPERT)
-                                                || user.getRoles().contains(Role.PROJECT_OFFICE)
-                                                || user.getRoles().contains(Role.MEMBER)) {
-                                            return  Mono.just(IdeaSkillRequest.builder()
-                                                    .skills(list)
-                                                    .ideaId(ideaId)
-                                                    .build());
-                                        }
-                                        return Mono.error(new AccessException("Нет Прав"));
-                                    })
+                )
+                .all()
+                .collectList()
+                .flatMap(list -> template.exists(query(where("initiator_id").is(jwt.getId())
+                                .and("id").is(ideaId)),Idea.class)
+                        .flatMap(isExists -> {
+                            if (Boolean.TRUE.equals(isExists)
+                                    || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))
+                                    || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.EXPERT))
+                                    || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.PROJECT_OFFICE))
+                                    || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.MEMBER))) {
+                                return Mono.just(IdeaSkillRequest.builder()
+                                        .skills(list)
+                                        .ideaId(ideaId)
+                                        .build());
+                            }
+                            return Mono.error(new AccessException("Нет Прав"));
+                        })
                 );
     }
 }

@@ -2,11 +2,11 @@ package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.IdeaInvitationDTO;
 import com.tyiu.ideas.model.dto.IdeaMarketDTO;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.requests.IdeaInvitationStatusRequest;
 import com.tyiu.ideas.service.IdeaInvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,12 +19,12 @@ public class IdeaInvitationController {
     private final IdeaInvitationService ideaInvitationService;
 
     @GetMapping("/idea-market")
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeasForInvitations(@AuthenticationPrincipal User user) {
-        return ideaInvitationService.getAllInitiatorMarketIdeasForInvitations(user.getId());
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeasForInvitations(@AuthenticationPrincipal Jwt jwt) {
+        return ideaInvitationService.getAllInitiatorMarketIdeasForInvitations(jwt.getId());
     }
     @GetMapping("/all/initiator")
-    public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(@AuthenticationPrincipal User user) {
-        return ideaInvitationService.getAllInvitationsByInitiator(user.getId());
+    public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(@AuthenticationPrincipal Jwt jwt) {
+        return ideaInvitationService.getAllInvitationsByInitiator(jwt.getId());
     }
 
     @GetMapping("/team/all/{teamId}")

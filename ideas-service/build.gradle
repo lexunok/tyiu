@@ -11,6 +11,7 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation "org.springframework.boot:spring-boot-starter-freemarker"
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.modelmapper:modelmapper:3.1.1'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
 	implementation 'org.flywaydb:flyway-core:9.21.0'

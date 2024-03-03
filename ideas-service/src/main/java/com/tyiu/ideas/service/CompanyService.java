@@ -1,8 +1,11 @@
 package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.model.dto.CompanyDTO;
+import com.tyiu.ideas.model.dto.UserDTO;
+import com.tyiu.ideas.model.entities.Company;
 import com.tyiu.ideas.model.entities.mappers.CompanyMapper;
 import com.tyiu.ideas.model.entities.relations.Company2User;
+import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
@@ -10,14 +13,11 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
-import com.tyiu.ideas.model.dto.UserDTO;
-import com.tyiu.ideas.model.entities.Company;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -47,11 +47,25 @@ public class CompanyService {
                 .map(c -> c.get(0));
     }
 
+    private CompanyDTO buildCompanyDTO(Row row) {
+        return CompanyDTO.builder()
+                .id(row.get("id", String.class))
+                .name(row.get("name", String.class))
+                .owner(UserDTO.builder()
+                        .id(row.get("user_id", String.class))
+                        .firstName(row.get("first_name", String.class))
+                        .lastName(row.get("last_name", String.class))
+                        .email(row.get("email", String.class))
+                        .build())
+                .build();
+    }
+
     @Cacheable
     public Mono<CompanyDTO> getCompanyById(String companyId){
         return getCompany(companyId);
     }
 
+    @Cacheable
     public Flux<CompanyDTO> getMembersListCompany(String userId) {
         String QUERY = "SELECT company_user.company_id, company.*, users.id user_id, users.email, users.first_name, users.last_name " +
                 "FROM company_user " +
@@ -61,16 +75,7 @@ public class CompanyService {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId",userId)
-                .map((row, rowMetadata) -> CompanyDTO.builder()
-                        .id(row.get("id", String.class))
-                        .name(row.get("name", String.class))
-                        .owner(UserDTO.builder()
-                                .id(row.get("user_id", String.class))
-                                .firstName(row.get("first_name", String.class))
-                                .lastName(row.get("last_name", String.class))
-                                .email(row.get("email", String.class))
-                                .build())
-                        .build())
+                .map((row, rowMetadata) -> buildCompanyDTO(row))
                 .all();
     }
 
@@ -80,16 +85,8 @@ public class CompanyService {
                 .sql("SELECT company.*, users.id user_id, users.email, users.first_name, users.last_name " +
                         "FROM company " +
                         "LEFT JOIN users ON company.owner_id = users.id")
-                .map((row, rowMetadata) -> CompanyDTO.builder()
-                                .id(row.get("id", String.class))
-                                .name(row.get("name", String.class))
-                                .owner(UserDTO.builder()
-                                        .id(row.get("user_id", String.class))
-                                        .firstName(row.get("first_name", String.class))
-                                        .lastName(row.get("last_name", String.class))
-                                        .email(row.get("email", String.class))
-                                        .build())
-                                .build()).all();
+                .map((row, rowMetadata) -> buildCompanyDTO(row))
+                .all();
     }
 
     @Cacheable
@@ -115,9 +112,10 @@ public class CompanyService {
         company.setOwnerId(companyDTO.getOwner().getId());
         return template.insert(company).flatMap(c -> {
             companyDTO.setId(c.getId());
-            return Flux.fromIterable(companyDTO.getUsers()).flatMap(u ->
-                    template.insert(new Company2User(u.getId(), c.getId())
-                    )).next().flatMap(co -> getCompany(c.getId()));
+            return Flux.fromIterable(companyDTO.getUsers())
+                    .flatMap(u -> template.insert(new Company2User(u.getId(), c.getId())))
+                    .next()
+                    .flatMap(co -> getCompany(c.getId()));
         });
     }
 
@@ -136,6 +134,7 @@ public class CompanyService {
                         .thenReturn(companyDTO.getUsers()).mapNotNull(list -> {
                             list.forEach(member -> template.insert(new Company2User(member.getId(), companyId)).subscribe());
                             return list;
-                        }).thenReturn(companyDTO));
+                        })
+                        .thenReturn(companyDTO));
     }
 }

@@ -11,6 +11,9 @@ import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaInvitationStatusRequest;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -26,10 +29,12 @@ import static org.springframework.data.relational.core.query.Update.update;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "idea_invitations")
 public class IdeaInvitationService {
 
     private final R2dbcEntityTemplate template;
 
+    @Cacheable
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(String teamId) {
         String query = "SELECT inv.*, t.name team_name, i.name idea_name, i.initiator_id initiator_id, " +
                 "ids.skill_id skill_id, s.name skill_name, s.type skill_type " +
@@ -69,6 +74,7 @@ public class IdeaInvitationService {
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
 
+    @Cacheable
     public Flux<IdeaInvitationDTO> getAllInvitationInIdea(String ideaId) {
         String query = "SELECT inv.*, t.name team_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) team_members_count, " +
@@ -109,6 +115,7 @@ public class IdeaInvitationService {
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<Void> changeInvitationStatus(IdeaInvitationStatusRequest request) {
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
             return template.update(query(where("team_id").is(request.getTeamId())
@@ -136,17 +143,19 @@ public class IdeaInvitationService {
                 update("status",request.getStatus()), IdeaInvitation.class).then();
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<IdeaInvitationDTO> inviteToIdea(String ideaId, String teamId) {
         String query = """
-                SELECT inv.*, t.name team_name, i.name idea_name, i.initiator_id initiator_id,
-                us.skill_id skill_id, s.name skill_name, s.type skill_type,
-                (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id AND finish_date IS NULL) team_members_count 
+                SELECT 
+                    inv.*, t.name team_name, i.name idea_name, i.initiator_id initiator_id,
+                    us.skill_id skill_id, s.name skill_name, s.type skill_type,
+                    (SELECT COUNT(*) FROM team_member WHERE team_id = inv.team_id AND finish_date IS NULL) team_members_count 
                 FROM idea_invitation inv
-                LEFT JOIN idea i ON i.id = inv.idea_id
-                LEFT JOIN team t ON t.id = inv.team_id
-                LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL
-                LEFT JOIN user_skill us ON us.user_id = tm.member_id
-                LEFT JOIN skill s ON s.id = us.skill_id
+                    LEFT JOIN idea i ON i.id = inv.idea_id
+                    LEFT JOIN team t ON t.id = inv.team_id
+                    LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL
+                    LEFT JOIN user_skill us ON us.user_id = tm.member_id
+                    LEFT JOIN skill s ON s.id = us.skill_id
                 WHERE inv.team_id = :teamId AND inv.idea_id = :ideaId""";
         IdeaInvitation invitation = new IdeaInvitation(null, ideaId, teamId, RequestStatus.NEW);
         return template.insert(invitation)
@@ -176,12 +185,15 @@ public class IdeaInvitationService {
                             }).last());
     }
 
+    @Cacheable
     public Flux<IdeaInvitationDTO> getAllInvitationsByInitiator(String userId) {
         String query = """
-                SELECT i.id idea_id, i.name idea_name, i.initiator_id initiator_id,
-                inv.id invitation_id, inv.status status ,inv.team_id team_id, t.name team_name FROM idea i
-                RIGHT JOIN idea_invitation inv ON inv.idea_id = i.id
-                LEFT JOIN team t ON t.id = inv.team_id
+                SELECT 
+                    i.id idea_id, i.name idea_name, i.initiator_id initiator_id,
+                    inv.id invitation_id, inv.status status ,inv.team_id team_id, t.name team_name 
+                FROM idea i
+                    RIGHT JOIN idea_invitation inv ON inv.idea_id = i.id
+                    LEFT JOIN team t ON t.id = inv.team_id
                 WHERE i.initiator_id = :userId
                 """;
         return template.getDatabaseClient().sql(query)
@@ -198,11 +210,15 @@ public class IdeaInvitationService {
                             .build())
                 .all();
     }
+
+    @Cacheable
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeasForInvitations(String userId) {
         String query = """
-                SELECT i.name name, i.id id, im.status status ,im.market_id market_id, m.status status FROM idea i
-                LEFT JOIN idea_market im ON im.idea_id = i.id
-                LEFT JOIN market m ON m.id = im.market_id
+                SELECT 
+                    i.name name, i.id id, im.status status ,im.market_id market_id, m.status status 
+                FROM idea i
+                    LEFT JOIN idea_market im ON im.idea_id = i.id
+                    LEFT JOIN market m ON m.id = im.market_id
                 WHERE i.initiator_id = :userId AND m.status = 'ACTIVE'
                 """;
         return template.getDatabaseClient().sql(query)

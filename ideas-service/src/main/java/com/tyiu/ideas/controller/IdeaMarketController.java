@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,30 +35,33 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/market/{marketId}/all")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal User user, @PathVariable String marketId) {
-        return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
+    @PreAuthorize("hasRole('MEMBER') || hasRole('PROJECT_OFFICE') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal Jwt jwt,
+                                                          @PathVariable String marketId) {
+        return ideaMarketService.getAllMarketIdeasForMarket(jwt.getId(), marketId);
     }
 
     @GetMapping("/market/{marketId}/initiator")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user, @PathVariable String marketId) {
-        return ideaMarketService.getAllInitiatorMarketIdeas(user.getId(), marketId);
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('ADMIN')")
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal Jwt jwt,
+                                                          @PathVariable String marketId) {
+        return ideaMarketService.getAllInitiatorMarketIdeas(jwt.getId(), marketId);
     }
 
     @GetMapping("/{ideaMarketId}")
-    public Mono<IdeaMarketDTO> getOneMarketIdea(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
-        return ideaMarketService.getMarketIdea(user.getId(), ideaMarketId)
+    public Mono<IdeaMarketDTO> getOneMarketIdea(@AuthenticationPrincipal Jwt jwt, @PathVariable String ideaMarketId) {
+        return ideaMarketService.getMarketIdea(jwt.getId(), ideaMarketId)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось загрузить идею")));
     }
 
     @GetMapping("/favourite/{marketId}")
-    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(@AuthenticationPrincipal User user, @PathVariable String marketId) {
-        return ideaMarketService.getAllFavoriteMarketIdeas(user.getId(), marketId);
+    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(@AuthenticationPrincipal Jwt jwt,
+                                                         @PathVariable String marketId) {
+        return ideaMarketService.getAllFavoriteMarketIdeas(jwt.getId(), marketId);
     }
 
     @GetMapping("/requests/{ideaMarketId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Flux<TeamMarketRequestDTO> getAllTeamMarketIdeaRequests(@PathVariable String ideaMarketId) {
         return ideaMarketService.getAllTeamsRequests(ideaMarketId);
     }
@@ -75,25 +79,26 @@ public class IdeaMarketController {
     //////////////////////////////
 
     @PostMapping("/send/{marketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody Flux<IdeaDTO> ideaDTOList) {
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId,
+                                                @RequestBody Flux<IdeaDTO> ideaDTOList) {
         return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить идею на биржу")));
     }
 
     @PostMapping("/declare")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO,
-                                                              @AuthenticationPrincipal User user) {
-        return ideaMarketService.declareTeam(teamMarketRequestDTO, user.getId())
+                                                              @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.declareTeam(teamMarketRequestDTO, jwt.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось заявить команду")));
     }
 
     @PostMapping("/add/advertisement")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO,
-                                                             @AuthenticationPrincipal User user) {
-        return ideaMarketService.addAdvertisement(ideaMarketAdvertisementDTO, user)
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('ADMIN')")
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO advertisementDTO,
+                                                             @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.addAdvertisement(advertisementDTO, jwt)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать объявление")));
     }
 
@@ -105,24 +110,26 @@ public class IdeaMarketController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/idea/{ideaMarketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> deleteMarketIdea(@PathVariable String ideaMarketId, @AuthenticationPrincipal User user) {
-        return ideaMarketService.deleteMarketIdea(ideaMarketId, user)
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    public Mono<InfoResponse> deleteMarketIdea(@PathVariable String ideaMarketId, @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.deleteMarketIdea(ideaMarketId, jwt)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить идею"));
     }
 
     @DeleteMapping("/unfavorite/{ideaMarketId}")
-    public Mono<InfoResponse> deleteFavoriteMarketIdea(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
-        return ideaMarketService.deleteMarketIdeaFromFavorite(user.getId(), ideaMarketId)
+    public Mono<InfoResponse> deleteFavoriteMarketIdea(@AuthenticationPrincipal Jwt jwt,
+                                                       @PathVariable String ideaMarketId) {
+        return ideaMarketService.deleteMarketIdeaFromFavorite(jwt.getId(), ideaMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Идея убрана из избранных"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось убрать идею из избранных"));
     }
 
     @DeleteMapping("/delete/advertisement/{ideaMarketAdvertisementId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> deleteIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId, @AuthenticationPrincipal User user) {
-        return ideaMarketService.deleteIdeaMarketAdvertisement(ideaMarketAdvertisementId, user)
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('ADMIN')")
+    public Mono<InfoResponse> deleteIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId,
+                                                            @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.deleteIdeaMarketAdvertisement(ideaMarketAdvertisementId, jwt)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
     }
@@ -135,36 +142,40 @@ public class IdeaMarketController {
     ////////////////////////
 
     @PutMapping("/favorite/{ideaMarketId}")
-    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
-        return ideaMarketService.makeMarketIdeaFavorite(user.getId(), ideaMarketId)
+    public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal Jwt jwt,
+                                                     @PathVariable String ideaMarketId) {
+        return ideaMarketService.makeMarketIdeaFavorite(jwt.getId(), ideaMarketId)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Идея добавлена в избранные"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось добавить идею в избранные"));
     }
 
     @PutMapping("/idea-status/{ideaMarketId}/{status}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status,
-                                             @AuthenticationPrincipal User user) {
-        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status, user);
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('ADMIN')")
+    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId,
+                                             @PathVariable IdeaMarketStatusType status,
+                                             @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status, jwt);
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status,
-                                          @AuthenticationPrincipal User user) {
-        return ideaMarketService.changeRequestStatus(teamMarketId, status, user);
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId,
+                                          @PathVariable RequestStatus status,
+                                          @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.changeRequestStatus(teamMarketId, status, jwt);
     }
 
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId,
-                                         @AuthenticationPrincipal User user) {
-        return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId, user);
+    @PreAuthorize("hasRole('INITIATOR') || hasRole('ADMIN')")
+    public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId,
+                                         @PathVariable String teamId,
+                                         @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId, jwt);
     }
 
     @PutMapping("/check/advertisement/{ideaMarketAdvertisementId}")
     public Mono<Void> updateCheckByAdvertisement(@PathVariable String ideaMarketAdvertisementId,
-                                                                          @AuthenticationPrincipal User user) {
-        return ideaMarketService.updateCheckByAdvertisement(ideaMarketAdvertisementId, user.getEmail());
+                                                 @AuthenticationPrincipal Jwt jwt) {
+        return ideaMarketService.updateCheckByAdvertisement(ideaMarketAdvertisementId, jwt.getClaimAsString("sub"));
     }
 }

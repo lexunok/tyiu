@@ -14,7 +14,11 @@ import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -30,9 +34,10 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
-@Slf4j
+@CacheConfig(cacheNames = "idea_markets")
 public class IdeaMarketService {
 
     private final R2dbcEntityTemplate template;
@@ -82,7 +87,8 @@ public class IdeaMarketService {
                 .bind("userId", userId)
                 .bind("marketId", marketId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     private IdeaMarketDTO buildIdeaMarket(Row row, ConcurrentHashMap<String, IdeaMarketDTO> map){
@@ -144,6 +150,31 @@ public class IdeaMarketService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
+    private final String getAllMarketQUERYMain = """
+                SELECT
+                    im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
+                    fi.idea_market_id AS favorite,
+                    s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                    i.name, i.solution, i.max_team_size
+                FROM (
+                    SELECT
+                        im.*,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
+                        ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
+                    FROM idea_market im
+                        INNER JOIN market m ON m.id = im.market_id
+                """;
+
+    private final String getAllMarketQUERYLast = """
+                ) AS im_sub
+                    LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
+                    LEFT JOIN idea i ON i.id = im_sub.idea_id
+                    LEFT JOIN users u ON u.id = i.initiator_id
+                    LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
+                    LEFT JOIN skill s ON s.id = ids.skill_id
+                """;
+
     ///////////////////////
     //  _____   ____ ______
     // / ___/  / __//_  __/
@@ -151,114 +182,53 @@ public class IdeaMarketService {
     //\___/  /___/  /_/
     ///////////////////////
 
-
+    @Cacheable
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
-        String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
-                FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
-                    FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
-                    WHERE m.status = 'ACTIVE'
-                ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
-                """;
+        String QUERY = getAllMarketQUERYMain + """
+                WHERE m.status = 'ACTIVE'
+                """ + getAllMarketQUERYLast;
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
+    @Cacheable
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
-        String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
-                FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
-                    FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
-                    WHERE im.market_id = :marketId
-                ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
-                """;
+        String QUERY = getAllMarketQUERYMain + """
+                WHERE im.market_id = :marketId
+                """ + getAllMarketQUERYLast;
         return getListMarketIdea(QUERY, userId, marketId);
     }
 
+    @Cacheable
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId){
-        String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
-                FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
-                    FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
+        String QUERY = getAllMarketQUERYMain + """
                     LEFT JOIN idea i ON i.id = im.idea_id
-                    WHERE i.initiator_id = :userId AND im.market_id = :marketId
-                ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
-                """;
+                WHERE i.initiator_id = :userId AND im.market_id = :marketId
+                """ + getAllMarketQUERYLast;
         return getListMarketIdea(QUERY, userId, marketId);
     }
 
+    @Cacheable
     public Mono<IdeaMarketDTO> getMarketIdea(String userId, String ideaMarketId){
         return getOneMarketIdea(userId, ideaMarketId);
     }
 
+    @Cacheable
     public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId, String marketId){
-        String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
-                FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
-                    FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
-                    WHERE im.market_id = :marketId
-                ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
+        String QUERY = getAllMarketQUERYMain + """
+                WHERE im.market_id = :marketId
+                """ + getAllMarketQUERYLast + """
                 WHERE fi.idea_market_id = im_sub.id
                 """;
         return getListMarketIdea(QUERY, userId, marketId);
     }
 
+    @Cacheable
     public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
         String QUERY = "SELECT tmr.*, " +
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
@@ -300,6 +270,7 @@ public class IdeaMarketService {
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
 
+    @Cacheable
     public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(String ideaMarketId){
         String QUERY = "SELECT ima.*, " +
                 "u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name " +
@@ -332,6 +303,7 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
+    @CacheEvict(allEntries = true)
     public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList) {
         return ideaDTOList.flatMap(ideaDTO -> {
             IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
@@ -359,6 +331,7 @@ public class IdeaMarketService {
         });
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO, String userId){
         return checkOwner(teamMarketRequestDTO.getTeamId(), userId)
                 .flatMap(isExists -> {
@@ -374,28 +347,32 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
-        advertisementDTO.setCreatedAt(LocalDateTime.now());
-        advertisementDTO.setCheckedBy(List.of(user.getEmail()));
-        return checkInitiator(advertisementDTO.getIdeaMarketId(), user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, Jwt jwt){
+        return checkInitiator(advertisementDTO.getIdeaMarketId(), jwt.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)){
+                        advertisementDTO.setCreatedAt(LocalDateTime.now());
+                        advertisementDTO.setCheckedBy(List.of(jwt.getClaimAsString("sub")));
                         return template.insert(IdeaMarketAdvertisement.builder()
                                         .ideaMarketId(advertisementDTO.getIdeaMarketId())
                                         .checkedBy(advertisementDTO.getCheckedBy())
                                         .createdAt(advertisementDTO.getCreatedAt())
                                         .text(advertisementDTO.getText())
-                                        .senderId(user.getId())
+                                        .senderId(jwt.getId())
                                         .build())
                                 .flatMap(a -> {
                                     advertisementDTO.setId(a.getId());
-                                    advertisementDTO.setSender(UserDTO.builder()
-                                            .id(user.getId())
-                                            .email(user.getEmail())
-                                            .firstName(user.getFirstName())
-                                            .lastName(user.getLastName())
-                                            .build());
-                                    return Mono.just(advertisementDTO);
+                                    return template.selectOne(query(where("id").is(jwt.getId())), User.class)
+                                                    .flatMap(u -> {
+                                                        advertisementDTO.setSender(UserDTO.builder()
+                                                                .id(u.getId())
+                                                                .email(u.getEmail())
+                                                                .firstName(u.getFirstName())
+                                                                .lastName(u.getLastName())
+                                                                .build());
+                                                        return Mono.just(advertisementDTO);
+                                                    });
                                 });
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -409,26 +386,29 @@ public class IdeaMarketService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
-        return checkInitiator(ideaMarketId,user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<Void> deleteMarketIdea(String ideaMarketId, Jwt jwt){
+        return checkInitiator(ideaMarketId,jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                         return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<Void> deleteMarketIdeaFromFavorite(String userId, String ideaMarketId){
         return template.delete(query(where("user_id").is(userId)
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
     }
 
-    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, User user){
+    @CacheEvict(allEntries = true)
+    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, Jwt jwt){
         return template.exists(query(where("id").is(ideaMarketAdvertisementId)
-                        .and("sender_id").is(user.getId())), IdeaMarketAdvertisement.class)
+                        .and("sender_id").is(jwt.getId())), IdeaMarketAdvertisement.class)
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                         return template.delete(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -442,14 +422,16 @@ public class IdeaMarketService {
     ///_/    \____/  /_/
     ////////////////////////
 
+    @CacheEvict(allEntries = true)
     public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
     }
 
-    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, User user){
-        return checkInitiator(ideaMarketId,user.getId())
+    @CacheEvict(allEntries = true)
+    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, Jwt jwt){
+        return checkInitiator(ideaMarketId,jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
                         return template.update(query(where("id").is(ideaMarketId)),
                                 update("status", statusType),
                                 IdeaMarket.class).then();
@@ -458,15 +440,15 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user){
+    @CacheEvict(allEntries = true)
+    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, Jwt jwt){
         return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
                 .flatMap(r -> {
-                    String userId = user.getId();
                     r.setStatus(status);
                     if (status.equals(RequestStatus.CANCELED)){
-                        return checkInitiator(r.getIdeaMarketId(),userId)
+                        return checkInitiator(r.getIdeaMarketId(),jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
                                                 .then(template.update(r))
                                                 .then();
@@ -475,9 +457,9 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (status.equals(RequestStatus.ACCEPTED)) {
-                        return checkInitiator(r.getIdeaMarketId(),userId)
+                        return checkInitiator(r.getIdeaMarketId(),jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.update(query(where("team_id").is(r.getTeamId())
                                                                 .or("idea_market_id").is(r.getIdeaMarketId())
                                                                 .and("status").is(RequestStatus.NEW)),
@@ -497,15 +479,15 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (status.equals(RequestStatus.WITHDRAWN)){
-                        return checkOwner(r.getTeamId(), userId)
+                        return checkOwner(r.getTeamId(), jwt.getId())
                                 .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                                         return template.update(r).then();
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
-                    else if (user.getRoles().contains(Role.ADMIN) &&
+                    else if (jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN)) &&
                             (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
                     {
                         return template.update(r).then();
@@ -514,7 +496,8 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user){
+    @CacheEvict(allEntries = true)
+    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, Jwt jwt){
         String QUERY = "SELECT " +
                 "t.id as team_id, t.name as team_name, " +
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
@@ -527,9 +510,9 @@ public class IdeaMarketService {
                 "LEFT JOIN skill s ON us.skill_id = s.id " +
                 "WHERE t.id = :teamId";
         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
-        return checkInitiator(ideaMarketId,user.getId())
+        return checkInitiator(ideaMarketId,jwt.getId())
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))){
                         return template.update(query(where("id").is(ideaMarketId)),
                                         update("team_id", teamId)
                                                 .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
@@ -571,6 +554,7 @@ public class IdeaMarketService {
                 });
     }
 
+    @CacheEvict(allEntries = true)
     public Mono<Void> updateCheckByAdvertisement(String ideaMarketAdvertisementId, String email){
         return template.getDatabaseClient()
                 .sql("UPDATE idea_market_advertisement SET checked_by = array_append(checked_by,:userEmail) WHERE id =:advertisementId")

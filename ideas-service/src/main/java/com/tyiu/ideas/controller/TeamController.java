@@ -5,7 +5,6 @@ import com.tyiu.ideas.config.exception.NotFoundException;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.TeamInvitation;
 import com.tyiu.ideas.model.entities.TeamRequest;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.responses.InfoResponse;
@@ -14,6 +13,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -35,20 +35,20 @@ public class TeamController {
     ///////////////////////
 
     @GetMapping("/{teamId}")
-    public Mono<TeamDTO> getTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.getTeam(teamId, user.getId())
+    public Mono<TeamDTO> getTeam(@PathVariable String teamId, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.getTeam(teamId, jwt.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось загрузить команду")));
     }
 
     @GetMapping("/all")
-    public Flux<TeamDTO> getTeams(@AuthenticationPrincipal User user) {
-        return teamService.getTeams(user.getId());
+    public Flux<TeamDTO> getTeams(@AuthenticationPrincipal Jwt jwt) {
+        return teamService.getTeams(jwt.getId());
     }
 
     @GetMapping("/owner/all/{ideaMarketId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {
-        return teamService.getOwnerTeams(user.getId(), ideaMarketId);
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal Jwt jwt, @PathVariable String ideaMarketId) {
+        return teamService.getOwnerTeams(jwt.getId(), ideaMarketId);
     }
 
     @GetMapping("/users")
@@ -57,24 +57,24 @@ public class TeamController {
     }
 
     @GetMapping("/invites")
-    public Flux<TeamInvitation> getInvitations(@AuthenticationPrincipal User user) {
-        return teamService.getInvitations(user.getId());
+    public Flux<TeamInvitation> getInvitations(@AuthenticationPrincipal Jwt jwt) {
+        return teamService.getInvitations(jwt.getId());
     }
 
     @GetMapping("/users/requests/{teamId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
         return teamService.getTeamRequests(teamId);
     }
 
     @GetMapping("/invitations/{teamId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Flux<TeamInvitation> getInvitationByTeam(@PathVariable String teamId) {
         return teamService.getInvitationByTeam(teamId);
     }
 
     @GetMapping("/idea/requests/{teamId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('PROJECT_OFFICE') ||  hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('PROJECT_OFFICE') ||  hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(@PathVariable String teamId){
         return teamService.getTeamMarketRequests(teamId);
     }
@@ -92,35 +92,35 @@ public class TeamController {
     //////////////////////////////
 
     @PostMapping("/add")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Mono<TeamDTO> addTeam(@RequestBody TeamDTO team) {
         return teamService.addTeam(team)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при создании команды")));
     }
 
     @PostMapping("/skill-filter/{role}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal User user) {
-        return teamService.getTeamsBySkills(checkedSkills, role, user.getId());
+    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('PROJECT_OFFICE') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.getTeamsBySkills(checkedSkills, role, jwt.getId());
     }
 
     @PostMapping("/vacancy-filter")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('INITIATOR') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamDTO> getTeamsByVacancies(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal User user) {
-        return teamService.getTeamsByVacancies(checkedSkills, user.getId());
+    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('PROJECT_OFFICE') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Flux<TeamDTO> getTeamsByVacancies(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.getTeamsByVacancies(checkedSkills, jwt.getId());
     }
 
     @PostMapping("/request/send/{teamId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('ADMIN')")
-    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.sendTeamRequest(teamId, user)
+    @PreAuthorize("hasRole('MEMBER') || hasRole('ADMIN')")
+    public Mono<TeamRequest> sendTeamRequest(@PathVariable String teamId, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.sendTeamRequest(teamId, jwt)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
 
     @PostMapping("/send-invites")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
-        return teamService.sendInvitesToUsers(users, user);
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.sendInvitesToUsers(users, jwt);
     }
 
     @PostMapping("/invite/{teamId}/{userId}")
@@ -151,9 +151,9 @@ public class TeamController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{teamId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<InfoResponse> deleteTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.deleteTeam(teamId, user)
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Mono<InfoResponse> deleteTeam(@PathVariable String teamId, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.deleteTeam(teamId, jwt)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное удаление"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении"));
     }
@@ -164,8 +164,8 @@ public class TeamController {
     }
 
     @DeleteMapping("/leave/{teamId}")
-    public Mono<Void> leaveFromTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
-        return teamService.leaveFromTeam(teamId, user.getId());
+    public Mono<Void> leaveFromTeam(@PathVariable String teamId, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.leaveFromTeam(teamId, jwt.getId());
     }
 
     ////////////////////////
@@ -176,18 +176,18 @@ public class TeamController {
     ////////////////////////
 
     @PutMapping("/update/{teamId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team, @AuthenticationPrincipal User user) {
-        return teamService.updateTeam(teamId, team, user)
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team, @AuthenticationPrincipal Jwt jwt) {
+        return teamService.updateTeam(teamId, team, jwt)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при обновлении команды")));
     }
 
     @PutMapping("/skills/update/{teamId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Mono<InfoResponse> updateTeamSkills(@PathVariable String teamId,
                                                @RequestBody Flux<SkillDTO> wantedSkills,
-                                               @AuthenticationPrincipal User user) {
-        return teamService.updateTeamSkills(teamId, wantedSkills, user)
+                                               @AuthenticationPrincipal Jwt jwt) {
+        return teamService.updateTeamSkills(teamId, wantedSkills, jwt)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Компетенции успешно изменены"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить компетенции"));
     }
@@ -195,25 +195,25 @@ public class TeamController {
     @PutMapping("/request/{requestId}/update/{newStatus}")
     public Mono<TeamRequest> updateTeamRequestStatus(@PathVariable String requestId,
                                                      @PathVariable RequestStatus newStatus,
-                                                     @AuthenticationPrincipal User user) {
-        return teamService.updateTeamRequestStatus(requestId, newStatus, user)
+                                                     @AuthenticationPrincipal Jwt jwt) {
+        return teamService.updateTeamRequestStatus(requestId, newStatus, jwt)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/invitation/{invitationId}/update/{newStatus}")
     public Mono<TeamInvitation> updateTeamInvitationStatus(@PathVariable String invitationId,
                                                            @PathVariable RequestStatus newStatus,
-                                                           @AuthenticationPrincipal User user) {
-        return teamService.updateTeamInvitationStatus(invitationId, newStatus, user)
+                                                           @AuthenticationPrincipal Jwt jwt) {
+        return teamService.updateTeamInvitationStatus(invitationId, newStatus, jwt)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }
 
     @PutMapping("/change/leader/{teamId}/{userId}")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Mono<InfoResponse> changeLeader(@PathVariable String teamId,
                                            @PathVariable String userId,
-                                           @AuthenticationPrincipal User user) {
-        return teamService.changeTeamLeader(teamId, userId, user)
+                                           @AuthenticationPrincipal Jwt jwt) {
+        return teamService.changeTeamLeader(teamId, userId, jwt)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное изменение лидера"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось назначить лидера"));
     }

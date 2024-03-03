@@ -25,4 +25,10 @@ public class RegisterRequest {
         this.password = password;
         this.roles = roles;
     }
+
+    public RegisterRequest(String email, String password, List<Role> roles){
+        this.email = email;
+        this.password = password;
+        this.roles = roles;
+    }
 }

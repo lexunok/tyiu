@@ -9,14 +9,18 @@ import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaSkillRequest;
+import com.tyiu.ideas.model.requests.OauthLogin;
 import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
 import com.tyiu.ideas.model.responses.InfoResponse;
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.test.web.reactive.server.WebTestClient;
+import org.springframework.web.client.RestTemplate;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
@@ -34,6 +38,9 @@ public class TeamControllerTest extends TestContainers {
 
     @Autowired
     private WebTestClient webTestClient;
+
+    private RestTemplate restTemplate;
+
     private UserDTO admin;
     private UserDTO owner;
     private UserDTO leader;
@@ -55,20 +62,27 @@ public class TeamControllerTest extends TestContainers {
     private SkillDTO skill3;
     private SkillDTO skill4;
 
-    private AuthenticationResponse register(String email, String firstName, String lastName, List<Role> roles) {
-        AuthenticationResponse response = webTestClient
+    private Jwt register(String email, String firstName, String lastName, List<Role> roles) {
+        webTestClient
                 .post()
-                .uri("/api/v1/ideas-service/auth/register")
-                .body(Mono.just(new RegisterRequest(email, firstName, lastName, "bla-bla-bla", roles)), RegisterRequest.class)
+                .uri("http://127.0.0.1:7777/api/v1/authorization-service/register")
+                .body(Mono.just(new RegisterRequest(email, "bla-bla-bla", roles)), RegisterRequest.class)
+                .exchange();
+        webTestClient
+                .post()
+                .uri("http://localhost/oauth2/authorize")
+                .body(new OauthLogin(email, "bla-bla-bla"), OauthLogin.class)
+                .exchange();
+        return webTestClient
+                .get()
+                .uri("http://127.0.0.1:7777/oauth2/token")
                 .exchange()
-                .expectBody(AuthenticationResponse.class)
+                .expectBody(Jwt.class)
                 .returnResult().getResponseBody();
-        assertNotNull(response);
-        return response;
     }
 
-    private UserDTO userBuild(String userId, String email, String firstname, String lastname, List<Role> roles) {
-        return UserDTO.builder().id(userId).email(email).firstName(firstname).lastName(lastname).roles(roles)
+    private UserDTO userBuild(String userId, String email, List<String> roles) {
+        return UserDTO.builder().id(userId).email(email).roles(roles.stream().map(Role::valueOf).toList())
                 .build();
     }
 
@@ -523,29 +537,29 @@ public class TeamControllerTest extends TestContainers {
 
     @BeforeAll
     public void setUp() {
-        AuthenticationResponse response = register("admin.addSkill@gmail.com", "Admin", "Adminov", List.of(Role.ADMIN));
-        AuthenticationResponse response1 = register("owner.team@gmail.com", "Owner", "Ownerov", List.of(Role.TEAM_OWNER));
-        AuthenticationResponse response2 = register("leader.team@gmail.com", "Leader", "Leaderov", List.of(Role.TEAM_OWNER));
-        AuthenticationResponse response3 = register("member.team@gmail.com", "Member", "Memberov", List.of(Role.MEMBER));
-        AuthenticationResponse response4 = register("randomUser.team@gmail.com", "Random", "User", List.of(Role.MEMBER));
-        AuthenticationResponse response5 = register("initiator.team@gmail.com", "Init", "Idea", List.of(Role.INITIATOR));
-        AuthenticationResponse response6 = register("kostya@gmail.com", "kostya", "da", List.of(Role.MEMBER));
+        Jwt response = register("admin.addSkill@gmail.com", "Admin", "Adminov", List.of(Role.ADMIN));
+        Jwt response1 = register("owner.team@gmail.com", "Owner", "Ownerov", List.of(Role.TEAM_OWNER));
+        Jwt response2 = register("leader.team@gmail.com", "Leader", "Leaderov", List.of(Role.TEAM_OWNER));
+        Jwt response3 = register("member.team@gmail.com", "Member", "Memberov", List.of(Role.MEMBER));
+        Jwt response4 = register("randomUser.team@gmail.com", "Random", "User", List.of(Role.MEMBER));
+        Jwt response5 = register("initiator.team@gmail.com", "Init", "Idea", List.of(Role.INITIATOR));
+        Jwt response6 = register("kostya@gmail.com", "kostya", "da", List.of(Role.MEMBER));
 
-        jwt_admin = response.getToken();
-        jwt_owner = response1.getToken();
-        jwt_leader = response2.getToken();
-        jwt_member = response3.getToken();
-        jwt_randomUser = response4.getToken();
-        jwt_initiator = response5.getToken();
-        jwt_kostya = response6.getToken();
+        jwt_admin = response.getTokenValue();
+        jwt_owner = response1.getTokenValue();
+        jwt_leader = response2.getTokenValue();
+        jwt_member = response3.getTokenValue();
+        jwt_randomUser = response4.getTokenValue();
+        jwt_initiator = response5.getTokenValue();
+        jwt_kostya = response6.getTokenValue();
 
-        admin = userBuild(response.getId(), response.getEmail(), response.getFirstName(), response.getLastName(), response.getRoles());
-        owner = userBuild(response1.getId(), response1.getEmail(), response1.getFirstName(), response1.getLastName(), response1.getRoles());
-        leader = userBuild(response2.getId(), response2.getEmail(), response2.getFirstName(), response2.getLastName(), response2.getRoles());
-        member = userBuild(response3.getId(), response3.getEmail(), response3.getFirstName(), response3.getLastName(), response3.getRoles());
-        randomUser = userBuild(response4.getId(), response4.getEmail(), response4.getFirstName(), response4.getLastName(), response4.getRoles());
-        initiator = userBuild(response5.getId(), response5.getEmail(), response5.getFirstName(), response5.getLastName(), response5.getRoles());
-        kostya = userBuild(response6.getId(), response6.getEmail(), response6.getFirstName(), response6.getLastName(), response6.getRoles());
+        admin = userBuild(response.getId(), response.getClaimAsString("sub"), response.getClaimAsStringList("roles"));
+        owner = userBuild(response1.getId(), response1.getClaimAsString("sub"), response1.getClaimAsStringList("roles"));
+        leader = userBuild(response2.getId(), response2.getClaimAsString("sub"), response2.getClaimAsStringList("roles"));
+        member = userBuild(response3.getId(), response3.getClaimAsString("sub"), response3.getClaimAsStringList("roles"));
+        randomUser = userBuild(response4.getId(), response4.getClaimAsString("sub"), response4.getClaimAsStringList("roles"));
+        initiator = userBuild(response5.getId(), response5.getClaimAsString("sub"), response5.getClaimAsStringList("roles"));
+        kostya = userBuild(response6.getId(), response6.getClaimAsString("sub"), response6.getClaimAsStringList("roles"));
 
         groupExpert = createGroup(buildGroup("exp", List.of(Role.EXPERT)));
         groupProjectOffice = createGroup(buildGroup("pro", List.of(Role.PROJECT_OFFICE)));
