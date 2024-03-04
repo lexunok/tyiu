@@ -62,9 +62,9 @@ public class ProfileController {
     public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal User user, @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(user.getId(), skills);
     }
-    @PutMapping("/update")
-    public Mono<InfoResponse> updateProfile(@AuthenticationPrincipal User user, @RequestBody ProfileUpdateRequest request) {
-        return profileService.updateProfile(user.getId(), request)
+    @PutMapping("/update/{userId}")
+    public Mono<InfoResponse> updateProfile(@RequestBody ProfileUpdateRequest request, @PathVariable String userId) {
+        return profileService.updateProfile(userId, request)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное изменение"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST, "Не удалось изменить"));
     }
