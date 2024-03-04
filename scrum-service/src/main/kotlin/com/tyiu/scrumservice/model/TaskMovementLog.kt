@@ -8,9 +8,8 @@ import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
-//реализовать:
 //автоматическое создание лога таска при создании таска
-//автоматическое измение времени и статуса
+//автоматическое измение времени при изменении статуса
 interface TaskMovementLogRepository: CoroutineCrudRepository<TaskMovementLog, String>{
     @Query("SELECT * FROM task_movement_log WHERE task_id = :taskId")
     fun findAllByTaskId(taskId: String): Flow<TaskMovementLog>
@@ -47,4 +46,3 @@ fun TaskMovementLog.toDTO(): TaskMovementLogDTO = TaskMovementLogDTO (
     endDate = endDate,
     status = status
 )
-//CREATE TABLE task_movement_log (id TEXT DEFAULT gen_random_uuid()::TEXT PRIMARY KEY, project_id TEXT, start_date DATE, end_date DATE, status TEXT);

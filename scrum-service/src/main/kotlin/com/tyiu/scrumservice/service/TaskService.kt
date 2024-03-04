@@ -3,6 +3,7 @@ package com.tyiu.scrumservice.service
 import com.tyiu.scrumservice.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
@@ -12,7 +13,7 @@ class TaskService
     (
     private val repository: TaskRepository,
     private val userRepository: UserRepository,
-    private val tasktagrepository: TaskTagRepository,
+    private val taskTagRepository: TaskTagRepository,
     val template: R2dbcEntityTemplate
     )
 {
@@ -22,8 +23,7 @@ class TaskService
 
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.tag = (task.id?.let {tasktagrepository.findById(it)})?.toDTO()
-
+        tasks.tag = (task.id?.let{taskTagRepository.findAllByTaskId(it)})?.toList()
         return tasks
     }
 
@@ -37,14 +37,13 @@ class TaskService
     fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
 
     //post
-    suspend fun createTask(taskCreateRequest: TaskCreateRequest):TaskDTO {
+    suspend fun createTask(taskCreateRequest: TaskCreateRequest) {
         val task = Task (
             name = taskCreateRequest.name,
             description = taskCreateRequest.description,
             projectId = taskCreateRequest.projectId,
             workHour = taskCreateRequest.workHour,
             initiatorId = taskCreateRequest.initiatorId
-
         )
         if (taskCreateRequest.sprintId == null){
             task.status = TaskStatus.InBacklog
@@ -53,8 +52,13 @@ class TaskService
             task.sprintId = taskCreateRequest.sprintId
             task.status = TaskStatus.New
         }
+        val taskSave = taskToDTO(repository.save(task))
 
-        return taskToDTO(repository.save(task))
+        val task2tag =  Task2Tag(
+            taskId = taskSave.id,
+            tagId  = ""
+        )
+       return taskTagRepository.InsertValues(task2tag.taskId, task2tag.tagId) // не добавляет в task_to_tag
     }
 
     //put

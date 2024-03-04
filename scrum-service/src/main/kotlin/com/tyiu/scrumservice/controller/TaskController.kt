@@ -24,7 +24,7 @@ class TaskController (private val taskService: TaskService  ) {
     fun getOneTaskById(@PathVariable id: String): Flow<TaskDTO> = taskService.getOneTaskById(id)
 
     @PostMapping("/add")
-    suspend fun postCreateTask(@RequestBody taskCreateRequest: TaskCreateRequest): TaskDTO = taskService.createTask(taskCreateRequest)
+    suspend fun postCreateTask(@RequestBody taskCreateRequest: TaskCreateRequest): Unit = taskService.createTask(taskCreateRequest)
 
     @PutMapping("/status/change")
     suspend fun putTaskStatus (@RequestBody taskStatusRequest: TaskStatusRequest) = taskService.putTaskStatus(taskStatusRequest)
