@@ -66,7 +66,7 @@ data class TaskDTO (
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
 
-    var tag: TaskTagDTO? = null,
+    var tag: List<TaskTagDTO>? = null,
     var status: TaskStatus? = TaskStatus.InBacklog
 )
 
@@ -103,7 +103,8 @@ data class TaskInfoRequest(
     var taskName: String? = null,
     var taskDescription: String? = null,
     var taskWork_hour: Long? = null,
-    var taskStatus: String? = null
+    var taskStatus: String? = null,
+    var taskTag: List<TaskTagDTO>? = null
 )
 
 data class TaskCreateRequest(

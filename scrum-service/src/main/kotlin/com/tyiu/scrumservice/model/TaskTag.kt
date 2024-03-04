@@ -4,15 +4,23 @@ import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
+import org.springframework.data.relational.core.sql.InsertBuilder.InsertValues
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 
+//автоматическое создание task_to_tag вместе с task
 interface TaskTagRepository: CoroutineCrudRepository<TaskTag, String> {
     @Query("DELETE FROM task_tag WHERE id=:tagId")
     fun deleteTagById(tagId: String): Flow<TaskTag>
 
     @Query("SELECT *  FROM task_tag WHERE project_id=:projectId")
     fun findAllTagByProjectId(projectId: String): Flow<TaskTag>
-}
+
+    @Query("SELECT * FROM task_tag JOIN task_to_tag ON task_tag.id = task_to_tag.tag_id WHERE task_to_tag.task_id = :taskId")
+    fun findAllByTaskId(taskId: String): Flow<TaskTagDTO>
+
+    @Query("INSERT INTO task_to_tag (task_id,tag_id) VALUES(taskId, tagId)")
+    fun InsertValues(taskId: String?, tagId: String?)
+} 
 
 @Table
 data class TaskTag (
