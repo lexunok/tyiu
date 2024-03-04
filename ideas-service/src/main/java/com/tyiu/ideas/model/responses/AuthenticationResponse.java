@@ -15,6 +15,8 @@ public class AuthenticationResponse {
     private String email;
     private String lastName;
     private String firstName;
+    private String studyGroup;
+    private String telephone;
     private List<Role> roles;
     private LocalDateTime createdAt;
 }
