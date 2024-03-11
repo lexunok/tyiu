@@ -2,7 +2,6 @@
 dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation "org.springframework.boot:spring-boot-starter-security"
 	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
@@ -20,7 +19,6 @@ dependencies {
 
 	implementation project(path: ':library')
 	implementation project(path: ':client')
-	implementation project(path: ':ideas-service')
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'
