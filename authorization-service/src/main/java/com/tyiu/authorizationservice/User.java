@@ -20,6 +20,8 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Id
     private String id;
+    private String studyGroup;
+    private String telephone;
     @Enumerated(EnumType.STRING)
     private List<Role> roles;
     private String email;
