@@ -1,7 +1,5 @@
 package com.tyiu.ideas.config;
 
-import com.tyiu.ideas.util.AuthenticationManager;
-import com.tyiu.ideas.util.SecurityContextRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -32,8 +30,6 @@ import java.util.List;
 @EnableReactiveMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final AuthenticationManager authenticationManager;
-    private final SecurityContextRepository securityContextRepository;
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
@@ -49,8 +45,6 @@ public class SecurityConfig {
                         .pathMatchers("/api/v1/ideas-service/profile/send/change/password").permitAll()
                         .pathMatchers("/api/**").authenticated()
                         .anyExchange().permitAll())
-                .authenticationManager(authenticationManager)
-                .securityContextRepository(securityContextRepository)
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt ->
                                 jwt.jwtAuthenticationConverter(getJwtAuthenticationConverter())));

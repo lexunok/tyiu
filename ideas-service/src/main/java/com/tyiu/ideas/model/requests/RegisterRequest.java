@@ -11,24 +11,19 @@ import java.util.List;
 @AllArgsConstructor
 @NoArgsConstructor
 public class RegisterRequest {
-    private String studyGroup;
-    private String telephone;
+    private String id;
     private String email;
     private String lastName;
     private String firstName;
-    private String password;
-    private List<Role> roles;
+    private String studyGroup;
+    private String telephone;
     public RegisterRequest(String email,String lastName, String firstName, String password, List<Role> roles){
         this.email = email;
         this.lastName = lastName;
         this.firstName = firstName;
-        this.password = password;
-        this.roles = roles;
     }
 
     public RegisterRequest(String email, String password, List<Role> roles){
         this.email = email;
-        this.password = password;
-        this.roles = roles;
     }
 }
