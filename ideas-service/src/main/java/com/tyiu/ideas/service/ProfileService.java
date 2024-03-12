@@ -3,9 +3,11 @@ package com.tyiu.ideas.service;
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.dto.TeamExperienceDTO;
+import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.entities.Idea;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.ProfileMapper;
+import com.tyiu.ideas.model.entities.relations.Team2Member;
 import com.tyiu.ideas.model.entities.relations.User2Skill;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.ProfileUpdateRequest;
@@ -15,7 +17,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.multipart.FilePart;
@@ -42,33 +43,15 @@ public class ProfileService {
     private static final long MAX_FILE_SIZE_BYTES = 16 * 1024 * 1024;
     private final ProfileMapper mapper;
     private final R2dbcEntityTemplate template;
-    private final ResourceLoader loader;
-
-    @Value("${file.path}")
-    String path;
-    public Mono<FileSystemResource> uploadAvatar(String userId, FilePart file) {
-        Path basePath = Paths.get(path);
-        Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
-
-        if (!isValidImageFile(file) && file.headers().getContentLength() > MAX_FILE_SIZE_BYTES) {
-            return Mono.error(new RuntimeException("Недопустимый тип или размер файла"));
-        }
-
-        try {
-            Files.createDirectories(basePath);
-
-            return file.transferTo(avatarPath)
-                    .then(Mono.just(new FileSystemResource(avatarPath)))
-                    .doOnError(e -> log.error("Ошибка загрузки аватара: {}", e.getMessage()));
-        } catch (IOException e) {
-            return Mono.error(new RuntimeException("Ошибка загрузки аватара", e));
-        }
-    }
 
     private boolean isValidImageFile(FilePart file) {
         MediaType contentType = file.headers().getContentType();
         return contentType != null && (contentType.isCompatibleWith(MediaType.IMAGE_JPEG) && contentType.isCompatibleWith(MediaType.IMAGE_PNG));
     }
+
+    @Value("${file.path}")
+    String path;
+
     public Mono<Resource> getAvatar(String userId){
         Path basePath = Paths.get(path, userId + "_avatar.jpg");
         try {
@@ -77,6 +60,7 @@ public class ProfileService {
             return null;
         }
     }
+
     public Mono<ProfileDTO> getUserProfile(String userId, String currentUserId) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, u.study_group u_study_group, u.telephone u_telephone, " +
                 "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.solution i_solution, i.status i_status, " +
@@ -144,6 +128,25 @@ public class ProfileService {
                 }).last();
     }
 
+    public Mono<FileSystemResource> uploadAvatar(String userId, FilePart file) {
+        Path basePath = Paths.get(path);
+        Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
+
+        if (!isValidImageFile(file) && file.headers().getContentLength() > MAX_FILE_SIZE_BYTES) {
+            return Mono.error(new RuntimeException("Недопустимый тип или размер файла"));
+        }
+
+        try {
+            Files.createDirectories(basePath);
+
+            return file.transferTo(avatarPath)
+                    .then(Mono.just(new FileSystemResource(avatarPath)))
+                    .doOnError(e -> log.error("Ошибка загрузки аватара: {}", e.getMessage()));
+        } catch (IOException e) {
+            return Mono.error(new RuntimeException("Ошибка загрузки аватара", e));
+        }
+    }
+
 
     public Flux<SkillDTO> saveSkills(String userId, Flux<SkillDTO> skills) {
         return template.delete(query(where("user_id").is(userId)), User2Skill.class)
@@ -155,11 +158,32 @@ public class ProfileService {
                 );
     }
 
+    public Mono<Void> deleteUser(String userId){
+        return template.update(query(where("id").is(userId)),
+                        update("is_deleted", Boolean.TRUE),
+                        User.class)
+                .then(template.delete(query(where("member_id").is(userId)), Team2Member.class))
+                .then();
+    }
+
     public Mono<Void> updateProfile(String userId, ProfileUpdateRequest request){
         return template.update(query(where("id").is(userId)),
                 update("first_name", request.getFirstName())
                         .set("last_name", request.getLastName())
                         .set("study_group", request.getStudyGroup())
-                        .set("telephone", request.getTelephone()), User.class).then();
+                        .set("telephone", request.getTelephone()),
+                User.class)
+                .then();
+    }
+
+    public Mono<UserDTO> changeUserInfo(UserDTO userDTO){
+        return template.update(query(where("id").is(userDTO.getId())),
+                        update("email", userDTO.getEmail())
+                                .set("first_name", userDTO.getFirstName())
+                                .set("last_name", userDTO.getLastName())
+                                .set("study_group", userDTO.getStudyGroup())
+                                .set("telephone", userDTO.getTelephone()),
+                        User.class)
+                .thenReturn(userDTO);
     }
 }
