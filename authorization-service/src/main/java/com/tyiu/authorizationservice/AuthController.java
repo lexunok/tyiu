@@ -1,5 +1,6 @@
 package com.tyiu.authorizationservice;
 
+import com.tyiu.client.connections.IdeasClient;
 import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class AuthController {
     private final UserRepository repository;
+    private final IdeasClient ideasClient;
     private final ModelMapper mapper = new ModelMapper();
     private final PasswordEncoder encoder;
 
@@ -22,5 +24,6 @@ public class AuthController {
         User user = mapper.map(userDTO,User.class);
         user.setPassword(encoder.encode(user.getPassword()));
         repository.save(user);
+        ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
     }
 }
