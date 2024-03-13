@@ -46,7 +46,7 @@ public class TeamController {
     }
 
     @GetMapping("/owner/all/{ideaMarketId}")
-    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
     public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal Jwt jwt, @PathVariable String ideaMarketId) {
         return teamService.getOwnerTeams(jwt.getId(), ideaMarketId);
     }
@@ -62,7 +62,7 @@ public class TeamController {
     }
 
     @GetMapping("/users/requests/{teamId}")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
         return teamService.getTeamRequests(teamId);
     }
