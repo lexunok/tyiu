@@ -27,15 +27,15 @@ public class AuthorizationViewController {
 
     @GetMapping("/registration")
     public String showRegistration(@RequestParam(name = "code") String code, Model model) {
-        InvitationDTO invitation = emailClient.findInvitationById(code);
-        if (invitation!= null) {
-            model.addAttribute("email", invitation.getEmail());
+        if (code.equals("admin")) {
+            model.addAttribute("email", "admin@admin.com");
             model.addAttribute("user", new User());
             model.addAttribute("code", code);
             return "registration";
         }
-        else if (code.equals("admin")) {
-            model.addAttribute("email", "admin@admin.com");
+        InvitationDTO invitation = emailClient.findInvitationById(code);
+        if (invitation!=null) {
+            model.addAttribute("email", invitation.getEmail());
             model.addAttribute("user", new User());
             model.addAttribute("code", code);
             return "registration";
@@ -45,17 +45,17 @@ public class AuthorizationViewController {
 
     @PostMapping("/registration")
     public String register(@RequestParam(name = "code") String code, User user) {
-        InvitationDTO invitation = emailClient.findInvitationById(code);
-        if (invitation!= null) {
-            user.setRoles(invitation.getRoles());
-            user.setEmail(invitation.getEmail());
+        if (code.equals("admin")) {
+            user.setRoles(Arrays.stream(Role.values()).toList());
+            user.setEmail("admin@admin.com");
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
             repository.save(user);
         }
-        else if (code.equals("admin")) {
-            user.setRoles(Arrays.stream(Role.values()).toList());
-            user.setEmail("admin@admin.com");
+        InvitationDTO invitation = emailClient.findInvitationById(code);
+        if (invitation!=null) {
+            user.setRoles(invitation.getRoles());
+            user.setEmail(invitation.getEmail());
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
             repository.save(user);
