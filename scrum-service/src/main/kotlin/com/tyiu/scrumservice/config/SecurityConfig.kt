@@ -24,10 +24,10 @@ class SecurityConfig {
         http
             .authorizeExchange{it.anyExchange().authenticated()}
             .csrf{it.disable()}
-            .oauth2ResourceServer { it ->
-                it.jwt { its ->
-                    its.jwtAuthenticationConverter(getJwtAuthenticationConverter())
-            }
+            .oauth2ResourceServer {
+                    it.jwt { its ->
+                        its.jwtAuthenticationConverter(getJwtAuthenticationConverter())
+                }
             }
         return http.build()
     }
