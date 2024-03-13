@@ -23,13 +23,6 @@ class ProjectService(
     private val taskRepository: TaskRepository,
     private val taskService: TaskService
 ) {
-    //suspend везде но не там где GET
-    //не делать много запросов в бд, лучше получить один раз модель и вставить ее в дто
-    //не делать много преобразований из дто и в дто
-    //return map можно убрать
-    //статус Paused  запрос чтобы его поменять
-    //отдельная модель
-    //по названию функции в репозитории формируется запрос автоматически
     suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
         val ideaToProject = project.ideaId?.let { ideaRepository.findById(it) }

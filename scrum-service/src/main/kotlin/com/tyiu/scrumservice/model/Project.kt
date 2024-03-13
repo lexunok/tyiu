@@ -7,6 +7,8 @@ import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
+import org.springframework.http.HttpStatus
+import org.springframework.http.HttpStatusCode
 import java.time.LocalDate
 
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
@@ -47,6 +49,11 @@ data class ProjectDTO (
 enum class ProjectStatus{
         ACTIVE, DONE, PAUSED
 }
+
+data class InfoResponse(
+        val statusCode: HttpStatus? = null,
+        val message: String? = null,
+)
 
 data class ReportProject(
         val projectId:String? = null,
