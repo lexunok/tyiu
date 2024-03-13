@@ -18,5 +18,24 @@ data class SprintMarks(
         val projectId:String? = null,
         val sprintId:String? = null,
         val userId:String? = null,
-        val mark:Long? = null,
+        val mark:Double? = null,
+)
+data class SprintMarksDTO(
+        val userId: String? = null,
+        val sprintId: String? = null,
+        var firstName: String? = null,
+        var lastName: String? = null,
+        val mark:Double? = null,
+        // tasks?
+)
+
+data class sprintMarksRequest(
+        val userId: String? = null,
+        val mark: Double? = null,
+)
+
+fun SprintMarks.toDTO():SprintMarksDTO = SprintMarksDTO(
+        sprintId = sprintId,
+        userId = userId,
+        mark = mark,
 )

@@ -1,13 +1,9 @@
 package com.tyiu.scrumservice.controller
 
-import com.tyiu.scrumservice.model.SprintDTO
-import com.tyiu.scrumservice.model.SprintMarks
+import com.tyiu.scrumservice.model.*
 import com.tyiu.scrumservice.service.SprintService
 import kotlinx.coroutines.flow.Flow
-import org.springframework.web.bind.annotation.GetMapping
-import org.springframework.web.bind.annotation.PathVariable
-import org.springframework.web.bind.annotation.RequestMapping
-import org.springframework.web.bind.annotation.RestController
+import org.springframework.web.bind.annotation.*
 import java.math.BigInteger
 
 @RestController
@@ -18,12 +14,27 @@ class SprintController(private val sprintService: SprintService)
     fun getAllSprintsByProject(@PathVariable projectId: String): Flow<SprintDTO> = sprintService.getAllSprintsByProject(projectId)
 
     @GetMapping("{id}")
-    fun getSprintById(@PathVariable id: BigInteger): Flow<SprintDTO> = sprintService.getSprintById(id)
+    suspend fun getSprintById(@PathVariable id: String): SprintDTO? = sprintService.getSprintById(id)
 
     @GetMapping("{projectId}/active")
     fun getActiveSprint(@PathVariable projectId: String): Flow<SprintDTO> = sprintService.getActiveSprint(projectId)
 
     @GetMapping("marks/{sprintId}/all")
     fun getAllSprintMarks(@PathVariable sprintId: String): Flow<SprintMarks> = sprintService.getAllSprintMarks(sprintId)
+
+    @PostMapping("add")
+    suspend fun createSprint(@RequestBody sprintDTO: SprintDTO): SprintDTO = sprintService.createSprint(sprintDTO)
+    @PostMapping("{sprintId}/add/marks")
+    suspend fun  addSprintMarks(@PathVariable sprintId: String, @RequestBody sprintMarksRequest: sprintMarksRequest) = sprintService.addSprintMarks(sprintId, sprintMarksRequest)
+
+    @PutMapping("status/change")
+    suspend fun changeSprintStatus(@RequestBody sprintStatusRequest: sprintStatusRequest) = sprintService.changeSprintStatus(sprintStatusRequest)
+    @PutMapping("{sprintId}/update")
+    suspend fun updateSprintInfo(@PathVariable sprintId: String, @RequestBody sprintInfoRequest: sprintInfoRequest) = sprintService.updateSprintInfo(sprintId, sprintInfoRequest)
+
+    @PutMapping("{sprintId}/finish")
+    suspend fun putSprintFinish(@PathVariable sprintId: String, @RequestBody sprintFinishRequest: SprintFinishRequest) = sprintService.putSprintFinish(sprintId, sprintFinishRequest)
+    @DeleteMapping("{id}/delete")
+    suspend fun deleteSprint(@PathVariable id: String) = sprintService.deleteSprint(id)
 
 }
