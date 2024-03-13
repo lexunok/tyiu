@@ -1,9 +1,12 @@
 package com.tyiu.authorizationservice;
 
 import com.tyiu.client.connections.EmailClient;
+import com.tyiu.client.connections.IdeasClient;
 import com.tyiu.client.models.InvitationDTO;
 import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -17,7 +20,9 @@ import java.util.Arrays;
 @RequiredArgsConstructor
 public class AuthorizationViewController {
     private final EmailClient emailClient;
+    private final IdeasClient ideasClient;
     private final UserRepository repository;
+    private final ModelMapper mapper = new ModelMapper();
     private final PasswordEncoder encoder;
 
     @GetMapping("/login")
@@ -51,6 +56,7 @@ public class AuthorizationViewController {
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
             repository.save(user);
+            ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
         }
         InvitationDTO invitation = emailClient.findInvitationById(code);
         if (invitation!=null) {
@@ -59,6 +65,7 @@ public class AuthorizationViewController {
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
             repository.save(user);
+            ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
         }
         return "redirect:/login";
     }
