@@ -42,6 +42,7 @@ public class AuthorizationViewController {
         }
         return "login";
     }
+
     @PostMapping("/registration")
     public String register(@RequestParam(name = "code") String code, User user) {
         InvitationDTO invitation = emailClient.findInvitationById(code);
