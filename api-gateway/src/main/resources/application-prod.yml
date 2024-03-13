@@ -19,6 +19,18 @@ spring:
           uri: http://authorization-service:7777
           predicates:
             - Path=/api/v1/authorization-service/**
+        - id: notification-service
+          uri: http://notification-service:1337
+          predicates:
+            - Path=/api/v1/notification-service/**
+        - id: email-service
+          uri: http://email-service:3000
+          predicates:
+            - Path=/api/v1/email-service/**
+        - id: tgbot-service
+          uri: http://tgbot-service:5321
+          predicates:
+            - Path=/api/v1/tgbot-service/**
   security:
     oauth2:
       client:
