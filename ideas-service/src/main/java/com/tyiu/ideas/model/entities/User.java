@@ -24,9 +24,7 @@ public class User {
     private String telephone;
     private LocalDateTime createdAt;
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
     public String getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
