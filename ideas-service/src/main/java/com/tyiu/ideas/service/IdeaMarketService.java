@@ -82,7 +82,8 @@ public class IdeaMarketService {
                 .bind("userId", userId)
                 .bind("marketId", marketId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     private IdeaMarketDTO buildIdeaMarket(Row row, ConcurrentHashMap<String, IdeaMarketDTO> map){
@@ -178,7 +179,8 @@ public class IdeaMarketService {
                 .sql(QUERY)
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
@@ -186,7 +188,8 @@ public class IdeaMarketService {
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
                        s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
+                       i.name, i.solution, i.max_team_size,
+                       t.id AS t_id
                 FROM (
                     SELECT im.*,
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
@@ -198,11 +201,56 @@ public class IdeaMarketService {
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
                 LEFT JOIN idea i ON i.id = im_sub.idea_id
+                LEFT JOIN team t ON t.id = im_sub.team_id
                 LEFT JOIN users u ON u.id = i.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
-        return getListMarketIdea(QUERY, userId, marketId);
+        ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId", userId)
+                .bind("marketId", marketId)
+                .map((row, rowMetadata) -> {
+                    String ideaMarketId = row.get("id", String.class);
+                    String skillId = row.get("s_id", String.class);
+                    String teamId = row.get("t_id", String.class);
+                    IdeaMarketDTO ideaMarketDTO = map.get(ideaMarketId);
+                    if (ideaMarketDTO == null) {
+                        ideaMarketDTO = map.getOrDefault(ideaMarketId, IdeaMarketDTO.builder()
+                                .id(ideaMarketId)
+                                .ideaId(row.get("idea_id", String.class))
+                                .team(teamId != null ? TeamDTO.builder().id(teamId).build() : null)
+                                .position(row.get("row_number", Integer.class))
+                                .name(row.get("name", String.class))
+                                .initiator(UserDTO.builder()
+                                        .id(row.get("u_id", String.class))
+                                        .email(row.get("u_e", String.class))
+                                        .firstName(row.get("u_fn", String.class))
+                                        .lastName(row.get("u_ln", String.class))
+                                        .build())
+                                .solution(row.get("solution", String.class))
+                                .stack(new ArrayList<>())
+                                .maxTeamSize(row.get("max_team_size", Short.class))
+                                .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
+                                .requests(row.get("request_count", Integer.class))
+                                .acceptedRequests(row.get("accepted_request_count", Integer.class))
+                                .isFavorite(Objects.equals(row.get("favorite", String.class), ideaMarketId))
+                                .build());
+                    }
+                    if (skillId != null){
+                        SkillDTO skill = SkillDTO.builder()
+                                .name(row.get("s_name", String.class))
+                                .type(SkillType.valueOf(row.get("s_type", String.class)))
+                                .id(skillId)
+                                .build();
+                        ideaMarketDTO.getStack().add(skill);
+                    }
+                    map.put(ideaMarketId, ideaMarketDTO);
+                    return ideaMarketDTO;
+                })
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId){
