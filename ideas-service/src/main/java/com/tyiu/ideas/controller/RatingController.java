@@ -22,13 +22,13 @@ public class RatingController {
     private final RatingService ratingService;
 
     @GetMapping("/all/{ideaId}")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Flux<RatingDTO> getAllIdeasRatings(@PathVariable String ideaId){
         return ratingService.getRatings(ideaId);
     }
 
     @GetMapping("/{ideaId}")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
     public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable String ideaId, @AuthenticationPrincipal User user){
         return ratingService.getExpertRating(ideaId, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Рейтинг не найден")));
