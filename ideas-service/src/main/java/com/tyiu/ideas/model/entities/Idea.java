@@ -47,9 +47,9 @@ public class Idea {
         return name;
     }
     public String getId() { return id; }
-    public String description() { return description; }
-    public String customer() { return customer; }
-    public String initiatorId() { return initiatorId; }
+    public String getDescription() { return description; }
+    public String getCustomer() { return customer; }
+    public String getInitiatorId() { return initiatorId; }
 
 
 }

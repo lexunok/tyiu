@@ -30,4 +30,8 @@ public class IdeaMarketDTO {
     private Integer requests;
     private Integer acceptedRequests;
     private Boolean isFavorite;
+
+    public String getIdeaId() { return ideaId; }
+    public TeamDTO getTeam() { return team; }
+
 }

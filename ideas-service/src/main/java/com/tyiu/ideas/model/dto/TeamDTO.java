@@ -33,4 +33,6 @@ public class TeamDTO {
         this.name = name;
     }
 
+    public String getId() { return id; }
+
 }
