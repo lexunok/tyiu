@@ -41,6 +41,7 @@ data class SprintDTO(
     val projectId:String? = null,
     val name:String? = null,
     val report:String? = null,
+    val status:SprintStatus? = null,
     val goal:String? = null,
     val startDate:LocalDate? = LocalDate.now(),
     val finishDate:LocalDate? = null,
@@ -49,12 +50,12 @@ data class SprintDTO(
 
     )
 
-data class sprintStatusRequest(
+data class SprintStatusRequest(
     val sprintId:String? = null,
     val sprintStatus:String? = null,
 )
 
-data class sprintInfoRequest(
+data class SprintInfoRequest(
     val sprintId:String? = null,
     val sprintName:String? = null,
     val sprintGoal:String? = null,
@@ -72,6 +73,7 @@ fun Sprint.toDTO(): SprintDTO = SprintDTO (
     projectId = projectId,
     goal = goal,
     name = name,
+    status = status,
     report = report,
     startDate = startDate,
     finishDate = finishDate,
