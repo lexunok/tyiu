@@ -2,6 +2,8 @@ package enums;
 
 public enum NotificationCase {
 
+    INITIATOR_INVITES_TEAM,
+
     TEAM_OWNER_INVITES_USER,
     USER_SEND_REQUEST_TO_TEAM_OWNER,
     USER_ACCEPT_INVITE,
