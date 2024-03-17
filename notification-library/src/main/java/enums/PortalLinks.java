@@ -3,7 +3,6 @@ package enums;
 public enum PortalLinks {
 
     IDEA_INVITATION("team/all/"),
-
     IDEAS_LIST("ideas/list/"),
     IDEAS_MARKET("market/"),
     TEAM("team/"),

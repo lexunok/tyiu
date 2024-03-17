@@ -59,6 +59,34 @@ public class IdeaInvitationService {
                                                                         .link(PortalLinks.IDEA_INVITATION + teamId)
                                                                         .buttonName("Перейти к приглашению")
                                                                         .build());
+
+                                                        case TEAM_INVITE_IS_ACCEPTED -> notificationPublisher.makeNotification(
+
+                                                                NotificationRequest.builder()
+                                                                        .publisherEmail(teamOwner.getEmail())
+                                                                        .consumerEmail(initiator.getEmail())
+                                                                        .title("Команда приняла ваше приглашение")
+                                                                        .message(String.format(
+                                                                                "Команда \"%s\" приняла ваше приглашение в идею \"%s\".",
+                                                                                team.getName(),
+                                                                                idea.getName()
+                                                                        ))
+                                                                        .link(PortalLinks.TEAM + teamId)
+                                                                        .buttonName("Перейти к команде")
+                                                                        .build());
+
+                                                        case TEAM_INVITE_IS_CANCELLED -> notificationPublisher.makeNotification(
+
+                                                                NotificationRequest.builder()
+                                                                        .publisherEmail(initiator.getEmail())
+                                                                        .consumerEmail(teamOwner.getEmail())
+                                                                        .title("Команда отклонила ваше приглашение")
+                                                                        .message(String.format(
+                                                                                "Команда \"%s\" отклонила ваше приглашение в идею \"%s\".",
+                                                                                team.getName(),
+                                                                                idea.getName()
+                                                                        ))
+                                                                        .build());
                                                     }
 
                                                     return Mono.empty();
@@ -164,12 +192,19 @@ public class IdeaInvitationService {
 
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
 
+            sendNotification(
+                    request.getIdeaId(),
+                    request.getTeamId(),
+                    NotificationCase.TEAM_INVITE_IS_ACCEPTED
+            );
+
             return template.update(query(where("team_id").is(request.getTeamId())
                                     .or("idea_id").is(request.getIdeaId())
                                     .and(where("id").not(request.getId()))
                                     .and(where("status").is(RequestStatus.NEW))),
                             update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
-                            .then(template.getDatabaseClient().sql("""
+                            .then(template.getDatabaseClient()
+                                    .sql("""
                                     UPDATE team_market_request SET status = :status 
                                     WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId) OR team_id = :teamId
                                     """)
@@ -193,6 +228,13 @@ public class IdeaInvitationService {
                             update("status", request.getStatus()),
                             IdeaInvitation.class)).then();
         }
+        if (request.getStatus().equals(RequestStatus.CANCELED))
+            sendNotification(
+                    request.getIdeaId(),
+                    request.getTeamId(),
+                    NotificationCase.TEAM_INVITE_IS_CANCELLED
+            );
+
         return template.update(query(where("id").is(request.getId())),
                 update("status", request.getStatus()), IdeaInvitation.class).then();
     }
