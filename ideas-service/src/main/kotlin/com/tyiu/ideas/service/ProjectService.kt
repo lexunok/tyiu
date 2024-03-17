@@ -61,7 +61,7 @@ class ProjectService(
             return@map projectMarks
         }
 
-    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): Project {
+    suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id
@@ -76,25 +76,25 @@ class ProjectService(
                 )
             )
         }
-        return createdProject
+        return createdProject.toDTO()
     }
 
-    suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMember {
+    suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMemberDTO {
         val projectMember = ProjectMember(
             projectId = projectId,
             userId = teamMemberRequest.userId,
             teamId = teamMemberRequest.teamId
         )
-        return projectMemberRepository.save(projectMember)
+        return projectMemberRepository.save(projectMember).toDTO()
     }
 
-    suspend fun addMarksInProject(projectId: String, projectMarkRequest: projectMarksRequest): ProjectMarks{
+    suspend fun addMarksInProject(projectId: String, projectMarkRequest: projectMarksRequest): ProjectMarksDTO{
         val projectMarks = ProjectMarks(
             projectId = projectId,
             userId = projectMarkRequest.userId,
             mark = projectMarkRequest.mark
         )
-        return projectMarksRepository.save(projectMarks)
+        return projectMarksRepository.save(projectMarks).toDTO()
     }
 
     suspend fun pauseProject(projectId: String) {

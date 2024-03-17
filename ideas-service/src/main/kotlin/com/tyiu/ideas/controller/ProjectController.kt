@@ -62,7 +62,7 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @PostMapping("/send")
-    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO,@AuthenticationPrincipal user: User): Project? {
+    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO,@AuthenticationPrincipal user: User): ProjectDTO? {
         return if (user.roles.contains(Role.ADMIN)||user.roles.contains(Role.PROJECT_OFFICE)){
             projectService.createProject(ideaMarketDTO)}
         else {null}
@@ -70,7 +70,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @PostMapping("/{projectId}/add/members")
     suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody teamMemberRequest: TeamMemberRequest,
-                                    @AuthenticationPrincipal user: User): ProjectMember? {
+                                    @AuthenticationPrincipal user: User): ProjectMemberDTO? {
         return if (user.roles.contains(Role.ADMIN)||user.roles.contains(Role.TEAM_OWNER)){
             projectService.addMembersInProject(projectId,teamMemberRequest)}
         else {null}
@@ -78,7 +78,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @PostMapping("/{projectId}/add/marks")
     suspend fun addMarksInProject(@PathVariable projectId: String,@RequestBody projectMarksRequest: projectMarksRequest,
-                                  @AuthenticationPrincipal user: User): ProjectMarks?{
+                                  @AuthenticationPrincipal user: User): ProjectMarksDTO?{
         return if (user.roles.contains(Role.ADMIN)||user.roles.contains(Role.INITIATOR)||user.roles.contains(Role.PROJECT_OFFICE)){
             projectService.addMarksInProject(projectId, projectMarksRequest)}
         else {null}
