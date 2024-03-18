@@ -17,6 +17,7 @@ import com.tyiu.ideas.model.entities.Group;
 import lombok.RequiredArgsConstructor;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import request.NotificationRequest;
 
 import java.util.ArrayList;
@@ -38,6 +39,60 @@ public class GroupService {
     private final NotificationPublisher notificationPublisher;
     private final ModelMapper mapper;
 
+    private Mono<Void> sendNotificationToGroupUsers(GroupDTO groupDTO, User admin){
+        template.select(query(where("group_id").is(groupDTO.getId())), Group2User.class)
+                .flatMap(group2User -> Mono.just(group2User.getUserId()))
+                .collectList().map(currentUserIdlist -> template.delete(query(where("group_id").is(groupDTO.getId())), Group2User.class)
+                        .flatMap(d -> {
+                            List<String> newId = groupDTO.getUsers().stream().map(UserDTO::getId).toList();
+                            Flux.fromIterable(newId.stream()
+                                            .distinct().filter(currentUserIdlist::contains)
+                                            .collect(Collectors.toSet()))
+                                    .flatMap(idToStay -> template.insert(new Group2User(idToStay, groupDTO.getId())))
+                                    .subscribe();
+                            Flux.fromIterable(newId.stream()
+                                            .distinct().filter(id -> !currentUserIdlist.contains(id))
+                                            .collect(Collectors.toSet()))
+                                    .flatMap(idToAdd -> template.insert(new Group2User(idToAdd, groupDTO.getId()))
+                                            .then(template.selectOne(query(where("id").is(idToAdd)), User.class)))
+                                    .flatMap(user -> notificationPublisher.makeNotification(
+                                            NotificationRequest.builder()
+                                                    .consumerEmail(user.getEmail())
+                                                    .title("Вы вошли в состав пользовательской группы на портале HITS")
+                                                    .message(String.format(
+                                                            "Админ %s %s сделал вас участником пользовательской группы " +
+                                                                    "\"%s\"",
+                                                            admin.getFirstName(),
+                                                            admin.getLastName(),
+                                                            groupDTO.getName()
+                                                    ))
+                                                    .publisherEmail(admin.getEmail())
+                                                    .build())
+                                    ).subscribe();
+                            Flux.fromIterable(currentUserIdlist
+                                            .stream().distinct().filter(id -> !newId.contains(id))
+                                            .collect(Collectors.toSet()))
+                                    .flatMap(idToDelete -> template.selectOne(query(where("id").is(idToDelete)), User.class))
+                                    .flatMap(user -> notificationPublisher.makeNotification(
+                                            NotificationRequest.builder()
+                                                    .consumerEmail(user.getEmail())
+                                                    .title("Вас исключили из состава пользовательской группы")
+                                                    .message(String.format(
+                                                            "Админ %s %s исключил вас из пользовательской группы " +
+                                                                    "\"%s\"",
+                                                            admin.getFirstName(),
+                                                            admin.getLastName(),
+                                                            groupDTO.getName()
+                                                    ))
+                                                    .publisherEmail(admin.getEmail())
+                                                    .build())
+                                    ).subscribe();
+                            return Mono.empty();
+                        })
+                ).publishOn(Schedulers.boundedElastic()).subscribe();
+        return Mono.empty();
+    }
+
     @Cacheable
     public Flux<GroupDTO> getGroups() {
         return template.select(Group.class).all()
@@ -55,25 +110,24 @@ public class GroupService {
             groupDTO.setId(g.getId());
             return Flux.fromIterable(groupDTO.getUsers()).flatMap(u ->
                     template.insert(new Group2User(u.getId(), g.getId())
-                    ).then(Mono.fromRunnable(() -> {
-                        template.selectOne(query(where("id").is(u.getId())), User.class)
-                            .flatMap(
-                                user -> notificationPublisher.makeNotification(
-                                        NotificationRequest.builder()
-                                                .consumerEmail(user.getEmail())
-                                                .title("Вы вошли в состав пользовательской группы на портале HITS")
-                                                .message(String.format(
-                                                        "Админ %s %s сделал вас участником пользовательской группы " +
-                                                                "\"%s\"",
-                                                        admin.getFirstName(),
-                                                        admin.getLastName(),
-                                                        groupDTO.getName()
-                                                ))
-                                                .publisherEmail(admin.getEmail())
-                                                .build()
-                                )
-                            ).subscribe();
-                    }))
+                    ).then(Mono.fromRunnable(() -> template.selectOne(query(where("id").is(u.getId())), User.class)
+                        .flatMap(
+                            user -> notificationPublisher.makeNotification(
+                                    NotificationRequest.builder()
+                                            .consumerEmail(user.getEmail())
+                                            .title("Вы вошли в состав пользовательской группы на портале HITS")
+                                            .message(String.format(
+                                                    "Админ %s %s сделал вас участником пользовательской группы " +
+                                                            "\"%s\"",
+                                                    admin.getFirstName(),
+                                                    admin.getLastName(),
+                                                    groupDTO.getName()
+                                            ))
+                                            .publisherEmail(admin.getEmail())
+                                            .build()
+                            ))
+                            .publishOn(Schedulers.boundedElastic())
+                            .subscribe()))
             ).then();
         }).thenReturn(groupDTO);
     }
@@ -97,6 +151,7 @@ public class GroupService {
                                             .consumerEmail(user.getEmail())
                                             .build()
                             ))
+                            .publishOn(Schedulers.boundedElastic())
                             .subscribe();
                     return template.delete(query(where("id").is(id)), Group.class).then();
                 }
@@ -116,54 +171,7 @@ public class GroupService {
                                             .stream()
                                             .map(Enum::toString)
                                             .toArray(String[]::new)), Group.class))
-                            .then(template.select(query(where("group_id").is(groupId)), Group2User.class)
-                                    .flatMap(group2User -> Mono.just(group2User.getUserId()))
-                                    .collectList().map(currentUserIdlist -> template.delete(query(where("group_id").is(groupId)),Group2User.class)
-                                            .then(Mono.fromRunnable(() -> {
-                                                List<String> newId = groupDTO.getUsers().stream().map(UserDTO::getId).toList();
-                                                Flux.fromIterable(newId.stream()
-                                                        .distinct().filter(currentUserIdlist::contains)
-                                                        .collect(Collectors.toSet()))
-                                                        .flatMap(idToStay -> template.insert(new Group2User(idToStay, groupId)))
-                                                        .subscribe();
-                                                Flux.fromIterable(newId.stream()
-                                                        .distinct().filter(id -> !currentUserIdlist.contains(id))
-                                                        .collect(Collectors.toSet()))
-                                                        .flatMap(idToAdd -> template.insert(new Group2User(idToAdd, groupId))
-                                                        .then(template.selectOne(query(where("id").is(idToAdd)), User.class)))
-                                                        .flatMap(user -> notificationPublisher.makeNotification(
-                                                                NotificationRequest.builder()
-                                                                        .consumerEmail(user.getEmail())
-                                                                        .title("Вы вошли в состав пользовательской группы на портале HITS")
-                                                                        .message(String.format(
-                                                                                "Админ %s %s сделал вас участником пользовательской группы " +
-                                                                                        "\"%s\"",
-                                                                                admin.getFirstName(),
-                                                                                admin.getLastName(),
-                                                                                groupDTO.getName()
-                                                                        ))
-                                                                        .publisherEmail(admin.getEmail())
-                                                                        .build())
-                                                        ).subscribe();
-                                                Flux.fromIterable(currentUserIdlist
-                                                        .stream().distinct().filter(id -> !newId.contains(id))
-                                                        .collect(Collectors.toSet()))
-                                                        .flatMap(idToDelete -> template.selectOne(query(where("id").is(idToDelete)), User.class))
-                                                        .flatMap(user -> notificationPublisher.makeNotification(
-                                                                NotificationRequest.builder()
-                                                                        .consumerEmail(user.getEmail())
-                                                                        .title("Вас исключили из состава пользовательской группы")
-                                                                        .message(String.format(
-                                                                                "Админ %s %s исключил вас из пользовательской группы " +
-                                                                                        "\"%s\"",
-                                                                                admin.getFirstName(),
-                                                                                admin.getLastName(),
-                                                                                groupDTO.getName()
-                                                                        ))
-                                                                        .publisherEmail(admin.getEmail())
-                                                                        .build())
-                                                        ).subscribe();
-                                            }))).thenReturn(groupDTO));
+                            .then(sendNotificationToGroupUsers(groupDTO, admin)).thenReturn(groupDTO);
                 });
     }
 

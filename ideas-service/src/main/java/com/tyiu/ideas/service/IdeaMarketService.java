@@ -39,6 +39,35 @@ public class IdeaMarketService {
     private final ModelMapper mapper;
     private final NotificationPublisher notificationPublisher;
 
+    private Mono<Void> sendNotificationCancelRequest(User user, String teamId, String ideaMarketId){
+        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                .flatMap(team -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
+                        .flatMap(owner -> template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
+                                .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class)
+                                        .flatMap(idea -> {
+                                            String message = String.format("Пользователь %s %s отклонил заявку " +
+                                                            "на вступление команды \"%s\" в идею \"%s\".",
+                                                    user.getFirstName(),
+                                                    user.getLastName(),
+                                                    team.getName(),
+                                                    idea.getName()
+                                            );
+                                            String link = PortalLinks.IDEAS_MARKET + ideaMarket.getMarketId() + "/" + ideaMarket.getId();
+                                            return notificationPublisher.makeNotification(
+                                                    NotificationRequest.builder()
+                                                            .publisherEmail(user.getEmail())
+                                                            .consumerEmail(owner.getEmail())
+                                                            .title("Ваша заявка в идею откланена")
+                                                            .message(message)
+                                                            .link(link)
+                                                            .buttonName("Перейти к идее")
+                                                            .build()
+                                            );
+                                        })))
+                ).then();
+    }
+
+
     private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
         String QUERY = "SELECT im.*, " +
                 "u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
@@ -333,7 +362,7 @@ public class IdeaMarketService {
     ///_/    \____/ /___/  /_/
     //////////////////////////////
 
-    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList) {
+    public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList, User user) {
         return ideaDTOList.flatMap(ideaDTO -> {
             IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
                     .ideaId(ideaDTO.getId())
@@ -355,6 +384,23 @@ public class IdeaMarketService {
                     .then(template.insert(mapper.map(ideaMarketDTO, IdeaMarket.class))
                             .flatMap(i -> {
                                 ideaMarketDTO.setId(i.getId());
+                                String message = String.format("Пользователь %s %s отправил вашу идею \"%s\" " +
+                                        "была отправлена в биржу. Перейдите по ссылке, чтобы посмотреть идею",
+                                        user.getFirstName(),
+                                        user.getLastName(),
+                                        ideaDTO.getName()
+                                );
+                                String link = PortalLinks.IDEAS_MARKET + marketId + "/" + i.getIdeaId();
+                                notificationPublisher.makeNotification(
+                                        NotificationRequest.builder()
+                                                .consumerEmail(ideaDTO.getInitiator().getEmail())
+                                                .publisherEmail(user.getEmail())
+                                                .buttonName("Перейти к идее в бирже")
+                                                .message(message)
+                                                .link(link)
+                                                .title("Ваша идея была отправлена на биржу!")
+                                                .build()
+                                );
                                 return Mono.just(ideaMarketDTO);
                             }));
         });
@@ -440,6 +486,26 @@ public class IdeaMarketService {
         return checkInitiator(ideaMarketId,user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                        template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
+                                .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class))
+                                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                                        .flatMap(initiator -> {
+                                            String message = String.format("Пользователь %s %s удалил идею \"%s\" " +
+                                                    "с биржи",
+                                                    user.getFirstName(),
+                                                    user.getLastName(),
+                                                    idea.getName()
+                                                    );
+                                            return notificationPublisher.makeNotification(
+                                                    NotificationRequest.builder()
+                                                            .consumerEmail(initiator.getEmail())
+                                                            .publisherEmail(user.getEmail())
+                                                            .title("Идея была удалена с биржи")
+                                                            .message(message)
+                                                            .build()
+                                            );
+                                        })
+                                ).subscribe();
                         return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -496,7 +562,7 @@ public class IdeaMarketService {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
                                                 .then(template.update(r))
-                                                .then();
+                                                .then(sendNotificationCancelRequest(user, r.getTeamId(), r.getIdeaMarketId()));
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });

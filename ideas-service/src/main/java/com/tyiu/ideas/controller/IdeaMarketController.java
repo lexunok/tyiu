@@ -76,8 +76,11 @@ public class IdeaMarketController {
 
     @PostMapping("/send/{marketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
-    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody Flux<IdeaDTO> ideaDTOList) {
-        return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList)
+    public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId,
+                                                @RequestBody Flux<IdeaDTO> ideaDTOList,
+                                                @AuthenticationPrincipal User user
+    ) {
+        return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить идею на биржу")));
     }
 
