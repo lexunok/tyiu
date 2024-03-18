@@ -43,26 +43,12 @@ data class SprintDTO(
     val report:String? = null,
     val status:SprintStatus? = null,
     val goal:String? = null,
-    val startDate:LocalDate? = LocalDate.now(),
+    val startDate:LocalDate? = null,
     val finishDate:LocalDate? = null,
     val workingHours:Long? = null,
     val tasks:HashMap<TaskStatus, List<TaskDTO>>? = null,
-
-    )
-
-data class SprintStatusRequest(
-    val sprintId:String? = null,
-    val sprintStatus:String? = null,
 )
 
-data class SprintInfoRequest(
-    val sprintId:String? = null,
-    val sprintName:String? = null,
-    val sprintGoal:String? = null,
-    val startDate:LocalDate? = LocalDate.now(),
-    val finishDate:LocalDate? = null,
-    val sprintWorkingHours: Long? = null,
-)
 data class SprintFinishRequest(
     val sprintReport: String? = null,
     val finishDate: LocalDate? = null,

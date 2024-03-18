@@ -26,29 +26,15 @@ class SprintService (
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarks> = sprintMarksRepository.findSprintMarks(sprintId)
 
-    suspend fun updateSprintInfo(sprintId: String, sprintInfoRequest: SprintInfoRequest){
-        val query =
-            "UPDATE sprint SET name = :sprintName, goal = :sprintGoal, working_hours = :sprintWorkingHours WHERE id = :sprintId"
-        return template.databaseClient.sql(query)
-            .bind("sprintName",sprintInfoRequest.sprintName!!)
-            .bind("sprintGoal",sprintInfoRequest.sprintGoal!!)
-            .bind("sprintWorkingHours",sprintInfoRequest.sprintWorkingHours!!)
-            .bind("sprintId",sprintId).await()
-    }
-
-    suspend fun changeSprintStatus(sprintStatusRequest: SprintStatusRequest){
-        return template.databaseClient.sql("UPDATE sprint SET status = :sprintStatus WHERE id = :sprintId")
-            .bind("sprintStatus",sprintStatusRequest.sprintStatus!!)
-            .bind("sprintId",sprintStatusRequest.sprintId!!).await()
-    }
-
     suspend fun createSprint(sprintDTO: SprintDTO): SprintDTO {
         val sprint = Sprint(
             projectId = sprintDTO.projectId,
             name = sprintDTO.name,
             goal = sprintDTO.goal,
             workingHours = sprintDTO.workingHours,
-            )
+            startDate = sprintDTO.startDate,
+            finishDate = sprintDTO.finishDate
+        )
         template.databaseClient.sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE'").await()
         return sprintRepository.save(sprint).toDTO()
     }
@@ -60,6 +46,25 @@ class SprintService (
             mark = sprintMarksRequest.mark,
             )
         return sprintMarksRepository.save(sprintMarks)
+    }
+
+    //TODO: добавить изменение списка задач
+    suspend fun updateSprintInfo(sprintId: String, sprintDTO: SprintDTO){
+        val query =
+            "UPDATE sprint SET name = :name, goal = :goal, start_date = :start_date, finish_date = :finish_date, working_hours = :working_hours WHERE id = :sprintId"
+        return template.databaseClient.sql(query)
+            .bind("name", sprintDTO.name!!)
+            .bind("goal", sprintDTO.goal!!)
+            .bind("start_date", sprintDTO.startDate!!)
+            .bind("finish_date", sprintDTO.finishDate!!)
+            .bind("working_hours", sprintDTO.workingHours!!)
+            .bind("sprintId", sprintId).await()
+    }
+
+    suspend fun changeSprintStatus(sprintId: String, status: SprintStatus){
+        return template.databaseClient.sql("UPDATE sprint SET status = :sprintStatus WHERE id = :sprintId")
+            .bind("sprintStatus", status)
+            .bind("sprintId", sprintId).await()
     }
 
     suspend fun putSprintFinish(sprintId: String, sprintFinishRequest: SprintFinishRequest) {
