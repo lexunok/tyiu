@@ -67,8 +67,9 @@ data class ReportProject(
 )
 
 data class ProjectFinishRequest(
+        val projectId:String? = null,
         val projectReport: String? = null,
-        val finishDate: LocalDate? = null,
+
 )
 
 fun Project.toDTO(): ProjectDTO=ProjectDTO(

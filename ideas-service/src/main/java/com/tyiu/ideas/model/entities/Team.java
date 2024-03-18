@@ -27,4 +27,5 @@ public class Team {
         return name;
     }
     public String getId() { return id; }
+    public String getLeaderId() { return leaderId; }
 }

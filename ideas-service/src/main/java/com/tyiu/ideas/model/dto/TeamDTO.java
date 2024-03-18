@@ -1,5 +1,6 @@
 package com.tyiu.ideas.model.dto;
 
+import com.tyiu.ideas.model.entities.User;
 import lombok.*;
 
 import java.time.LocalDate;

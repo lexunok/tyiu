@@ -38,6 +38,11 @@ data class ProjectLeaderRequest(
     val userId:String?=null,
 )
 
+data class AddToProjectRequest(
+    val teamId:String?=null,
+    val userId:String?=null,
+)
+
 enum class ProjectRole{
     TEAM_LEADER, INITIATOR, MEMBER
 }

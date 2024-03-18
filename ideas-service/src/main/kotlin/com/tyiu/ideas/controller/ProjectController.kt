@@ -87,10 +87,10 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @PostMapping("/{projectId}/add/members")
-    suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody teamMemberRequest: TeamMemberRequest,
+    suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody addToProjectRequest: AddToProjectRequest,
                                     @AuthenticationPrincipal user: User): ProjectMemberDTO {
         return if (user.roles.roleCheck(listOf(Role.TEAM_OWNER,Role.ADMIN))) {
-            projectService.addMembersInProject(projectId,teamMemberRequest)
+            projectService.addMembersInProject(projectId,addToProjectRequest)
         }
         else {
             throw AccessException("Нет прав")
@@ -125,12 +125,12 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
-    @PutMapping("/{projectId}/finish/change")
-    suspend fun putFinishProject(@PathVariable projectId: String,@RequestBody projectFinishRequest: ProjectFinishRequest,
+    @PutMapping("/finish/change")
+    suspend fun putFinishProject(@RequestBody projectFinishRequest: ProjectFinishRequest,
                                  @AuthenticationPrincipal user: User) : InfoResponse {
         return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
             try {
-                projectService.putFinishProject(projectId,projectFinishRequest)
+                projectService.putFinishProject(projectFinishRequest)
                 InfoResponse(HttpStatus.OK,"Проект успешно завершён")
             }
             catch(e: Exception){

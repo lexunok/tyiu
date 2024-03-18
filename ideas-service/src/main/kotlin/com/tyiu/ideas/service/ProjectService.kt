@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service
 
 @Service
 class ProjectService(
-    private val teamMemberRepository: TeamMemberRepository,
     private val projectRepository: ProjectRepository,
     private val ideaRepository: IdeaRepository,
     private val teamRepository: TeamRepository,
@@ -19,7 +18,8 @@ class ProjectService(
     private val userRepository: UserRepository,
     private val taskRepository: TaskRepository,
     private val taskService: TaskService,
-    private val marketRepository: MarketRepository
+    private val marketRepository: MarketRepository,
+    private val teamToMemberRepository: TeamToMemberRepository
 ) {
     private suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
@@ -70,23 +70,23 @@ class ProjectService(
 
         )
         val createdProject = projectRepository.save(project)
-        teamMemberRepository.findMemberByTeamId(ideaMarketDTO.team.id).toList().forEach { m ->
-            projectMemberRepository.save(
-                ProjectMember(
-                    projectId = createdProject.id,
-                    userId = m.userId,
-                    teamId = m.teamId
-                )
-            )
+        val team = teamRepository.findById(ideaMarketDTO.team.id)
+        teamToMemberRepository.findMembersByTeamId(ideaMarketDTO.team.id).toList().forEach { m ->
+            projectMemberRepository.save(ProjectMember(
+                projectId = createdProject.id,
+                userId = m.memberId,
+                teamId = ideaMarketDTO.team.id,
+                projectRole = if (m.memberId == team?.leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
+            ))
         }
         return createdProject.toDTO()
     }
 
-    suspend fun addMembersInProject(projectId: String, teamMemberRequest: TeamMemberRequest): ProjectMemberDTO {
+        suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
         val projectMember = ProjectMember(
             projectId = projectId,
-            userId = teamMemberRequest.userId,
-            teamId = teamMemberRequest.teamId
+            userId = addToProjectRequest.userId,
+            teamId = addToProjectRequest.teamId
         )
         return projectMemberRepository.save(projectMember).toDTO()
     }
@@ -105,12 +105,11 @@ class ProjectService(
         return template.databaseClient.sql(query).bind("projectId", projectId).await()
     }
 
-    suspend fun putFinishProject(projectId: String,projectFinishRequest:ProjectFinishRequest) {
-        val query = "UPDATE project SET finish_date = :finishDate, report = :projectReport, status = 'DONE' WHERE id = :projectId"
+    suspend fun putFinishProject(projectFinishRequest:ProjectFinishRequest) {
+        val query = "UPDATE project SET report = :projectReport, status = 'DONE' WHERE id = :projectId"
         return template.databaseClient.sql(query)
-            .bind("finishDate", projectFinishRequest.finishDate!!)
             .bind("projectReport", projectFinishRequest.projectReport!!)
-            .bind("projectId", projectId).await()
+            .bind("projectId", projectFinishRequest.projectId).await()
     }
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
