@@ -28,68 +28,75 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
 
-
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "groups")
 public class GroupService {
-    private final GroupMapper groupMapper;
+
+    private final ModelMapper mapper;
     private final UserMapper userMapper;
+    private final GroupMapper groupMapper;
     private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
-    private final ModelMapper mapper;
 
-    private Mono<Void> sendNotificationToGroupUsers(GroupDTO groupDTO, User admin){
+    private Mono<Void> sendNotificationToGroupUsers(GroupDTO groupDTO, User admin) {
+
         template.select(query(where("group_id").is(groupDTO.getId())), Group2User.class)
                 .flatMap(group2User -> Mono.just(group2User.getUserId()))
-                .collectList().map(currentUserIdlist -> template.delete(query(where("group_id").is(groupDTO.getId())), Group2User.class)
+                .collectList()
+                .map(currentUserIdlist -> template.delete(query(where("group_id").is(groupDTO.getId())), Group2User.class)
                         .flatMap(d -> {
+
                             List<String> newId = groupDTO.getUsers().stream().map(UserDTO::getId).toList();
                             Flux.fromIterable(newId.stream()
                                             .distinct().filter(currentUserIdlist::contains)
                                             .collect(Collectors.toSet()))
                                     .flatMap(idToStay -> template.insert(new Group2User(idToStay, groupDTO.getId())))
                                     .subscribe();
+
                             Flux.fromIterable(newId.stream()
                                             .distinct().filter(id -> !currentUserIdlist.contains(id))
                                             .collect(Collectors.toSet()))
                                     .flatMap(idToAdd -> template.insert(new Group2User(idToAdd, groupDTO.getId()))
                                             .then(template.selectOne(query(where("id").is(idToAdd)), User.class)))
                                     .flatMap(user -> notificationPublisher.makeNotification(
+
                                             NotificationRequest.builder()
+                                                    .publisherEmail(admin.getEmail())
                                                     .consumerEmail(user.getEmail())
-                                                    .title("Вы вошли в состав пользовательской группы на портале HITS")
+                                                    .title("Вы вошли в состав пользовательской группы")
                                                     .message(String.format(
-                                                            "Админ %s %s сделал вас участником пользовательской группы " +
-                                                                    "\"%s\"",
+                                                            "Админ %s %s сделал вас участником пользовательской группы \"%s\".",
                                                             admin.getFirstName(),
                                                             admin.getLastName(),
                                                             groupDTO.getName()
                                                     ))
-                                                    .publisherEmail(admin.getEmail())
                                                     .build())
                                     ).subscribe();
-                            Flux.fromIterable(currentUserIdlist
-                                            .stream().distinct().filter(id -> !newId.contains(id))
+
+                            Flux.fromIterable(currentUserIdlist.stream()
+                                            .distinct().filter(id -> !newId.contains(id))
                                             .collect(Collectors.toSet()))
                                     .flatMap(idToDelete -> template.selectOne(query(where("id").is(idToDelete)), User.class))
                                     .flatMap(user -> notificationPublisher.makeNotification(
+
                                             NotificationRequest.builder()
+                                                    .publisherEmail(admin.getEmail())
                                                     .consumerEmail(user.getEmail())
                                                     .title("Вас исключили из состава пользовательской группы")
                                                     .message(String.format(
-                                                            "Админ %s %s исключил вас из пользовательской группы " +
-                                                                    "\"%s\"",
+                                                            "Админ %s %s исключил вас из пользовательской группы \"%s\".",
                                                             admin.getFirstName(),
                                                             admin.getLastName(),
                                                             groupDTO.getName()
                                                     ))
-                                                    .publisherEmail(admin.getEmail())
                                                     .build())
                                     ).subscribe();
+
                             return Mono.empty();
                         })
                 ).publishOn(Schedulers.boundedElastic()).subscribe();
+
         return Mono.empty();
     }
 
@@ -98,6 +105,7 @@ public class GroupService {
         return template.select(Group.class).all()
                 .flatMap(g -> Flux.just(mapper.map(g, GroupDTO.class)));
     }
+
     @Cacheable
     public Mono<GroupDTO> getGroupById(String groupId) {
         return getGroup(groupId);
@@ -195,6 +203,3 @@ public class GroupService {
                 }).last();
     }
 }
-
-
-

@@ -28,80 +28,84 @@ import static org.springframework.data.relational.core.query.Update.update;
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "ratings")
 public class RatingService {
-    private final R2dbcEntityTemplate template;
-    private final RatingMapper ratingMapper;
-    private final NotificationPublisher notificationPublisher;
-    private final ModelMapper mapper;
 
-    private Mono<Void> sendNotificationThatIdeaIsConfirm(Rating rating, String expertId){
+    private final ModelMapper mapper;
+    private final RatingMapper ratingMapper;
+    private final R2dbcEntityTemplate template;
+    private final NotificationPublisher notificationPublisher;
+
+    private Mono<Void> sendNotificationThatIdeaIsConfirm(Rating rating, String expertId) {
+
         template.selectOne(query(where("id").is(rating.getIdeaId())), Idea.class)
-                .flatMap(idea ->
-                        template.selectOne(query(where("id").is(expertId)), User.class)
-                                .flatMap(expert -> template.selectOne(query(where("id")
-                                                .is(idea.getInitiatorId())), User.class)
-                                        .flatMap(initiator -> notificationPublisher
-                                                .makeNotification(NotificationRequest.builder()
-                                                        .consumerEmail(initiator.getEmail())
-                                                        .buttonName("Перейти к идее")
-                                                        .title("Утвержденная идея")
-                                                        .message(String
-                                                                .format("Ваша идея \"%s\" была утверждена экспертами. " +
-                                                                                "Перейдите по ссылке, чтобы перейти к идее",
-                                                                        idea.getName()))
+                .flatMap(idea -> template.selectOne(query(where("id").is(expertId)), User.class)
+                                .flatMap(expert -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                                        .flatMap(initiator -> notificationPublisher.makeNotification(
+
+                                                NotificationRequest.builder()
                                                         .publisherEmail(expert.getEmail())
+                                                        .consumerEmail(initiator.getEmail())
+                                                        .title("Утвержденная идея")
+                                                        .message(String.format(
+                                                                "Ваша идея \"%s\" была утверждена экспертами. " +
+                                                                        "Перейдите по ссылке, чтобы перейти к идее",
+                                                                idea.getName()
+                                                        ))
                                                         .link(PortalLinks.IDEAS_LIST + idea.getId())
+                                                        .buttonName("Перейти к идее")
                                                         .build()))
-                                        .then(template.select(query(where("group_id")
-                                                        .is(idea.getGroupProjectOfficeId())), Group2User.class)
-                                                .flatMap(projectOffice ->
-                                                        template.selectOne(query(where("id")
-                                                                .is(projectOffice.getUserId())), User.class))
-                                                .flatMap(projectOfficeUser ->
-                                                        notificationPublisher
-                                                                .makeNotification(NotificationRequest
-                                                                        .builder()
-                                                                        .publisherEmail(expert.getEmail())
-                                                                        .consumerEmail(projectOfficeUser.getEmail())
-                                                                        .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                                        .buttonName("Перейти к идее")
-                                                                        .title("Утвержденная идея")
-                                                                        .message(String
-                                                                                .format("Идея \"%s\" была утверждена экспертами. " +
-                                                                                                "Перейдите по ссылке, чтобы перейти к идее",
-                                                                                        idea.getName()))
-                                                                        .build())
-                                                ).then())
+
+                                        .then(template.select(query(where("group_id").is(idea.getGroupProjectOfficeId())), Group2User.class)
+                                                .flatMap(projectOffice -> template.selectOne(query(where("id").is(projectOffice.getUserId())), User.class))
+                                                .flatMap(projectOfficeUser -> notificationPublisher.makeNotification(
+
+                                                        NotificationRequest
+                                                                .builder()
+                                                                .publisherEmail(expert.getEmail())
+                                                                .consumerEmail(projectOfficeUser.getEmail())
+                                                                .title("Утвержденная идея")
+                                                                .message(String.format(
+                                                                        "Идея \"%s\" была утверждена экспертами. " +
+                                                                                "Перейдите по ссылке, чтобы перейти к идее.",
+                                                                        idea.getName()
+                                                                ))
+                                                                .link(PortalLinks.IDEAS_LIST + idea.getId())
+                                                                .buttonName("Перейти к идее")
+                                                                .build())
+                                                ).then()
+                                        )
                                 )
-                )
-                .publishOn(Schedulers.boundedElastic())
-                .subscribe();
+                ).publishOn(Schedulers.boundedElastic()).subscribe();
+
         return Mono.empty();
     }
 
-    private Mono<Void> sendRatingNotification(Rating rating, String expertId){
-        template.selectOne(query(where("id").is(expertId)), User.class).flatMap(
-                expert -> template.selectOne(query(where("id").is(rating.getIdeaId())), Idea.class)
+    private Mono<Void> sendRatingNotification(Rating rating, String expertId) {
+
+        template.selectOne(query(where("id").is(expertId)), User.class)
+                .flatMap(expert -> template.selectOne(query(where("id").is(rating.getIdeaId())), Idea.class)
                         .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
                                 .flatMap(initiator -> notificationPublisher.makeNotification(
+
                                         NotificationRequest.builder()
-                                                .consumerEmail(initiator.getEmail())
-                                                .buttonName("Перейти к идее")
-                                                .title("Ваша идея была оценена")
-                                                .message(String
-                                                        .format("Эксперт %s %s оценил важу идею \"%s\" на оценку - %.2f" +
-                                                                        "Перейдите по ссылке, чтобы посмотреть подробности",
-                                                                expert.getFirstName(),
-                                                                expert.getLastName(),
-                                                                idea.getName(),
-                                                                rating.getRating())
-                                                )
                                                 .publisherEmail(expert.getEmail())
+                                                .consumerEmail(initiator.getEmail())
+                                                .title("Ваша идея была оценена")
+                                                .message(String.format(
+                                                        "Эксперт %s %s оценил важу идею \"%s\" на оценку - %.2f. " +
+                                                                "Перейдите по ссылке, чтобы посмотреть подробности.",
+                                                        expert.getFirstName(),
+                                                        expert.getLastName(),
+                                                        idea.getName(),
+                                                        rating.getRating()
+                                                ))
                                                 .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                .build())
+                                                .buttonName("Перейти к идее")
+                                                .build()
+                                        )
                                 )
                         )
-                ).publishOn(Schedulers.boundedElastic())
-                .subscribe();
+                ).publishOn(Schedulers.boundedElastic()).subscribe();
+
         return Mono.empty();
     }
 
@@ -149,9 +153,8 @@ public class RatingService {
                             })).then();
     }
 
-
     @CacheEvict(allEntries = true)
-    public Mono<Void> saveRating(RatingDTO ratingDTO, String id){
+    public Mono<Void> saveRating(RatingDTO ratingDTO, String id) {
         Rating rating = mapper.map(ratingDTO, Rating.class);
         rating.setExpertId(id);
         rating.setIsConfirmed(false);

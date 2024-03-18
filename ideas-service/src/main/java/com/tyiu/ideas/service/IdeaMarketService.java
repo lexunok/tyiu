@@ -35,16 +35,18 @@ import static org.springframework.data.relational.core.query.Update.update;
 @Slf4j
 public class IdeaMarketService {
 
-    private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
+    private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
 
-    private Mono<Void> sendNotificationCancelRequest(User user, String teamId, String ideaMarketId){
+    private Mono<Void> sendNotificationCancelRequest(User user, String teamId, String ideaMarketId) {
+
         return template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(team -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
                         .flatMap(owner -> template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
                                 .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class)
                                         .flatMap(idea -> {
+
                                             String message = String.format("Пользователь %s %s отклонил заявку " +
                                                             "на вступление команды \"%s\" в идею \"%s\".",
                                                     user.getFirstName(),
@@ -53,6 +55,7 @@ public class IdeaMarketService {
                                                     idea.getName()
                                             );
                                             String link = PortalLinks.IDEAS_MARKET + ideaMarket.getMarketId() + "/" + ideaMarket.getId();
+
                                             return notificationPublisher.makeNotification(
                                                     NotificationRequest.builder()
                                                             .publisherEmail(user.getEmail())
@@ -61,12 +64,10 @@ public class IdeaMarketService {
                                                             .message(message)
                                                             .link(link)
                                                             .buttonName("Перейти к идее")
-                                                            .build()
-                                            );
+                                                            .build());
                                         })))
                 ).then();
     }
-
 
     private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
         String QUERY = "SELECT im.*, " +
