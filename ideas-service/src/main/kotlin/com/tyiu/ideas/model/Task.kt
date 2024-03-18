@@ -114,5 +114,6 @@ data class TaskCreateRequest(
     val workHour: Long? = null,
     var initiatorId: String? = null,
     var sprintId: String? = null,
-    val taskTags: List<String>? = null
+    //val taskTags: List<String>? = null
+    val taskTags: String? = null
 )

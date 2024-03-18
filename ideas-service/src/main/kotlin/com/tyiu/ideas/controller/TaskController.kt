@@ -1,9 +1,6 @@
 package com.tyiu.ideas.controller
 
-import com.tyiu.ideas.model.TaskCreateRequest
-import com.tyiu.ideas.model.TaskDTO
-import com.tyiu.ideas.model.TaskInfoRequest
-import com.tyiu.ideas.model.TaskStatusRequest
+import com.tyiu.ideas.model.*
 import com.tyiu.ideas.service.TaskService
 import kotlinx.coroutines.flow.Flow
 import org.springframework.web.bind.annotation.*
@@ -25,7 +22,7 @@ class TaskController (private val taskService: TaskService) {
     fun getOneTaskById(@PathVariable id: String): Flow<TaskDTO> = taskService.getOneTaskById(id)
 
     @PostMapping("/add")
-    suspend fun postCreateTask(@RequestBody taskCreateRequest: TaskCreateRequest): Unit = taskService.createTask(taskCreateRequest)
+    suspend fun postCreateTask(@RequestBody taskCreateRequest: TaskCreateRequest): TaskDTO = taskService.createTask(taskCreateRequest)
 
     @PutMapping("/status/change")
     suspend fun putTaskStatus (@RequestBody taskStatusRequest: TaskStatusRequest) = taskService.putTaskStatus(taskStatusRequest)

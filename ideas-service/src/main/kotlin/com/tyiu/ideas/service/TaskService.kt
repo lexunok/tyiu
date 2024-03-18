@@ -14,6 +14,7 @@ class TaskService
     private val repository: TaskRepository,
     private val userRepository: UserRepository,
     private val taskTagRepository: TaskTagRepository,
+    private val task2tagRepository: Task2TagRepository,
     val template: R2dbcEntityTemplate
     )
 {
@@ -37,7 +38,7 @@ class TaskService
     fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
 
     //post
-    suspend fun createTask(taskCreateRequest: TaskCreateRequest) {
+    suspend fun createTask(taskCreateRequest: TaskCreateRequest): TaskDTO {
         val task = Task (
             name = taskCreateRequest.name,
             description = taskCreateRequest.description,
@@ -54,11 +55,13 @@ class TaskService
         }
         val taskSave = taskToDTO(repository.save(task))
 
-        val task2tag =  Task2Tag(
+        task2tagRepository.save (
+            Task2Tag(
             taskId = taskSave.id,
-            tagId  = ""
+            tagId = "0aeadd54-5323-40b4-97bd-7e5072f9d576"
         )
-       return taskTagRepository.InsertValues(task2tag.taskId, task2tag.tagId) // не добавляет в task_to_tag
+        )
+       return taskSave
     }
 
     //put
