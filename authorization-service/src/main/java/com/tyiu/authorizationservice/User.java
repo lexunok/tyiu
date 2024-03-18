@@ -1,6 +1,6 @@
 package com.tyiu.authorizationservice;
 
-import com.tyiu.client.models.*;
+import com.tyiu.client.models.Role;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,13 +20,17 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     @Id
     private String id;
+    private String studyGroup;
+    private String telephone;
     @Enumerated(EnumType.STRING)
     private List<Role> roles;
+    @Column(unique = true)
     private String email;
     private String password;
     private String lastName;
     private String firstName;
     private LocalDateTime createdAt;
+    private Boolean isDeleted = Boolean.FALSE;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -40,21 +44,21 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonExpired() {
-        return true;
+        return !isDeleted;
     }
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !isDeleted;
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
-        return true;
+        return !isDeleted;
     }
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return !isDeleted;
     }
 }

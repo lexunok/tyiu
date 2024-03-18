@@ -16,6 +16,8 @@ public class ProfileMapper implements BiFunction<Row,Object, ProfileDTO> {
                 .id(row.get("u_id",String.class))
                 .email(row.get("u_email",String.class))
                 .lastName(row.get("u_last_name",String.class))
+                .studyGroup(row.get("u_study_group", String.class))
+                .telephone(row.get("u_telephone", String.class))
                 .firstName(row.get("u_first_name",String.class))
                 .roles(Arrays.stream(row.get("u_roles",String[].class)).map(Role::valueOf).toList())
                 .isUserTagVisible(row.get("ut_is_visible", Boolean.class))

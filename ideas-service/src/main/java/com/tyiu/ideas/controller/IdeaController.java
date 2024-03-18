@@ -25,7 +25,7 @@ public class IdeaController {
     private final IdeaService ideaService;
 
     @GetMapping("/{ideaId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
     public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId, user.getId());
     }
@@ -40,7 +40,7 @@ public class IdeaController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAuthority('MEMBER')|| hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
     public Flux<IdeaDTO> showListIdea(@AuthenticationPrincipal User user){
         return ideaService.getListIdea(user.getId());
     }

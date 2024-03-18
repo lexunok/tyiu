@@ -1,14 +1,16 @@
 package com.tyiu.tgbotservice.service;
 
 import com.tyiu.tgbotservice.model.entities.UserTelegram;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
-import static org.springframework.data.relational.core.query.Criteria.where;
+import reactor.core.publisher.Mono;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Update.update;
 
 @Slf4j

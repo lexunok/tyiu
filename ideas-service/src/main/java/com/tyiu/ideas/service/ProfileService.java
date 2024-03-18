@@ -78,7 +78,7 @@ public class ProfileService {
         }
     }
     public Mono<ProfileDTO> getUserProfile(String userId, String currentUserId) {
-        String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, " +
+        String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, u.study_group u_study_group, u.telephone u_telephone, " +
                 "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.solution i_solution, i.status i_status, " +
                 "ut.user_tag ut_user_tag, ut.is_visible ut_is_visible, " +
                 "t.name t_name, t.id t_id, t.has_active_project t_has_active_project, " +
@@ -154,8 +154,11 @@ public class ProfileService {
                 );
     }
 
-    public Mono<Void> updateFullName(String userId, ProfileUpdateRequest request){
+    public Mono<Void> updateProfile(String userId, ProfileUpdateRequest request){
         return template.update(query(where("id").is(userId)),
-                update("first_name", request.getFirstName()).set("last_name", request.getLastName()), User.class).then();
+                update("first_name", request.getFirstName())
+                        .set("last_name", request.getLastName())
+                        .set("study_group", request.getStudyGroup())
+                        .set("telephone", request.getTelephone()), User.class).then();
     }
 }

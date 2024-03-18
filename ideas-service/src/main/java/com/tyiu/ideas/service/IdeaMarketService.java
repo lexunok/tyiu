@@ -113,7 +113,8 @@ public class IdeaMarketService {
                 .bind("userId", userId)
                 .bind("marketId", marketId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     private IdeaMarketDTO buildIdeaMarket(Row row, ConcurrentHashMap<String, IdeaMarketDTO> map){
@@ -209,7 +210,8 @@ public class IdeaMarketService {
                 .sql(QUERY)
                 .bind("userId",userId)
                 .map((row, rowMetadata) -> buildIdeaMarket(row, map))
-                .all().thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
@@ -217,7 +219,8 @@ public class IdeaMarketService {
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
                        s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
+                       i.name, i.solution, i.max_team_size,
+                       t.id AS t_id
                 FROM (
                     SELECT im.*,
                            (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
@@ -229,11 +232,56 @@ public class IdeaMarketService {
                 ) AS im_sub
                 LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
                 LEFT JOIN idea i ON i.id = im_sub.idea_id
+                LEFT JOIN team t ON t.id = im_sub.team_id
                 LEFT JOIN users u ON u.id = i.initiator_id
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
-        return getListMarketIdea(QUERY, userId, marketId);
+        ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("userId", userId)
+                .bind("marketId", marketId)
+                .map((row, rowMetadata) -> {
+                    String ideaMarketId = row.get("id", String.class);
+                    String skillId = row.get("s_id", String.class);
+                    String teamId = row.get("t_id", String.class);
+                    IdeaMarketDTO ideaMarketDTO = map.get(ideaMarketId);
+                    if (ideaMarketDTO == null) {
+                        ideaMarketDTO = map.getOrDefault(ideaMarketId, IdeaMarketDTO.builder()
+                                .id(ideaMarketId)
+                                .ideaId(row.get("idea_id", String.class))
+                                .team(teamId != null ? TeamDTO.builder().id(teamId).build() : null)
+                                .position(row.get("row_number", Integer.class))
+                                .name(row.get("name", String.class))
+                                .initiator(UserDTO.builder()
+                                        .id(row.get("u_id", String.class))
+                                        .email(row.get("u_e", String.class))
+                                        .firstName(row.get("u_fn", String.class))
+                                        .lastName(row.get("u_ln", String.class))
+                                        .build())
+                                .solution(row.get("solution", String.class))
+                                .stack(new ArrayList<>())
+                                .maxTeamSize(row.get("max_team_size", Short.class))
+                                .status(IdeaMarketStatusType.valueOf(row.get("status", String.class)))
+                                .requests(row.get("request_count", Integer.class))
+                                .acceptedRequests(row.get("accepted_request_count", Integer.class))
+                                .isFavorite(Objects.equals(row.get("favorite", String.class), ideaMarketId))
+                                .build());
+                    }
+                    if (skillId != null){
+                        SkillDTO skill = SkillDTO.builder()
+                                .name(row.get("s_name", String.class))
+                                .type(SkillType.valueOf(row.get("s_type", String.class)))
+                                .id(skillId)
+                                .build();
+                        ideaMarketDTO.getStack().add(skill);
+                    }
+                    map.put(ideaMarketId, ideaMarketDTO);
+                    return ideaMarketDTO;
+                })
+                .all()
+                .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId){
@@ -609,59 +657,65 @@ public class IdeaMarketService {
     }
 
     public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user){
-        String QUERY = "SELECT " +
-                "t.id as team_id, t.name as team_name, " +
-                "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
-                "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count " +
-                "FROM team t " +
-                "LEFT JOIN users l ON t.leader_id = l.id " +
-                "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
-                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
-                "LEFT JOIN skill s ON us.skill_id = s.id " +
-                "WHERE t.id = :teamId";
-        ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
-        return checkInitiator(ideaMarketId,user.getId())
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
-                        return template.update(query(where("id").is(ideaMarketId)),
-                                        update("team_id", teamId)
-                                                .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
-                                        IdeaMarket.class)
-                                .then(template.update(query(where("id").is(teamId)),
-                                        update("has_active_project", true),
-                                        Team.class))
-                                .then(template.getDatabaseClient()
-                                        .sql(QUERY)
-                                        .bind("teamId", teamId)
-                                        .map((row, rowMetadata) -> {
-                                            String skillId = row.get("skill_id", String.class);
-                                            TeamDTO teamDTO = map.getOrDefault(teamId, TeamDTO.builder()
-                                                    .id(teamId)
-                                                    .name(row.get("team_name", String.class))
-                                                    .leader(UserDTO.builder()
-                                                            .id(row.get("leader_id", String.class))
-                                                            .email(row.get("leader_email", String.class))
-                                                            .firstName(row.get("leader_first_name", String.class))
-                                                            .lastName(row.get("leader_last_name", String.class))
-                                                            .build())
-                                                    .skills(new ArrayList<>())
-                                                    .build());
-                                            if (skillId!=null) {
-                                                SkillDTO skill = SkillDTO.builder()
-                                                        .name(row.get("skill_name", String.class))
-                                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
-                                                        .id(skillId)
-                                                        .build();
-                                                teamDTO.getSkills().add(skill);
-                                            }
-                                            map.put(teamId,teamDTO);
-                                            return teamDTO;
-                                        })
-                                        .all().thenMany(Flux.fromIterable(map.values()))
-                                        .collectList().map(i -> i.get(0)));
+        return template.exists(query(where("team_id").is(teamId)), IdeaMarket.class)
+                .flatMap(isExistsTeam -> {
+                    if (Boolean.FALSE.equals(isExistsTeam)) {
+                        String QUERY = "SELECT " +
+                                "t.id as team_id, t.name as team_name, " +
+                                "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
+                                "s.id as skill_id, s.name as skill_name, s.type as skill_type, " +
+                                "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count " +
+                                "FROM team t " +
+                                "LEFT JOIN users l ON t.leader_id = l.id " +
+                                "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
+                                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
+                                "LEFT JOIN skill s ON us.skill_id = s.id " +
+                                "WHERE t.id = :teamId";
+                        ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
+                        return checkInitiator(ideaMarketId,user.getId())
+                                .flatMap(isExists -> {
+                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                        return template.update(query(where("id").is(ideaMarketId)),
+                                                        update("team_id", teamId)
+                                                                .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
+                                                        IdeaMarket.class)
+                                                .then(template.update(query(where("id").is(teamId)),
+                                                        update("has_active_project", true),
+                                                        Team.class))
+                                                .then(template.getDatabaseClient()
+                                                        .sql(QUERY)
+                                                        .bind("teamId", teamId)
+                                                        .map((row, rowMetadata) -> {
+                                                            String skillId = row.get("skill_id", String.class);
+                                                            TeamDTO teamDTO = map.getOrDefault(teamId, TeamDTO.builder()
+                                                                    .id(teamId)
+                                                                    .name(row.get("team_name", String.class))
+                                                                    .leader(UserDTO.builder()
+                                                                            .id(row.get("leader_id", String.class))
+                                                                            .email(row.get("leader_email", String.class))
+                                                                            .firstName(row.get("leader_first_name", String.class))
+                                                                            .lastName(row.get("leader_last_name", String.class))
+                                                                            .build())
+                                                                    .skills(new ArrayList<>())
+                                                                    .build());
+                                                            if (skillId!=null) {
+                                                                SkillDTO skill = SkillDTO.builder()
+                                                                        .name(row.get("skill_name", String.class))
+                                                                        .type(SkillType.valueOf(row.get("skill_type", String.class)))
+                                                                        .id(skillId)
+                                                                        .build();
+                                                                teamDTO.getSkills().add(skill);
+                                                            }
+                                                            map.put(teamId,teamDTO);
+                                                            return teamDTO;
+                                                        })
+                                                        .all().thenMany(Flux.fromIterable(map.values()))
+                                                        .collectList().map(i -> i.get(0)));
+                                    }
+                                    return Mono.error(new AccessException("Нет Прав"));
+                                });
                     }
-                    return Mono.error(new AccessException("Нет Прав"));
+                    return Mono.error(new AccessException("Данная команда уже занята"));
                 });
     }
 

@@ -27,6 +27,8 @@ public class User implements UserDetails {
     private String firstName;
     private Boolean isDeleted;
     private List<Role> roles;
+    private String studyGroup;
+    private String telephone;
     private String password;
     private LocalDateTime createdAt;
 
@@ -36,6 +38,7 @@ public class User implements UserDetails {
     public String getId() { return id; }
     public String getFirstName() { return firstName; }
     public String getLastName() { return lastName; }
+    public List<Role> getRoles() { return roles; }
 
 
     @Override

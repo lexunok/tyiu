@@ -46,7 +46,7 @@ public class AccountChangeController {
     }
 
     @GetMapping("/get/users")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ADMIN','TEACHER')")
     public Flux<UserDTO> getUsersInfo(){
         return accountChangeService.getUsersInfo()
                 .switchIfEmpty(Mono.error(new CustomHttpException("Not found!", HttpStatus.NOT_FOUND.value())));

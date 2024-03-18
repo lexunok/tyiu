@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS task_to_tag (
+    task_id TEXT REFERENCES task (id) ON DELETE CASCADE,
+    tag_id TEXT REFERENCES task_tag (id) ON DELETE CASCADE
+);

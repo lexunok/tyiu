@@ -8,7 +8,7 @@ spring:
         - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
-          uri: http://localhost:8082
+          uri: http://localhost:8081
           predicates:
             - Path=/api/v1/ideas-service/**
         - id: scrum-service
@@ -19,6 +19,18 @@ spring:
           uri: http://localhost:7777
           predicates:
             - Path=/api/v1/authorization-service/**
+        - id: notification-service
+          uri: http://localhost:1337
+          predicates:
+            - Path=/api/v1/notification-service/**
+        - id: email-service
+          uri: http://localhost:3000
+          predicates:
+            - Path=/api/v1/email-service/**
+        - id: tgbot-service
+          uri: http://localhost:5321
+          predicates:
+            - Path=/api/v1/tgbot-service/**
   security:
     oauth2:
       client:
@@ -35,4 +47,3 @@ spring:
             authorization-uri: http://127.0.0.1:7777/oauth2/authorize
             token-uri: http://127.0.0.1:7777/oauth2/token
             jwk-set-uri: http://127.0.0.1:7777/oauth2/jwks
-

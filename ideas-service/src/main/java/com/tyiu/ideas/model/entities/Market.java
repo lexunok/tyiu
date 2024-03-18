@@ -20,4 +20,7 @@ public class Market {
     private LocalDate startDate;
     private LocalDate finishDate;
     private MarketStatus status;
+
+    public String getId() { return id; }
+    public LocalDate getFinishDate() { return finishDate; }
 }

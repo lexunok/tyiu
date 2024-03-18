@@ -2,7 +2,7 @@
 dependencies {
 
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
-	implementation "org.springframework.boot:spring-boot-starter-security"
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
 	implementation 'org.springframework.boot:spring-boot-starter-amqp'
 	implementation group: 'org.telegram', name: 'telegrambots', version: '6.1.0'
@@ -19,7 +19,6 @@ dependencies {
 
 	implementation project(path: ':notification-library')
 	implementation project(path: ':client')
-	implementation project(path: ':ideas-service')
 
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'io.projectreactor:reactor-test'

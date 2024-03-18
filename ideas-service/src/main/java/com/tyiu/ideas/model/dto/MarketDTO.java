@@ -18,4 +18,9 @@ public class MarketDTO {
     private LocalDate startDate;
     private LocalDate finishDate;
     private MarketStatus status;
+
+    public MarketDTO(String id, LocalDate finishDate) {
+        this.id = id;
+        this.finishDate = finishDate;
+    }
 }
