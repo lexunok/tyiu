@@ -13,7 +13,13 @@ import java.time.LocalDate
 
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
 
-        @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId and status = 'ACTIVE'")
+        @Query("""
+                SELECT *
+                FROM project 
+                    JOIN project_member ON project.id = project_member.project_id 
+                    JOIN idea ON idea.id = project.idea_id 
+                WHERE (project_member.user_id = :userId OR idea.initiator_id = :userId) and project.status = 'ACTIVE'
+        """)
         fun findByStatus(userId: String): Flow<Project>
 
         @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId")
