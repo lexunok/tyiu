@@ -18,7 +18,8 @@ class ProjectService(
     val template: R2dbcEntityTemplate,
     private val userRepository: UserRepository,
     private val taskRepository: TaskRepository,
-    private val taskService: TaskService
+    private val taskService: TaskService,
+    private val marketRepository: MarketRepository
 ) {
     private suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
@@ -64,7 +65,9 @@ class ProjectService(
     suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
-            teamId = ideaMarketDTO.team.id
+            teamId = ideaMarketDTO.team.id,
+            finishDate = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }?.finishDate
+
         )
         val createdProject = projectRepository.save(project)
         teamMemberRepository.findMemberByTeamId(ideaMarketDTO.team.id).toList().forEach { m ->
