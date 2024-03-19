@@ -16,6 +16,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import request.NotificationRequest;
 
 import java.util.HashSet;
@@ -33,65 +34,69 @@ public class IdeaInvitationService {
     private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
 
-    private void sendNotification(String ideaId, String teamId, NotificationCase notificationCase) {
+    private Mono<Void> sendNotification(String ideaId, String teamId, NotificationCase notificationCase) {
 
-        template.selectOne(query(where("id").is(ideaId)), Idea.class)
-                        .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                                .flatMap(initiator -> template.selectOne(query(where("id").is(teamId)), Team.class)
-                                        .flatMap(team -> template.selectOne(query(where("owner_id").is(team.getOwnerId())), User.class)
-                                                .flatMap(teamOwner -> {
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
+                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                        .flatMap(initiator -> template.selectOne(query(where("id").is(teamId)), Team.class)
+                                .flatMap(team -> template.selectOne(query(where("owner_id").is(team.getOwnerId())), User.class)
+                                        .flatMap(teamOwner -> {
 
-                                                    switch (notificationCase) {
+                                            switch (notificationCase) {
 
-                                                        case INITIATOR_INVITES_TEAM -> notificationPublisher.makeNotification(
+                                                case INITIATOR_INVITES_TEAM -> notificationPublisher.makeNotification(
 
-                                                                NotificationRequest.builder()
-                                                                        .publisherEmail(initiator.getEmail())
-                                                                        .consumerEmail(teamOwner.getEmail())
-                                                                        .title("Вашу команду пригласили в идею")
-                                                                        .message(String.format(
-                                                                                "Инициатор %s %s пригласил вашу команду \"%s\" в идею \"%s\".",
-                                                                                initiator.getFirstName(),
-                                                                                initiator.getLastName(),
-                                                                                idea.getName(),
-                                                                                team.getName()
-                                                                        ))
-                                                                        .link(PortalLinks.IDEA_INVITATION + teamId)
-                                                                        .buttonName("Перейти к приглашению")
-                                                                        .build());
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(initiator.getEmail())
+                                                                .consumerEmail(teamOwner.getEmail())
+                                                                .title("Вашу команду пригласили в идею")
+                                                                .message(String.format(
+                                                                        "Инициатор %s %s пригласил вашу команду \"%s\" в идею \"%s\".",
+                                                                        initiator.getFirstName(),
+                                                                        initiator.getLastName(),
+                                                                        idea.getName(),
+                                                                        team.getName()
+                                                                ))
+                                                                .link(PortalLinks.IDEA_INVITATION + teamId)
+                                                                .buttonName("Перейти к приглашению")
+                                                                .build());
 
-                                                        case TEAM_INVITE_IS_ACCEPTED -> notificationPublisher.makeNotification(
+                                                case TEAM_INVITE_IS_ACCEPTED -> notificationPublisher.makeNotification(
 
-                                                                NotificationRequest.builder()
-                                                                        .publisherEmail(teamOwner.getEmail())
-                                                                        .consumerEmail(initiator.getEmail())
-                                                                        .title("Команда приняла ваше приглашение")
-                                                                        .message(String.format(
-                                                                                "Команда \"%s\" приняла ваше приглашение в идею \"%s\".",
-                                                                                team.getName(),
-                                                                                idea.getName()
-                                                                        ))
-                                                                        .link(PortalLinks.TEAM + teamId)
-                                                                        .buttonName("Перейти к команде")
-                                                                        .build());
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(teamOwner.getEmail())
+                                                                .consumerEmail(initiator.getEmail())
+                                                                .title("Команда приняла ваше приглашение")
+                                                                .message(String.format(
+                                                                        "Команда \"%s\" приняла ваше приглашение в идею \"%s\".",
+                                                                        team.getName(),
+                                                                        idea.getName()
+                                                                ))
+                                                                .link(PortalLinks.TEAM + teamId)
+                                                                .buttonName("Перейти к команде")
+                                                                .build());
 
-                                                        case TEAM_INVITE_IS_CANCELLED -> notificationPublisher.makeNotification(
+                                                case TEAM_INVITE_IS_CANCELLED -> notificationPublisher.makeNotification(
 
-                                                                NotificationRequest.builder()
-                                                                        .publisherEmail(initiator.getEmail())
-                                                                        .consumerEmail(teamOwner.getEmail())
-                                                                        .title("Команда отклонила ваше приглашение")
-                                                                        .message(String.format(
-                                                                                "Команда \"%s\" отклонила ваше приглашение в идею \"%s\".",
-                                                                                team.getName(),
-                                                                                idea.getName()
-                                                                        ))
-                                                                        .build());
-                                                    }
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(initiator.getEmail())
+                                                                .consumerEmail(teamOwner.getEmail())
+                                                                .title("Команда отклонила ваше приглашение")
+                                                                .message(String.format(
+                                                                        "Команда \"%s\" отклонила ваше приглашение в идею \"%s\".",
+                                                                        team.getName(),
+                                                                        idea.getName()
+                                                                ))
+                                                                .build());
+                                            }
 
-                                                    return Mono.empty();
-                                                })))
-                        ).subscribe();
+                                            return Mono.empty();
+                                        })
+                                )
+                        )
+                ).publishOn(Schedulers.boundedElastic()).subscribe());
+
+        return Mono.empty();
     }
 
     public Flux<IdeaInvitationDTO> getAllInvitationsInTeam(String teamId) {
@@ -192,28 +197,20 @@ public class IdeaInvitationService {
 
         if (request.getStatus().equals(RequestStatus.ACCEPTED)) {
 
-            sendNotification(
-                    request.getIdeaId(),
-                    request.getTeamId(),
-                    NotificationCase.TEAM_INVITE_IS_ACCEPTED
-            );
-
             return template.update(query(where("team_id").is(request.getTeamId())
                                     .or("idea_id").is(request.getIdeaId())
                                     .and(where("id").not(request.getId()))
                                     .and(where("status").is(RequestStatus.NEW))),
                             update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
-                            .then(template.getDatabaseClient()
-                                    .sql("""
-                                    UPDATE team_market_request SET status = :status 
-                                    WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId) OR team_id = :teamId
-                                    """)
-                                    .bind("status", "ANNULLED")
-                                    .bind("ideaId", request.getIdeaId())
-                                    .bind("teamId", request.getTeamId())
-                                    .fetch()
-                                    .all()
-                                    .then())
+                    .then(template.getDatabaseClient()
+                            .sql("UPDATE team_market_request SET status = :status " +
+                                    "WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId) OR team_id = :teamId")
+                            .bind("status", "ANNULLED")
+                            .bind("ideaId", request.getIdeaId())
+                            .bind("teamId", request.getTeamId())
+                            .fetch()
+                            .all()
+                            .then())
 
                     .then(template.update(query(where("idea_id").is(request.getIdeaId())),
                             update("team_id", request.getTeamId())
@@ -226,7 +223,13 @@ public class IdeaInvitationService {
 
                     .then(template.update(query(where("id").is(request.getId())),
                             update("status", request.getStatus()),
-                            IdeaInvitation.class)).then();
+                            IdeaInvitation.class))
+
+                    .then(sendNotification(
+                            request.getIdeaId(),
+                            request.getTeamId(),
+                            NotificationCase.TEAM_INVITE_IS_ACCEPTED
+                    )).then();
         }
         if (request.getStatus().equals(RequestStatus.CANCELED))
             sendNotification(
