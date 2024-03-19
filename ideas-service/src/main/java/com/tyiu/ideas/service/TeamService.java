@@ -26,6 +26,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import request.NotificationRequest;
 
 import java.time.LocalDate;
@@ -42,8 +43,8 @@ import static org.springframework.data.relational.core.query.Update.update;
 @RequiredArgsConstructor
 public class TeamService {
 
-    private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
+    private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
 
     private Flux<SkillDTO> getSkillsByList(List<String> skills) {
@@ -127,9 +128,9 @@ public class TeamService {
                 .and("user_id").is(userId)), TeamInvitation.class);
     }
 
-    private void sendNotification(String teamId, String publisherId, String consumerId, NotificationCase notificationCase) {
+    private Mono<Void> sendNotification(String teamId, String publisherId, String consumerId, NotificationCase notificationCase) {
 
-        template.selectOne(query(where("id").is(teamId)), Team.class)
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(team -> template.selectOne(query(where("id").is(publisherId)), User.class)
                         .flatMap(publisher -> template.selectOne(query(where("id").is(consumerId)), User.class)
                                 .flatMap(consumer -> template.selectOne(query(where("owner_id").is(team.getOwnerId())), User.class)
@@ -437,11 +438,18 @@ public class TeamService {
                                                                                                                 .build()));
                                                                                     }
                                                                                     return Mono.empty();
-                                                                                })));
+                                                                                })
+                                                                        )
+                                                                );
                                                     }
                                                     return Mono.empty();
-                                                }))))
-                ).subscribe();
+                                                })
+                                        )
+                                )
+                        )
+                ).publishOn(Schedulers.boundedElastic()).subscribe()
+        );
+        return Mono.empty();
     }
 
     ///////////////////////
@@ -591,7 +599,7 @@ public class TeamService {
                                 .build();
                         member.getSkills().add(skill);
                     }
-                    map.put(userId,member);
+                    map.put(userId, member);
                     return member;
                 })
                 .all().thenMany(Flux.fromIterable(map.values()));
@@ -932,18 +940,17 @@ public class TeamService {
 
                     if (Boolean.TRUE.equals(isOwner) || userThatKicks.getRoles().contains(Role.ADMIN)) {
 
-                        sendNotification(
-                                teamId,
-                                userThatKicks.getId(),
-                                userToKickId,
-                                NotificationCase.USER_IS_KICKED_FROM_TEAM
-                        );
                         return template.update(query(where("team_id").is(teamId)
                                                 .and("member_id").is(userToKickId)),
                                         update("is_active", Boolean.FALSE)
                                                 .set("finish_date", LocalDate.now()),
                                         Team2Member.class)
                                 .then(template.insert(new Team2Refused(teamId, userToKickId)))
+                                .then(sendNotification(
+                                        teamId,
+                                        userThatKicks.getId(),
+                                        userToKickId,
+                                        NotificationCase.USER_IS_KICKED_FROM_TEAM))
                                 .then();
                     }
                     return Mono.error(new AccessException("Нет Прав"));
@@ -952,17 +959,17 @@ public class TeamService {
 
     public Mono<Void> leaveFromTeam(String teamId, String userThatLeavesId) {
 
-        sendNotification(
-                teamId,
-                userThatLeavesId,
-                userThatLeavesId, // получатель здесь не важен, так как им является владелец команды, которого мы достаём по teamId
-                NotificationCase.USER_LEAVE_FROM_TEAM
-        );
         return template.update(query(where("team_id").is(teamId)
                                 .and("member_id").is(userThatLeavesId)),
                         update("is_active", Boolean.FALSE)
                                 .set("finish_date", LocalDate.now()),
                         Team2Member.class)
+                .then(sendNotification(
+                        teamId,
+                        userThatLeavesId,
+                        userThatLeavesId, // получатель здесь не важен, так как им является владелец команды, которого мы достаём по teamId
+                        NotificationCase.USER_LEAVE_FROM_TEAM
+                ))
                 .then();
     }
 
@@ -1009,15 +1016,15 @@ public class TeamService {
 
                     if (Boolean.TRUE.equals(isOwner) || userThatChangesTeamLeader.getRoles().contains(Role.ADMIN)) {
 
-                        sendNotification(
-                                teamId,
-                                userThatChangesTeamLeader.getId(),
-                                newLeaderId,
-                                NotificationCase.TEAM_LEADER_CHANGES
-                        );
                         return template.update(query(where("id").is(teamId)),
                                 update("leader_id", newLeaderId),
-                                Team.class);
+                                Team.class)
+                                .then(sendNotification(
+                                        teamId,
+                                        userThatChangesTeamLeader.getId(),
+                                        newLeaderId,
+                                        NotificationCase.TEAM_LEADER_CHANGES
+                                ));
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
@@ -1036,14 +1043,14 @@ public class TeamService {
 
                                     if (Boolean.TRUE.equals(isInitiator) || userThatUpdatesStatus.getRoles().contains(Role.ADMIN)) {
 
-                                        sendNotification(
-                                                invitation.getTeamId(),
-                                                userThatUpdatesStatus.getId(),
-                                                userThatUpdatesStatus.getId(), // получатель здесь не важен, так как им является владелец команды, которого мы достаём по teamId
-                                                NotificationCase.INVITE_STATUS_IS_ACCEPTED
-                                        );
                                         return annul(invitation.getUserId())
                                                 .then(template.update(invitation))
+                                                .then(sendNotification(
+                                                        invitation.getTeamId(),
+                                                        userThatUpdatesStatus.getId(),
+                                                        userThatUpdatesStatus.getId(), // получатель здесь не важен, так как им является владелец команды, которого мы достаём по teamId
+                                                        NotificationCase.INVITE_STATUS_IS_ACCEPTED
+                                                ))
                                                 .thenReturn(invitation);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
@@ -1056,13 +1063,14 @@ public class TeamService {
 
                                     if (Boolean.TRUE.equals(isInitiator) || userThatUpdatesStatus.getRoles().contains(Role.ADMIN)) {
 
-                                        sendNotification(
-                                                invitation.getTeamId(),
-                                                userThatUpdatesStatus.getId(),
-                                                userThatUpdatesStatus.getId(), // получатель здесь не важен, так как им является владелец команды, которого мы достаём по teamId
-                                                NotificationCase.INVITE_STATUS_IS_CANCELED
-                                        );
-                                        return template.update(invitation).thenReturn(invitation);
+                                        return template.update(invitation)
+                                                .then(sendNotification(
+                                                        invitation.getTeamId(),
+                                                        userThatUpdatesStatus.getId(),
+                                                        userThatUpdatesStatus.getId(), // получатель здесь не важен, так как им является владелец команды, которого мы достаём по teamId
+                                                        NotificationCase.INVITE_STATUS_IS_CANCELED
+                                                ))
+                                                .thenReturn(invitation);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
@@ -1099,14 +1107,14 @@ public class TeamService {
 
                                     if (Boolean.TRUE.equals(isOwner) || userThatUpdatesStatus.getRoles().contains(Role.ADMIN)) {
 
-                                        sendNotification(
-                                                request.getTeamId(),
-                                                userThatUpdatesStatus.getId(),
-                                                request.getUserId(),
-                                                NotificationCase.REQUEST_IS_CANCELED
-                                        );
                                         return template.insert(new Team2Refused(request.getTeamId(), request.getUserId()))
                                                 .then(template.update(request))
+                                                .then(sendNotification(
+                                                        request.getTeamId(),
+                                                        userThatUpdatesStatus.getId(),
+                                                        request.getUserId(),
+                                                        NotificationCase.REQUEST_IS_CANCELED
+                                                ))
                                                 .thenReturn(request);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
@@ -1119,14 +1127,14 @@ public class TeamService {
 
                                     if (Boolean.TRUE.equals(isOwner) || userThatUpdatesStatus.getRoles().contains(Role.ADMIN)) {
 
-                                        sendNotification(
-                                                request.getTeamId(),
-                                                userThatUpdatesStatus.getId(),
-                                                request.getUserId(),
-                                                NotificationCase.REQUEST_IS_ACCEPTED
-                                        );
                                         return annul(request.getUserId())
                                                 .then(template.update(request))
+                                                .then(sendNotification(
+                                                        request.getTeamId(),
+                                                        userThatUpdatesStatus.getId(),
+                                                        request.getUserId(),
+                                                        NotificationCase.REQUEST_IS_ACCEPTED
+                                                ))
                                                 .thenReturn(request);
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
