@@ -392,7 +392,7 @@ public class TeamService {
                     teamDTO.setCreatedAt(team.getCreatedAt());
 
                     return template.getDatabaseClient()
-                            .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE users = :userId")
+                            .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
                             .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
                             .then()
                             .then(template.getDatabaseClient().inConnection(connection -> {
@@ -621,11 +621,11 @@ public class TeamService {
                                         return Mono.empty();
                                     }
                                     return template.getDatabaseClient()
-                                            .sql("UPDATE users SET roles = ARRAY_REMOVE(roles, 'TEAM_LEADER') WHERE users = :userId")
+                                            .sql("UPDATE users SET roles = ARRAY_REMOVE(roles, 'TEAM_LEADER') WHERE id = :userId")
                                             .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
                                             .then()
                                             .then(template.getDatabaseClient()
-                                                    .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE users = :userId")
+                                                    .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
                                                     .bind("userId", userId)
                                                     .then()
                                             )
