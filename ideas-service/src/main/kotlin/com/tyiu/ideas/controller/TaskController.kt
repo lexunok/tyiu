@@ -22,13 +22,13 @@ class TaskController (private val taskService: TaskService) {
     fun getOneTaskById(@PathVariable id: String): Flow<TaskDTO> = taskService.getOneTaskById(id)
 
     @PostMapping("/add")
-    suspend fun postCreateTask(@RequestBody taskCreateRequest: TaskCreateRequest): TaskDTO = taskService.createTask(taskCreateRequest)
+    suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO): TaskDTO = taskService.createTask(taskDTO)
 
     @PutMapping("/status/change")
-    suspend fun putTaskStatus (@RequestBody taskStatusRequest: TaskStatusRequest) = taskService.putTaskStatus(taskStatusRequest)
+    suspend fun putTaskStatus (@RequestBody taskDTO: TaskDTO) = taskService.putTaskStatus(taskDTO)
 
     @PutMapping("/{taskId}/update")
-    suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskInfoRequest: TaskInfoRequest) = taskService.putUpdateTask(taskId, taskInfoRequest)
+    suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskDTO: TaskDTO) = taskService.putUpdateTask(taskId, taskDTO)
 
     @DeleteMapping("/{id}/delete")
     suspend fun deleteTask(@PathVariable id: String) = taskService.deleteTask(id)

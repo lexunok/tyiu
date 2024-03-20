@@ -13,7 +13,7 @@ class TaskService
     (
     private val repository: TaskRepository,
     private val userRepository: UserRepository,
-    private val taskTagRepository: TaskTagRepository,
+    private val tagRepository: TagRepository,
     private val task2tagRepository: Task2TagRepository,
     val template: R2dbcEntityTemplate
     )
@@ -24,7 +24,7 @@ class TaskService
 
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.tag = (task.id?.let{taskTagRepository.findAllByTaskId(it)})?.toList()
+        tasks.tags = task.id?.let { tagRepository.findAllTagsInTaskByTaskId(it).toList().map { tag -> tag.toDTO() } }
         return tasks
     }
 
@@ -38,49 +38,47 @@ class TaskService
     fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
 
     //post
-    suspend fun createTask(taskCreateRequest: TaskCreateRequest): TaskDTO {
+    suspend fun createTask(taskDTO: TaskDTO): TaskDTO {
         val task = Task (
-            name = taskCreateRequest.name,
-            description = taskCreateRequest.description,
-            projectId = taskCreateRequest.projectId,
-            workHour = taskCreateRequest.workHour,
-            initiatorId = taskCreateRequest.initiatorId
+            sprintId = taskDTO.sprintId,
+            projectId = taskDTO.projectId,
+            name = taskDTO.name,
+            description = taskDTO.description,
+            initiatorId = taskDTO.initiator?.id,
+            workHour = taskDTO.workHour,
+            status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
         )
-        if (taskCreateRequest.sprintId == null){
-            task.status = TaskStatus.InBacklog
-        }
-        else {
-            task.sprintId = taskCreateRequest.sprintId
-            task.status = TaskStatus.New
-        }
+
         val taskSave = taskToDTO(repository.save(task))
 
-        task2tagRepository.save (
-            Task2Tag(
-            taskId = taskSave.id,
-            tagId = "0aeadd54-5323-40b4-97bd-7e5072f9d576"
-        )
-        )
+        taskDTO.tags?.forEach {
+            task2tagRepository.save (
+                Task2Tag(
+                    taskId = taskSave.id,
+                    tagId = it.id
+                )
+            )
+        }
        return taskSave
     }
 
     //put
-    suspend fun putUpdateTask(taskId: String, taskInfoRequest: TaskInfoRequest) {
+    suspend fun putUpdateTask(taskId: String, taskDTO: TaskDTO) {
         val query =
-            "UPDATE task SET name = :taskName, description = :taskDescription, work_hour = :taskWork_hour WHERE id = :taskId"
+            "UPDATE task SET name = :name, description = :description, work_hour = :workHour WHERE id = :taskId"
         return template.databaseClient.sql(query)
-            .bind("taskName", taskInfoRequest.taskName!!)
-            .bind("taskDescription", taskInfoRequest.taskDescription!!)
-            .bind("taskWork_hour", taskInfoRequest.taskWork_hour!!)
+            .bind("name", taskDTO.name!!)
+            .bind("description", taskDTO.description!!)
+            .bind("workHour", taskDTO.workHour!!)
             .bind("taskId", taskId).await()
     }
 
-    suspend fun putTaskStatus(TaskStatusRequest: TaskStatusRequest) {
-        val query = "UPDATE task SET status = :taskStatus, executor_Id = :taskExecutor WHERE id = :taskId"
+    suspend fun putTaskStatus(taskDTO: TaskDTO) {
+        val query = "UPDATE task SET status = :status, executor_Id = :executor WHERE id = :taskId"
         return template.databaseClient.sql(query)
-            .bind("taskStatus", TaskStatusRequest.taskStatus.toString())
-            .bind("taskExecutor", TaskStatusRequest.taskExecutor.toString())
-            .bind("taskId", TaskStatusRequest.taskId!!).await()
+            .bind("status", taskDTO.status!!.toString())
+            .bind("executor", taskDTO.executor?.id!!)
+            .bind("taskId", taskDTO.id!!).await()
     }
 
     //delete
