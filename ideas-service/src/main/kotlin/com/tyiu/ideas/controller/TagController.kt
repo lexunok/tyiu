@@ -52,9 +52,15 @@ class TagController(private val tagService: TagService) {
 
     @PutMapping("/confirm/{tagId}")
     suspend fun confirmTag(@PathVariable tagId: String,
-                           @AuthenticationPrincipal user: User){
+                           @AuthenticationPrincipal user: User): InfoResponse{
         return if (user.roles.roleCheck(listOf(Role.ADMIN))) {
-            tagService.confirmTag(user.id, tagId)
+            try {
+                tagService.confirmTag(user.id, tagId)
+                InfoResponse(HttpStatus.OK,"Тег утверждён")
+            }
+            catch(e: Exception){
+                InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось утвердить тег")
+            }
         }
         else {
             throw AccessException("Нет прав")
@@ -64,9 +70,15 @@ class TagController(private val tagService: TagService) {
     @PutMapping("/update/{tagId}")
     suspend fun updateTag(@PathVariable tagId: String,
                           @RequestBody tagDTO: TagDTO,
-                          @AuthenticationPrincipal user: User){
+                          @AuthenticationPrincipal user: User): InfoResponse{
         return if (user.roles.roleCheck(listOf(Role.ADMIN))) {
-            tagService.updateTag(tagDTO, user.id, tagId)
+            try {
+                tagService.updateTag(tagDTO, user.id, tagId)
+                InfoResponse(HttpStatus.OK,"Тег обновлён успешно")
+            }
+            catch(e: Exception){
+                InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при обновлении тега")
+            }
         }
         else {
             throw AccessException("Нет прав")
