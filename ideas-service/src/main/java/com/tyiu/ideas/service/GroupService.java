@@ -39,6 +39,49 @@ public class GroupService {
     private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
 
+    private Mono<Void> sendNotificationOnCreateGroup(String groupName, String userId, User user) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(userId)), User.class)
+                .flatMap(userThatAddedInGroup -> notificationPublisher.makeNotification(
+
+                        NotificationRequest.builder()
+                                .publisherEmail(user.getEmail())
+                                .consumerEmail(userThatAddedInGroup.getEmail())
+                                .title("Вы вошли в состав пользовательской группы")
+                                .message(String.format(
+                                        "Админ %s %s сделал вас участником пользовательской группы \"%s\".",
+                                        user.getFirstName(),
+                                        user.getLastName(),
+                                        groupName
+                                ))
+                                .build())
+                ).publishOn(Schedulers.boundedElastic()).subscribe());
+
+        return Mono.empty();
+    }
+
+    private void sendNotificationOnDeleteGroup(String groupName, String groupId, User user) {
+
+        Mono.fromRunnable(() -> template.select(query(where("group_id").is(groupId)), Group2User.class)
+                .flatMap(group2User -> template.selectOne(query(where("id").is(group2User.getUserId())), User.class))
+                .flatMap(userToNotify -> notificationPublisher.makeNotification(
+
+                        NotificationRequest.builder()
+                                .publisherEmail(user.getEmail())
+                                .consumerEmail(userToNotify.getEmail())
+                                .title("Группа, в которой вы состояли, была удалена")
+                                .message(String.format(
+                                        "Админ %s %s удалил группу \"%s\".",
+                                        user.getFirstName(),
+                                        user.getLastName(),
+                                        groupName
+                                ))
+                                .build()
+                ))
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe());
+    }
+
     private Mono<Void> sendNotificationToGroupUsers(GroupDTO groupDTO, User admin) {
 
         template.select(query(where("group_id").is(groupDTO.getId())), Group2User.class)
@@ -113,91 +156,80 @@ public class GroupService {
 
     @CacheEvict(allEntries = true)
     public Mono<GroupDTO> createGroup(GroupDTO groupDTO, User admin) {
+
         Group group = mapper.map(groupDTO, Group.class);
         return template.insert(group).flatMap(g -> {
+
             groupDTO.setId(g.getId());
-            return Flux.fromIterable(groupDTO.getUsers()).flatMap(u ->
-                    template.insert(new Group2User(u.getId(), g.getId())
-                    ).then(Mono.fromRunnable(() -> template.selectOne(query(where("id").is(u.getId())), User.class)
-                        .flatMap(
-                            user -> notificationPublisher.makeNotification(
-                                    NotificationRequest.builder()
-                                            .consumerEmail(user.getEmail())
-                                            .title("Вы вошли в состав пользовательской группы на портале HITS")
-                                            .message(String.format(
-                                                    "Админ %s %s сделал вас участником пользовательской группы " +
-                                                            "\"%s\"",
-                                                    admin.getFirstName(),
-                                                    admin.getLastName(),
-                                                    groupDTO.getName()
-                                            ))
-                                            .publisherEmail(admin.getEmail())
-                                            .build()
+            return Flux.fromIterable(groupDTO.getUsers())
+                    .flatMap(u -> template.insert(new Group2User(u.getId(), g.getId()))
+                            .then(sendNotificationOnCreateGroup(
+                                    groupDTO.getName(),
+                                    u.getId(),
+                                    admin
                             ))
-                            .publishOn(Schedulers.boundedElastic())
-                            .subscribe()))
-            ).then();
+                    ).then();
         }).thenReturn(groupDTO);
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteGroup(String id, User admin) {
-        return template.selectOne(query(where("id").is(id)), Group.class).flatMap(
-                group -> {
-                    template.select(query(where("group_id").is(group.getId())), Group2User.class)
-                            .flatMap(group2User -> template.selectOne(query(where("id").is(group2User.getUserId())), User.class))
-                            .flatMap(user -> notificationPublisher.makeNotification(
-                                    NotificationRequest.builder()
-                                            .publisherEmail(admin.getEmail())
-                                            .title("Вашу группу на портале HITS удалили")
-                                            .message(String.format(
-                                                    "Админ %s %s удалил группу \"%s\"",
-                                                    admin.getFirstName(),
-                                                    admin.getLastName(),
-                                                    group.getName()
-                                            ))
-                                            .consumerEmail(user.getEmail())
-                                            .build()
-                            ))
-                            .publishOn(Schedulers.boundedElastic())
-                            .subscribe();
-                    return template.delete(query(where("id").is(id)), Group.class).then();
+    public Mono<Void> deleteGroup(String groupId, User admin) {
+
+        return template.selectOne(query(where("id").is(groupId)), Group.class)
+                .flatMap(group -> {
+
+                    sendNotificationOnDeleteGroup(
+                            group.getName(),
+                            groupId,
+                            admin
+                    );
+                    return template.delete(query(where("id").is(group)), Group.class).then();
                 }
         );
     }
 
     @CacheEvict(allEntries = true)
     public Mono<GroupDTO> updateGroup(String groupId, GroupDTO groupDTO, User admin) {
+
         return getGroup(groupId)
-                .flatMap(g -> {
-                    groupDTO.setId(g.getId());
+                .flatMap(group -> {
+
+                    groupDTO.setId(group.getId());
                     return template.update(query(where("id").is(groupId)),
-                            update("name", groupDTO.getName()), Group.class)
+                            update("name", groupDTO.getName()),
+                                    Group.class)
                             .then(template.update(query(where("id").is(groupId)),
                                     update("roles", groupDTO
                                             .getRoles()
                                             .stream()
                                             .map(Enum::toString)
-                                            .toArray(String[]::new)), Group.class))
-                            .then(sendNotificationToGroupUsers(groupDTO, admin)).thenReturn(groupDTO);
+                                            .toArray(String[]::new)),
+                                    Group.class))
+                            .then(sendNotificationToGroupUsers(groupDTO, admin))
+                            .thenReturn(groupDTO);
                 });
     }
 
-    private Mono<GroupDTO> getGroup(String groupId){
+    private Mono<GroupDTO> getGroup(String groupId) {
+
         String query = "SELECT groups.*, users.id user_id, users.email, users.first_name, users.last_name " +
                 "FROM groups " +
                 "LEFT JOIN group_user ON groups.id = group_user.group_id " +
                 "LEFT JOIN users ON group_user.user_id = users.id " +
                 "WHERE groups.id = :groupId";
+
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("groupId", groupId)
-                .flatMap(d -> {
+                .flatMap(group -> {
+
                     List<UserDTO> users = new ArrayList<>();
-                    return d.map((row, rowMetadata) -> {
+                    return group.map((row, rowMetadata) -> {
+
                         users.add(userMapper.apply(row,rowMetadata));
                         GroupDTO groupDTO = groupMapper.apply(row,rowMetadata);
                         groupDTO.setUsers(users);
+
                         return groupDTO;
                     });
                 }).last();
