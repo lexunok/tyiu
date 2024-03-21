@@ -30,6 +30,7 @@ import org.springframework.stereotype.Service;
 
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import request.NotificationRequest;
 
 import java.time.LocalDateTime;
@@ -45,11 +46,75 @@ import static org.springframework.data.relational.core.query.Update.update;
 @Slf4j
 public class IdeaService {
 
-    private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
+    private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
 
-    private IdeaDTO buildIdeaDTO(Row row){
+    private String getStatusName(Status status) {
+
+        return switch (status) {
+            case NEW -> "Новая";
+            case CONFIRMED -> "Утверждена";
+            case ON_APPROVAL -> "На согласовании";
+            case ON_CONFIRMATION -> "На утверждении";
+            case ON_EDITING -> "На редактировании";
+            case ON_MARKET -> "Опубликована";
+        };
+    }
+
+    private void sendNotificationOnNewIdea(IdeaDTO idea, Idea savedIdea) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("group_id").is(idea.getProjectOffice().getId())), Group2User.class)
+                        .flatMap(group2User -> template.selectOne(query(where("id").is(group2User.getUserId())), User.class)
+                                .flatMap(projectOffice -> notificationPublisher.makeNotification(
+
+                                        NotificationRequest.builder()
+                                                .publisherEmail(idea.getInitiator().getEmail())
+                                                .consumerEmail(projectOffice.getEmail())
+                                                .title("Идея поступила на согласование")
+                                                .message(String.format(
+                                                        "Инициатор %s %s отправил идею \"%s\" на согласование. " +
+                                                                "Просим вас согласовать её в ближайшее время.",
+                                                        idea.getInitiator().getFirstName(),
+                                                        idea.getInitiator().getLastName(),
+                                                        savedIdea.getName()
+                                                ))
+                                                .link(PortalLinks.IDEAS_LIST + savedIdea.getId())
+                                                .buttonName("Перейти к идее")
+                                                .build()
+                                ))
+                        )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+    }
+
+    private void sendNotificationOnDeleteIdea(String ideaId, User userThatDeleteIdea) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
+                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                        .flatMap(initiator -> notificationPublisher.makeNotification(
+
+                                NotificationRequest.builder()
+                                        .publisherEmail(userThatDeleteIdea.getEmail())
+                                        .consumerEmail(initiator.getEmail())
+                                        .title("Ваша идея была удалена")
+                                        .message(String.format(
+                                                "Админ %s %s удалил вашу идею \"%s\".",
+                                                userThatDeleteIdea.getFirstName(),
+                                                userThatDeleteIdea.getLastName(),
+                                                idea.getName()
+                                        ))
+                                        .build()
+                        ))
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+    }
+
+    private IdeaDTO buildIdeaDTO(Row row) {
+
         IdeaDTO ideaDTO = IdeaDTO.builder()
                 .id(row.get("id", String.class))
                 .name(row.get("name", String.class))
@@ -70,26 +135,17 @@ public class IdeaService {
                 .rating(row.get("rating", Double.class))
                 .isChecked(row.get("is_checked", Boolean.class))
                 .build();
-        String status = row.get("status", String.class);
-        if (status != null){
-            ideaDTO.setStatus(Status.valueOf(status));
-        }
-        return ideaDTO;
-    }
 
-    private String getStatusName(Status status){
-        return switch (status) {
-            case NEW -> "Новая";
-            case CONFIRMED -> "Утверждена";
-            case ON_APPROVAL -> "На согласовании";
-            case ON_CONFIRMATION -> "На утверждении";
-            case ON_EDITING -> "На редактировании";
-            case ON_MARKET -> "Опубликована";
-        };
+        String status = row.get("status", String.class);
+        if (status != null)
+            ideaDTO.setStatus(Status.valueOf(status));
+
+        return ideaDTO;
     }
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId, String userId) {
+
         String query = """
                 SELECT idea.*, e.name experts_name, e.id experts_id, p.name project_office_name, p.id project_office_id,
                 i.first_name initiator_first_name, i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
@@ -100,42 +156,50 @@ public class IdeaService {
                 FROM idea LEFT JOIN groups e ON idea.group_expert_id = e.id
                 LEFT JOIN groups p ON idea.group_project_office_id = p.id
                 LEFT JOIN users i ON idea.initiator_id = i.id
-                WHERE idea.id =:ideaId""";
+                WHERE idea.id =:ideaId
+                """;
+
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("ideaId", ideaId)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
+
                     IdeaDTO idea = buildIdeaDTO(row);
                     idea.setProjectOffice(GroupDTO.builder()
                             .id(row.get("project_office_id", String.class))
-                            .name(row.get("project_office_name",String.class))
+                            .name(row.get("project_office_name", String.class))
                             .build());
+
                     idea.setExperts(GroupDTO.builder()
                             .id(row.get("experts_id", String.class))
-                            .name(row.get("experts_name",String.class))
+                            .name(row.get("experts_name", String.class))
                             .build());
+
                     idea.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
+                            .email(row.get("initiator_email", String.class))
+                            .firstName(row.get("initiator_first_name", String.class))
+                            .lastName(row.get("initiator_last_name", String.class))
+                            .id(row.get("initiator_id", String.class))
                             .build());
+
                     return idea;
                 })
                 .first()
                 .flatMap(i -> template.exists(query(where("user_id").is(userId)
-                        .and("idea_id").is(i.getId())), Idea2Checked.class).flatMap(isExists -> {
-                    if (Boolean.FALSE.equals(isExists)){
-                        return template.insert(new Idea2Checked(userId, i.getId()));
-                    }
-                    return Mono.empty();
+                        .and("idea_id").is(i.getId())), Idea2Checked.class)
+                        .flatMap(isExists -> {
+
+                            if (Boolean.FALSE.equals(isExists))
+                                return template.insert(new Idea2Checked(userId, i.getId()));
+                            return Mono.empty();
                 }).thenReturn(i))
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea(String userId) {
+
         String query = """
                 SELECT idea.*, i.first_name initiator_first_name,
                 i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
@@ -145,30 +209,27 @@ public class IdeaService {
                         ) as is_checked
                 FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
                 """;
-        return template.getDatabaseClient().sql(query)
+
+        return template.getDatabaseClient()
+                .sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
+
                     IdeaDTO ideaDTO = buildIdeaDTO(row);
                     ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
+                            .email(row.get("initiator_email", String.class))
+                            .firstName(row.get("initiator_first_name", String.class))
+                            .lastName(row.get("initiator_last_name", String.class))
+                            .id(row.get("initiator_id", String.class))
                             .build());
+
                     return ideaDTO;
-                })
-                .all();
-//        return template.select(Idea.class).all()
-//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(userId)), Idea2Checked.class)
-//                        .flatMap(isExists -> {
-//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-//                            ideaDTO.setIsChecked(isExists);
-//                            return Mono.just(ideaDTO);
-//                        }));
+                }).all();
     }
 
     @Cacheable
     public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
+
         String query = """
                 SELECT idea.*, i.first_name initiator_first_name,
                 i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
@@ -179,30 +240,27 @@ public class IdeaService {
                 FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
                 WHERE idea.initiator_id = :id
                 """;
-        return template.getDatabaseClient().sql(query)
+
+        return template.getDatabaseClient()
+                .sql(query)
                 .bind("userId", user.getId())
                 .bind("id", user.getId())
                 .map((row, rowMetadata) -> {
+
                     IdeaDTO ideaDTO = buildIdeaDTO(row);
                     ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
+                            .email(row.get("initiator_email", String.class))
+                            .firstName(row.get("initiator_first_name", String.class))
+                            .lastName(row.get("initiator_last_name", String.class))
+                            .id(row.get("initiator_id", String.class))
                             .build());
+
                     return ideaDTO;
-                })
-                .all();
-//        return template.select(query(where("initiator_email").is(user.getEmail())), Idea.class)
-//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(user.getId())), Idea2Checked.class)
-//                        .flatMap(isExists -> {
-//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-//                            ideaDTO.setIsChecked(isExists);
-//                            return Mono.just(ideaDTO);
-//                        }));
+                }).all();
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
+
         String query = """
                 SELECT r.idea_id, r.is_confirmed, idea.*, i.first_name initiator_first_name,
                 i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
@@ -215,23 +273,27 @@ public class IdeaService {
                 LEFT JOIN users i ON idea.initiator_id = i.id
                 WHERE expert_id = :userId AND r.is_confirmed IS FALSE
                 """;
-        return template.getDatabaseClient().sql(query)
+
+        return template.getDatabaseClient()
+                .sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
+
                     IdeaDTO ideaDTO = buildIdeaDTO(row);
                     ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
+                            .email(row.get("initiator_email", String.class))
+                            .firstName(row.get("initiator_first_name", String.class))
+                            .lastName(row.get("initiator_last_name", String.class))
+                            .id(row.get("initiator_id", String.class))
                             .build());
+
                     return ideaDTO;
-                })
-                .all();
+                }).all();
     }
 
     @CacheEvict(allEntries = true)
     public Mono<IdeaDTO> saveIdea(IdeaDTO ideaDTO, String initiatorId) {
+
         Idea idea = mapper.map(ideaDTO, Idea.class);
         idea.setInitiatorId(initiatorId);
         idea.setIsActive(true);
@@ -239,7 +301,7 @@ public class IdeaService {
         return Mono.just(idea)
                 .flatMap(i -> template.getDatabaseClient()
                         .sql("SELECT id FROM groups WHERE 'EXPERT' = ANY(roles) ORDER BY id LIMIT 1")
-                        .map((row, rowMetadata) -> row.get("id",String.class))
+                        .map((row, rowMetadata) -> row.get("id", String.class))
                         .one()
                         .map(g -> {
                             i.setGroupExpertId(g);
@@ -247,7 +309,7 @@ public class IdeaService {
                         }))
                 .flatMap(i -> template.getDatabaseClient()
                         .sql("SELECT id FROM groups WHERE 'PROJECT_OFFICE' = ANY(roles) ORDER BY id LIMIT 1")
-                        .map((row, rowMetadata) -> row.get("id",String.class))
+                        .map((row, rowMetadata) -> row.get("id", String.class))
                         .one()
                         .map(g -> {
                             i.setGroupProjectOfficeId(g);
@@ -255,6 +317,7 @@ public class IdeaService {
                         }))
                 .flatMap(i -> template.selectOne(query(where("id").is(i.getInitiatorId())), User.class)
                         .flatMap(initiator -> {
+
                             IdeaDTO savedDTO = mapper.map(i, IdeaDTO.class);
                             GroupDTO experts = new GroupDTO();
                             UserDTO initiatorDTO = UserDTO.builder()
@@ -269,51 +332,32 @@ public class IdeaService {
                             savedDTO.setExperts(experts);
                             savedDTO.setInitiator(initiatorDTO);
                             savedDTO.setProjectOffice(projectOffice);
-                            if (i.getId()!=null) {
+
+                            if (i.getId() != null)
                                 return template.exists(query(where("initiator_id").is(initiatorId)
-                                                .and(where("id").is(i.getId()))),Idea.class)
+                                                .and(where("id").is(i.getId()))), Idea.class)
                                         .flatMap(isExist -> {
+
                                             if (Boolean.TRUE.equals(isExist)) {
                                                 i.setModifiedAt(LocalDateTime.now());
                                                 return template.update(i).thenReturn(savedDTO);
                                             }
                                             else return Mono.error(new AccessException("Нет Прав!"));
                                         });
-                            } else {
+                            else {
                                 i.setCreatedAt(LocalDateTime.now());
                                 return template.insert(i).flatMap(savedIdea -> {
+
                                      savedDTO.setId(savedIdea.getId());
-                                     if (savedIdea.getStatus().equals(Status.ON_APPROVAL)) {
-                                         template.select(query(where("group_id").is(savedDTO.getProjectOffice().getId())), Group2User.class)
-                                                 .flatMap(id -> template.selectOne(query(where("id").is(id.getUserId())), User.class))
-                                                 .flatMap(user -> {
-                                                     log.info(user.getEmail());
-                                                     return notificationPublisher
-                                                             .makeNotification(NotificationRequest
-                                                                     .builder()
-                                                                     .consumerEmail(user.getEmail())
-                                                                     .buttonName("Перейти к идее")
-                                                                     .title("Идея была отправлена на согласование")
-                                                                     .message(
-                                                                             String.format(
-                                                                                     "Иниациатор %s %s отправил идею " +
-                                                                                             "\"%s\" на солгласование. " +
-                                                                                             "Просим вас согласовать ее " +
-                                                                                             "в ближайшее время.",
-                                                                                     savedDTO.getInitiator().getFirstName(),
-                                                                                     savedDTO.getInitiator().getLastName(),
-                                                                                     savedIdea.getName()
-                                                                             )
-                                                                     )
-                                                                     .publisherEmail(savedDTO.getInitiator().getEmail())
-                                                                     .link(PortalLinks.IDEAS_LIST + savedIdea.getId())
-                                                                     .build());
-                                                 }).subscribe();
-                                     }
+                                     if (savedIdea.getStatus().equals(Status.ON_APPROVAL))
+                                         sendNotificationOnNewIdea(savedDTO, savedIdea);
+
                                      return template.select(query(where("group_id")
-                                                    .is(savedIdea.getGroupExpertId())), Group2User.class).collectList()
-                                            .flatMap(list ->
-                                                    template.getDatabaseClient().inConnection(connection -> {
+                                                    .is(savedIdea.getGroupExpertId())), Group2User.class)
+                                             .collectList()
+                                            .flatMap(list -> template.getDatabaseClient()
+                                                    .inConnection(connection -> {
+
                                                         Batch batch = connection.createBatch();
                                                         list.forEach(u -> batch.add(
                                                                 String.format(
@@ -323,34 +367,19 @@ public class IdeaService {
                                                         );
                                                         return Mono.from(batch.execute());
                                                     }).then())
-                                            .thenReturn(savedDTO);
+                                             .thenReturn(savedDTO);
                                 });
                             }
-                        }));
+                        })
+                );
     }
 
     @CacheEvict(allEntries = true)
     public Mono<Void> deleteIdea(String ideaId, User user) {
+
         if (user.getRoles().contains(Role.ADMIN)) {
-            return template.selectOne(query(where("id").is(ideaId)), Idea.class)
-                    .flatMap(idea -> template.delete(query(where("id").is(ideaId)), Idea.class).then(
-                            Mono.fromRunnable(() -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                                            .flatMap(initiator -> notificationPublisher.makeNotification(
-                                                    NotificationRequest.builder()
-                                                            .consumerEmail(initiator.getEmail())
-                                                            .title("Ваша идея была удалена на портале HITS")
-                                                            .message(
-                                                                    String.format(
-                                                                            "Админ %s %s удалил вашу идею \"%s\".",
-                                                                            user.getFirstName(),
-                                                                            user.getLastName(),
-                                                                            idea.getName()
-                                                                    ))
-                                                            .publisherEmail(user.getEmail())
-                                                            .build()
-                                            )
-                            ).subscribe()
-                    )));
+            sendNotificationOnDeleteIdea(ideaId, user);
+            return template.delete(query(where("id").is(ideaId)), Idea.class).then();
         }
         else return template.delete(query(where("id").is(ideaId)
                 .and("initiator_email").is(user.getEmail())), Idea.class).then()

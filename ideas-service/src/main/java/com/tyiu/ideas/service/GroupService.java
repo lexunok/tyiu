@@ -55,7 +55,10 @@ public class GroupService {
                                         groupName
                                 ))
                                 .build())
-                ).publishOn(Schedulers.boundedElastic()).subscribe());
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
 
         return Mono.empty();
     }
@@ -79,10 +82,11 @@ public class GroupService {
                                 .build()
                 ))
                 .publishOn(Schedulers.boundedElastic())
-                .subscribe());
+                .subscribe()
+        );
     }
 
-    private Mono<Void> sendNotificationToGroupUsers(GroupDTO groupDTO, User admin) {
+    private Mono<Void> sendNotificationOnGroupUpdate(GroupDTO groupDTO, User admin) {
 
         template.select(query(where("group_id").is(groupDTO.getId())), Group2User.class)
                 .flatMap(group2User -> Mono.just(group2User.getUserId()))
@@ -138,7 +142,9 @@ public class GroupService {
 
                             return Mono.empty();
                         })
-                ).publishOn(Schedulers.boundedElastic()).subscribe();
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe();
 
         return Mono.empty();
     }
@@ -205,7 +211,7 @@ public class GroupService {
                                             .map(Enum::toString)
                                             .toArray(String[]::new)),
                                     Group.class))
-                            .then(sendNotificationToGroupUsers(groupDTO, admin))
+                            .then(sendNotificationOnGroupUpdate(groupDTO, admin))
                             .thenReturn(groupDTO);
                 });
     }

@@ -447,7 +447,9 @@ public class TeamService {
                                         )
                                 )
                         )
-                ).publishOn(Schedulers.boundedElastic()).subscribe()
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
         );
         return Mono.empty();
     }

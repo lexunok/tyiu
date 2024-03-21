@@ -94,7 +94,10 @@ public class IdeaInvitationService {
                                         })
                                 )
                         )
-                ).publishOn(Schedulers.boundedElastic()).subscribe());
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
 
         return Mono.empty();
     }
