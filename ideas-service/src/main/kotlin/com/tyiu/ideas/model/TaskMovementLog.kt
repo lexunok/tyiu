@@ -13,6 +13,8 @@ import java.time.LocalDate
 interface TaskMovementLogRepository: CoroutineCrudRepository<TaskMovementLog, String>{
     @Query("SELECT * FROM task_movement_log WHERE task_id = :taskId")
     fun findAllByTaskId(taskId: String): Flow<TaskMovementLog>
+
+    fun existsTaskMovementLogByTaskId(taskId: String): Boolean
 }
 
 @Table
