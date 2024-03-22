@@ -81,6 +81,13 @@ class TaskService
             .bind("taskId", taskDTO.id!!).await()
     }
 
+    suspend fun putUpdateExecutorTask(taskId: String, executor: String, taskDTO: TaskDTO){
+        val query =
+            "UPDATE task SET executor_id = :executor WHERE id = :taskId"
+        return template.databaseClient.sql(query)
+            .bind("executor_id", taskDTO.executor!!).await()
+    }
+
     //delete
     suspend fun deleteTask(id: String) = repository.deleteById(id)
 

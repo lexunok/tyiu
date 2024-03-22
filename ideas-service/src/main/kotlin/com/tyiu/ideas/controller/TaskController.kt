@@ -30,6 +30,9 @@ class TaskController (private val taskService: TaskService) {
     @PutMapping("/{taskId}/update")
     suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskDTO: TaskDTO) = taskService.putUpdateTask(taskId, taskDTO)
 
+    @PutMapping("/{taskId}/{executorId}")
+    suspend fun putUpdateExecutorTask(@PathVariable taskId: String, @PathVariable executor: String, @RequestBody taskDTO: TaskDTO) = taskService.putUpdateExecutorTask(taskId, executor, taskDTO)
+
     @DeleteMapping("/{id}/delete")
     suspend fun deleteTask(@PathVariable id: String) = taskService.deleteTask(id)
 }
