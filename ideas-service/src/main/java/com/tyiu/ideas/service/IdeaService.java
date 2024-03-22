@@ -113,6 +113,96 @@ public class IdeaService {
         );
     }
 
+    public Mono<Void> sendNotificationOnUpdateIdeaStatusByInitiator(String ideaId) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
+                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                        .flatMap(initiator -> template.selectOne(query(where("group_id").is(idea.getGroupProjectOfficeId())), Group2User.class)
+                                .flatMap(group2User -> template.selectOne(query(where("id").is(group2User.getUserId())), User.class)
+                                        .flatMap(projectOffice -> notificationPublisher.makeNotification(
+
+                                                NotificationRequest.builder()
+                                                        .publisherEmail(initiator.getEmail())
+                                                        .consumerEmail(projectOffice.getEmail())
+                                                        .title("Идея поступила на согласование")
+                                                        .message(String.format(
+                                                                "Инициатор %s %s отправил идею \"%s\" на согласование. " +
+                                                                        "Просим вас согласовать её в ближайшее время.",
+                                                                initiator.getFirstName(),
+                                                                initiator.getLastName(),
+                                                                idea.getName()
+                                                        ))
+                                                        .link(PortalLinks.IDEAS_LIST + idea.getId())
+                                                        .buttonName("Перейти к идее")
+                                                        .build()
+                                        ))
+                                )
+                        )
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+
+        return Mono.empty();
+    }
+
+    public Mono<Void> sendNotificationOnUpdateIdeaStatus(String ideaId, Status status, User updater) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
+                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                        .flatMap(initiator -> template.selectOne(query(where("group_id").is(idea.getGroupExpertId())), Group2User.class)
+                                .flatMap(group2User -> template.selectOne(query(where("id").is(group2User.getUserId())), User.class)
+                                        .flatMap(expert -> {
+
+                                            notificationPublisher.makeNotification(
+
+                                                    NotificationRequest.builder()
+                                                            .publisherEmail(updater.getEmail())
+                                                            .consumerEmail(initiator.getEmail())
+                                                            .title("Статус вашей идеи обновлён")
+                                                            .message(String.format(
+                                                                    "Эксперт %s %s обновил статус вашей идеи \"%s\" на \"%s\".",
+                                                                    updater.getFirstName(),
+                                                                    updater.getLastName(),
+                                                                    idea.getName(),
+                                                                    getStatusName(status)
+                                                            ))
+                                                            .link(PortalLinks.IDEAS_LIST + ideaId)
+                                                            .buttonName("Перейти к идее")
+                                                            .build()
+                                            );
+
+                                            if (status.equals(Status.ON_CONFIRMATION))
+                                                notificationPublisher.makeNotification(
+
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(initiator.getEmail())
+                                                                .consumerEmail(expert.getEmail())
+                                                                .title("Идея ждёт утверждения")
+                                                                .message(String.format(
+                                                                        "Инициатор %s %s отправил идею \"%s\" на утверждение. " +
+                                                                                "Просим вас оценить её в ближайшее время.",
+                                                                        initiator.getFirstName(),
+                                                                        initiator.getLastName(),
+                                                                        idea.getName()
+                                                                ))
+                                                                .link(PortalLinks.IDEAS_LIST + ideaId)
+                                                                .buttonName("Перейти к идее")
+                                                                .build()
+                                                );
+
+                                            return Mono.empty();
+                                        })
+                                )
+                        )
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+
+        return Mono.empty();
+    }
+
     private IdeaDTO buildIdeaDTO(Row row) {
 
         IdeaDTO ideaDTO = IdeaDTO.builder()
@@ -387,103 +477,20 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusByInitiator (String ideaId, String initiatorId){
+    public Mono<Void> updateStatusByInitiator(String ideaId, String initiatorId) {
+
         return template.update(query(where("id").is(ideaId).and(where("initiator_id").is(initiatorId))),
-                update("status", Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()),Idea.class)
-                .then(template.selectOne(query(where("id").is(ideaId)), Idea.class)
-                        .flatMap(idea ->
-                                template.selectOne(query(where("id").is(initiatorId)), User.class)
-                                        .flatMap(initiator -> {
-                                            template.select(query(where("group_id").is(idea.getGroupProjectOfficeId())), Group2User.class)
-                                                    .flatMap(group2User ->
-                                                            template.selectOne(query(where("id").is(group2User.getUserId())), User.class)
-                                                                    .flatMap(projectOfficeUser -> notificationPublisher
-                                                                            .makeNotification(NotificationRequest
-                                                                                    .builder()
-                                                                                    .consumerEmail(projectOfficeUser.getEmail())
-                                                                                    .buttonName("Перейти к идее")
-                                                                                    .title("Идея была отправлена на согласование")
-                                                                                    .message(
-                                                                                            String.format(
-                                                                                                    "Инициатор %s %s отправил идею " +
-                                                                                                            "\"%s\" на солгласование. " +
-                                                                                                            "Просим вас согласовать ее " +
-                                                                                                            "в ближайшее время.",
-                                                                                                    initiator.getFirstName(),
-                                                                                                    initiator.getLastName(),
-                                                                                                    idea.getName()
-                                                                                            )
-                                                                                    )
-                                                                                    .publisherEmail(initiator.getEmail())
-                                                                                    .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                                                    .build()
-                                                                            )
-                                                                    )
-                                                    ).subscribe();
-                                            return Mono.empty();
-                                        })
-                        )
-                );
+                update("status", Status.ON_APPROVAL).set("modified_at", LocalDateTime.now()), Idea.class)
+                .then(sendNotificationOnUpdateIdeaStatusByInitiator(ideaId)).then();
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> updateStatusIdea(String ideaId, StatusIdeaRequest newStatus, User updater){
+    public Mono<Void> updateStatusIdea(String ideaId, StatusIdeaRequest newStatus, User updater) {
+
         return template.update(query(where("id").is(ideaId)),
                         update("status", newStatus.getStatus())
-                                .set("modified_at", LocalDateTime.now()),Idea.class)
-                .then(Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
-                        .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                                .flatMap(initiator -> notificationPublisher
-                                        .makeNotification(NotificationRequest
-                                                .builder()
-                                                .consumerEmail(initiator.getEmail())
-                                                .buttonName("Перейти к идее")
-                                                .title("Статус идеи на портале HITS был обновлен")
-                                                .message(
-                                                        String.format(
-                                                                "Пользователь %s %s обновил статус вашей идеи " +
-                                                                        "\"%s\" на статус \"%s\". " +
-                                                                        "Перейдите по ссылке, " +
-                                                                        "чтобы посмотреть идею.",
-                                                                updater.getFirstName(),
-                                                                updater.getLastName(),
-                                                                idea.getName(),
-                                                                getStatusName(newStatus.getStatus())
-                                                        )
-                                                )
-                                                .publisherEmail(updater.getEmail())
-                                                .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                .build()
-                                        ).thenReturn(initiator)
-                                ).flatMap(initiator -> {
-                                    if (newStatus.getStatus().equals(Status.ON_CONFIRMATION))
-                                        template.select(query(where("group_id").is(idea.getGroupExpertId())), Group2User.class)
-                                                .flatMap(group2User -> template.selectOne(query(where("id").is(group2User.getUserId())), User.class)
-                                                .flatMap(expert -> notificationPublisher
-                                                        .makeNotification(NotificationRequest
-                                                                .builder()
-                                                                .consumerEmail(expert.getEmail())
-                                                                .buttonName("Перейти к идее")
-                                                                .title("Идея была отправлена на утверждение")
-                                                                .message(
-                                                                        String.format(
-                                                                                "Пользователь %s %s отправил идею " +
-                                                                                        "\"%s\" на утверждение. " +
-                                                                                        "Просим вас оценить ее " +
-                                                                                        "в ближайшее время.",
-                                                                                initiator.getFirstName(),
-                                                                                initiator.getLastName(),
-                                                                                idea.getName()
-                                                                        )
-                                                                )
-                                                                .publisherEmail(initiator.getEmail())
-                                                                .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                                .build()
-                                                        ))).subscribe();
-                                    return Mono.empty();
-                                })
-                        ).subscribe()
-                ));
+                                .set("modified_at", LocalDateTime.now()), Idea.class)
+                .then(sendNotificationOnUpdateIdeaStatus(ideaId, newStatus.getStatus(), updater)).then();
     }
 
     @CacheEvict(allEntries = true)
