@@ -67,7 +67,6 @@ class ProjectService(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id,
             finishDate = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }?.finishDate
-
         )
         val createdProject = projectRepository.save(project)
         val team = teamRepository.findById(ideaMarketDTO.team.id)
@@ -77,6 +76,14 @@ class ProjectService(
                 userId = m.memberId,
                 teamId = ideaMarketDTO.team.id,
                 projectRole = if (m.memberId == team?.leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
+            ))
+        }
+        userRepository.findById(ideaMarketDTO.initiator.id).let {
+            projectMemberRepository.save(ProjectMember(
+                projectId = createdProject.id,
+                userId = ideaMarketDTO.initiator.id,
+                teamId = ideaMarketDTO.team.id,
+                projectRole = ProjectRole.INITIATOR
             ))
         }
         return createdProject.toDTO()
