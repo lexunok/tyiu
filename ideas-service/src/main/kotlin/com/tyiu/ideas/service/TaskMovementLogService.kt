@@ -1,9 +1,6 @@
 package com.tyiu.ideas.service
 
-import com.tyiu.ideas.model.TaskMovementLog
-import com.tyiu.ideas.model.TaskMovementLogDTO
-import com.tyiu.ideas.model.TaskMovementLogRepository
-import com.tyiu.ideas.model.toDTO
+import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.springframework.stereotype.Service
@@ -12,13 +9,29 @@ import org.springframework.stereotype.Service
 @Service
 class TaskMovementLogService
     (
-    private val repository: TaskMovementLogRepository,
+    private val taskMovementLogRepository: TaskMovementLogRepository,
+    private val userRepository: UserRepository,
+    private val taskRepository: TaskRepository
     )
 {
-    suspend fun TaskMovementLogToDTO(tasksLog: TaskMovementLog): TaskMovementLogDTO {
-        val tasksLog = tasksLog.toDTO()
-        return tasksLog
+    private suspend fun toDTO(taskMovementLog: TaskMovementLog): TaskMovementLogDTO {
+        val taskLog = taskMovementLog.toDTO()
+        taskLog.task = taskMovementLog.taskId?.let { taskRepository.findById(it)?.toDTO() }
+        taskLog.executor = taskMovementLog.executorId?.let { userRepository.findById(it)?.toDTO() }
+        taskLog.user = taskMovementLog.userId?.let { userRepository.findById(it)?.toDTO() }
+        return taskLog
     }
 
-    fun getAllTaskLog(taskId: String): Flow<TaskMovementLogDTO> = repository.findAllByTaskId(taskId).map {TaskMovementLogToDTO(it)}
+    fun getAllTaskLog(taskId: String): Flow<TaskMovementLogDTO> = taskMovementLogRepository.findAllByTaskId(taskId).map {toDTO(it)}
+
+    suspend fun addNewTaskLog(taskMovementLogDTO: TaskMovementLogDTO): TaskMovementLogDTO {
+        val taskMovementLog = TaskMovementLog(
+            taskId = taskMovementLogDTO.task?.id,
+            executorId = taskMovementLogDTO.executor?.id,
+            userId = taskMovementLogDTO.user?.id,
+            status = taskMovementLogDTO.status
+        )
+
+        return toDTO(taskMovementLogRepository.save(taskMovementLog))
+    }
 }

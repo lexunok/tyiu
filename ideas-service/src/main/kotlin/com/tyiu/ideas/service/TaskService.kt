@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 
 @Service
 class TaskService
@@ -15,6 +16,7 @@ class TaskService
     private val userRepository: UserRepository,
     private val tagRepository: TagRepository,
     private val task2tagRepository: Task2TagRepository,
+    private val taskMovementLogRepository: TaskMovementLogRepository,
     val template: R2dbcEntityTemplate
     )
 {
@@ -53,6 +55,16 @@ class TaskService
 
         val taskSave = taskToDTO(repository.save(task))
 
+        val taskMovementLog = TaskMovementLog(
+            taskId = taskSave.id,
+            executorId = taskDTO.executor?.id,
+            userId = taskDTO.initiator?.id,
+            startDate = LocalDate.now(),
+            status = taskSave.status
+        )
+
+        taskMovementLogRepository.save(taskMovementLog)
+
         taskDTO.tags?.forEach {
             task2tagRepository.save (
                 Task2Tag(
@@ -73,14 +85,6 @@ class TaskService
             .bind("description", taskDTO.description!!)
             .bind("workHour", taskDTO.workHour!!)
             .bind("taskId", taskId).await()
-    }
-
-    suspend fun putTaskStatus(taskDTO: TaskDTO) {
-        val query = "UPDATE task SET status = :status, executor_Id = :executor WHERE id = :taskId"
-        return template.databaseClient.sql(query)
-            .bind("status", taskDTO.status!!.toString())
-            .bind("executor", taskDTO.executor?.id!!)
-            .bind("taskId", taskDTO.id!!).await()
     }
 
     suspend fun putUpdateExecutorTask(taskId: String, executorId: String){

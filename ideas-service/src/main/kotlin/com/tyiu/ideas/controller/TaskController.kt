@@ -24,9 +24,6 @@ class TaskController (private val taskService: TaskService) {
     @PostMapping("/add")
     suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO): TaskDTO = taskService.createTask(taskDTO)
 
-    @PutMapping("/status/change/{taskId}")
-    suspend fun putTaskStatus (@PathVariable taskId:String, @RequestBody taskDTO: TaskDTO) = taskService.putTaskStatus(taskDTO)
-
     @PutMapping("/update/{taskId}")
     suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskDTO: TaskDTO) = taskService.putUpdateTask(taskId, taskDTO)
 
