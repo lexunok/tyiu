@@ -98,7 +98,7 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @PostMapping("/{projectId}/add/marks")
-    suspend fun addMarksInProject(@PathVariable projectId: String,@RequestBody projectMarksRequest: projectMarksRequest,
+    suspend fun addMarksInProject(@PathVariable projectId: String,@RequestBody projectMarksRequest: ProjectMarksRequest,
                                   @AuthenticationPrincipal user: User): ProjectMarksDTO {
 
         return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.ADMIN))) {

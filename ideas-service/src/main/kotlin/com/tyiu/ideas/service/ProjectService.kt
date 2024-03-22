@@ -1,5 +1,6 @@
 package com.tyiu.ideas.service
 
+import com.tyiu.ideas.config.exception.AccessException
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import kotlinx.coroutines.flow.*
@@ -56,6 +57,8 @@ class ProjectService(
         projectMarksRepository.findMarksByProjectId(projectId).map{ m ->
             val projectMarks = m.toDTO()
             val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
+            //val projectMember = m.userId?.let { projectMemberRepository.findMemberByUserIdAAndProjectId(it,projectId) }
+            //projectMarks.projectRole = if (projectMember?.projectRole == ProjectRole.TEAM_LEADER) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
             projectMarks.firstName = userToProject?.firstName
             projectMarks.lastName = userToProject?.lastName
             projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
@@ -89,7 +92,7 @@ class ProjectService(
                 finishDate = market?.finishDate
             ))
         }
-        return createdProject.toDTO()
+        return projectToDTO(createdProject)
     }
 
         suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
@@ -103,13 +106,16 @@ class ProjectService(
         return projectMemberRepository.save(projectMember).toDTO()
     }
 
-    suspend fun addMarksInProject(projectId: String, projectMarkRequest: projectMarksRequest): ProjectMarksDTO{
-        val projectMarks = ProjectMarks(
+    suspend fun addMarksInProject(projectId: String, projectMarkRequest: ProjectMarksRequest): ProjectMarksDTO{
+        val project = getOneProject(projectId)
+        return if (project?.initiator?.id==projectMarkRequest.userId){
+            throw AccessException("Вы не можете выставить оценку инициатору")
+        }
+        else projectMarksRepository.save(ProjectMarks(
             projectId = projectId,
             userId = projectMarkRequest.userId,
             mark = projectMarkRequest.mark
-        )
-        return projectMarksRepository.save(projectMarks).toDTO()
+        )).toDTO()
     }
 
     suspend fun pauseProject(projectId: String) {
