@@ -9,30 +9,30 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/scrum-service/task")
 class TaskController (private val taskService: TaskService) {
 
-    @GetMapping("/projects/{projectId}/all")
+    @GetMapping("/project/all/{projectId}")
     fun getAllTaskByProject(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksByProject(projectId)
 
-    @GetMapping("/projects/{projectId}")
+    @GetMapping("/project/backlog/{projectId}")
     fun getAllTasksInBackLog(@PathVariable projectId: String): Flow<TaskDTO> = taskService.getAllTasksInBacklog(projectId)
 
-    @GetMapping("/projects/{projectId}/sprint/{sprintId}")
-    fun getAllTasksInSprint(@PathVariable projectId: String, @PathVariable sprintId: String): Flow<TaskDTO> = taskService.getAllTasksInSprint(projectId, sprintId)
+    @GetMapping("/project/sprint/{sprintId}")
+    fun getAllTasksInSprint(@PathVariable sprintId: String): Flow<TaskDTO> = taskService.getAllTasksInSprint(sprintId)
 
-    @GetMapping("/{id}")
-    fun getOneTaskById(@PathVariable id: String): Flow<TaskDTO> = taskService.getOneTaskById(id)
+    @GetMapping("/{taskId}")
+    fun getOneTaskById(@PathVariable taskId: String): Flow<TaskDTO> = taskService.getOneTaskById(taskId)
 
     @PostMapping("/add")
     suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO): TaskDTO = taskService.createTask(taskDTO)
 
-    @PutMapping("/status/change")
-    suspend fun putTaskStatus (@RequestBody taskDTO: TaskDTO) = taskService.putTaskStatus(taskDTO)
+    @PutMapping("/status/change/{taskId}")
+    suspend fun putTaskStatus (@PathVariable taskId:String, @RequestBody taskDTO: TaskDTO) = taskService.putTaskStatus(taskDTO)
 
-    @PutMapping("/{taskId}/update")
+    @PutMapping("/update/{taskId}")
     suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskDTO: TaskDTO) = taskService.putUpdateTask(taskId, taskDTO)
 
-    @PutMapping("/{taskId}/{executorId}")
-    suspend fun putUpdateExecutorTask(@PathVariable taskId: String, @PathVariable executor: String, @RequestBody taskDTO: TaskDTO) = taskService.putUpdateExecutorTask(taskId, executor, taskDTO)
+    @PutMapping("/executor/{taskId}/{executorId}")
+    suspend fun putUpdateExecutorTask(@PathVariable taskId: String, @PathVariable executorId: String) = taskService.putUpdateExecutorTask(taskId, executorId)
 
-    @DeleteMapping("/{id}/delete")
+    @DeleteMapping("/delete/{id}")
     suspend fun deleteTask(@PathVariable id: String) = taskService.deleteTask(id)
 }

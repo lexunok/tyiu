@@ -24,7 +24,7 @@ class TaskService
 
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.tags = task.id?.let { tagRepository.findAllTagsInTaskByTaskId(it).toList().map { tag -> tag.toDTO() } }
+        tasks.tags = task.id?.let { tagRepository.findAllTagByTaskId(it).toList().map { tag -> tag.toDTO() } }
         return tasks
     }
 
@@ -33,7 +33,7 @@ class TaskService
 
     fun getAllTasksInBacklog(projectId: String): Flow<TaskDTO> = repository.findAllInBacklog(projectId).map {taskToDTO(it)}
 
-    fun getAllTasksInSprint(projectId: String, sprintId: String): Flow<TaskDTO> =  repository.findAllTaskBySprint(projectId, sprintId).map {taskToDTO(it)}
+    fun getAllTasksInSprint(sprintId: String): Flow<TaskDTO> =  repository.findAllTaskBySprintId(sprintId).map {taskToDTO(it)}
 
     fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
 
@@ -42,8 +42,10 @@ class TaskService
         val task = Task (
             sprintId = taskDTO.sprintId,
             projectId = taskDTO.projectId,
+            position = taskDTO.position,
             name = taskDTO.name,
             description = taskDTO.description,
+            leaderComment = taskDTO.leaderComment,
             initiatorId = taskDTO.initiator?.id,
             workHour = taskDTO.workHour,
             status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
@@ -59,7 +61,7 @@ class TaskService
                 )
             )
         }
-       return taskSave
+        return taskSave
     }
 
     //put
@@ -81,11 +83,11 @@ class TaskService
             .bind("taskId", taskDTO.id!!).await()
     }
 
-    suspend fun putUpdateExecutorTask(taskId: String, executor: String, taskDTO: TaskDTO){
-        val query =
-            "UPDATE task SET executor_id = :executor WHERE id = :taskId"
-        return template.databaseClient.sql(query)
-            .bind("executor_id", taskDTO.executor!!).await()
+    suspend fun putUpdateExecutorTask(taskId: String, executorId: String){
+        return template.databaseClient
+            .sql("UPDATE task SET executor_id = :executorId WHERE id = :taskId")
+            .bind("executorId", executorId)
+            .bind("taskId", taskId).await()
     }
 
     //delete

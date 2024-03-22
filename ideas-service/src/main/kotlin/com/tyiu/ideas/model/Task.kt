@@ -18,8 +18,8 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
     fun findAllInBacklog(projectId: String): Flow<Task>
 
-    @Query(" SELECT * FROM task WHERE project_id = :projectId and sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
-    fun findAllTaskBySprint(projectId: String, sprintId: String): Flow<Task>
+    @Query(" SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
+    fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
     fun findTaskById(id: String): Flow<Task>
@@ -35,13 +35,15 @@ data class Task (
     var sprintId: String? = null,
     val projectId: String? = null,
 
+    var position:Int? = null,
     val name: String? = null,
     val description: String? = null,
+    var leaderComment: String? = null,
 
     var initiatorId: String? = null,
     var executorId: String? = null,
 
-    val workHour: Long? = null,
+    val workHour: Int? = null,
 
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
@@ -55,18 +57,21 @@ data class TaskDTO (
     var sprintId: String? = null,
     val projectId: String? = null,
 
+    var position:Int? = null,
     val name:String? = null,
     val description: String? = null,
+    var leaderComment: String? = null,
 
     var initiator: UserDTO? = null,
     var executor: UserDTO? = null,
 
-    val workHour: Long? = null,
+    val workHour: Int? = null,
 
     val startDate: LocalDate? = null,
     val finishDate: LocalDate? = null,
 
     var tags: List<TagDTO>? = null,
+    val taskMovementLog: List<TaskMovementLogDTO>? = null,
     var status: TaskStatus? = null
 )
 

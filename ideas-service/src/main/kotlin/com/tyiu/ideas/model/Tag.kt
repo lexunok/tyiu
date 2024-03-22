@@ -17,8 +17,8 @@ interface TagRepository: CoroutineCrudRepository<Tag, String> {
     @Query("SELECT * FROM task_tag JOIN task_to_tag ON task_tag.id = task_to_tag.tag_id WHERE task_to_tag.task_id = :taskId")
     fun findAllByTaskId(taskId: String): Flow<TagDTO>
 
-    @Query("SELECT tag.* FROM task_tag JOIN tag ON tag.id = task_tag.tag_id WHERE task_tag = :taskId")
-    fun findAllTagsInTaskByTaskId(taskId: String): Flow<Tag>
+    @Query("SELECT tag.* FROM task_tag JOIN tag ON tag.id = task_tag.tag_id WHERE task_tag.task_id = :taskId")
+    fun findAllTagByTaskId(taskId: String): Flow<Tag>
 } 
 
 @Table
