@@ -63,10 +63,11 @@ class ProjectService(
         }
 
     suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
+        val market = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id,
-            finishDate = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }?.finishDate
+            finishDate = market?.finishDate
         )
         val createdProject = projectRepository.save(project)
         val team = teamRepository.findById(ideaMarketDTO.team.id)
@@ -75,7 +76,8 @@ class ProjectService(
                 projectId = createdProject.id,
                 userId = m.memberId,
                 teamId = ideaMarketDTO.team.id,
-                projectRole = if (m.memberId == team?.leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
+                projectRole = if (m.memberId == team?.leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
+                finishDate = market?.finishDate
             ))
         }
         userRepository.findById(ideaMarketDTO.initiator.id).let {
@@ -83,17 +85,20 @@ class ProjectService(
                 projectId = createdProject.id,
                 userId = ideaMarketDTO.initiator.id,
                 teamId = ideaMarketDTO.team.id,
-                projectRole = ProjectRole.INITIATOR
+                projectRole = ProjectRole.INITIATOR,
+                finishDate = market?.finishDate
             ))
         }
         return createdProject.toDTO()
     }
 
         suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
+        val project = projectRepository.findById(projectId)
         val projectMember = ProjectMember(
             projectId = projectId,
             userId = addToProjectRequest.userId,
-            teamId = addToProjectRequest.teamId
+            teamId = addToProjectRequest.teamId,
+            finishDate = project?.finishDate
         )
         return projectMemberRepository.save(projectMember).toDTO()
     }
