@@ -203,6 +203,80 @@ public class IdeaService {
         return Mono.empty();
     }
 
+    public Mono<Void> sendNotificationOnUpdateIdeaByAdmin(Idea idea, Idea updatedIdea, User updater) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                .flatMap(initiator -> template.selectOne(query(where("id").is(updatedIdea.getInitiatorId())), User.class)
+                        .flatMap(newInitiator -> {
+
+                            if (initiator.getId().equals(newInitiator.getId()))
+                                notificationPublisher.makeNotification(
+
+                                        NotificationRequest.builder()
+                                                .publisherEmail(updater.getEmail())
+                                                .consumerEmail(initiator.getEmail())
+                                                .title("Ваша идея была обновлена")
+                                                .message(String.format(
+                                                        "Админ %s %s обновил вашу идею \"%s\". Перейдите " +
+                                                                "по ссылке, чтобы ознакомиться подробнее.",
+                                                        updater.getFirstName(),
+                                                        updater.getLastName(),
+                                                        idea.getName()
+                                                ))
+                                                .link(PortalLinks.IDEAS_LIST + updatedIdea.getId())
+                                                .buttonName("Перейти к идее")
+                                                .build()
+                                );
+
+                            else notificationPublisher.makeNotification(
+
+                                    NotificationRequest.builder()
+                                            .publisherEmail(updater.getEmail())
+                                            .consumerEmail(initiator.getEmail())
+                                            .title("Ваша идея была обновлена")
+                                            .message(String.format(
+                                                    "Админ %s %s передал вашу идею \"%s\" к пользователю %s %s. " +
+                                                            "Перейдите по ссылке, чтобы ознакомиться подробнее.",
+                                                    updater.getFirstName(),
+                                                    updater.getLastName(),
+                                                    idea.getName(),
+                                                    newInitiator.getFirstName(),
+                                                    newInitiator.getLastName()
+                                            ))
+                                            .link(PortalLinks.IDEAS_LIST + updatedIdea.getId())
+                                            .buttonName("Перейти к идее")
+                                            .build()
+
+                            ).then(notificationPublisher.makeNotification(
+
+                                    NotificationRequest.builder()
+                                            .publisherEmail(updater.getEmail())
+                                            .consumerEmail(newInitiator.getEmail())
+                                            .title("Ваша идея была обновлена")
+                                            .message(String.format(
+                                                    "Админ %s %s передал вам идею \"%s\" пользователя %s %s. " +
+                                                            "Перейдите по ссылке, чтобы ознакомиться подробнее.",
+                                                    updater.getFirstName(),
+                                                    updater.getLastName(),
+                                                    updatedIdea.getName(),
+                                                    initiator.getFirstName(),
+                                                    initiator.getLastName()
+                                            ))
+                                            .link(PortalLinks.IDEAS_LIST + updatedIdea.getId())
+                                            .buttonName("Перейти к идее")
+                                            .build()
+                            ));
+
+                            return Mono.empty();
+                        })
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+
+        return Mono.empty();
+    }
+
     private IdeaDTO buildIdeaDTO(Row row) {
 
         IdeaDTO ideaDTO = IdeaDTO.builder()
@@ -274,8 +348,8 @@ public class IdeaService {
                             .build());
 
                     return idea;
-                })
-                .first()
+
+                }).first()
                 .flatMap(i -> template.exists(query(where("user_id").is(userId)
                         .and("idea_id").is(i.getId())), Idea2Checked.class)
                         .flatMap(isExists -> {
@@ -283,7 +357,8 @@ public class IdeaService {
                             if (Boolean.FALSE.equals(isExists))
                                 return template.insert(new Idea2Checked(userId, i.getId()));
                             return Mono.empty();
-                }).thenReturn(i))
+
+                        }).thenReturn(i))
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
 
@@ -495,83 +570,14 @@ public class IdeaService {
 
     @CacheEvict(allEntries = true)
     public Mono<Void> updateIdeaByAdmin(String ideaId, IdeaDTO ideaToUpdate, User admin) {
+
         ideaToUpdate.setId(ideaId);
         ideaToUpdate.setModifiedAt(LocalDateTime.now());
-        Idea ideaToSave = mapper.map(ideaToUpdate,Idea.class);
+        Idea ideaToSave = mapper.map(ideaToUpdate, Idea.class);
         ideaToSave.setInitiatorId(ideaToUpdate.getInitiator().getId());
         return template.selectOne(query(where("id").is(ideaId)), Idea.class)
                 .flatMap(idea -> template.update(ideaToSave)
-                        .flatMap(updatedIdea -> Mono.fromRunnable(() -> {
-                            template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                                    .flatMap(oldInitiator -> {
-                                        if (idea.getInitiatorId().equals(updatedIdea.getInitiatorId()))
-                                            return notificationPublisher.makeNotification(
-                                                    NotificationRequest
-                                                            .builder()
-                                                            .consumerEmail(oldInitiator.getEmail())
-                                                            .buttonName("Перейти к идее")
-                                                            .title("Ваша идея на портале HITS была обновлена")
-                                                            .message(
-                                                                    String.format(
-                                                                            "Админ %s %s обновил вашу идею " +
-                                                                                    "\"%s\". " +
-                                                                                    "Перейдите по ссылке, " +
-                                                                                    "чтобы посмотреть идею.",
-                                                                            admin.getFirstName(),
-                                                                            admin.getLastName(),
-                                                                            idea.getName()
-                                                                    )
-                                                            )
-                                                            .publisherEmail(admin.getEmail())
-                                                            .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                            .build()
-                                            );
-                                        return template.selectOne(query(where("id").is(updatedIdea.getInitiatorId())), User.class)
-                                                .flatMap(newInitiator -> notificationPublisher.makeNotification(
-                                                        NotificationRequest
-                                                                .builder()
-                                                                .consumerEmail(oldInitiator.getEmail())
-                                                                .buttonName("Перейти к идее")
-                                                                .title("Ваша идея на портале HITS была обновлена")
-                                                                .message(
-                                                                        String.format(
-                                                                                "Админ %s %s передал вашу идею " +
-                                                                                        "\"%s\" другому пользователю. " +
-                                                                                        "Перейдите по ссылке, " +
-                                                                                        "чтобы посмотреть идею.",
-                                                                                admin.getFirstName(),
-                                                                                admin.getLastName(),
-                                                                                idea.getName()
-                                                                        )
-                                                                )
-                                                                .publisherEmail(admin.getEmail())
-                                                                .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                                .build()
-                                                ).then(notificationPublisher.makeNotification(
-                                                        NotificationRequest
-                                                                .builder()
-                                                                .consumerEmail(newInitiator.getEmail())
-                                                                .buttonName("Перейти к идее")
-                                                                .title("Вам была передана идея на портале HITS")
-                                                                .message(
-                                                                        String.format(
-                                                                                "Админ %s %s передал вам идею " +
-                                                                                        "\"%s\". " +
-                                                                                        "Перейдите по ссылке, " +
-                                                                                        "чтобы посмотреть идею.",
-                                                                                admin.getFirstName(),
-                                                                                admin.getLastName(),
-                                                                                idea.getName()
-                                                                        ))
-                                                                .publisherEmail(admin.getEmail())
-                                                                .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                                .build()
-                                                                )
-                                                        )
-                                                );
-                                    }).subscribe();
-                        }))
-                );
+                        .flatMap(updatedIdea -> sendNotificationOnUpdateIdeaByAdmin(idea, updatedIdea, admin))).then();
     }
 
     public Mono<Void> addIdeaSkills(IdeaSkillRequest request, User user) {
