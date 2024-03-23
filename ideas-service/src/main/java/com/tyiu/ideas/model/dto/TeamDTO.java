@@ -1,7 +1,9 @@
 package com.tyiu.ideas.model.dto;
 
-import com.tyiu.ideas.model.entities.User;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -35,5 +37,6 @@ public class TeamDTO {
     }
 
     public String getId() { return id; }
-
+    public Integer getMembersCount() { return membersCount; }
+    public void setMembersCount(Integer data) { membersCount = data; }
 }

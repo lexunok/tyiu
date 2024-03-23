@@ -17,6 +17,9 @@ interface MarketRepository: CoroutineCrudRepository<Market, String>
 interface TeamToMemberRepository: CoroutineCrudRepository<Team2Member, String>{
     @Query("SELECT * FROM team_member WHERE team_id =:teamId")
     fun findMembersByTeamId(teamId: String): Flow<Team2Member>
+
+    @Query("SELECT COUNT(*) FROM team_member WHERE team_id = :teamId AND finish_date IS NULL")
+    fun countTeam2MemberByTeamId(teamId: String): Flow<Int>
 }
 
 fun Market.toDTO(): MarketDTO = MarketDTO(

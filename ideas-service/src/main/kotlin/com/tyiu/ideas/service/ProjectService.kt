@@ -29,7 +29,8 @@ class ProjectService(
         projects.description = ideaToProject?.description
         projects.customer = ideaToProject?.customer
         projects.initiator = ideaToProject?.initiatorId?.let { userRepository.findById(it)?.toDTO()}
-        projects.team = project.teamId?.let { teamRepository.findById(it) }?.toDTO()
+        projects.team = project.teamId?.let { teamRepository.findById(it)?.toDTO() }
+        projects.team?.membersCount = projects.team?.id?.let { teamToMemberRepository.countTeam2MemberByTeamId(it) }?.first()
         projects.members = project.id?.let{ getProjectMembers(it) }?.toList()
         projects.report = ReportProject(project.id,project.id?.let { getProjectMarks(it).toList() },project.report)
         return projects
