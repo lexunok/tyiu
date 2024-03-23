@@ -81,8 +81,10 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     sprintId = sprintId,
     projectId = projectId,
 
+    position = position,
     name = name,
     description = description,
+    leaderComment = leaderComment,
 
     workHour = workHour,
 
