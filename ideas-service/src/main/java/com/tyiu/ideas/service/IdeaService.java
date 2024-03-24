@@ -1,49 +1,43 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.AccessException;
-import com.tyiu.ideas.config.exception.NotFoundException;
-import com.tyiu.ideas.model.dto.GroupDTO;
-import com.tyiu.ideas.model.dto.IdeaDTO;
-import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
-import com.tyiu.ideas.model.entities.Idea;
-import com.tyiu.ideas.model.entities.User;
-import com.tyiu.ideas.model.entities.relations.Group2User;
-import com.tyiu.ideas.model.entities.relations.Idea2Checked;
-import com.tyiu.ideas.model.entities.relations.Idea2Skill;
-import enums.PortalLinks;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.enums.SkillType;
-import com.tyiu.ideas.model.requests.IdeaSkillRequest;
-import com.tyiu.ideas.model.requests.StatusIdeaRequest;
-import com.tyiu.ideas.publisher.NotificationPublisher;
-import io.r2dbc.spi.Batch;
-import io.r2dbc.spi.Row;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.modelmapper.ModelMapper;
-import org.springframework.cache.annotation.CacheConfig;
-import org.springframework.cache.annotation.CacheEvict;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.stereotype.Service;
+import com.tyiu.ideas.model.dto.*;
+import com.tyiu.ideas.model.enums.*;
+import com.tyiu.ideas.model.entities.*;
+import com.tyiu.ideas.model.requests.*;
+import com.tyiu.ideas.config.exception.*;
+import com.tyiu.ideas.model.entities.relations.*;
 
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
-import reactor.core.scheduler.Schedulers;
+import enums.PortalLinks;
 import request.NotificationRequest;
+import com.tyiu.ideas.publisher.NotificationPublisher;
+
+import io.r2dbc.spi.Row;
+import io.r2dbc.spi.Batch;
+import org.modelmapper.ModelMapper;
+import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+
+import lombok.extern.slf4j.Slf4j;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CacheConfig;
+
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 
 import static com.tyiu.ideas.model.entities.Idea.*;
-import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
+import static org.springframework.data.relational.core.query.Criteria.where;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "ideas")
-@Slf4j
 public class IdeaService {
 
     private final ModelMapper mapper;
@@ -113,7 +107,7 @@ public class IdeaService {
         );
     }
 
-    public Mono<Void> sendNotificationOnUpdateIdeaStatusByInitiator(String ideaId) {
+    private Mono<Void> sendNotificationOnUpdateIdeaStatusByInitiator(String ideaId) {
 
         Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
                 .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
@@ -146,7 +140,7 @@ public class IdeaService {
         return Mono.empty();
     }
 
-    public Mono<Void> sendNotificationOnUpdateIdeaStatus(String ideaId, Status status, User updater) {
+    private Mono<Void> sendNotificationOnUpdateIdeaStatus(String ideaId, Status status, User updater) {
 
         Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
                 .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
@@ -203,7 +197,7 @@ public class IdeaService {
         return Mono.empty();
     }
 
-    public Mono<Void> sendNotificationOnUpdateIdeaByAdmin(Idea idea, Idea updatedIdea, User updater) {
+    private Mono<Void> sendNotificationOnUpdateIdeaByAdmin(Idea idea, Idea updatedIdea, User updater) {
 
         Mono.fromRunnable(() -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
                 .flatMap(initiator -> template.selectOne(query(where("id").is(updatedIdea.getInitiatorId())), User.class)
@@ -269,6 +263,64 @@ public class IdeaService {
 
                             return Mono.empty();
                         })
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+
+        return Mono.empty();
+    }
+
+    private Mono<Void> sendNotificationOnNewSkills(String ideaId, User updater) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
+                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                        .flatMap(initiator -> notificationPublisher.makeNotification(
+
+                                NotificationRequest.builder()
+                                        .publisherEmail(updater.getEmail())
+                                        .consumerEmail(initiator.getEmail())
+                                        .title("Ваша идея была обновлена")
+                                        .message(String.format(
+                                                "Админ %s %s добавил компетенции в вашу идею \"%s\". " +
+                                                        "Перейдите по ссылке, чтобы ознакомиться подробнее.",
+                                                updater.getFirstName(),
+                                                updater.getLastName(),
+                                                idea.getName()
+                                        ))
+                                        .link(PortalLinks.IDEAS_LIST + idea.getId())
+                                        .buttonName("Перейти к идее")
+                                        .build()
+                        ))
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+
+        return Mono.empty();
+    }
+
+    private Mono<Void> sendNotificationOnSkillsUpdate(String ideaId, User updater) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(ideaId)), Idea.class)
+                .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                        .flatMap(initiator -> notificationPublisher.makeNotification(
+
+                                NotificationRequest.builder()
+                                        .publisherEmail(updater.getEmail())
+                                        .consumerEmail(initiator.getEmail())
+                                        .title("Ваша идея была обновлена")
+                                        .message(String.format(
+                                                "Админ %s %s обновил компетенции в вашей идее \"%s\". " +
+                                                        "Перейдите по ссылке, чтобы ознакомиться подробнее.",
+                                                updater.getFirstName(),
+                                                updater.getLastName(),
+                                                idea.getName()
+                                        ))
+                                        .link(PortalLinks.IDEAS_LIST + idea.getId())
+                                        .buttonName("Перейти к идее")
+                                        .build()
+                        ))
                 )
                 .publishOn(Schedulers.boundedElastic())
                 .subscribe()
@@ -581,107 +633,84 @@ public class IdeaService {
     }
 
     public Mono<Void> addIdeaSkills(IdeaSkillRequest request, User user) {
+
         if (user.getRoles().contains(Role.ADMIN)) {
-            return template.getDatabaseClient().inConnection(connection -> {
-                Batch batch = connection.createBatch();
-                request.getSkills().forEach(s -> batch.add(
-                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
+
+            return template.getDatabaseClient()
+                    .inConnection(connection -> {
+
+                        Batch batch = connection.createBatch();
+                        request.getSkills().forEach(s -> batch.add(String.format(
+                                "INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
                                 request.getIdeaId(),s.getId())
-                ));
-                return Mono.from(batch.execute());
-            }).then(Mono.fromRunnable(() -> template.selectOne(query(where("id").is(request.getIdeaId())), Idea.class)
-                    .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                            .flatMap(initiator -> notificationPublisher.makeNotification(
-                                    NotificationRequest.builder()
-                                            .consumerEmail(initiator.getEmail())
-                                            .buttonName("Перейти к идее")
-                                            .title("Вам была передана идея на портале HITS")
-                                            .message(
-                                                    String.format(
-                                                            "Админ %s %s добавил вам в идею " +
-                                                                    "\"%s\" новые компетенции. " +
-                                                                    "Перейдите по ссылке, " +
-                                                                    "чтобы посмотреть их.",
-                                                            user.getFirstName(),
-                                                            user.getLastName(),
-                                                            idea.getName()
-                                                    ))
-                                            .publisherEmail(user.getEmail())
-                                            .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                            .build()
-                            ))
-                    ).subscribe()
-            ));
+                        ));
+                        return Mono.from(batch.execute());
+
+            }).then(sendNotificationOnNewSkills(request.getIdeaId(), user));
         }
         return template.exists(query(where("initiator_id").is(user.getId())
-                .and(where("id").is(request.getIdeaId()))),Idea.class)
+                .and(where("id").is(request.getIdeaId()))), Idea.class)
                 .flatMap(isExists -> {
+
                     if (Boolean.TRUE.equals(isExists)) {
-                        return template.getDatabaseClient().inConnection(connection -> {
-                            Batch batch = connection.createBatch();
-                            request.getSkills().forEach(s -> batch.add(
-                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
+
+                        return template.getDatabaseClient()
+                                .inConnection(connection -> {
+
+                                    Batch batch = connection.createBatch();
+                                    request.getSkills().forEach(s -> batch.add(String.format(
+                                            "INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
                                             request.getIdeaId(),s.getId())
-                            ));
-                            return Mono.from(batch.execute());
-                        }).then();
+                                    ));
+                                    return Mono.from(batch.execute());
+
+                                }).then();
                     }
                     return Mono.error(new AccessException("Нет Прав!"));
+
                 }).then();
     }
 
     public Mono<Void> updateIdeaSkills(IdeaSkillRequest request, User user) {
+
         if (user.getRoles().contains(Role.ADMIN)) {
+
             return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
-                    .flatMap(r ->
-                            template.getDatabaseClient().inConnection(connection -> {
+                    .flatMap(r -> template.getDatabaseClient()
+                            .inConnection(connection -> {
+
                                 Batch batch = connection.createBatch();
-                                request.getSkills().forEach(s -> batch.add(
-                                        String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
-                                                request.getIdeaId(),s.getId())
+                                request.getSkills().forEach(s -> batch.add(String.format(
+                                        "INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
+                                        request.getIdeaId(),s.getId())
                                 ));
                                 return Mono.from(batch.execute());
                             })
+
                     ).then(template.update(query(where("id").is(request.getIdeaId())),
                             update("modified_at",LocalDateTime.now()), Idea.class))
-                    .then(Mono.fromRunnable(() -> template.selectOne(query(where("id").is(request.getIdeaId())), Idea.class)
-                            .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                                    .flatMap(initiator -> notificationPublisher.makeNotification(
-                                            NotificationRequest.builder()
-                                                .consumerEmail(initiator.getEmail())
-                                                .buttonName("Перейти к идее")
-                                                .title("Вам была передана идея на портале HITS")
-                                                .message(
-                                                        String.format(
-                                                                "Админ %s %s изменил у вас в идеи " +
-                                                                        "\"%s\" компетенции. " +
-                                                                        "Перейдите по ссылке, " +
-                                                                        "чтобы посмотреть их.",
-                                                                user.getFirstName(),
-                                                                user.getLastName(),
-                                                                idea.getName()
-                                                        ))
-                                                .publisherEmail(user.getEmail())
-                                                .link(PortalLinks.IDEAS_LIST + idea.getId())
-                                                .build()
-                                    ))
-                            ).subscribe()
-                    ));
+
+                    .then(sendNotificationOnSkillsUpdate(request.getIdeaId(), user));
         }
         return template.exists(query(where("initiator_id").is(user.getId())
-                .and("id").is(request.getIdeaId())),Idea.class)
+                .and("id").is(request.getIdeaId())), Idea.class)
                 .flatMap(isExists -> {
+
                     if (Boolean.TRUE.equals(isExists)) {
+
                         return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
-                                .flatMap(r ->
-                                        template.getDatabaseClient().inConnection(connection -> {
+                                .flatMap(r -> template.getDatabaseClient()
+                                        .inConnection(connection -> {
+
                                             Batch batch = connection.createBatch();
-                                            request.getSkills().forEach(s -> batch.add(
-                                                    String.format("INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
-                                                            request.getIdeaId(),s.getId())
+                                            request.getSkills().forEach(s -> batch.add(String.format(
+                                                    "INSERT INTO idea_skill (idea_id, skill_id) VALUES ('%s', '%s');",
+                                                    request.getIdeaId(),s.getId())
                                             ));
                                             return Mono.from(batch.execute());
+
                                         }).then()
+
                                 ).then(template.update(query(where("id").is(request.getIdeaId())),
                                         update("modified_at",LocalDateTime.now()), Idea.class))
                                 .then();
@@ -691,10 +720,14 @@ public class IdeaService {
     }
 
     public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, User user) {
+
         String query = """
                 SELECT skill.*, i.skill_id skill_id FROM idea_skill i
-                LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId""";
-        return template.getDatabaseClient().sql(query)
+                LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId
+                """;
+
+        return template.getDatabaseClient()
+                .sql(query)
                 .bind("ideaId", ideaId)
                 .map((row, rowMetadata) ->
                     SkillDTO.builder()
@@ -703,23 +736,25 @@ public class IdeaService {
                             .type(SkillType.valueOf(row.get("type",String.class)))
                             .confirmed(row.get("confirmed",Boolean.class))
                             .build()
-                ).all().collectList()
-                .flatMap(list ->
-                    template.exists(query(where("initiator_id").is(user.getId())
-                            .and("id").is(ideaId)),Idea.class)
-                                    .flatMap(isExists -> {
-                                        if (Boolean.TRUE.equals(isExists)
-                                                || user.getRoles().contains(Role.ADMIN)
-                                                || user.getRoles().contains(Role.EXPERT)
-                                                || user.getRoles().contains(Role.PROJECT_OFFICE)
-                                                || user.getRoles().contains(Role.MEMBER)) {
-                                            return  Mono.just(IdeaSkillRequest.builder()
-                                                    .skills(list)
-                                                    .ideaId(ideaId)
-                                                    .build());
-                                        }
-                                        return Mono.error(new AccessException("Нет Прав"));
-                                    })
+                ).all()
+                .collectList()
+                .flatMap(list -> template.exists(query(where("initiator_id").is(user.getId())
+                                .and("id").is(ideaId)), Idea.class)
+                        .flatMap(isExists -> {
+
+                            if (Boolean.TRUE.equals(isExists)
+                                    || user.getRoles().contains(Role.ADMIN)
+                                    || user.getRoles().contains(Role.EXPERT)
+                                    || user.getRoles().contains(Role.PROJECT_OFFICE)
+                                    || user.getRoles().contains(Role.MEMBER)) {
+
+                                return  Mono.just(IdeaSkillRequest.builder()
+                                        .skills(list)
+                                        .ideaId(ideaId)
+                                        .build());
+                            }
+                            return Mono.error(new AccessException("Нет Прав"));
+                        })
                 );
     }
 }
