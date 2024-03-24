@@ -35,8 +35,18 @@ class SprintService (
             startDate = sprintDTO.startDate,
             finishDate = sprintDTO.finishDate
         )
-        template.databaseClient.sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE'").await()
-        return sprintRepository.save(sprint).toDTO()
+        template.databaseClient
+            .sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE'")
+            .await()
+        val createdSprint = sprintRepository.save(sprint).toDTO()
+        sprintDTO.tasks?.forEach {
+            template.databaseClient
+                .sql("UPDATE task SET sprint_id = :sprintId WHERE id = :taskId")
+                .bind("sprintId", createdSprint.id!!)
+                .bind("taskId", it.id!!)
+                .await()
+        }
+        return createdSprint
     }
 
     suspend fun addSprintMarks(sprintId: String, sprintMarksRequest: SprintMarksRequest): SprintMarks {
