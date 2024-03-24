@@ -1,6 +1,7 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
+import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
@@ -8,18 +9,26 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
+import java.time.LocalDate
 
 @Service
 class SprintService (
     private val sprintRepository: SprintRepository,
     private val sprintMarksRepository: SprintMarksRepository,
     private val taskRepository: TaskRepository,
+    private val taskMovementLogRepository: TaskMovementLogRepository,
+    private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate,
 )
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
         val sprintDTO = sprint.toDTO()
-        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map { it.toDTO() }?.toList()
+        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map {
+            val taskDTO = it.toDTO()
+            taskDTO.tags = it.id?.let { it1 -> tagRepository.findAllTagByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
+            taskDTO.taskMovementLog = it.id?.let { it1 -> taskMovementLogRepository.findAllByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
+            return@map taskDTO
+        }?.toList()
         return sprintDTO
     }
 
@@ -31,7 +40,7 @@ class SprintService (
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarks> = sprintMarksRepository.findSprintMarks(sprintId)
 
-    suspend fun createSprint(sprintDTO: SprintDTO): SprintDTO {
+    suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
         val sprint = Sprint(
             projectId = sprintDTO.projectId,
             name = sprintDTO.name,
@@ -46,10 +55,24 @@ class SprintService (
         val createdSprint = sprintRepository.save(sprint)
         sprintDTO.tasks?.forEach {
             template.databaseClient
-                .sql("UPDATE task SET sprint_id = :sprintId WHERE id = :taskId")
+                .sql("UPDATE task SET sprint_id = :sprintId, status = 'NewTask' WHERE id = :taskId")
                 .bind("sprintId", createdSprint.id!!)
                 .bind("taskId", it.id!!)
                 .await()
+            template.databaseClient
+                .sql("UPDATE task_movement_log SET finish_date = :date WHERE task_id = :taskId AND finish_date IS NULL")
+                .bind("date", LocalDate.now())
+                .bind("taskId", it.id)
+                .await()
+            taskMovementLogRepository.save(
+                TaskMovementLog(
+                    taskId = it.id,
+                    executorId = it.executor?.id,
+                    userId = user.id,
+                    startDate = LocalDate.now(),
+                    status = TaskStatus.NewTask
+                )
+            )
         }
         return sprintToDTO(createdSprint)
     }

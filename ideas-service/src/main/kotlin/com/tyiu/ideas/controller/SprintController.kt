@@ -59,7 +59,7 @@ class SprintController(private val sprintService: SprintService)
     @PostMapping("/add")
     suspend fun createSprint(@RequestBody sprintDTO: SprintDTO, @AuthenticationPrincipal user: User): SprintDTO {
         return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
-            sprintService.createSprint(sprintDTO)
+            sprintService.createSprint(sprintDTO, user)
         }
         else {
             throw AccessException("Нет прав")

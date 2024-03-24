@@ -53,7 +53,7 @@ data class Task (
 
 data class TaskDTO (
     val id: String? = null,
-    
+
     var sprintId: String? = null,
     val projectId: String? = null,
 
@@ -71,7 +71,7 @@ data class TaskDTO (
     val finishDate: LocalDate? = null,
 
     var tags: List<TagDTO>? = null,
-    val taskMovementLog: List<TaskMovementLogDTO>? = null,
+    var taskMovementLog: List<TaskMovementLogDTO>? = null,
     var status: TaskStatus? = null
 )
 
