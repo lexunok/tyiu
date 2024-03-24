@@ -3,6 +3,7 @@ package com.tyiu.ideas.service
 import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
@@ -24,7 +25,7 @@ class SprintService (
 
     suspend fun getSprintById(id: String): SprintDTO? = sprintRepository.findById(id)?.let {sprintToDTO(it)}
 
-    fun getActiveSprint(projectId: String): Flow<SprintDTO> = sprintRepository.findActiveSprint(projectId).map { sprintToDTO(it) }
+    suspend fun getActiveSprint(projectId: String): SprintDTO = sprintRepository.findActiveSprint(projectId).map { sprintToDTO(it) }.first()
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarks> = sprintMarksRepository.findSprintMarks(sprintId)
 
