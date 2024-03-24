@@ -17,13 +17,15 @@ class SprintService (
     val template: R2dbcEntityTemplate,
 )
 {
-    private fun sprintToDTO(sprint: Sprint): SprintDTO {
-        return sprint.toDTO()
+    private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
+        val sprintDTO = sprint.toDTO()
+        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map { it.toDTO() }?.toList()
+        return sprintDTO
     }
 
     fun getAllSprintsByProject(projectId: String): Flow<SprintDTO> = sprintRepository.findAllSprintsByProject(projectId).map {sprintToDTO(it) }
 
-    suspend fun getSprintById(id: String): SprintDTO? = sprintRepository.findById(id)?.let {sprintToDTO(it)}
+    suspend fun getSprintById(id: String): SprintDTO? = sprintRepository.findById(id)?.let { sprintToDTO(it) }
 
     suspend fun getActiveSprint(projectId: String): SprintDTO = sprintRepository.findActiveSprint(projectId).map { sprintToDTO(it) }.first()
 
@@ -41,7 +43,7 @@ class SprintService (
         template.databaseClient
             .sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE'")
             .await()
-        val createdSprint = sprintRepository.save(sprint).toDTO()
+        val createdSprint = sprintRepository.save(sprint)
         sprintDTO.tasks?.forEach {
             template.databaseClient
                 .sql("UPDATE task SET sprint_id = :sprintId WHERE id = :taskId")
@@ -49,8 +51,7 @@ class SprintService (
                 .bind("taskId", it.id!!)
                 .await()
         }
-        createdSprint.tasks = createdSprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map { it.toDTO() }?.toList()
-        return createdSprint
+        return sprintToDTO(createdSprint)
     }
 
     suspend fun addSprintMarks(sprintId: String, sprintMarksRequest: SprintMarksRequest): SprintMarks {
