@@ -41,39 +41,39 @@ class TaskService
 
     //post
     suspend fun createTask(taskDTO: TaskDTO): TaskDTO {
-        val task = Task (
-            sprintId = taskDTO.sprintId,
-            projectId = taskDTO.projectId,
-            position = taskDTO.position,
-            name = taskDTO.name,
-            description = taskDTO.description,
-            leaderComment = taskDTO.leaderComment,
-            initiatorId = taskDTO.initiator?.id,
-            workHour = taskDTO.workHour,
-            status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
+        val createdTask = repository.save(
+            Task (
+                sprintId = taskDTO.sprintId,
+                projectId = taskDTO.projectId,
+                position = taskDTO.position,
+                name = taskDTO.name,
+                description = taskDTO.description,
+                leaderComment = taskDTO.leaderComment,
+                initiatorId = taskDTO.initiator?.id,
+                workHour = taskDTO.workHour,
+                status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
+            )
         )
 
-        val taskSave = taskToDTO(repository.save(task))
-
-        val taskMovementLog = TaskMovementLog(
-            taskId = taskSave.id,
-            executorId = taskDTO.executor?.id,
-            userId = taskDTO.initiator?.id,
-            startDate = LocalDate.now(),
-            status = taskSave.status
+        taskMovementLogRepository.save(
+            TaskMovementLog(
+                taskId = createdTask.id,
+                executorId = taskDTO.executor?.id,
+                userId = taskDTO.initiator?.id,
+                startDate = LocalDate.now(),
+                status = createdTask.status
+            )
         )
-
-        taskMovementLogRepository.save(taskMovementLog)
 
         taskDTO.tags?.forEach {
             task2tagRepository.save (
                 Task2Tag(
-                    taskId = taskSave.id,
+                    taskId = createdTask.id,
                     tagId = it.id
                 )
             )
         }
-        return taskSave
+        return taskToDTO(createdTask)
     }
 
     //put
