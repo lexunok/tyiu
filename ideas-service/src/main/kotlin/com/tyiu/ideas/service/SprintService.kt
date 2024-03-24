@@ -3,6 +3,7 @@ package com.tyiu.ideas.service
 import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
@@ -11,6 +12,7 @@ import org.springframework.stereotype.Service
 class SprintService (
     private val sprintRepository: SprintRepository,
     private val sprintMarksRepository: SprintMarksRepository,
+    private val taskRepository: TaskRepository,
     val template: R2dbcEntityTemplate,
 )
 {
@@ -46,6 +48,7 @@ class SprintService (
                 .bind("taskId", it.id!!)
                 .await()
         }
+        createdSprint.tasks = createdSprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map { it.toDTO() }?.toList()
         return createdSprint
     }
 
