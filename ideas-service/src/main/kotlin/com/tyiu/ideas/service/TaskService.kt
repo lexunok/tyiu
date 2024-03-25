@@ -1,7 +1,9 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
+import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
@@ -40,20 +42,20 @@ class TaskService
     fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
 
     //post
-    suspend fun createTask(taskDTO: TaskDTO): TaskDTO {
+    suspend fun createTask(taskDTO: TaskDTO, userId: String): TaskDTO {
         val createdTask = repository.save(
             Task (
                 sprintId = taskDTO.sprintId,
                 projectId = taskDTO.projectId,
-                position = taskDTO.position,
                 name = taskDTO.name,
                 description = taskDTO.description,
                 leaderComment = taskDTO.leaderComment,
-                initiatorId = taskDTO.initiator?.id,
+                initiatorId = userId,
                 workHour = taskDTO.workHour,
                 status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
             )
         )
+        createdTask.position = createdTask.projectId?.let { repository.countTaskByProjectId(it) }?.first()
 
         taskMovementLogRepository.save(
             TaskMovementLog(

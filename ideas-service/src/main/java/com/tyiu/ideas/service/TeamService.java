@@ -2,6 +2,8 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.config.exception.AccessException;
 import com.tyiu.ideas.model.ProjectDTO;
+import com.tyiu.ideas.model.ProjectMember;
+import com.tyiu.ideas.model.ProjectRole;
 import com.tyiu.ideas.model.ProjectStatus;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.email.requests.NotificationEmailRequest;
@@ -627,11 +629,22 @@ public class TeamService {
                                             .then(template.getDatabaseClient()
                                                     .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
                                                     .bind("userId", userId)
-                                                    .then()
-                                            )
+                                                    .then())
                                             .then(template.update(query(where("id").is(teamId)),
                                                     update("leader_id", userId),
-                                                    Team.class)
+                                                    Team.class))
+                                            .then(template.exists(query(where("team_id").is(t.getId())), ProjectMember.class)
+                                                    .flatMap(thisExists -> {
+                                                        if (Boolean.TRUE.equals(thisExists)){
+                                                            return template.update(query(where("user_id").is(t.getLeaderId())),
+                                                                            update("project_role", ProjectRole.MEMBER),
+                                                                            ProjectMember.class)
+                                                                    .then(template.update(query(where("user_id").is(userId)),
+                                                                            update("project_role", ProjectRole.TEAM_LEADER),
+                                                                            ProjectMember.class));
+                                                        }
+                                                        return Mono.empty();
+                                                    })
                                             );
                                 });
                     }

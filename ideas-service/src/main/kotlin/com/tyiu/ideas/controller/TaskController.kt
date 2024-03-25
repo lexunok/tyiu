@@ -1,8 +1,10 @@
 package com.tyiu.ideas.controller
 
 import com.tyiu.ideas.model.*
+import com.tyiu.ideas.model.entities.User
 import com.tyiu.ideas.service.TaskService
 import kotlinx.coroutines.flow.Flow
+import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -22,7 +24,7 @@ class TaskController (private val taskService: TaskService) {
     fun getOneTaskById(@PathVariable taskId: String): Flow<TaskDTO> = taskService.getOneTaskById(taskId)
 
     @PostMapping("/add")
-    suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO): TaskDTO = taskService.createTask(taskDTO)
+    suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO, @AuthenticationPrincipal user: User): TaskDTO = taskService.createTask(taskDTO, user.id)
 
     @PutMapping("/update/{taskId}")
     suspend fun putUpdateTask (@PathVariable taskId: String,@RequestBody taskDTO: TaskDTO) = taskService.putUpdateTask(taskId, taskDTO)
