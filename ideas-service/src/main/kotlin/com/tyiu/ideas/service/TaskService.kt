@@ -47,6 +47,7 @@ class TaskService
             Task (
                 sprintId = taskDTO.sprintId,
                 projectId = taskDTO.projectId,
+                position = taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.first()?.plus(1),
                 name = taskDTO.name,
                 description = taskDTO.description,
                 leaderComment = taskDTO.leaderComment,
@@ -55,7 +56,6 @@ class TaskService
                 status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
             )
         )
-        createdTask.position = createdTask.projectId?.let { repository.countTaskByProjectId(it) }?.first()
 
         taskMovementLogRepository.save(
             TaskMovementLog(
