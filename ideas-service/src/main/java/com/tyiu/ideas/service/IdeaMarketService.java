@@ -17,6 +17,7 @@ import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 import request.NotificationRequest;
 
 import java.time.LocalDateTime;
@@ -39,37 +40,82 @@ public class IdeaMarketService {
     private final R2dbcEntityTemplate template;
     private final NotificationPublisher notificationPublisher;
 
-    private Mono<Void> sendNotificationCancelRequest(User user, String teamId, String ideaMarketId) {
+    private void sendNotificationOnIdeaSentOnMarket(IdeaDTO idea, User user) {
 
-        return template.selectOne(query(where("id").is(teamId)), Team.class)
+        Mono.fromRunnable(() -> notificationPublisher.makeNotification(
+
+                NotificationRequest.builder()
+                        .publisherEmail(user.getEmail())
+                        .consumerEmail(idea.getInitiator().getEmail())
+                        .title("Ваша идея была отправлена на биржу")
+                        .message(String.format(
+                                "%s %s отправил вашу идею \"%s\" на биржу.",
+                                user.getFirstName(),
+                                user.getLastName(),
+                                idea.getName()
+                        ))
+                        .build()
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+    }
+
+    private Mono<Void> sendNotificationOnRequestStatusChange(String teamId, String ideaMarketId, User user, RequestStatus status) {
+
+        Mono.fromRunnable(() -> template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(team -> template.selectOne(query(where("id").is(team.getOwnerId())), User.class)
-                        .flatMap(owner -> template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
+                        .flatMap(teamOwner -> template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
                                 .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class)
                                         .flatMap(idea -> {
 
-                                            String message = String.format("Пользователь %s %s отклонил заявку " +
-                                                            "на вступление команды \"%s\" в идею \"%s\".",
-                                                    user.getFirstName(),
-                                                    user.getLastName(),
-                                                    team.getName(),
-                                                    idea.getName()
-                                            );
-                                            String link = PortalLinks.IDEAS_MARKET + ideaMarket.getMarketId() + "/" + ideaMarket.getId();
+                                            if (status.equals(RequestStatus.CANCELED))
+                                                notificationPublisher.makeNotification(
 
-                                            return notificationPublisher.makeNotification(
-                                                    NotificationRequest.builder()
-                                                            .publisherEmail(user.getEmail())
-                                                            .consumerEmail(owner.getEmail())
-                                                            .title("Ваша заявка в идею откланена")
-                                                            .message(message)
-                                                            .link(link)
-                                                            .buttonName("Перейти к идее")
-                                                            .build());
-                                        })))
-                ).then();
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(user.getEmail())
+                                                                .consumerEmail(teamOwner.getEmail())
+                                                                .title("Ваша заявка в идею откланена")
+                                                                .message(String.format(
+                                                                        "Инициатор %s %s отклонил заявку от команды \"%s\" в идею \"%s\".",
+                                                                        user.getFirstName(),
+                                                                        user.getLastName(),
+                                                                        team.getName(),
+                                                                        idea.getName()
+                                                                ))
+                                                                .build()
+                                                );
+                                            else if (status.equals(RequestStatus.ACCEPTED))
+                                                notificationPublisher.makeNotification(
+
+                                                        NotificationRequest.builder()
+                                                                .publisherEmail(user.getEmail())
+                                                                .consumerEmail(teamOwner.getEmail())
+                                                                .title("Ваша заявка в идею была одобрена")
+                                                                .message(String.format(
+                                                                        "Инициатор %s %s одобрил заявку от команды \"%s\" в идею \"%s\".",
+                                                                        user.getFirstName(),
+                                                                        user.getLastName(),
+                                                                        team.getName(),
+                                                                        idea.getName()
+                                                                ))
+                                                                .build()
+                                                );
+
+                                            return Mono.empty();
+                                        })
+                                )
+                        )
+                )
+                .publishOn(Schedulers.boundedElastic())
+                .subscribe()
+        );
+
+        return Mono.empty();
     }
 
-    private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId){
+    private Mono<IdeaMarketDTO> getOneMarketIdea(String userId, String ideaMarketId) {
+
         String QUERY = "SELECT im.*, " +
                 "u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e, " +
                 "o.id AS o_id, o.first_name AS o_fn, o.last_name AS o_ln, o.email AS o_e, " +
@@ -95,7 +141,9 @@ public class IdeaMarketService {
                 "LEFT JOIN users o ON o.id = t.owner_id " +
                 "LEFT JOIN users l ON l.id = t.leader_id " +
                 "WHERE im.id = :ideaMarketId";
+
         IdeaMarketMapper ideaMarketMapper = new IdeaMarketMapper();
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("ideaMarketId",ideaMarketId)
@@ -106,8 +154,10 @@ public class IdeaMarketService {
                 .map(i -> i.get(0));
     }
 
-    private Flux<IdeaMarketDTO> getListMarketIdea(String QUERY, String userId, String marketId){
+    private Flux<IdeaMarketDTO> getListMarketIdea(String QUERY, String userId, String marketId) {
+
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId", userId)
@@ -117,11 +167,13 @@ public class IdeaMarketService {
                 .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
-    private IdeaMarketDTO buildIdeaMarket(Row row, ConcurrentHashMap<String, IdeaMarketDTO> map){
+    private IdeaMarketDTO buildIdeaMarket(Row row, ConcurrentHashMap<String, IdeaMarketDTO> map) {
+
         String ideaMarketId = row.get("id", String.class);
         String skillId = row.get("s_id", String.class);
         IdeaMarketDTO ideaMarketDTO = map.get(ideaMarketId);
         if (ideaMarketDTO == null) {
+
             ideaMarketDTO = map.getOrDefault(ideaMarketId, IdeaMarketDTO.builder()
                     .id(ideaMarketId)
                     .ideaId(row.get("idea_id", String.class))
@@ -142,7 +194,8 @@ public class IdeaMarketService {
                     .isFavorite(Objects.equals(row.get("favorite", String.class), ideaMarketId))
                     .build());
         }
-        if (skillId != null){
+        if (skillId != null) {
+
             SkillDTO skill = SkillDTO.builder()
                     .name(row.get("s_name", String.class))
                     .type(SkillType.valueOf(row.get("s_type", String.class)))
@@ -154,7 +207,8 @@ public class IdeaMarketService {
         return ideaMarketDTO;
     }
 
-    private Mono<Boolean> checkInitiator(String ideaMarketId, String userId){
+    private Mono<Boolean> checkInitiator(String ideaMarketId, String userId) {
+
         String QUERY = """
                         SELECT EXISTS (
                             SELECT 1 
@@ -163,6 +217,7 @@ public class IdeaMarketService {
                             WHERE im.id = :ideaMarketId AND i.initiator_id = :userId
                         )
                         """;
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId", userId)
@@ -171,7 +226,7 @@ public class IdeaMarketService {
                 .first();
     }
 
-    private Mono<Boolean> checkOwner(String teamId, String userId){
+    private Mono<Boolean> checkOwner(String teamId, String userId) {
         return template.exists(query(where("id").is(teamId)
                 .and("owner_id").is(userId)), Team.class);
     }
@@ -184,7 +239,8 @@ public class IdeaMarketService {
     ///////////////////////
 
 
-    public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
+    public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId) {
+
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -205,7 +261,9 @@ public class IdeaMarketService {
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
+
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId",userId)
@@ -214,7 +272,8 @@ public class IdeaMarketService {
                 .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
-    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
+    public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId) {
+
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -237,17 +296,21 @@ public class IdeaMarketService {
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
+
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("userId", userId)
                 .bind("marketId", marketId)
                 .map((row, rowMetadata) -> {
+
                     String ideaMarketId = row.get("id", String.class);
                     String skillId = row.get("s_id", String.class);
                     String teamId = row.get("t_id", String.class);
                     IdeaMarketDTO ideaMarketDTO = map.get(ideaMarketId);
                     if (ideaMarketDTO == null) {
+
                         ideaMarketDTO = map.getOrDefault(ideaMarketId, IdeaMarketDTO.builder()
                                 .id(ideaMarketId)
                                 .ideaId(row.get("idea_id", String.class))
@@ -269,7 +332,8 @@ public class IdeaMarketService {
                                 .isFavorite(Objects.equals(row.get("favorite", String.class), ideaMarketId))
                                 .build());
                     }
-                    if (skillId != null){
+                    if (skillId != null) {
+
                         SkillDTO skill = SkillDTO.builder()
                                 .name(row.get("s_name", String.class))
                                 .type(SkillType.valueOf(row.get("s_type", String.class)))
@@ -284,7 +348,8 @@ public class IdeaMarketService {
                 .thenMany(Flux.fromIterable(map.values()).sort(Comparator.comparing(IdeaMarketDTO::getPosition)));
     }
 
-    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId){
+    public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId) {
+
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -306,14 +371,16 @@ public class IdeaMarketService {
                 LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
+
         return getListMarketIdea(QUERY, userId, marketId);
     }
 
-    public Mono<IdeaMarketDTO> getMarketIdea(String userId, String ideaMarketId){
+    public Mono<IdeaMarketDTO> getMarketIdea(String userId, String ideaMarketId) {
         return getOneMarketIdea(userId, ideaMarketId);
     }
 
-    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId, String marketId){
+    public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId, String marketId) {
+
         String QUERY = """
                 SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                        fi.idea_market_id AS favorite,
@@ -335,10 +402,12 @@ public class IdeaMarketService {
                 LEFT JOIN skill s ON s.id = ids.skill_id
                 WHERE fi.idea_market_id = im_sub.id
                 """;
+
         return getListMarketIdea(QUERY, userId, marketId);
     }
 
-    public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
+    public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId) {
+
         String QUERY = "SELECT tmr.*, " +
                 "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id AND finish_date IS NULL) AS member_count " +
@@ -347,11 +416,14 @@ public class IdeaMarketService {
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN skill s ON s.id = us.skill_id " +
                 "WHERE tmr.idea_market_id = :ideaId";
+
         ConcurrentHashMap<String, TeamMarketRequestDTO> map = new ConcurrentHashMap<>();
+
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("ideaId",ideaId)
                 .map((row, rowMetadata) -> {
+
                     String teamRequestId = row.get("id", String.class);
                     String skillId = row.get("s_id", String.class);
                     TeamMarketRequestDTO teamMarketRequestDTO = map.getOrDefault(teamRequestId, TeamMarketRequestDTO.builder()
@@ -365,7 +437,9 @@ public class IdeaMarketService {
                             .membersCount(row.get("member_count", Integer.class))
                             .skills(new ArrayList<>())
                             .build());
-                    if (skillId != null){
+
+                    if (skillId != null) {
+
                         SkillDTO skill = SkillDTO.builder()
                                 .name(row.get("s_name", String.class))
                                 .type(SkillType.valueOf(row.get("s_type", String.class)))
@@ -376,10 +450,12 @@ public class IdeaMarketService {
                     map.put(teamRequestId, teamMarketRequestDTO);
                     return teamMarketRequestDTO;
                 })
-                .all().thenMany(Flux.fromIterable(map.values()));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()));
     }
 
-    public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(String ideaMarketId){
+    public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(String ideaMarketId) {
+
         String QUERY = "SELECT ima.*, " +
                 "u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name " +
                 "FROM idea_market_advertisement ima " +
@@ -389,19 +465,22 @@ public class IdeaMarketService {
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("ideaMarketId", ideaMarketId)
-                .map((row, rowMetadata) -> IdeaMarketAdvertisementDTO.builder()
-                        .id(row.get("id", String.class))
-                        .ideaMarketId(row.get("idea_market_id", String.class))
-                        .createdAt(row.get("created_at", LocalDateTime.class))
-                        .text(row.get("text", String.class))
-                        .sender(UserDTO.builder()
-                                .id(row.get("u_id", String.class))
-                                .email(row.get("u_email", String.class))
-                                .firstName(row.get("u_first_name", String.class))
-                                .lastName(row.get("u_last_name", String.class))
+                .map((row, rowMetadata) ->
+                        IdeaMarketAdvertisementDTO.builder()
+                                .id(row.get("id", String.class))
+                                .ideaMarketId(row.get("idea_market_id", String.class))
+                                .createdAt(row.get("created_at", LocalDateTime.class))
+                                .text(row.get("text", String.class))
+                                .sender(UserDTO.builder()
+                                        .id(row.get("u_id", String.class))
+                                        .email(row.get("u_email", String.class))
+                                        .firstName(row.get("u_first_name", String.class))
+                                        .lastName(row.get("u_last_name", String.class))
+                                        .build())
+                                .checkedBy(List.of(Objects.requireNonNull(row.get("checked_by", String[].class))))
                                 .build())
-                        .checkedBy(List.of(Objects.requireNonNull(row.get("checked_by", String[].class))))
-                        .build()).all().sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
+                .all()
+                .sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
     }
 
     //////////////////////////////
@@ -412,7 +491,9 @@ public class IdeaMarketService {
     //////////////////////////////
 
     public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList, User user) {
+
         return ideaDTOList.flatMap(ideaDTO -> {
+
             IdeaMarketDTO ideaMarketDTO = IdeaMarketDTO.builder()
                     .ideaId(ideaDTO.getId())
                     .initiator(ideaDTO.getInitiator())
@@ -426,82 +507,76 @@ public class IdeaMarketService {
                     .customer(ideaDTO.getCustomer())
                     .status(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)
                     .build();
+
             return template.update(query(where("id").is(ideaDTO.getId())),
                             update("status", Idea.Status.ON_MARKET)
-                                    .set("is_active", true),
-                            Idea.class)
+                                    .set("is_active", true), Idea.class)
                     .then(template.insert(mapper.map(ideaMarketDTO, IdeaMarket.class))
                             .flatMap(i -> {
+
+                                sendNotificationOnIdeaSentOnMarket(ideaDTO, user);
                                 ideaMarketDTO.setId(i.getId());
-                                String message = String.format("Пользователь %s %s отправил вашу идею \"%s\" " +
-                                        "была отправлена в биржу. Перейдите по ссылке, чтобы посмотреть идею",
-                                        user.getFirstName(),
-                                        user.getLastName(),
-                                        ideaDTO.getName()
-                                );
-                                String link = PortalLinks.IDEAS_MARKET + marketId + "/" + i.getIdeaId();
-                                notificationPublisher.makeNotification(
-                                        NotificationRequest.builder()
-                                                .consumerEmail(ideaDTO.getInitiator().getEmail())
-                                                .publisherEmail(user.getEmail())
-                                                .buttonName("Перейти к идее в бирже")
-                                                .message(message)
-                                                .link(link)
-                                                .title("Ваша идея была отправлена на биржу!")
-                                                .build()
-                                );
                                 return Mono.just(ideaMarketDTO);
                             }));
         });
     }
 
-    public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO, String userId){
+    public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO, String userId) {
+
         return checkOwner(teamMarketRequestDTO.getTeamId(), userId)
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists)){
+                .flatMap(isOwner -> {
+
+                    if (Boolean.TRUE.equals(isOwner)) {
+
                         teamMarketRequestDTO.setStatus(RequestStatus.NEW);
                         TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
-                        return template.insert(teamMarketRequest).flatMap(r -> {
-                            teamMarketRequestDTO.setId(r.getId());
-                            template.selectOne(query(where("id").is(teamMarketRequestDTO.getIdeaMarketId())), IdeaMarket.class)
-                                .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class))
-                                .flatMap(idea -> template.selectOne(query(where("id").is(userId)), User.class)
-                                    .flatMap(declarator -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
-                                            .flatMap(initiator -> notificationPublisher.makeNotification(
-                                                    NotificationRequest.builder()
-                                                            .consumerEmail(initiator.getEmail())
-                                                            .buttonName("Перейти к идее в бирже")
-                                                            .title("Команда подала заявку на вступление в вашу идею")
-                                                            .message(String
-                                                                    .format("Владелец команды %s %s подал заявку" +
-                                                                                    " на вашу идею в бирже \"%s\"." +
-                                                                                    "Перейдите по ссылке, чтобы посмотреть заявку",
-                                                                            declarator.getFirstName(),
-                                                                            declarator.getLastName(),
-                                                                            idea.getName()
+                        return template.insert(teamMarketRequest)
+                                .flatMap(r -> {
+
+                                    teamMarketRequestDTO.setId(r.getId());
+                                    template.selectOne(query(where("id").is(teamMarketRequestDTO.getIdeaMarketId())), IdeaMarket.class)
+                                            .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class))
+                                            .flatMap(idea -> template.selectOne(query(where("id").is(userId)), User.class)
+                                                    .flatMap(declarator -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
+                                                            .flatMap(initiator -> notificationPublisher.makeNotification(
+                                                                    NotificationRequest.builder()
+                                                                            .consumerEmail(initiator.getEmail())
+                                                                            .buttonName("Перейти к идее в бирже")
+                                                                            .title("Команда подала заявку на вступление в вашу идею")
+                                                                            .message(String
+                                                                                    .format("Владелец команды %s %s подал заявку" +
+                                                                                                    " на вашу идею в бирже \"%s\"." +
+                                                                                                    "Перейдите по ссылке, чтобы посмотреть заявку",
+                                                                                            declarator.getFirstName(),
+                                                                                            declarator.getLastName(),
+                                                                                            idea.getName()
+                                                                                    ))
+                                                                            .publisherEmail(declarator.getEmail())
+                                                                            .link(PortalLinks.IDEAS_MARKET
+                                                                                    + teamMarketRequest.getIdeaMarketId()
+                                                                                    + "/"
+                                                                                    + idea.getId())
+                                                                            .build()
                                                             ))
-                                                            .publisherEmail(declarator.getEmail())
-                                                            .link(PortalLinks.IDEAS_MARKET
-                                                                    + teamMarketRequest.getIdeaMarketId()
-                                                                    + "/"
-                                                                    + idea.getId())
-                                                            .build()
-                                            ))
-                                    )
-                                ).subscribe();
-                            return Mono.just(teamMarketRequestDTO);
-                        });
+                                                    )
+                                            ).subscribe();
+
+                                    return Mono.just(teamMarketRequestDTO);
+                                });
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
     }
 
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user) {
+
         advertisementDTO.setCreatedAt(LocalDateTime.now());
         advertisementDTO.setCheckedBy(List.of(user.getEmail()));
         return checkInitiator(advertisementDTO.getIdeaMarketId(), user.getId())
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists)){
+                .flatMap(isInitiator -> {
+
+                    if (Boolean.TRUE.equals(isInitiator)) {
+
                         return template.insert(IdeaMarketAdvertisement.builder()
                                         .ideaMarketId(advertisementDTO.getIdeaMarketId())
                                         .checkedBy(advertisementDTO.getCheckedBy())
@@ -510,6 +585,7 @@ public class IdeaMarketService {
                                         .senderId(user.getId())
                                         .build())
                                 .flatMap(a -> {
+
                                     advertisementDTO.setId(a.getId());
                                     advertisementDTO.setSender(UserDTO.builder()
                                             .id(user.getId())
@@ -517,6 +593,7 @@ public class IdeaMarketService {
                                             .firstName(user.getFirstName())
                                             .lastName(user.getLastName())
                                             .build());
+
                                     return Mono.just(advertisementDTO);
                                 });
                     }
@@ -531,10 +608,13 @@ public class IdeaMarketService {
     ///____/ /___/  /____//___/  /_/    /___/
     ///////////////////////////////////////////
 
-    public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
-        return checkInitiator(ideaMarketId,user.getId())
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+    public Mono<Void> deleteMarketIdea(String ideaMarketId, User user) {
+
+        return checkInitiator(ideaMarketId, user.getId())
+                .flatMap(isInitiator -> {
+
+                    if (Boolean.TRUE.equals(isInitiator) || user.getRoles().contains(Role.ADMIN)) {
+
                         template.selectOne(query(where("id").is(ideaMarketId)), IdeaMarket.class)
                                 .flatMap(ideaMarket -> template.selectOne(query(where("id").is(ideaMarket.getIdeaId())), Idea.class))
                                 .flatMap(idea -> template.selectOne(query(where("id").is(idea.getInitiatorId())), User.class)
@@ -555,25 +635,28 @@ public class IdeaMarketService {
                                             );
                                         })
                                 ).subscribe();
+
                         return template.delete(query(where("id").is(ideaMarketId)), IdeaMarket.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
     }
 
-    public Mono<Void> deleteMarketIdeaFromFavorite(String userId, String ideaMarketId){
+    public Mono<Void> deleteMarketIdeaFromFavorite(String userId, String ideaMarketId) {
         return template.delete(query(where("user_id").is(userId)
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
     }
 
-    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, User user){
+    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, User user) {
+
         return template.exists(query(where("id").is(ideaMarketAdvertisementId)
                         .and("sender_id").is(user.getId())), IdeaMarketAdvertisement.class)
                 .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+
+                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN))
                         return template.delete(query(where("id").is(ideaMarketAdvertisementId)), IdeaMarketAdvertisement.class);
-                    }
                     return Mono.error(new AccessException("Нет Прав"));
+
                 }).then();
     }
 
@@ -584,14 +667,17 @@ public class IdeaMarketService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
+    public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId) {
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
     }
 
-    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, User user){
+    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, User user) {
+
         return checkInitiator(ideaMarketId,user.getId())
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
+                .flatMap(isInitiator -> {
+
+                    if (Boolean.TRUE.equals(isInitiator) || user.getRoles().contains(Role.ADMIN)) {
+
                         return template.update(query(where("id").is(ideaMarketId)),
                                 update("status", statusType),
                                 IdeaMarket.class).then();
@@ -600,66 +686,82 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user){
+    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user) {
+
         return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
                 .flatMap(r -> {
+
                     String userId = user.getId();
                     r.setStatus(status);
-                    if (status.equals(RequestStatus.CANCELED)){
+                    if (status.equals(RequestStatus.CANCELED)) {
+
                         return checkInitiator(r.getIdeaMarketId(),userId)
-                                .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                .flatMap(isInitiator -> {
+
+                                    if (Boolean.TRUE.equals(isInitiator) || user.getRoles().contains(Role.ADMIN)) {
+
                                         return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
                                                 .then(template.update(r))
-                                                .then(sendNotificationCancelRequest(user, r.getTeamId(), r.getIdeaMarketId()));
+                                                .then(sendNotificationOnRequestStatusChange(r.getTeamId(), r.getIdeaMarketId(), user, status));
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
                     else if (status.equals(RequestStatus.ACCEPTED)) {
+
                         return checkInitiator(r.getIdeaMarketId(),userId)
-                                .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                .flatMap(isInitiator -> {
+
+                                    if (Boolean.TRUE.equals(isInitiator) || user.getRoles().contains(Role.ADMIN)) {
+
                                         return template.update(query(where("team_id").is(r.getTeamId())
                                                                 .or("idea_market_id").is(r.getIdeaMarketId())
                                                                 .and("status").is(RequestStatus.NEW)),
                                                         update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
-                                                .then(template.getDatabaseClient().sql("""
+                                                .then(template.getDatabaseClient()
+                                                        .sql("""
                                                         UPDATE idea_invitation SET status = :status 
                                                         WHERE idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) OR team_id = :teamId
-                                                        """)
+                                                                """)
                                                         .bind("status", "ANNULLED")
                                                         .bind("ideaMarketId", r.getIdeaMarketId())
-                                                        .bind("teamId", r.getTeamId()).fetch().all().then())
+                                                        .bind("teamId", r.getTeamId())
+                                                        .fetch()
+                                                        .all()
+                                                        .then())
                                                 .then(template.update(r))
-                                                .then();
+                                                .then(sendNotificationOnRequestStatusChange(r.getTeamId(), r.getIdeaMarketId(), user, status));
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
                     }
-                    else if (status.equals(RequestStatus.WITHDRAWN)){
+                    else if (status.equals(RequestStatus.WITHDRAWN)) {
+
                         return checkOwner(r.getTeamId(), userId)
-                                .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                .flatMap(isOwner -> {
+
+                                    if (Boolean.TRUE.equals(isOwner) || user.getRoles().contains(Role.ADMIN))
                                         return template.update(r).then();
-                                    }
                                     return Mono.error(new AccessException("Нет Прав"));
+
                                 });
                     }
                     else if (user.getRoles().contains(Role.ADMIN) &&
                             (status.equals(RequestStatus.NEW) || status.equals(RequestStatus.ANNULLED)))
-                    {
                         return template.update(r).then();
-                    }
                     return Mono.error(new AccessException("Ошибка"));
+
                 });
     }
 
-    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user){
+    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user) {
+
         return template.exists(query(where("team_id").is(teamId)), IdeaMarket.class)
                 .flatMap(isExistsTeam -> {
+
                     if (Boolean.FALSE.equals(isExistsTeam)) {
+
                         String QUERY = "SELECT " +
                                 "t.id as team_id, t.name as team_name, " +
                                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
@@ -671,21 +773,28 @@ public class IdeaMarketService {
                                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                                 "LEFT JOIN skill s ON us.skill_id = s.id " +
                                 "WHERE t.id = :teamId";
+
                         ConcurrentHashMap<String, TeamDTO> map = new ConcurrentHashMap<>();
+
                         return checkInitiator(ideaMarketId,user.getId())
-                                .flatMap(isExists -> {
-                                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
+                                .flatMap(isInitiator -> {
+
+                                    if (Boolean.TRUE.equals(isInitiator) || user.getRoles().contains(Role.ADMIN)) {
+
                                         return template.update(query(where("id").is(ideaMarketId)),
                                                         update("team_id", teamId)
                                                                 .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
                                                         IdeaMarket.class)
+
                                                 .then(template.update(query(where("id").is(teamId)),
                                                         update("has_active_project", true),
                                                         Team.class))
+
                                                 .then(template.getDatabaseClient()
                                                         .sql(QUERY)
                                                         .bind("teamId", teamId)
                                                         .map((row, rowMetadata) -> {
+
                                                             String skillId = row.get("skill_id", String.class);
                                                             TeamDTO teamDTO = map.getOrDefault(teamId, TeamDTO.builder()
                                                                     .id(teamId)
@@ -698,7 +807,9 @@ public class IdeaMarketService {
                                                                             .build())
                                                                     .skills(new ArrayList<>())
                                                                     .build());
-                                                            if (skillId!=null) {
+
+                                                            if (skillId != null) {
+
                                                                 SkillDTO skill = SkillDTO.builder()
                                                                         .name(row.get("skill_name", String.class))
                                                                         .type(SkillType.valueOf(row.get("skill_type", String.class)))
@@ -709,8 +820,10 @@ public class IdeaMarketService {
                                                             map.put(teamId,teamDTO);
                                                             return teamDTO;
                                                         })
-                                                        .all().thenMany(Flux.fromIterable(map.values()))
-                                                        .collectList().map(i -> i.get(0)));
+                                                        .all()
+                                                        .thenMany(Flux.fromIterable(map.values()))
+                                                        .collectList()
+                                                        .map(i -> i.get(0)));
                                     }
                                     return Mono.error(new AccessException("Нет Прав"));
                                 });
@@ -719,10 +832,12 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<Void> updateCheckByAdvertisement(String ideaMarketAdvertisementId, String email){
+    public Mono<Void> updateCheckByAdvertisement(String ideaMarketAdvertisementId, String email) {
+
         return template.getDatabaseClient()
                 .sql("UPDATE idea_market_advertisement SET checked_by = array_append(checked_by,:userEmail) WHERE id =:advertisementId")
                 .bind("advertisementId", ideaMarketAdvertisementId)
-                .bind("userEmail", email).then();
+                .bind("userEmail", email)
+                .then();
     }
 }
