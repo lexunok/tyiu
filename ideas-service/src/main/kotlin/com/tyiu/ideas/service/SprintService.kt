@@ -60,7 +60,7 @@ class SprintService (
                 .bind("taskId", it.id!!)
                 .await()
             template.databaseClient
-                .sql("UPDATE task_movement_log SET finish_date = :date WHERE task_id = :taskId AND finish_date IS NULL")
+                .sql("UPDATE task_movement_log SET end_date = :date WHERE task_id = :taskId AND end_date IS NULL")
                 .bind("date", LocalDate.now())
                 .bind("taskId", it.id)
                 .await()

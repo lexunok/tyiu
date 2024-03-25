@@ -31,7 +31,7 @@ class TaskMovementLogService
         taskMovementLogDTO.task?.id?.let {
             if (taskMovementLogRepository.existsTaskMovementLogByTaskId(it)) {
                 template.databaseClient
-                    .sql("UPDATE task_movement_log SET finish_date = :finishDate WHERE task_id = :taskId")
+                    .sql("UPDATE task_movement_log SET end_date = :finishDate WHERE task_id = :taskId")
                     .bind("finishDate", LocalDate.now())
                     .bind("taskId", it)
             }
