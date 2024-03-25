@@ -26,7 +26,6 @@ class SprintService (
         sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map {
             val taskDTO = it.toDTO()
             taskDTO.tags = it.id?.let { it1 -> tagRepository.findAllTagByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
-            taskDTO.taskMovementLog = it.id?.let { it1 -> taskMovementLogRepository.findAllByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
             return@map taskDTO
         }?.toList()
         return sprintDTO

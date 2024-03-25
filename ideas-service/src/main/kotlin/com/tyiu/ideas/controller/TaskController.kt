@@ -48,7 +48,7 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @GetMapping("/{taskId}")
-    fun getOneTaskById(@PathVariable taskId: String, @AuthenticationPrincipal user: User): Flow<TaskDTO> {
+    suspend fun getOneTaskById(@PathVariable taskId: String, @AuthenticationPrincipal user: User): TaskDTO? {
         return if (user.roles.roleCheck(roles)) {
             taskService.getOneTaskById(taskId)
         }

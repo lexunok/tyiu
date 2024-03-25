@@ -21,9 +21,6 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query(" SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
     fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
-    @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
-    fun findTaskById(id: String): Flow<Task>
-
     @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
     fun findTaskByExecutorId(executorId: String): Flow<Task>
 
@@ -74,7 +71,6 @@ data class TaskDTO (
     val finishDate: LocalDate? = null,
 
     var tags: List<TagDTO>? = null,
-    var taskMovementLog: List<TaskMovementLogDTO>? = null,
     var status: TaskStatus? = null
 )
 

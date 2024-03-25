@@ -29,7 +29,6 @@ class TaskService
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.tags = task.id?.let { tagRepository.findAllTagByTaskId(it).toList().map { tag -> tag.toDTO() } }
-        tasks.taskMovementLog = task.id?.let { taskMovementLogRepository.findAllByTaskId(it) }?.map { log -> log.toDTO() }?.toList()
         return tasks
     }
 
@@ -40,7 +39,7 @@ class TaskService
 
     fun getAllTasksInSprint(sprintId: String): Flow<TaskDTO> =  repository.findAllTaskBySprintId(sprintId).map {taskToDTO(it)}
 
-    fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
+    suspend fun getOneTaskById(id: String): TaskDTO? = repository.findById(id)?.let { taskToDTO(it) }
 
     //post
     suspend fun createTask(taskDTO: TaskDTO, userId: String): TaskDTO {
