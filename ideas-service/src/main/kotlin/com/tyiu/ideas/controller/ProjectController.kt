@@ -28,7 +28,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/private/all")
     fun getYourProjects(@AuthenticationPrincipal user: User): Flow<ProjectDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getYourProjects(user.id)
         }
         else {
@@ -38,7 +38,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/active/all")
     fun getYourActiveProjects(@AuthenticationPrincipal user: User): Flow<ProjectDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getYourActiveProjects(user.id)
         }
         else {
@@ -48,7 +48,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/{projectId}")
     suspend fun getOneProject(@PathVariable projectId: String,@AuthenticationPrincipal user: User): ProjectDTO? {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getOneProject(projectId)
         }
         else {
@@ -58,7 +58,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/members/{projectId}/all")
     fun getProjectMembers(@PathVariable projectId: String,@AuthenticationPrincipal user: User): Flow<ProjectMemberDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getProjectMembers(projectId)
         }
         else {
@@ -68,7 +68,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/marks/{projectId}/all")
     fun getProjectMarks(@PathVariable projectId: String,@AuthenticationPrincipal user: User): Flow<ProjectMarksDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getProjectMarks(projectId)
         }
         else {
@@ -89,7 +89,7 @@ class ProjectController (private val projectService: ProjectService) {
     @PostMapping("/{projectId}/add/members")
     suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody addToProjectRequest: AddToProjectRequest,
                                     @AuthenticationPrincipal user: User): ProjectMemberDTO {
-        return if (user.roles.roleCheck(listOf(Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(listOf(Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.addMembersInProject(projectId,addToProjectRequest)
         }
         else {
@@ -111,7 +111,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @PutMapping("/{projectId}/status/change")
     suspend fun pauseProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User) : InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
+        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
             try {
                 projectService.pauseProject(projectId)
                 InfoResponse(HttpStatus.OK, "Проект успешно приостановлен")
@@ -144,7 +144,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @PutMapping("/leader/change")
     suspend fun putTeamLeader(@RequestBody projectLeaderRequest: ProjectLeaderRequest,@AuthenticationPrincipal user: User) : InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
+        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
             try {
                 projectService.putTeamLeader(projectLeaderRequest)
                 InfoResponse(HttpStatus.OK,"Лидер команды назначен")
