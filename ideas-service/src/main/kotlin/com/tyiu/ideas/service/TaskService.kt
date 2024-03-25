@@ -29,6 +29,7 @@ class TaskService
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.tags = task.id?.let { tagRepository.findAllTagByTaskId(it).toList().map { tag -> tag.toDTO() } }
+        tasks.taskMovementLog = task.id?.let { taskMovementLogRepository.findAllByTaskId(it) }?.map { log -> log.toDTO() }?.toList()
         return tasks
     }
 
