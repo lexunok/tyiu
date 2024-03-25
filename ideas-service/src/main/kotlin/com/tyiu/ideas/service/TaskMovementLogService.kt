@@ -36,6 +36,12 @@ class TaskMovementLogService
                     .bind("taskId", it)
             }
         }
+
+        template.databaseClient
+            .sql("UPDATE task SET status = :status WHERE task_id = :taskId")
+            .bind("status", taskMovementLogDTO.status!!)
+            .bind("taskId", taskMovementLogDTO.task?.id!!)
+
         val taskMovementLog = TaskMovementLog(
             taskId = taskMovementLogDTO.task?.id,
             executorId = taskMovementLogDTO.executor?.id,
