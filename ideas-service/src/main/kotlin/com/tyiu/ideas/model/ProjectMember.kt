@@ -11,8 +11,11 @@ interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String
     @Query("SELECT * FROM project_member WHERE project_id = :projectId")
     fun findMemberByProjectId(projectId: String): Flow<ProjectMember>
 
-    @Query("SELECT * FROM project_member WHERE user_id = :userId and project_id = :projectId LIMIT 1")
-    fun findMemberByUserIdAAndProjectId(userId: String, projectId: String): ProjectMember
+    @Query("SELECT * FROM project_member WHERE user_id = :userId and project_id = :projectId")
+    fun findMemberByUserIdAndProjectId(userId: String, projectId: String): Flow<ProjectMember>
+
+    @Query("SELECT * FROM project_member WHERE project_id = :projectId and project_role = 'TEAM_LEADER'")
+    fun findMemberByProjectIdAAndProjectRole(projectId: String?): Flow<ProjectMember>
 }
 
 @Table

@@ -58,8 +58,8 @@ class ProjectService(
         projectMarksRepository.findMarksByProjectId(projectId).map{ m ->
             val projectMarks = m.toDTO()
             val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
-            //val projectMember = m.userId?.let { projectMemberRepository.findMemberByUserIdAAndProjectId(it,projectId) }
-            //projectMarks.projectRole = if (projectMember?.projectRole == ProjectRole.TEAM_LEADER) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
+            val projectMember = m.userId?.let { projectMemberRepository.findMemberByUserIdAndProjectId(it,projectId) }?.first()
+            projectMarks.projectRole = if (projectMember?.projectRole == ProjectRole.TEAM_LEADER) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
             projectMarks.firstName = userToProject?.firstName
             projectMarks.lastName = userToProject?.lastName
             projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
@@ -132,10 +132,23 @@ class ProjectService(
     }
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
-        val query = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
-        return template.databaseClient.sql(query)
-            .bind("userId", projectLeaderRequest.userId!!)
-            .bind("projectId",projectLeaderRequest.projectId!!).await()
+        val projectLeader = projectMemberRepository.findMemberByProjectIdAAndProjectRole(projectLeaderRequest.projectId).first()
+        return if (projectLeader !=null){
+            val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
+            template.databaseClient.sql(query)
+                .bind("userId", projectLeader.userId!!)
+                .bind("projectId",projectLeaderRequest.projectId!!).await()
+            val query2 = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
+            template.databaseClient.sql(query2)
+                .bind("userId", projectLeaderRequest.userId!!)
+                .bind("projectId",projectLeaderRequest.projectId).await()
+        }
+        else {
+            val query = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
+            return template.databaseClient.sql(query)
+                .bind("userId", projectLeaderRequest.userId!!)
+                .bind("projectId",projectLeaderRequest.projectId!!).await()
+        }
     }
 }
 
