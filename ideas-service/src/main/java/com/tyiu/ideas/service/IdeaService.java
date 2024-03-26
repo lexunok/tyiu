@@ -155,7 +155,8 @@ public class IdeaService {
                                                             .consumerEmail(initiator.getEmail())
                                                             .title("Статус вашей идеи обновлён")
                                                             .message(String.format(
-                                                                    "Эксперт %s %s обновил статус вашей идеи \"%s\" на \"%s\".",
+                                                                    "Эксперт %s %s обновил статус вашей идеи \"%s\" на \"%s\". " +
+                                                                            "Перейдите по ссылке, чтобы ознакомиться подробнее. ",
                                                                     updater.getFirstName(),
                                                                     updater.getLastName(),
                                                                     idea.getName(),
@@ -211,8 +212,8 @@ public class IdeaService {
                                                 .consumerEmail(initiator.getEmail())
                                                 .title("Ваша идея была обновлена")
                                                 .message(String.format(
-                                                        "Админ %s %s обновил вашу идею \"%s\". Перейдите " +
-                                                                "по ссылке, чтобы ознакомиться подробнее.",
+                                                        "Админ %s %s обновил вашу идею \"%s\". " +
+                                                                "Перейдите по ссылке, чтобы ознакомиться подробнее.",
                                                         updater.getFirstName(),
                                                         updater.getLastName(),
                                                         idea.getName()
