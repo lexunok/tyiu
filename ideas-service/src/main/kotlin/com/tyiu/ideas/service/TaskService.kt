@@ -99,4 +99,32 @@ class TaskService
     //delete
     suspend fun deleteTask(id: String) = repository.deleteById(id)
 
+    suspend fun changePosition(taskId: String, position: Int){
+        repository.findById(taskId).let {
+            template.databaseClient
+                .sql("UPDATE task SET position = :position WHERE id = :taskId")
+                .bind("position", position)
+                .bind("taskId", taskId)
+                .await()
+            if (it?.position!! > position){
+                template.databaseClient
+                    .sql("UPDATE task SET position = position + 1 WHERE project_id = :projectId AND id <> :taskId AND position < :position AND position >= :newPosition")
+                    .bind("projectId", it.projectId!!)
+                    .bind("taskId", taskId)
+                    .bind("position", it.position!!)
+                    .bind("newPosition", position)
+                    .await()
+            }
+            else if (it.position!! < position){
+                template.databaseClient
+                    .sql("UPDATE task SET position = position - 1 WHERE project_id = :projectId AND id <> :taskId AND position > :position AND position <= :newPosition")
+                    .bind("projectId", it.projectId!!)
+                    .bind("taskId", taskId)
+                    .bind("position", it.position!!)
+                    .bind("newPosition", position)
+                    .await()
+            }
+        }
+    }
+
 }

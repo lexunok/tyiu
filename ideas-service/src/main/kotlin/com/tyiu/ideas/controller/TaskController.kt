@@ -103,6 +103,11 @@ class TaskController (private val taskService: TaskService) {
         }
     }
 
+    @PutMapping("/move/{taskId}/{position}")
+    suspend fun moveTask(@PathVariable taskId: String, @PathVariable position: Int){
+        taskService.changePosition(taskId, position)
+    }
+
     @DeleteMapping("/delete/{id}")
     suspend fun deleteTask(@PathVariable id: String, @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles)) {
