@@ -58,6 +58,13 @@ services:
       - postgres-ideas:/data/postgres-ideas
     networks:
       - spring
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3.12.12-management
+    restart: always
+    ports:
+      - 5672:5672
+      - 15672:15672
 networks:
   spring:
     driver: bridge
