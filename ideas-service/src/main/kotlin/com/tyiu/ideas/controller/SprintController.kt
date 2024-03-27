@@ -16,9 +16,13 @@ import org.springframework.web.bind.annotation.*
 class SprintController(private val sprintService: SprintService)
 {
 
+    private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_LEADER, Role.TEAM_OWNER, Role.ADMIN)
+    private val roles2 = listOf(Role.PROJECT_OFFICE, Role.TEAM_LEADER, Role.ADMIN)
+    private val roles3 = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.ADMIN)
+
     @GetMapping("/{projectId}/all")
     fun getAllSprintsByProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User): Flow<SprintDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles)) {
             sprintService.getAllSprintsByProject(projectId)
         }
         else {
@@ -28,7 +32,7 @@ class SprintController(private val sprintService: SprintService)
 
     @GetMapping("/{id}")
     suspend fun getSprintById(@PathVariable id: String, @AuthenticationPrincipal user: User): SprintDTO? {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles)) {
             sprintService.getSprintById(id)
         }
         else {
@@ -37,8 +41,8 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/{projectId}/active")
-    fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): Flow<SprintDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): SprintDTO {
+        return if (user.roles.roleCheck(roles)) {
             sprintService.getActiveSprint(projectId)
         }
         else {
@@ -48,7 +52,7 @@ class SprintController(private val sprintService: SprintService)
 
     @GetMapping("/marks/{sprintId}/all")
     fun getAllSprintMarks(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): Flow<SprintMarks> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles)) {
             sprintService.getAllSprintMarks(sprintId)
         }
         else {
@@ -58,8 +62,8 @@ class SprintController(private val sprintService: SprintService)
 
     @PostMapping("/add")
     suspend fun createSprint(@RequestBody sprintDTO: SprintDTO, @AuthenticationPrincipal user: User): SprintDTO {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
-            sprintService.createSprint(sprintDTO)
+        return if (user.roles.roleCheck(roles2)) {
+            sprintService.createSprint(sprintDTO, user)
         }
         else {
             throw AccessException("Нет прав")
@@ -70,7 +74,7 @@ class SprintController(private val sprintService: SprintService)
     suspend fun  addSprintMarks(@PathVariable sprintId: String,
                                 @RequestBody sprintMarksRequest: SprintMarksRequest,
                                 @AuthenticationPrincipal user: User): SprintMarks {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles3)) {
             sprintService.addSprintMarks(sprintId, sprintMarksRequest)
         }
         else {
@@ -80,7 +84,7 @@ class SprintController(private val sprintService: SprintService)
 
     @PutMapping("/{sprintId}/status/{status}")
     suspend fun changeSprintStatus(@PathVariable sprintId: String, @PathVariable status: SprintStatus, @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles2)) {
             try {
                 sprintService.changeSprintStatus(sprintId, status)
                 InfoResponse(HttpStatus.OK, "Статус спринта успешно изменён на $status")
@@ -98,7 +102,7 @@ class SprintController(private val sprintService: SprintService)
     suspend fun updateSprintInfo(@PathVariable sprintId: String,
                                  @RequestBody sprintDTO: SprintDTO,
                                  @AuthenticationPrincipal user: User) {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles2)) {
             sprintService.updateSprintInfo(sprintId, sprintDTO)
         }
         else {
@@ -110,7 +114,7 @@ class SprintController(private val sprintService: SprintService)
     suspend fun putSprintFinish(@PathVariable sprintId: String,
                                 @RequestBody sprintFinishRequest: SprintFinishRequest,
                                 @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles3)) {
             try {
                 sprintService.putSprintFinish(sprintId, sprintFinishRequest)
                 InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
@@ -126,7 +130,7 @@ class SprintController(private val sprintService: SprintService)
 
     @DeleteMapping("/{sprintId}/delete")
     suspend fun deleteSprint(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
+        return if (user.roles.roleCheck(roles2)) {
             try {
                 sprintService.deleteSprint(sprintId)
                 InfoResponse(HttpStatus.OK,"Спринт успешно удалён")

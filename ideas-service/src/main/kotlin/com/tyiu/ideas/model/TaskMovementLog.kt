@@ -13,13 +13,14 @@ import java.time.LocalDate
 interface TaskMovementLogRepository: CoroutineCrudRepository<TaskMovementLog, String>{
     @Query("SELECT * FROM task_movement_log WHERE task_id = :taskId")
     fun findAllByTaskId(taskId: String): Flow<TaskMovementLog>
+
+    fun existsTaskMovementLogByTaskId(taskId: String): Boolean
 }
 
 @Table
 data class TaskMovementLog (
     @Id
     val id: String? = null,
-    val projectId: String? = null,
     val taskId: String? = null,
     val executorId: String? = null,
     val userId: String? = null,
@@ -30,18 +31,16 @@ data class TaskMovementLog (
 
 data class TaskMovementLogDTO (
     val id: String? = null, //айди лога
-    val projectId: String? = null, // связь с проектом
-    val task: TaskDTO? = null, // связь с таском
-    val executor: UserDTO? = null, // отвественный за таск
-    val user: UserDTO? = null,  // Тот, кто поменял статус таска
-    val startDate: LocalDate? = LocalDate.now(), // при создании таска - LocalDate.Now. При имзенении статуса таска LocalDate.Now
+    var task: TaskDTO? = null, // связь с таском
+    var executor: UserDTO? = null, // отвественный за таск
+    var user: UserDTO? = null,  // Тот, кто поменял статус таска
+    val startDate: LocalDate? = null, // при создании таска - LocalDate.Now. При имзенении статуса таска LocalDate.Now
     val endDate: LocalDate? = null, // при создании null. При имзенении статуса таска LocalDate.Now
     var status: TaskStatus? = null // предыдущий статус таска ????
 )
 
 fun TaskMovementLog.toDTO(): TaskMovementLogDTO = TaskMovementLogDTO (
     id = id,
-    projectId = projectId,
     startDate = startDate,
     endDate = endDate,
     status = status

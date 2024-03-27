@@ -2,6 +2,8 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.config.exception.AccessException;
 import com.tyiu.ideas.model.ProjectDTO;
+import com.tyiu.ideas.model.ProjectMember;
+import com.tyiu.ideas.model.ProjectRole;
 import com.tyiu.ideas.model.ProjectStatus;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.Team;
@@ -713,12 +715,9 @@ public class TeamService {
                 .closed(teamDTO.getClosed())
                 .hasActiveProject(false)
                 .ownerId(teamDTO.getOwner().getId())
+                .leaderId(teamDTO.getLeader() != null && teamDTO.getLeader().getId() != null ? teamDTO.getLeader().getId() : null)
                 .createdAt(LocalDate.now())
                 .build();
-
-        if (teamDTO.getLeader() != null && teamDTO.getLeader().getId() != null) {
-            team.setLeaderId(teamDTO.getLeader().getId());
-        }
 
         return template.insert(team)
                 .flatMap(t -> {
@@ -726,8 +725,12 @@ public class TeamService {
                     teamDTO.setId(t.getId());
                     teamDTO.setMembersCount((teamDTO.getMembers() != null) ? teamDTO.getMembers().size() : 0);
                     teamDTO.setCreatedAt(team.getCreatedAt());
-                    return template.getDatabaseClient().inConnection(connection -> {
 
+                    return template.getDatabaseClient()
+                            .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
+                            .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
+                            .then()
+                            .then(template.getDatabaseClient().inConnection(connection -> {
                                 Batch batch = connection.createBatch();
                                 teamDTO.getMembers().forEach(u -> batch.add(
                                         String.format(
@@ -735,8 +738,10 @@ public class TeamService {
                                                 t.getId(), u.getId(), Boolean.TRUE, LocalDate.now()
                                         ))
                                 );
+
                                 return Mono.from(batch.execute());
-                            })
+
+                            }))
                             .then(template.getDatabaseClient().inConnection(connection -> {
 
                                 Batch batch = connection.createBatch();
@@ -746,6 +751,7 @@ public class TeamService {
                                                 t.getId(), s.getId()
                                         ))
                                 );
+
                                 return Mono.from(batch.execute());
                             })).thenReturn(teamDTO);
                 });
@@ -986,12 +992,13 @@ public class TeamService {
 
         return checkOwner(teamId, user.getId())
                 .flatMap(isOwner -> {
-
                     if (Boolean.TRUE.equals(isOwner) || user.getRoles().contains(Role.ADMIN)) {
 
-                        Team team = mapper.map(teamDTO, Team.class);
-                        team.setId(teamId);
-                        return template.update(team).thenReturn(teamDTO);
+                        return template.update(query(where("id").is(teamId)),
+                                update("name", teamDTO.getName())
+                                        .set("description", teamDTO.getDescription())
+                                        .set("closed", teamDTO.getClosed()), Team.class)
+                                .thenReturn(teamDTO);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
@@ -1012,21 +1019,50 @@ public class TeamService {
     }
 
     public Mono<Void> changeTeamLeader(String teamId, String newLeaderId, User userThatChangesTeamLeader) {
-
         return checkOwner(teamId, userThatChangesTeamLeader.getId())
                 .flatMap(isOwner -> {
 
                     if (Boolean.TRUE.equals(isOwner) || userThatChangesTeamLeader.getRoles().contains(Role.ADMIN)) {
 
-                        return template.update(query(where("id").is(teamId)),
-                                update("leader_id", newLeaderId),
-                                Team.class)
-                                .then(sendNotification(
-                                        teamId,
-                                        userThatChangesTeamLeader.getId(),
-                                        newLeaderId,
-                                        NotificationCase.TEAM_LEADER_CHANGES
-                                ));
+                        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                                .flatMap(t -> {
+
+                                    if (Objects.equals(newLeaderId, t.getLeaderId()))
+                                        return Mono.empty();
+
+                                    return template.getDatabaseClient()
+                                            .sql("UPDATE users SET roles = ARRAY_REMOVE(roles, 'TEAM_LEADER') WHERE id = :userId")
+                                            .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
+                                            .then()
+                                            .then(template.getDatabaseClient()
+                                                    .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
+                                                    .bind("userId", newLeaderId)
+                                                    .then())
+                                            .then(template.update(query(where("id").is(teamId)),
+                                                    update("leader_id", newLeaderId),
+                                                    Team.class))
+                                            .then(template.exists(query(where("team_id").is(t.getId())), ProjectMember.class)
+                                                    .flatMap(thisExists -> {
+
+                                                        if (Boolean.TRUE.equals(thisExists)) {
+
+                                                            return template.update(query(where("user_id").is(t.getLeaderId())),
+                                                                            update("project_role", ProjectRole.MEMBER),
+                                                                            ProjectMember.class)
+                                                                    .then(template.update(query(where("user_id").is(newLeaderId)),
+                                                                            update("project_role", ProjectRole.TEAM_LEADER),
+                                                                            ProjectMember.class));
+                                                        }
+                                                        return Mono.empty();
+                                                    })
+                                            )
+                                            .then(sendNotification(
+                                                    teamId,
+                                                    userThatChangesTeamLeader.getId(),
+                                                    newLeaderId,
+                                                    NotificationCase.TEAM_LEADER_CHANGES
+                                            ));
+                                });
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();

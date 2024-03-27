@@ -10,6 +10,12 @@ interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String
 
     @Query("SELECT * FROM project_member WHERE project_id = :projectId")
     fun findMemberByProjectId(projectId: String): Flow<ProjectMember>
+
+    @Query("SELECT * FROM project_member WHERE user_id = :userId and project_id = :projectId")
+    fun findMemberByUserIdAndProjectId(userId: String, projectId: String): Flow<ProjectMember>
+
+    @Query("SELECT * FROM project_member WHERE project_id = :projectId and project_role = 'TEAM_LEADER'")
+    fun findMemberByProjectIdAAndProjectRole(projectId: String?): Flow<ProjectMember>
 }
 
 @Table
@@ -35,6 +41,11 @@ data class ProjectMemberDTO(
 
 data class ProjectLeaderRequest(
     val projectId:String?=null,
+    val userId:String?=null,
+)
+
+data class AddToProjectRequest(
+    val teamId:String?=null,
     val userId:String?=null,
 )
 

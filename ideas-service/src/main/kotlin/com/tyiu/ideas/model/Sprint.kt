@@ -46,7 +46,7 @@ data class SprintDTO(
     val startDate:LocalDate? = null,
     val finishDate:LocalDate? = null,
     val workingHours:Long? = null,
-    val tasks:HashMap<TaskStatus, List<TaskDTO>>? = null,
+    var tasks:List<TaskDTO>? = null,
 )
 
 data class SprintFinishRequest(

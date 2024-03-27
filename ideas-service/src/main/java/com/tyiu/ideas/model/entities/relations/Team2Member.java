@@ -17,4 +17,6 @@ public class Team2Member {
     private Boolean isActive;
     private LocalDate startDate;
     private LocalDate finishDate;
+
+    public String getMemberId() { return memberId; }
 }

@@ -6,6 +6,7 @@ public enum Role {
     PROJECT_OFFICE,
     ADMIN,
     MEMBER,
+    TEAM_LEADER,
     TEAM_OWNER,
     TEACHER
 }

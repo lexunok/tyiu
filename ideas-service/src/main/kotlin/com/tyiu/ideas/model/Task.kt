@@ -18,14 +18,14 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
     fun findAllInBacklog(projectId: String): Flow<Task>
 
-    @Query(" SELECT * FROM task WHERE project_id = :projectId and sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
-    fun findAllTaskBySprint(projectId: String, sprintId: String): Flow<Task>
-
-    @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
-    fun findTaskById(id: String): Flow<Task>
+    @Query(" SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
+    fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
     fun findTaskByExecutorId(executorId: String): Flow<Task>
+
+    @Query("SELECT COUNT(*) FROM task WHERE project_id = :projectId AND status = 'InBackLog'")
+    fun countTaskByProjectId(projectId: String): Flow<Int>
 }
 
 @Table
@@ -35,39 +35,43 @@ data class Task (
     var sprintId: String? = null,
     val projectId: String? = null,
 
+    var position:Int? = null,
     val name: String? = null,
     val description: String? = null,
+    var leaderComment: String? = null,
 
     var initiatorId: String? = null,
     var executorId: String? = null,
 
-    val workHour: Long? = null,
+    val workHour: Int? = null,
 
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
 
-    var status: TaskStatus? = TaskStatus.InBacklog
+    var status: TaskStatus? = null
 )
 
 data class TaskDTO (
     val id: String? = null,
-    
+
     var sprintId: String? = null,
     val projectId: String? = null,
 
+    var position:Int? = null,
     val name:String? = null,
     val description: String? = null,
+    var leaderComment: String? = null,
 
     var initiator: UserDTO? = null,
-    var executor: UserDTO? = null, //firstName lastName
+    var executor: UserDTO? = null,
 
-    val workHour: Long? = null,
+    val workHour: Int? = null,
 
-    val startDate: LocalDate? = LocalDate.now(),
+    val startDate: LocalDate? = null,
     val finishDate: LocalDate? = null,
 
-    var tag: List<TaskTagDTO>? = null,
-    var status: TaskStatus? = TaskStatus.InBacklog
+    var tags: List<TagDTO>? = null,
+    var status: TaskStatus? = null
 )
 
 fun Task.toDTO(): TaskDTO = TaskDTO (
@@ -76,8 +80,10 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     sprintId = sprintId,
     projectId = projectId,
 
+    position = position,
     name = name,
     description = description,
+    leaderComment = leaderComment,
 
     workHour = workHour,
 
@@ -87,33 +93,6 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     status = status
 )
 
-enum class TaskStatus
-{
-    InBacklog, OnModification, New, InProgress, OnVerification, Done
+enum class TaskStatus {
+    InBackLog, OnModification, NewTask, InProgress, OnVerification, Done
 }
-
-data class TaskStatusRequest(
-    val taskId :String? = null,
-    val taskStatus: TaskStatus? = null,
-    val taskExecutor: String? = null
-)
-
-data class TaskInfoRequest(
-    val taskId :String? = null,
-    var taskName: String? = null,
-    var taskDescription: String? = null,
-    var taskWork_hour: Long? = null,
-    var taskStatus: String? = null,
-    var taskTag: List<TaskTagDTO>? = null
-)
-
-data class TaskCreateRequest(
-    val name:String? = null,
-    val description: String? = null,
-    val projectId: String? = null,
-    val workHour: Long? = null,
-    var initiatorId: String? = null,
-    var sprintId: String? = null,
-    //val taskTags: List<String>? = null
-    val taskTags: String? = null
-)
