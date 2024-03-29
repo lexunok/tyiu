@@ -45,5 +45,5 @@ class TagService (private val taskTagRepository: TagRepository, val template: R2
             .bind("tagId", tagId).await()
     }
 
-    fun deleteTag(tagId: String) = taskTagRepository.deleteTagById(tagId)
+    suspend fun deleteTag(tagId: String) = taskTagRepository.deleteById(tagId)
 }

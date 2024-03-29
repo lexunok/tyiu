@@ -15,7 +15,7 @@ interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String
     fun findMemberByUserIdAndProjectId(userId: String, projectId: String): Flow<ProjectMember>
 
     @Query("SELECT * FROM project_member WHERE project_id = :projectId and project_role = 'TEAM_LEADER'")
-    fun findMemberByProjectIdAAndProjectRole(projectId: String?): Flow<ProjectMember>
+    suspend fun findProjectMemberByProjectIdAndProjectRole(projectId: String?): ProjectMember
 }
 
 @Table

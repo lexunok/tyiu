@@ -47,7 +47,7 @@ class TaskService
             Task (
                 sprintId = taskDTO.sprintId,
                 projectId = taskDTO.projectId,
-                position = taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.first()?.plus(1),
+                position = taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.plus(1),
                 name = taskDTO.name,
                 description = taskDTO.description,
                 leaderComment = taskDTO.leaderComment,

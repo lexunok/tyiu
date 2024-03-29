@@ -13,7 +13,7 @@ interface SprintRepository: CoroutineCrudRepository<Sprint, String>{
     fun findAllSprintsByProject(projectId: String): Flow<Sprint>
 
     @Query("SELECT * FROM sprint WHERE project_id =:projectId and status = 'ACTIVE'")
-    fun findActiveSprint(projectId: String): Flow<Sprint>
+    suspend fun findActiveSprint(projectId: String): Sprint
 
 
 }

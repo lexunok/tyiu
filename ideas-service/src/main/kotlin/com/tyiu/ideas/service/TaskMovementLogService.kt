@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
 import java.time.LocalDate
 
@@ -35,27 +36,28 @@ class TaskMovementLogService
     fun getAllTaskLog(taskId: String): Flow<TaskMovementLogDTO> = taskMovementLogRepository.findAllByTaskId(taskId).map {toDTO(it)}
 
     suspend fun addNewTaskLog(taskMovementLogDTO: TaskMovementLogDTO): TaskMovementLogDTO {
-        taskMovementLogDTO.task?.id?.let {
-            if (taskMovementLogRepository.existsTaskMovementLogByTaskId(it)) {
+        taskMovementLogDTO.let {
+            it.task?.id.let {taskId ->
+                if (taskId?.let { it1 -> taskMovementLogRepository.existsTaskMovementLogByTaskId(it1) } == true) {
+                    template.databaseClient
+                        .sql("UPDATE task_movement_log SET end_date = :finishDate WHERE task_id = :taskId")
+                        .bind("finishDate", LocalDate.now())
+                        .bind("taskId", taskId)
+                        .await()
+                }
                 template.databaseClient
-                    .sql("UPDATE task_movement_log SET end_date = :finishDate WHERE task_id = :taskId")
-                    .bind("finishDate", LocalDate.now())
-                    .bind("taskId", it)
+                    .sql("UPDATE task SET status = :status WHERE id = :taskId")
+                    .bind("status", it.status!!.toString())
+                    .bind("taskId", taskId!!)
+                    .await()
             }
+            val taskMovementLog = TaskMovementLog(
+                taskId = it.task?.id,
+                executorId = it.executor?.id,
+                userId = it.user?.id,
+                status = it.status
+            )
+            return toDTO(taskMovementLogRepository.save(taskMovementLog))
         }
-
-        template.databaseClient
-            .sql("UPDATE task SET status = :status WHERE task_id = :taskId")
-            .bind("status", taskMovementLogDTO.status!!)
-            .bind("taskId", taskMovementLogDTO.task?.id!!)
-
-        val taskMovementLog = TaskMovementLog(
-            taskId = taskMovementLogDTO.task?.id,
-            executorId = taskMovementLogDTO.executor?.id,
-            userId = taskMovementLogDTO.user?.id,
-            status = taskMovementLogDTO.status
-        )
-
-        return toDTO(taskMovementLogRepository.save(taskMovementLog))
     }
 }

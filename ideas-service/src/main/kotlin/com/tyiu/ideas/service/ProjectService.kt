@@ -30,7 +30,7 @@ class ProjectService(
         projects.customer = ideaToProject?.customer
         projects.initiator = ideaToProject?.initiatorId?.let { userRepository.findById(it)?.toDTO()}
         projects.team = project.teamId?.let { teamRepository.findById(it)?.toDTO() }
-        projects.team?.membersCount = projects.team?.id?.let { teamToMemberRepository.countTeam2MemberByTeamId(it) }?.first()
+        projects.team?.membersCount = projects.team?.id?.let { teamToMemberRepository.countTeam2MemberByTeamId(it) }
         projects.members = project.id?.let{ getProjectMembers(it) }?.toList()
         projects.report = ReportProject(project.id,project.id?.let { getProjectMarks(it).toList() },project.report)
         return projects
@@ -132,7 +132,7 @@ class ProjectService(
     }
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
-        val projectLeader = projectMemberRepository.findMemberByProjectIdAAndProjectRole(projectLeaderRequest.projectId).first()
+        val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
         return if (projectLeader !=null){
             val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
             template.databaseClient.sql(query)

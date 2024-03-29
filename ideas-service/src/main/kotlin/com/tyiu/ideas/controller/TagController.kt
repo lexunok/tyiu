@@ -86,7 +86,7 @@ class TagController(private val tagService: TagService) {
     }
 
     @DeleteMapping("/delete/{tagId}")
-    fun deleteTag(@PathVariable tagId: String,@AuthenticationPrincipal user: User): InfoResponse {
+    suspend fun deleteTag(@PathVariable tagId: String, @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(listOf(Role.ADMIN))) {
             try {
                 tagService.deleteTag(tagId)

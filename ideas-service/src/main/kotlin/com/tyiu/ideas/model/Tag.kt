@@ -8,14 +8,6 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 
 //автоматическое создание task_to_tag вместе с task
 interface TagRepository: CoroutineCrudRepository<Tag, String> {
-    @Query("DELETE FROM task_tag WHERE id=:tagId")
-    fun deleteTagById(tagId: String): Flow<Tag>
-
-    @Query("SELECT *  FROM task_tag WHERE project_id=:projectId")
-    fun findAllTagByProjectId(projectId: String): Flow<Tag>
-
-    @Query("SELECT * FROM task_tag JOIN task_to_tag ON task_tag.id = task_to_tag.tag_id WHERE task_to_tag.task_id = :taskId")
-    fun findAllByTaskId(taskId: String): Flow<TagDTO>
 
     @Query("SELECT tag.* FROM task_tag JOIN tag ON tag.id = task_tag.tag_id WHERE task_tag.task_id = :taskId")
     fun findAllTagByTaskId(taskId: String): Flow<Tag>

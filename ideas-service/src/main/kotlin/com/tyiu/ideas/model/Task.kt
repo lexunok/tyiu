@@ -25,7 +25,7 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     fun findTaskByExecutorId(executorId: String): Flow<Task>
 
     @Query("SELECT COUNT(*) FROM task WHERE project_id = :projectId AND status = 'InBackLog'")
-    fun countTaskByProjectId(projectId: String): Flow<Int>
+    suspend fun countTaskByProjectId(projectId: String): Int
 }
 
 @Table
