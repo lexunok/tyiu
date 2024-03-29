@@ -108,6 +108,21 @@ class TaskController (private val taskService: TaskService) {
         taskService.changePosition(taskId, position)
     }
 
+    @PutMapping("/comment/{taskId}")
+    suspend fun updateLeaderCommentInTask(@PathVariable taskId: String, @RequestBody leaderComment: String){
+        taskService.updateLeaderCommentInTask(taskId, leaderComment)
+    }
+
+    @PutMapping("/description/{taskId}")
+    suspend fun updateDescriptionInTask(@PathVariable taskId: String, @RequestBody description: String){
+        taskService.updateDescriptionInTask(taskId, description)
+    }
+
+    @PutMapping("/name/{taskId}")
+    suspend fun updateNameInTask(@PathVariable taskId: String, @RequestBody name: String){
+        taskService.updateNameInTask(taskId, name)
+    }
+
     @DeleteMapping("/delete/{id}")
     suspend fun deleteTask(@PathVariable id: String, @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles)) {

@@ -94,8 +94,26 @@ class TaskService
             .bind("taskId", taskId).await()
     }
 
-    //delete
-    suspend fun deleteTask(id: String) = repository.deleteById(id)
+    suspend fun updateLeaderCommentInTask(taskId: String, leaderComment: String){
+        return template.databaseClient
+            .sql("UPDATE task SET leader_comment = :leaderComment WHERE id = :taskId")
+            .bind("leaderComment", leaderComment)
+            .bind("taskId", taskId).await()
+    }
+
+    suspend fun updateDescriptionInTask(taskId: String, description: String){
+        return template.databaseClient
+            .sql("UPDATE task SET description = :description WHERE id = :taskId")
+            .bind("description", description)
+            .bind("taskId", taskId).await()
+    }
+
+    suspend fun updateNameInTask(taskId: String, name: String){
+        return template.databaseClient
+            .sql("UPDATE task SET name = :name WHERE id = :taskId")
+            .bind("name", name)
+            .bind("taskId", taskId).await()
+    }
 
     suspend fun changePosition(taskId: String, position: Int){
         repository.findById(taskId).let {
@@ -124,5 +142,8 @@ class TaskService
             }
         }
     }
+
+    //delete
+    suspend fun deleteTask(id: String) = repository.deleteById(id)
 
 }
