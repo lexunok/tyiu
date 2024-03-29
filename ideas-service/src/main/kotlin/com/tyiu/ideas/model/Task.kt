@@ -2,7 +2,6 @@ package com.tyiu.ideas.model
 
 import com.tyiu.ideas.model.dto.UserDTO
 import kotlinx.coroutines.flow.Flow
-import org.springframework.core.task.TaskExecutor
 import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -11,8 +10,6 @@ import java.time.LocalDate
 
 interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
-    //вывод tasktagDTO как списка
-    //убрать лишние запросы
     @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC") // ПОИСК ТАСКА ПО ПРОЕКТУ. СОРТИРОВКА ПО СОЗДАНИЮ ТАСКА
     fun findAllByProjectId(projectId: String): Flow<Task>
     @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА

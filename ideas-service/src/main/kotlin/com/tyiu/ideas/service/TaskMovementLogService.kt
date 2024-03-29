@@ -2,13 +2,12 @@ package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 
 @Service
@@ -41,7 +40,7 @@ class TaskMovementLogService
                 if (taskId?.let { it1 -> taskMovementLogRepository.existsTaskMovementLogByTaskId(it1) } == true) {
                     template.databaseClient
                         .sql("UPDATE task_movement_log SET end_date = :finishDate WHERE task_id = :taskId")
-                        .bind("finishDate", LocalDate.now())
+                        .bind("finishDate", LocalDateTime.now())
                         .bind("taskId", taskId)
                         .await()
                 }

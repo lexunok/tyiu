@@ -1,15 +1,13 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class TaskService
@@ -62,7 +60,7 @@ class TaskService
                 taskId = createdTask.id,
                 executorId = taskDTO.executor?.id,
                 userId = taskDTO.initiator?.id,
-                startDate = LocalDate.now(),
+                startDate = LocalDateTime.now(),
                 status = createdTask.status
             )
         )

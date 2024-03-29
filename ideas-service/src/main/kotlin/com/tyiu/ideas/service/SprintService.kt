@@ -4,12 +4,11 @@ import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import java.time.LocalDate
+import java.time.LocalDateTime
 
 @Service
 class SprintService (
@@ -60,7 +59,7 @@ class SprintService (
                 .await()
             template.databaseClient
                 .sql("UPDATE task_movement_log SET end_date = :date WHERE task_id = :taskId AND end_date IS NULL")
-                .bind("date", LocalDate.now())
+                .bind("date", LocalDateTime.now())
                 .bind("taskId", it.id)
                 .await()
             taskMovementLogRepository.save(
@@ -68,7 +67,7 @@ class SprintService (
                     taskId = it.id,
                     executorId = it.executor?.id,
                     userId = user.id,
-                    startDate = LocalDate.now(),
+                    startDate = LocalDateTime.now(),
                     status = TaskStatus.NewTask
                 )
             )
