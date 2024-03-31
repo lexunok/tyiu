@@ -45,7 +45,7 @@ class TaskService
             Task (
                 sprintId = taskDTO.sprintId,
                 projectId = taskDTO.projectId,
-                position = taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.plus(1),
+                position = if (taskDTO.sprintId == null) taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.plus(1) else null,
                 name = taskDTO.name,
                 description = taskDTO.description,
                 leaderComment = taskDTO.leaderComment,
@@ -124,7 +124,7 @@ class TaskService
                 .await()
             if (it?.position!! > position){
                 template.databaseClient
-                    .sql("UPDATE task SET position = position + 1 WHERE project_id = :projectId AND id <> :taskId AND position < :position AND position >= :newPosition")
+                    .sql("UPDATE task SET position = position + 1 WHERE project_id = :projectId AND id <> :taskId AND position < :position AND position >= :newPosition AND status = 'InBackLog'")
                     .bind("projectId", it.projectId!!)
                     .bind("taskId", taskId)
                     .bind("position", it.position!!)
@@ -133,7 +133,7 @@ class TaskService
             }
             else if (it.position!! < position){
                 template.databaseClient
-                    .sql("UPDATE task SET position = position - 1 WHERE project_id = :projectId AND id <> :taskId AND position > :position AND position <= :newPosition")
+                    .sql("UPDATE task SET position = position - 1 WHERE project_id = :projectId AND id <> :taskId AND position > :position AND position <= :newPosition AND status = 'InBackLog'")
                     .bind("projectId", it.projectId!!)
                     .bind("taskId", taskId)
                     .bind("position", it.position!!)

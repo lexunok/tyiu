@@ -12,10 +12,12 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
     @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC") // ПОИСК ТАСКА ПО ПРОЕКТУ. СОРТИРОВКА ПО СОЗДАНИЮ ТАСКА
     fun findAllByProjectId(projectId: String): Flow<Task>
-    @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
+    @Query("SELECT * FROM task WHERE project_id = :projectId and status = 'InBackLog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
     fun findAllInBacklog(projectId: String): Flow<Task>
 
-    @Query(" SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
+    fun findTaskByProjectIdAndStatusOrderByPosition(projectId: String, status: TaskStatus): Flow<Task>
+
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
     fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
@@ -23,6 +25,9 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
 
     @Query("SELECT COUNT(*) FROM task WHERE project_id = :projectId AND status = 'InBackLog'")
     suspend fun countTaskByProjectId(projectId: String): Int
+
+    @Query("UPDATE task SET position = :newPosition WHERE project_id = :projectId AND status = 'InBackLog' AND id = :taskId")
+    suspend fun updateTasksByProjectIdAndId(newPosition: Int, projectId: String, taskId: String)
 }
 
 @Table

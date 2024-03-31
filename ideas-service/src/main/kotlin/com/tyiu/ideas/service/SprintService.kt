@@ -2,9 +2,7 @@ package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.entities.User
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.flow.*
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
@@ -39,18 +37,22 @@ class SprintService (
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarks> = sprintMarksRepository.findSprintMarks(sprintId)
 
     suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
-        val sprint = Sprint(
-            projectId = sprintDTO.projectId,
-            name = sprintDTO.name,
-            goal = sprintDTO.goal,
-            workingHours = sprintDTO.workingHours,
-            startDate = sprintDTO.startDate,
-            finishDate = sprintDTO.finishDate
+        sprintDTO.projectId?.let {
+            template.databaseClient
+                .sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE' AND project_id = :projectId")
+                .bind("projectId", it)
+                .await()
+        }
+        val createdSprint = sprintRepository.save(
+            Sprint(
+                projectId = sprintDTO.projectId,
+                name = sprintDTO.name,
+                goal = sprintDTO.goal,
+                workingHours = sprintDTO.workingHours,
+                startDate = sprintDTO.startDate,
+                finishDate = sprintDTO.finishDate
+            )
         )
-        template.databaseClient
-            .sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE'")
-            .await()
-        val createdSprint = sprintRepository.save(sprint)
         sprintDTO.tasks?.forEach {
             template.databaseClient
                 .sql("UPDATE task SET sprint_id = :sprintId, status = 'NewTask' WHERE id = :taskId")
@@ -72,6 +74,18 @@ class SprintService (
                 )
             )
         }
+
+        sprintDTO.projectId?.let {
+            val tasks = taskRepository.findTaskByProjectIdAndStatusOrderByPosition(it,TaskStatus.InBackLog)
+            var i = 1
+            tasks.collect {task ->
+                if (task.position != i){
+                    task.id?.let { id -> taskRepository.updateTasksByProjectIdAndId(i, sprintDTO.projectId, id) }
+                }
+                i += 1
+            }
+        }
+
         return sprintToDTO(createdSprint)
     }
 
