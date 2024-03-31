@@ -1,5 +1,6 @@
 package com.tyiu.ideas.controller;
 
+import com.tyiu.ideas.TestContainers;
 import com.tyiu.ideas.model.dto.GroupDTO;
 import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.enums.Role;
@@ -22,7 +23,7 @@ import static org.springframework.boot.test.context.SpringBootTest.WebEnvironmen
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class GroupControllerTest extends TestContainers{
+class GroupControllerTest extends TestContainers {
 
     @Autowired
     private WebTestClient webTestClient;

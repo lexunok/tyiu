@@ -1,5 +1,6 @@
 package com.tyiu.ideas.controller;
 
+import com.tyiu.ideas.TestContainers;
 import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.requests.LoginRequest;
 import com.tyiu.ideas.model.requests.RegisterRequest;
@@ -18,7 +19,7 @@ import java.util.List;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
 @SpringBootTest(webEnvironment = RANDOM_PORT)
-class AuthenticationControllerTest extends TestContainers{
+class AuthenticationControllerTest extends TestContainers {
     @Autowired
     private WebTestClient webTestClient;
 

@@ -1,4 +1,4 @@
-package com.tyiu.ideas.controller;
+package com.tyiu.ideas;
 
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;

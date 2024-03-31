@@ -130,7 +130,7 @@ public class TeamService {
                 .and("user_id").is(userId)), TeamInvitation.class);
     }
 
-    private Mono<Void> sendNotification(String teamId, String publisherId, String consumerId, NotificationCase notificationCase) {
+    public Mono<Void> sendNotification(String teamId, String publisherId, String consumerId, NotificationCase notificationCase) {
 
         Mono.fromRunnable(() -> template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(team -> template.selectOne(query(where("id").is(publisherId)), User.class)
@@ -144,14 +144,14 @@ public class TeamService {
                                                         case TEAM_OWNER_INVITES_USER -> notificationPublisher.makeNotification(
 
                                                                 NotificationRequest.builder()
-                                                                        .publisherEmail(teamOwner.getEmail())
+                                                                        .publisherEmail(publisher.getEmail())
                                                                         .consumerEmail(consumer.getEmail())
                                                                         .title("Вас пригласили в команду")
                                                                         .message(String.format(
                                                                                 "%s %s пригласил вас в команду \"%s\". " +
                                                                                         "Перейдите по ссылке, чтобы ответить на приглашение",
-                                                                                teamOwner.getFirstName(),
-                                                                                teamOwner.getLastName(),
+                                                                                publisher.getFirstName(),
+                                                                                publisher.getLastName(),
                                                                                 team.getName()
                                                                         ))
                                                                         .link(String.valueOf(PortalLinks.TEAM_INVITES))

@@ -1,35 +1,29 @@
 package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.*;
-import com.tyiu.ideas.model.entities.Idea;
-import com.tyiu.ideas.model.entities.TeamInvitation;
-import com.tyiu.ideas.model.entities.TeamRequest;
-import com.tyiu.ideas.model.enums.MarketStatus;
-import com.tyiu.ideas.model.enums.RequestStatus;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.enums.SkillType;
-import com.tyiu.ideas.model.requests.IdeaSkillRequest;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
-import com.tyiu.ideas.model.responses.InfoResponse;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.tyiu.ideas.model.enums.*;
+import com.tyiu.ideas.model.entities.*;
+import com.tyiu.ideas.model.requests.*;
+import com.tyiu.ideas.model.responses.*;
+
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
+import com.tyiu.ideas.TestContainers;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
+import org.junit.jupiter.api.*;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = RANDOM_PORT)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 public class TeamControllerTest extends TestContainers {
 
     @Autowired
@@ -437,7 +431,7 @@ public class TeamControllerTest extends TestContainers {
         webTestClient
                 .delete()
                 .uri("/api/v1/ideas-service/team/kick/{teamId}/{userId}", teamId, userId)
-                .header("Authorization", "Bearer " + jwt_randomUser)
+                .header("Authorization", "Bearer " + jwt_owner)
                 .exchange()
                 .expectStatus().isOk();
     }
