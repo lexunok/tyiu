@@ -7,10 +7,12 @@ import com.tyiu.ideas.model.requests.*;
 import com.tyiu.ideas.model.responses.*;
 import com.tyiu.ideas.service.TeamService;
 
+import enums.PortalLinks;
 import enums.NotificationCase;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.TestInstance;
+import request.NotificationRequest;
+import com.tyiu.ideas.publisher.NotificationPublisher;
+
+import org.junit.jupiter.api.*;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -54,6 +56,7 @@ public class TeamNotificationTest extends TestContainers {
     @Autowired
     private WebTestClient webTestClient;
     private final TeamService teamService = mock(TeamService.class);
+    private final NotificationPublisher notificationPublisher = mock(NotificationPublisher.class);
 
     private AuthenticationResponse register(String email, String firstName, String lastName, List<Role> roles) {
 
@@ -151,12 +154,12 @@ public class TeamNotificationTest extends TestContainers {
         webTestClient = webTestClient.mutate()
                 .responseTimeout(Duration.ofMillis(90000))
                 .build();
+
+        when(teamService.sendNotification(anyString(), anyString(), anyString(), any(NotificationCase.class))).thenReturn(Mono.empty());
     }
 
     @Test
     void testTeamOwnerInvitesUser() {
-
-        when(teamService.sendNotification(anyString(), anyString(), anyString(), any(NotificationCase.class))).thenReturn(Mono.empty());
 
         TeamDTO team = addTeam();
 
@@ -166,8 +169,28 @@ public class TeamNotificationTest extends TestContainers {
                 .email(randomUser.getEmail())
                 .firstName(randomUser.getFirstName())
                 .lastName(randomUser.getLastName())
-                .status(RequestStatus.NEW)
                 .build();
+
+        NotificationRequest notification = NotificationRequest.builder()
+                .publisherEmail(teamOwner.getEmail())
+                .consumerEmail(randomUser.getEmail())
+                .title("Вас пригласили в команду")
+                .message(String.format(
+                        "%s %s пригласил вас в команду \"%s\". " +
+                                "Перейдите по ссылке, чтобы ответить на приглашение",
+                        teamOwner.getFirstName(),
+                        teamOwner.getLastName(),
+                        team.getName()
+                ))
+                .link(String.valueOf(PortalLinks.TEAM_INVITES))
+                .buttonName("Перейти к приглашениям")
+                .build();
+
+//        teamService.sendInvitesToUsers(Flux.just(teamInvitation), authTeamOwner);
+//        verify(teamService).sendInvitesToUsers(
+//                eq(Flux.just(teamInvitation)),
+//                eq(authTeamOwner)
+//        );
 
         teamService.sendInvitesToUsers(Flux.just(teamInvitation), authTeamOwner);
         StepVerifier.create(
