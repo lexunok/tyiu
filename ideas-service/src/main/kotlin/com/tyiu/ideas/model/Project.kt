@@ -61,9 +61,9 @@ data class InfoResponse(
 )
 
 data class ReportProject(
-        val projectId:String? = null,
-        val marks:List<ProjectMarksDTO>? = null,
-        val report:String? = null,
+    val projectId:String? = null,
+    val marks:List<ProjectMarksDTO>? = null,
+    val report:String? = null,
 )
 
 data class ProjectFinishRequest(

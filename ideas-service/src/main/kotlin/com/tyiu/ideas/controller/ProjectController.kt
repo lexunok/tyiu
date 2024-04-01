@@ -97,12 +97,11 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
-    @PostMapping("/{projectId}/add/marks")
-    suspend fun addMarksInProject(@PathVariable projectId: String,@RequestBody projectMarksRequest: ProjectMarksRequest,
-                                  @AuthenticationPrincipal user: User): ProjectMarksDTO {
+    @PutMapping("/{projectId}/add/marks")
+    suspend fun addMarksInProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User) {
 
         return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.ADMIN))) {
-            projectService.addMarksInProject(projectId, projectMarksRequest)
+            projectService.addMarksInProject(projectId)
         }
         else {
             throw AccessException("Нет прав")

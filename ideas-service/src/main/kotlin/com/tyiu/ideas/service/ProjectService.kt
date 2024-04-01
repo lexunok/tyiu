@@ -20,7 +20,8 @@ class ProjectService(
     private val taskRepository: TaskRepository,
     private val taskService: TaskService,
     private val marketRepository: MarketRepository,
-    private val teamToMemberRepository: TeamToMemberRepository
+    private val teamToMemberRepository: TeamToMemberRepository,
+    private val sprintMarksRepository: SprintMarksRepository
 ) {
     private suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
@@ -107,16 +108,21 @@ class ProjectService(
         return projectMemberRepository.save(projectMember).toDTO()
     }
 
-    suspend fun addMarksInProject(projectId: String, projectMarkRequest: ProjectMarksRequest): ProjectMarksDTO{
+    suspend fun addMarksInProject(projectId: String){
         val project = getOneProject(projectId)
-        return if (project?.initiator?.id==projectMarkRequest.userId){
-            throw AccessException("Вы не можете выставить оценку инициатору")
-        }
-        else projectMarksRepository.save(ProjectMarks(
-            projectId = projectId,
-            userId = projectMarkRequest.userId,
-            mark = projectMarkRequest.mark
-        )).toDTO()
+        val projectMembers = projectMemberRepository.findMemberByProjectId(projectId)
+        return projectMembers.toList().forEach { m->
+            val sprintMarks = sprintMarksRepository.findSprintMarksByProjectIdAAndUserId(projectId,m.userId)
+            val cnt = sprintMarks.toList().size
+            if (project?.initiator?.id==m.userId) {
+                null
+            }
+            else projectMarksRepository.save(ProjectMarks(
+                    projectId = projectId,
+                    userId = m.userId,
+                    mark = ((sprintMarks.toList().sumByDouble { it.mark!! })/cnt)
+                )).toDTO()
+            }
     }
 
     suspend fun pauseProject(projectId: String) {

@@ -8,6 +8,9 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 interface SprintMarksRepository: CoroutineCrudRepository<SprintMarks, String>{
     @Query("SELECT * FROM sprint_marks WHERE sprint_id =:sprintId")
     fun findSprintMarks(sprintId: String): Flow<SprintMarks>
+
+    @Query("SELECT * FROM sprint_marks WHERE project_id =:projectId and user_id =:userId")
+    fun findSprintMarksByProjectIdAAndUserId(projectId: String, userId: String?): Flow<SprintMarks>
 }
 @Table
 

@@ -21,7 +21,7 @@ interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String
 @Table
 data class ProjectMember (
     val projectId:String?=null,
-    val userId:String?=null,
+    var userId:String?=null,
     val teamId:String?=null,
     var projectRole: ProjectRole?=ProjectRole.MEMBER,
     val startDate:LocalDate? = LocalDate.now(),
