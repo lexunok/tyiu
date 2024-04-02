@@ -16,6 +16,7 @@ class SprintService (
     private val taskMovementLogRepository: TaskMovementLogRepository,
     private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate,
+    private val userRepository: UserRepository
 )
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
@@ -23,6 +24,8 @@ class SprintService (
         sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map {
             val taskDTO = it.toDTO()
             taskDTO.tags = it.id?.let { it1 -> tagRepository.findAllTagByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
+            taskDTO.initiator = it.initiatorId?.let { userRepository.findById(it) }?.toDTO()
+            taskDTO.executor = it.executorId?.let { userRepository.findById(it) }?.toDTO()
             return@map taskDTO
         }?.toList()
         return sprintDTO
@@ -120,40 +123,16 @@ class SprintService (
     suspend fun putSprintFinishWithTaskTransfer(sprintId: String,sprintDTO: SprintDTO,user: User) {
         val tasks = taskRepository.findTasksNotDoneBySprintId(sprintId)
         val newSprint = createSprint(sprintDTO,user)
-        tasks.toList().forEach { t->
-            taskRepository.save(Task(
-                sprintId = newSprint.id,
-                projectId = t.projectId,
-                name=t.name,
-                description = t.description,
-                leaderComment = t.leaderComment,
-                initiatorId = t.initiatorId,
-                executorId = null,
-                workHour = t.workHour,
-                startDate = t.startDate,
-                status = TaskStatus.NewTask
-            ))
-        }
+        tasks.toList().forEach { taskRepository.finishTaskWithTransfer(newSprint.id,it.id) }
         sprintRepository.finishSprintById(sprintId,sprintDTO.report)
     }
 
     suspend fun putSprintFinishWithoutTaskTransfer(sprintFinishRequest: SprintFinishRequest) {
         val tasks = sprintFinishRequest.sprintId?.let { taskRepository.findTasksNotDoneBySprintId(it) }
-        tasks?.toList()?.forEach { t->
-            val pos = t.projectId?.let { taskRepository.countTaskByProjectId(it) }
-            taskRepository.save(Task(
-                sprintId = null,
-                projectId = t.projectId,
-                position = pos?.plus(1),
-                name=t.name,
-                description = t.description,
-                leaderComment = t.leaderComment,
-                initiatorId = t.initiatorId,
-                executorId = null,
-                workHour = t.workHour,
-                startDate = t.startDate,
-                status = TaskStatus.InBackLog
-            ))
+        var pos = tasks?.first()?.projectId?.let { taskRepository.countTaskByProjectId(it) }
+        tasks?.toList()?.forEach {
+            pos = pos?.plus(1)
+            taskRepository.finishTaskWithoutTransfer(pos,it.id)
         }
         sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)
     }

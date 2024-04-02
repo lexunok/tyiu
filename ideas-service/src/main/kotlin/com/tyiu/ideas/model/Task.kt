@@ -31,6 +31,12 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
 
     @Query("UPDATE task SET position = :newPosition WHERE project_id = :projectId AND status = 'InBackLog' AND id = :taskId")
     suspend fun updateTasksByProjectIdAndId(newPosition: Int, projectId: String, taskId: String)
+
+    @Query("UPDATE task SET sprint_id = NULL, position =:newPosition, executor_id = NULL, status = 'InBackLog' WHERE id = :taskId")
+    suspend fun finishTaskWithoutTransfer(newPosition: Int?,taskId: String?)
+
+    @Query("UPDATE task SET sprint_id =:sprintId, executor_id = NULL, status = 'NewTask' WHERE id = :taskId")
+    suspend fun finishTaskWithTransfer(sprintId: String?,taskId: String?)
 }
 
 @Table
