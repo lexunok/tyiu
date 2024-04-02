@@ -120,19 +120,12 @@ class SprintService (
             .bind("sprintId", sprintId).await()
     }
 
-    suspend fun putSprintFinishWithTaskTransfer(sprintId: String,sprintDTO: SprintDTO,user: User) {
-        val tasks = taskRepository.findTasksNotDoneBySprintId(sprintId)
-        val newSprint = createSprint(sprintDTO,user)
-        tasks.toList().forEach { taskRepository.finishTaskWithTransfer(newSprint.id,it.id) }
-        sprintRepository.finishSprintById(sprintId,sprintDTO.report)
-    }
-
-    suspend fun putSprintFinishWithoutTaskTransfer(sprintFinishRequest: SprintFinishRequest) {
+    suspend fun putSprintFinish(sprintFinishRequest: SprintFinishRequest) {
         val tasks = sprintFinishRequest.sprintId?.let { taskRepository.findTasksNotDoneBySprintId(it) }
         var pos = tasks?.first()?.projectId?.let { taskRepository.countTaskByProjectId(it) }
         tasks?.toList()?.forEach {
             pos = pos?.plus(1)
-            taskRepository.finishTaskWithoutTransfer(pos,it.id)
+            taskRepository.finishTask(pos,it.id)
         }
         sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)
     }
