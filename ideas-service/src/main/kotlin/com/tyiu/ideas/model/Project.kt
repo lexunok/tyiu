@@ -24,6 +24,12 @@ interface ProjectRepository: CoroutineCrudRepository<Project, String>{
         @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId")
         fun findProjectByUserId(userId: String): Flow<Project>
 
+        @Query("UPDATE project SET report = :projectReport, status = 'DONE' WHERE id = :projectId")
+        suspend fun finishProjectById(projectId: String?,projectReport: String?)
+
+        @Query("UPDATE project SET status = 'PAUSED' WHERE id = :projectId")
+        suspend fun pauseProjectById(projectId: String?)
+
 }
 @Table
 data class Project(

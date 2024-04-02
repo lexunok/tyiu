@@ -117,12 +117,45 @@ class SprintService (
             .bind("sprintId", sprintId).await()
     }
 
-    suspend fun putSprintFinish(sprintId: String, sprintFinishRequest: SprintFinishRequest) {
-        val query = "UPDATE sprint SET finish_date = :finishDate, report = :sprintReport, status = 'DONE' WHERE id = :sprintId"
-        return template.databaseClient.sql(query)
-            .bind("finishDate", sprintFinishRequest.finishDate!!)
-            .bind("sprintReport", sprintFinishRequest.sprintReport!!)
-            .bind("sprintId", sprintId).await()
+    suspend fun putSprintFinishWithTaskTransfer(sprintId: String,sprintDTO: SprintDTO,user: User) {
+        val tasks = taskRepository.findTasksNotDoneBySprintId(sprintId)
+        val newSprint = createSprint(sprintDTO,user)
+        tasks.toList().forEach { t->
+            taskRepository.save(Task(
+                sprintId = newSprint.id,
+                projectId = t.projectId,
+                name=t.name,
+                description = t.description,
+                leaderComment = t.leaderComment,
+                initiatorId = t.initiatorId,
+                executorId = null,
+                workHour = t.workHour,
+                startDate = t.startDate,
+                status = TaskStatus.NewTask
+            ))
+        }
+        sprintRepository.finishSprintById(sprintId,sprintDTO.report)
+    }
+
+    suspend fun putSprintFinishWithoutTaskTransfer(sprintFinishRequest: SprintFinishRequest) {
+        val tasks = sprintFinishRequest.sprintId?.let { taskRepository.findTasksNotDoneBySprintId(it) }
+        tasks?.toList()?.forEach { t->
+            val pos = t.projectId?.let { taskRepository.countTaskByProjectId(it) }
+            taskRepository.save(Task(
+                sprintId = null,
+                projectId = t.projectId,
+                position = pos?.plus(1),
+                name=t.name,
+                description = t.description,
+                leaderComment = t.leaderComment,
+                initiatorId = t.initiatorId,
+                executorId = null,
+                workHour = t.workHour,
+                startDate = t.startDate,
+                status = TaskStatus.InBackLog
+            ))
+        }
+        sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)
     }
 
     suspend fun deleteSprint(id: String) = sprintRepository.deleteById(id)

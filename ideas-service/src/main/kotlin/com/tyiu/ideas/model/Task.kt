@@ -20,6 +20,9 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query("SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
     fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId and NOT status = 'Done'")
+    fun findTasksNotDoneBySprintId(sprintId: String?): Flow<Task>
+
     @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
     fun findTaskByExecutorId(executorId: String): Flow<Task>
 

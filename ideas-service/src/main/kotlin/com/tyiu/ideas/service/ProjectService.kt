@@ -89,7 +89,6 @@ class ProjectService(
             projectMemberRepository.save(ProjectMember(
                 projectId = createdProject.id,
                 userId = ideaMarketDTO.initiator.id,
-                teamId = ideaMarketDTO.team.id,
                 projectRole = ProjectRole.INITIATOR,
                 finishDate = market?.finishDate
             ))
@@ -112,7 +111,7 @@ class ProjectService(
         val project = getOneProject(projectId)
         val projectMembers = projectMemberRepository.findMemberByProjectId(projectId)
         return projectMembers.toList().forEach { m->
-            val sprintMarks = sprintMarksRepository.findSprintMarksByProjectIdAAndUserId(projectId,m.userId)
+            val sprintMarks = sprintMarksRepository.findSprintMarksByProjectIdAndUserId(projectId,m.userId)
             val cnt = sprintMarks.toList().size
             if (project?.initiator?.id==m.userId) {
                 null
@@ -125,17 +124,9 @@ class ProjectService(
             }
     }
 
-    suspend fun pauseProject(projectId: String) {
-        val query = "UPDATE project SET status = 'PAUSED' WHERE id = :projectId"
-        return template.databaseClient.sql(query).bind("projectId", projectId).await()
-    }
+    suspend fun pauseProject(projectId: String) = projectRepository.pauseProjectById(projectId)
 
-    suspend fun putFinishProject(projectFinishRequest:ProjectFinishRequest) {
-        val query = "UPDATE project SET report = :projectReport, status = 'DONE' WHERE id = :projectId"
-        return template.databaseClient.sql(query)
-            .bind("projectReport", projectFinishRequest.projectReport!!)
-            .bind("projectId", projectFinishRequest.projectId).await()
-    }
+    suspend fun putFinishProject(projectFinishRequest:ProjectFinishRequest)= projectRepository.finishProjectById(projectFinishRequest.projectId,projectFinishRequest.projectReport)
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
         val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)

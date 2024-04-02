@@ -15,6 +15,9 @@ interface SprintRepository: CoroutineCrudRepository<Sprint, String>{
     @Query("SELECT * FROM sprint WHERE project_id =:projectId and status = 'ACTIVE'")
     suspend fun findActiveSprint(projectId: String): Sprint
 
+    @Query("UPDATE sprint SET report = :sprintReport, status = 'DONE' WHERE id = :sprintId")
+    suspend fun finishSprintById(sprintId: String?,sprintReport: String?)
+
 
 }
 @Table
@@ -50,8 +53,8 @@ data class SprintDTO(
 )
 
 data class SprintFinishRequest(
+    val sprintId:String? = null,
     val sprintReport: String? = null,
-    val finishDate: LocalDate? = null,
 )
 
 fun Sprint.toDTO(): SprintDTO = SprintDTO (

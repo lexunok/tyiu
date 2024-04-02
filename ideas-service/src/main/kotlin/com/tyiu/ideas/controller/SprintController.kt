@@ -110,13 +110,30 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
-    @PutMapping("/{sprintId}/finish")
-    suspend fun putSprintFinish(@PathVariable sprintId: String,
-                                @RequestBody sprintFinishRequest: SprintFinishRequest,
+    @PutMapping("{sprintId}/transfer/finish")
+    suspend fun putSprintFinishWithTaskTransfer(@PathVariable sprintId: String,
+                                                @RequestBody sprintDTO: SprintDTO,
+                                                @AuthenticationPrincipal user: User): InfoResponse {
+        return if (user.roles.roleCheck(roles3)) {
+            try {
+                sprintService.putSprintFinishWithTaskTransfer(sprintId,sprintDTO,user)
+                InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
+            }
+            catch(e: Exception){
+                InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при завершении спринта")
+            }
+        }
+        else {
+            throw AccessException("Нет прав")
+        }
+    }
+
+    @PutMapping("/finish")
+    suspend fun putSprintFinishWithoutTaskTransfer(@RequestBody sprintFinishRequest: SprintFinishRequest,
                                 @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles3)) {
             try {
-                sprintService.putSprintFinish(sprintId, sprintFinishRequest)
+                sprintService.putSprintFinishWithoutTaskTransfer(sprintFinishRequest)
                 InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
             }
             catch(e: Exception){

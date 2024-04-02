@@ -10,7 +10,7 @@ interface SprintMarksRepository: CoroutineCrudRepository<SprintMarks, String>{
     fun findSprintMarks(sprintId: String): Flow<SprintMarks>
 
     @Query("SELECT * FROM sprint_marks WHERE project_id =:projectId and user_id =:userId")
-    fun findSprintMarksByProjectIdAAndUserId(projectId: String, userId: String?): Flow<SprintMarks>
+    fun findSprintMarksByProjectIdAndUserId(projectId: String, userId: String?): Flow<SprintMarks>
 }
 @Table
 
@@ -26,7 +26,7 @@ data class SprintMarksDTO(
     var firstName: String? = null,
     var lastName: String? = null,
     val mark:Double? = null,
-    // tasks?
+    var tasks: List<TaskDTO>? = null,
 )
 
 data class SprintMarksRequest(
