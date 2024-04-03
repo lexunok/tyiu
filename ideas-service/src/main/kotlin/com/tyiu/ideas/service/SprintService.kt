@@ -131,10 +131,7 @@ class SprintService (
                 status = it.status,
                 executorId = it.executorId
             ))
-            if (it.status==TaskStatus.Done){
-                null
-            }
-            else {
+            if (it.status!=TaskStatus.Done){
                 pos = pos?.plus(1)
                 taskRepository.finishTask(pos, it.id)
             }
