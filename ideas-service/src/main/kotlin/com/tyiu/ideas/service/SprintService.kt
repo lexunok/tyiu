@@ -16,7 +16,8 @@ class SprintService (
     private val taskMovementLogRepository: TaskMovementLogRepository,
     private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val taskHistoryRepository: TaskHistoryRepository
 )
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
@@ -125,6 +126,12 @@ class SprintService (
         var pos = tasks?.first()?.projectId?.let { taskRepository.countTaskByProjectId(it) }
         tasks?.toList()?.forEach {
             pos = pos?.plus(1)
+            taskHistoryRepository.save(TaskHistory(
+                taskId = it.id,
+                sprintId = it.sprintId,
+                status = it.status,
+                executorId = it.executorId
+            ))
             taskRepository.finishTask(pos,it.id)
         }
         sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)

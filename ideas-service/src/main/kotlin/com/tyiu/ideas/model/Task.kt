@@ -35,6 +35,9 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query("UPDATE task SET sprint_id = NULL, position =:newPosition, executor_id = NULL, status = 'InBackLog' WHERE id = :taskId")
     suspend fun finishTask(newPosition: Int?,taskId: String?)
 
+    @Query("SELECT * FROM task_history JOIN task ON task.id = task_history.task_id WHERE task_history.sprint_id = :sprintId ")
+    fun findAllTaskHistoryBySprintId(sprintId: String): Flow<Task>
+
 }
 
 @Table
