@@ -22,7 +22,7 @@ class SprintService (
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
         val sprintDTO = sprint.toDTO()
-        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map {
+        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskHistoryBySprintId(it) }?.map {
             val taskDTO = it.toDTO()
             taskDTO.tags = it.id?.let { it1 -> tagRepository.findAllTagByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
             taskDTO.initiator = it.initiatorId?.let { userRepository.findById(it) }?.toDTO()
@@ -125,14 +125,19 @@ class SprintService (
         val tasks = sprintFinishRequest.sprintId?.let { taskRepository.findTasksNotDoneBySprintId(it) }
         var pos = tasks?.first()?.projectId?.let { taskRepository.countTaskByProjectId(it) }
         tasks?.toList()?.forEach {
-            pos = pos?.plus(1)
             taskHistoryRepository.save(TaskHistory(
                 taskId = it.id,
                 sprintId = it.sprintId,
                 status = it.status,
                 executorId = it.executorId
             ))
-            taskRepository.finishTask(pos,it.id)
+            if (it.status==TaskStatus.Done){
+                null
+            }
+            else {
+                pos = pos?.plus(1)
+                taskRepository.finishTask(pos, it.id)
+            }
         }
         sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)
     }
