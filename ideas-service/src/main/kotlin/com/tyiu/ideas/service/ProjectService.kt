@@ -21,7 +21,7 @@ class ProjectService(
     private val taskService: TaskService,
     private val marketRepository: MarketRepository,
     private val teamToMemberRepository: TeamToMemberRepository,
-    private val sprintMarksRepository: SprintMarksRepository
+    private val sprintMarksRepository: SprintMarkRepository
 ) {
     private suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()

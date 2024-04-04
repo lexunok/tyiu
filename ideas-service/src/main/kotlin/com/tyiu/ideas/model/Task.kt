@@ -10,21 +10,27 @@ import java.time.LocalDate
 
 interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
-    @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC") // ПОИСК ТАСКА ПО ПРОЕКТУ. СОРТИРОВКА ПО СОЗДАНИЮ ТАСКА
+    @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC")
     fun findAllByProjectId(projectId: String): Flow<Task>
-    @Query("SELECT * FROM task WHERE project_id = :projectId and status = 'InBackLog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
+    @Query("SELECT * FROM task WHERE project_id = :projectId and status = 'InBackLog'")
     fun findAllInBacklog(projectId: String): Flow<Task>
 
     fun findTaskByProjectIdAndStatusOrderByPosition(projectId: String, status: TaskStatus): Flow<Task>
 
-    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ")
     fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE sprint_id = :sprintId")
     fun findTasksNotDoneBySprintId(sprintId: String?): Flow<Task>
 
-    @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
+    @Query("SELECT * FROM task WHERE executor_id = :executorId ")
     fun findTaskByExecutorId(executorId: String): Flow<Task>
+
+    @Query("SELECT * FROM task_history JOIN task ON task.id = task_history.task_id WHERE task_history.sprint_id = :sprintId ")
+    fun findAllTaskHistoryBySprintId(sprintId: String): Flow<Task>
+
+    @Query("SELECT t.* FROM sprint_mark_task smt JOIN task t ON t.id = smt.task_id WHERE smt.sprint_mark_id = :sprintMarkId")
+    fun findTaskBySprintMarkTask(sprintMarkId: String): Flow<Task>
 
     @Query("SELECT COUNT(*) FROM task WHERE project_id = :projectId AND status = 'InBackLog'")
     suspend fun countTaskByProjectId(projectId: String): Int
@@ -34,9 +40,6 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
 
     @Query("UPDATE task SET sprint_id = NULL, position =:newPosition, executor_id = NULL, status = 'InBackLog' WHERE id = :taskId")
     suspend fun finishTask(newPosition: Int?,taskId: String?)
-
-    @Query("SELECT * FROM task_history JOIN task ON task.id = task_history.task_id WHERE task_history.sprint_id = :sprintId ")
-    fun findAllTaskHistoryBySprintId(sprintId: String): Flow<Task>
 
 }
 

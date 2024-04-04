@@ -51,7 +51,7 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/marks/{sprintId}/all")
-    fun getAllSprintMarks(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): Flow<SprintMarks> {
+    fun getAllSprintMarks(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): Flow<SprintMarkDTO> {
         return if (user.roles.roleCheck(roles)) {
             sprintService.getAllSprintMarks(sprintId)
         }
@@ -72,10 +72,10 @@ class SprintController(private val sprintService: SprintService)
 
     @PostMapping("/{sprintId}/add/marks")
     suspend fun  addSprintMarks(@PathVariable sprintId: String,
-                                @RequestBody sprintMarksRequest: SprintMarksRequest,
-                                @AuthenticationPrincipal user: User): SprintMarks {
+                                @RequestBody sprintMarks: Flow<SprintMarkDTO>,
+                                @AuthenticationPrincipal user: User) {
         return if (user.roles.roleCheck(roles3)) {
-            sprintService.addSprintMarks(sprintId, sprintMarksRequest)
+            sprintService.addSprintMarks(sprintId, sprintMarks)
         }
         else {
             throw AccessException("Нет прав")

@@ -11,13 +11,15 @@ import java.time.LocalDateTime
 @Service
 class SprintService (
     private val sprintRepository: SprintRepository,
-    private val sprintMarksRepository: SprintMarksRepository,
+    private val sprintMarkRepository: SprintMarkRepository,
     private val taskRepository: TaskRepository,
     private val taskMovementLogRepository: TaskMovementLogRepository,
     private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate,
     private val userRepository: UserRepository,
-    private val taskHistoryRepository: TaskHistoryRepository
+    private val taskHistoryRepository: TaskHistoryRepository,
+    private val sprintMarkTaskRepository: SprintMarkTaskRepository,
+    private val taskService: TaskService
 )
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
@@ -38,7 +40,14 @@ class SprintService (
 
     suspend fun getActiveSprint(projectId: String): SprintDTO = sprintToDTO(sprintRepository.findActiveSprint(projectId))
 
-    fun getAllSprintMarks(sprintId: String): Flow<SprintMarks> = sprintMarksRepository.findSprintMarks(sprintId)
+    fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> = sprintMarkRepository.findSprintMarksBySprintId(sprintId).map { sprintMark ->
+        val sprintMarkDTO = sprintMark.toDTO()
+        val user = sprintMark.userId?.let { userRepository.findById(it) }
+        sprintMarkDTO.firstName = user?.firstName
+        sprintMarkDTO.lastName = user?.lastName
+        sprintMarkDTO.tasks = sprintMark.id?.let { taskRepository.findTaskBySprintMarkTask(it).map{ task -> taskService.taskToDTO(task) }}?.toList()
+        return@map sprintMarkDTO
+    }
 
     suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
         sprintDTO.projectId?.let {
@@ -93,13 +102,20 @@ class SprintService (
         return sprintToDTO(createdSprint)
     }
 
-    suspend fun addSprintMarks(sprintId: String, sprintMarksRequest: SprintMarksRequest): SprintMarks {
-        val sprintMarks = SprintMarks(
-            sprintId = sprintId,
-            userId = sprintMarksRequest.userId,
-            mark = sprintMarksRequest.mark,
+    suspend fun addSprintMarks(sprintId: String, sprintMarks: Flow<SprintMarkDTO>) {
+        sprintMarks.collect { sprintMark ->
+            val createdSprintMark = sprintMarkRepository.save(
+                SprintMark(
+                    sprintId = sprintId,
+                    userId = sprintMark.userId,
+                    projectRole = sprintMark.projectRole,
+                    mark = sprintMark.mark
+                )
             )
-        return sprintMarksRepository.save(sprintMarks)
+            sprintMark.tasks?.forEach {
+                sprintMarkTaskRepository.save(SprintMarkTask(createdSprintMark.id!!, it.id!!))
+            }
+        }
     }
 
     //TODO: добавить изменение списка задач
