@@ -2,6 +2,7 @@ package com.tyiu.authorizationservice;
 
 import com.tyiu.client.connections.EmailClient;
 import com.tyiu.client.connections.IdeasClient;
+import com.tyiu.client.models.ChangePasswordRequest;
 import com.tyiu.client.models.InvitationDTO;
 import com.tyiu.client.models.Role;
 import com.tyiu.client.models.UserDTO;
@@ -24,6 +25,10 @@ public class AuthorizationViewController {
     private final UserRepository repository;
     private final ModelMapper mapper = new ModelMapper();
     private final PasswordEncoder encoder;
+
+    //TODO: Сделать обработку ошибок
+    //TODO: Код и почту админа вынести в конфиг
+    //TODO: Вынести логику в сервис
 
     @GetMapping("/login")
     public String login() {
@@ -58,6 +63,7 @@ public class AuthorizationViewController {
             repository.save(user);
             ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
         }
+        //TODO: Добавить проверку на существует ли пользователь
         InvitationDTO invitation = emailClient.findInvitationById(code);
         if (invitation!=null) {
             user.setRoles(invitation.getRoles());
@@ -68,5 +74,26 @@ public class AuthorizationViewController {
             ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
         }
         return "redirect:/login";
+    }
+
+    @GetMapping("/recovery-password")
+    public String showRecoveryPasswordForm() {
+        return "recovery-password";
+    }
+
+    @PostMapping("/recovery-password")
+    public String recoveryPassword(@RequestParam String email) {
+        //emailClient.sendCodeToChangePassword(new ChangePasswordRequest(email));
+        return "new-password";
+    }
+
+    @GetMapping("/new-password")
+    public String showNewPasswordForm() {
+        return "new-password";
+    }
+
+    @PostMapping("/new-password")
+    public String newPassword(@RequestParam String code, @RequestParam String password) {
+        return "login";
     }
 }
