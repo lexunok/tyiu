@@ -137,10 +137,10 @@ class SprintService (
             .bind("sprintId", sprintId).await()
     }
 
-    suspend fun putSprintFinish(sprintFinishRequest: SprintFinishRequest) {
-        val tasks = sprintFinishRequest.sprintId?.let { taskRepository.findTasksNotDoneBySprintId(it) }
-        var pos = tasks?.first()?.projectId?.let { taskRepository.countTaskByProjectId(it) }
-        tasks?.toList()?.forEach {
+    suspend fun putSprintFinish(sprintId: String, report: String, userId: String) {
+        val tasks = sprintId.let { taskRepository.findTasksNotDoneBySprintId(it) }
+        var pos = tasks.first().projectId?.let { taskRepository.countTaskByProjectId(it) }
+        tasks.toList().forEach {
             taskHistoryRepository.save(TaskHistory(
                 taskId = it.id,
                 sprintId = it.sprintId,
@@ -150,9 +150,17 @@ class SprintService (
             if (it.status!=TaskStatus.Done){
                 pos = pos?.plus(1)
                 taskRepository.finishTask(pos, it.id)
+                taskMovementLogRepository.save(
+                    TaskMovementLog(
+                        taskId = it.id,
+                        userId = userId,
+                        startDate = LocalDateTime.now(),
+                        status = TaskStatus.InBackLog
+                    )
+                )
             }
         }
-        sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)
+        sprintRepository.updateSprintById(sprintId,report)
     }
 
     suspend fun deleteSprint(id: String) = sprintRepository.deleteById(id)

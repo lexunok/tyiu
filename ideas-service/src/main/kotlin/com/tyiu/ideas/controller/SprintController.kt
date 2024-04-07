@@ -110,12 +110,13 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
-    @PutMapping("/finish")
-    suspend fun putSprintFinishWithoutTaskTransfer(@RequestBody sprintFinishRequest: SprintFinishRequest,
-                                @AuthenticationPrincipal user: User): InfoResponse {
+    @PutMapping("/finish/{sprintId}")
+    suspend fun putSprintFinishWithoutTaskTransfer(@PathVariable sprintId: String,
+                                                   @RequestBody report: String,
+                                                   @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles3)) {
             try {
-                sprintService.putSprintFinish(sprintFinishRequest)
+                sprintService.putSprintFinish(sprintId, report, user.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
             }
             catch(e: Exception){
