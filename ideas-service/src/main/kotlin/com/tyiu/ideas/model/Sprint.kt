@@ -52,11 +52,6 @@ data class SprintDTO(
     var tasks:List<TaskDTO>? = null,
 )
 
-data class SprintFinishRequest(
-    val sprintId:String? = null,
-    val sprintReport: String? = null,
-)
-
 fun Sprint.toDTO(): SprintDTO = SprintDTO (
     id = id,
     projectId = projectId,

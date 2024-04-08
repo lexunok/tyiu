@@ -126,7 +126,7 @@ class ProjectService(
 
     suspend fun pauseProject(projectId: String) = projectRepository.pauseProjectById(projectId)
 
-    suspend fun putFinishProject(projectFinishRequest:ProjectFinishRequest)= projectRepository.finishProjectById(projectFinishRequest.projectId,projectFinishRequest.projectReport)
+    suspend fun putFinishProject(projectId: String, report: String)= projectRepository.finishProjectById(projectId, report)
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
         val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)

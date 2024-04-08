@@ -124,12 +124,13 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
-    @PutMapping("/finish/change")
-    suspend fun putFinishProject(@RequestBody projectFinishRequest: ProjectFinishRequest,
+    @PutMapping("/finish/{projectId}")
+    suspend fun putFinishProject(@PathVariable projectId: String,
+                                 @RequestBody report: String,
                                  @AuthenticationPrincipal user: User) : InfoResponse {
         return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
             try {
-                projectService.putFinishProject(projectFinishRequest)
+                projectService.putFinishProject(projectId, report)
                 InfoResponse(HttpStatus.OK,"Проект успешно завершён")
             }
             catch(e: Exception){
