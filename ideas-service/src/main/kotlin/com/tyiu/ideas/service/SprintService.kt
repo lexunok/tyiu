@@ -38,7 +38,13 @@ class SprintService (
 
     suspend fun getSprintById(id: String): SprintDTO? = sprintRepository.findById(id)?.let { sprintToDTO(it) }
 
-    suspend fun getActiveSprint(projectId: String): SprintDTO = sprintToDTO(sprintRepository.findActiveSprint(projectId))
+    suspend fun getActiveSprint(projectId: String): SprintDTO? {
+        val sprint = sprintRepository.findActiveSprint(projectId)
+        if (sprint != null) {
+            return sprintToDTO(sprint)
+        }
+        return null
+    }
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> = sprintMarkRepository.findSprintMarksBySprintId(sprintId).map { sprintMark ->
         val sprintMarkDTO = sprintMark.toDTO()

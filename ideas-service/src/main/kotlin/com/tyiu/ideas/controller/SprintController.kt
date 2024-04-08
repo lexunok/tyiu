@@ -41,7 +41,7 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/{projectId}/active")
-    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): SprintDTO {
+    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): SprintDTO? {
         return if (user.roles.roleCheck(roles)) {
             sprintService.getActiveSprint(projectId)
         }
