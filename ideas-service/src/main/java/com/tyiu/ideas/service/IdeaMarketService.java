@@ -494,16 +494,10 @@ public class IdeaMarketService {
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
     }
 
-    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, User user){
-        return checkInitiator(ideaMarketId,user.getId())
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
-                        return template.update(query(where("id").is(ideaMarketId)),
-                                update("status", statusType),
-                                IdeaMarket.class).then();
-                    }
-                    return Mono.error(new AccessException("Нет Прав"));
-                });
+    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType){
+        return template.update(query(where("id").is(ideaMarketId)),
+                update("status", statusType),
+                IdeaMarket.class).then();
     }
 
     public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user){
