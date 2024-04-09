@@ -373,6 +373,10 @@ public class IdeaMarketService {
                         .build()).all().sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
     }
 
+    public Mono<Boolean> checkOwnerAccessInMarket(String marketId, String userId){
+        return template.exists(query(where("market_id").is(marketId).and("owner_id").is(userId)), Team.class);
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

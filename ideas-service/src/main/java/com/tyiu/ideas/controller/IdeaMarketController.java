@@ -67,6 +67,11 @@ public class IdeaMarketController {
         return ideaMarketService.getIdeaMarketAdvertisement(ideaMarketId);
     }
 
+    @GetMapping("/access/check/{marketId}")
+    public Mono<Boolean> checkOwnerAccessInMarket(@PathVariable String marketId, @AuthenticationPrincipal User user){
+        return ideaMarketService.checkOwnerAccessInMarket(marketId, user.getId());
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/

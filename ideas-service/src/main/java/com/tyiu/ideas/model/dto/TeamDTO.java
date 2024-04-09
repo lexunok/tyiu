@@ -14,6 +14,7 @@ import java.util.List;
 @NoArgsConstructor
 public class TeamDTO {
     private String id;
+    private String marketId;
 
     private String name;
     private String description;
