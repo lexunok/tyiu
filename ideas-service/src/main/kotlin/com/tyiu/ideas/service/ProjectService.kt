@@ -113,15 +113,14 @@ class ProjectService(
         return projectMembers.toList().forEach { m->
             val sprintMarks = sprintMarksRepository.findSprintMarksByProjectIdAndUserId(projectId,m.userId)
             val cnt = sprintMarks.toList().size
-            if (project?.initiator?.id==m.userId) {
-                null
-            }
-            else projectMarksRepository.save(ProjectMarks(
+            if (project?.initiator?.id != m.userId) {
+                projectMarksRepository.save(ProjectMarks(
                     projectId = projectId,
                     userId = m.userId,
                     mark = ((sprintMarks.toList().sumByDouble { it.mark!! })/cnt)
                 )).toDTO()
             }
+        }
     }
 
     suspend fun pauseProject(projectId: String) = projectRepository.pauseProjectById(projectId)
@@ -130,7 +129,7 @@ class ProjectService(
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
         val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
-        return if (projectLeader !=null){
+        return if (projectLeader != null){
             val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
             template.databaseClient.sql(query)
                 .bind("userId", projectLeader.userId!!)
