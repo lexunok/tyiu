@@ -24,7 +24,7 @@ public class IdeaController {
     private final IdeaService ideaService;
 
     @GetMapping("/{ideaId}")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('PROJECT_OFFICE') || hasRole('EXPERT') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','TEACHER','PROJECT_OFFICE','EXPERT','ADMIN')")
     public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId, @AuthenticationPrincipal Jwt jwt) {
         return ideaService.getIdea(ideaId, jwt.getId());
     }
@@ -39,13 +39,13 @@ public class IdeaController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('PROJECT_OFFICE') || hasRole('EXPERT') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','TEACHER','PROJECT_OFFICE','EXPERT','ADMIN')")
     public Flux<IdeaDTO> showListIdea(@AuthenticationPrincipal Jwt jwt){
         return ideaService.getListIdea(jwt.getId());
     }
 
     @GetMapping("/all/on-confirmation")
-    @PreAuthorize("hasRole('EXPERT') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('ADMIN','EXPERT')")
     public Flux<IdeaDTO> showListIdeaOnConfirmation(@AuthenticationPrincipal Jwt jwt){
         return ideaService.getListIdeaOnConfirmation(jwt.getId());
     }
@@ -85,7 +85,7 @@ public class IdeaController {
     }
 
     @PutMapping("/status/update/{ideaId}")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('EXPERT') || hasRole('ADMIN') ")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE','EXPERT','ADMIN')")
     public Mono<InfoResponse> updateStatusIdea(@PathVariable String ideaId,
                                                @RequestBody StatusIdeaRequest status){
         return ideaService.updateStatusIdea(ideaId, status)
@@ -105,8 +105,8 @@ public class IdeaController {
     @PutMapping("/skills/update")
     public Mono<InfoResponse> updateIdeaSkills(@RequestBody IdeaSkillRequest request, @AuthenticationPrincipal Jwt jwt) {
         return ideaService.updateIdeaSkills(request, jwt)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Скиллы для идеи обновлены"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Скиллы для идеи не обновлены"));
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Компетенции для идеи обновлены"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Компетенции для идеи не обновлены"));
     }
 
     @GetMapping("/skills/{ideaId}")
@@ -117,7 +117,7 @@ public class IdeaController {
     @PostMapping("/skills/add")
     public Mono<InfoResponse> addIdeaSkills(@RequestBody IdeaSkillRequest request, @AuthenticationPrincipal Jwt jwt) {
         return ideaService.addIdeaSkills(request, jwt)
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное добавление скиллов идеи"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Скиллы для идеи не добавлены"));
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное добавление компетенций идеи"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Компетенции для идеи не добавлены"));
     }
 }

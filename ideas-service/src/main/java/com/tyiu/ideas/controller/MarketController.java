@@ -29,19 +29,19 @@ public class MarketController {
     ///////////////////////
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('TEACHER') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('TEACHER','PROJECT_OFFICE','ADMIN')")
     public Flux<MarketDTO> getAll(){
         return marketService.getAll();
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','TEACHER','INITIATOR','TEAM_OWNER','PROJECT_OFFICE','ADMIN')")
     public Flux<MarketDTO> getActiveMarket(){
         return marketService.getActiveMarkets();
     }
 
     @GetMapping("/{marketId}")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','TEACHER','INITIATOR','TEAM_OWNER','PROJECT_OFFICE','ADMIN')")
     public Mono<MarketDTO> getMarket(@PathVariable String marketId){
         return marketService.getMarket(marketId);
     }
@@ -54,7 +54,7 @@ public class MarketController {
     //////////////////////////////
 
     @PostMapping("/create")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE','ADMIN')")
     public Mono<MarketDTO> createMarket(@RequestBody MarketDTO market){
         return marketService.createMarket(market)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать биржу")));
@@ -68,10 +68,10 @@ public class MarketController {
     ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{marketId}")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE','ADMIN')")
     public Mono<InfoResponse> deleteMarket(@PathVariable String marketId){
         return marketService.deleteMarket(marketId)
-                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление биржи"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить биржу"));
     }
 
@@ -83,18 +83,18 @@ public class MarketController {
     ////////////////////////
 
     @PutMapping("/update/{marketId}")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE','ADMIN')")
     public Mono<MarketDTO> updateMarket(@PathVariable String marketId, @RequestBody MarketDTO market){
         return marketService.updateMarket(marketId, market)
-                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при редактировании")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при редактировании биржи")));
     }
 
     @PutMapping("/status/{marketId}/{status}")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE','ADMIN')")
     public Mono<MarketDTO> updateStatus(@PathVariable String marketId,
                                         @PathVariable MarketStatus status,
                                         @AuthenticationPrincipal Jwt jwt){
         return marketService.updateStatus(marketId, status, jwt)
-                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка обновления биржи")));
     }
 }

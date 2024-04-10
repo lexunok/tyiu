@@ -5,6 +5,7 @@ import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.*
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
 
@@ -55,7 +56,7 @@ class SprintService (
         return@map sprintMarkDTO
     }
 
-    suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
+    suspend fun createSprint(sprintDTO: SprintDTO, jwt: Jwt): SprintDTO {
         sprintDTO.projectId?.let {
             template.databaseClient
                 .sql("UPDATE sprint SET status = 'DONE' WHERE status = 'ACTIVE' AND project_id = :projectId")
@@ -87,7 +88,7 @@ class SprintService (
                 TaskMovementLog(
                     taskId = it.id,
                     executorId = it.executor?.id,
-                    userId = user.id,
+                    userId = jwt.id,
                     startDate = LocalDateTime.now(),
                     status = TaskStatus.NewTask
                 )

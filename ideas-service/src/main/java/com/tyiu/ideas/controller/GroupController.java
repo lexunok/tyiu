@@ -30,14 +30,14 @@ public class GroupController {
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<GroupDTO> getGroupById(@PathVariable String groupId) {
         return groupService.getGroupById(groupId)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Группа не найдена")));
     }
 
     @PostMapping("/create")
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<GroupDTO> createGroup(@RequestBody GroupDTO group) {
         return groupService.createGroup(group)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not success!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать группу")));
     }
 
 
@@ -45,15 +45,15 @@ public class GroupController {
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<InfoResponse> deleteGroup(@PathVariable String groupId) {
         return groupService.deleteGroup(groupId)
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success"));
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Группа успешно удалена"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении группы"));
     }
 
     @PutMapping("/update/{groupId}")
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<GroupDTO> updateGroup(@PathVariable String groupId, @RequestBody GroupDTO group) {
         return groupService.updateGroup(groupId, group)
-                .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при обновлении группы")));
     }
 }
     

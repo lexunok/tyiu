@@ -68,7 +68,7 @@ public class ProfileController {
     }
 
     @DeleteMapping("/delete/user/{userId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<Void> deleteUser(@PathVariable String userId){
         return profileService.deleteUser(userId);
     }
@@ -81,7 +81,7 @@ public class ProfileController {
     }
 
     @PutMapping("/change/info")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<UserDTO> changeUserInfoByAdmin(@RequestBody UserDTO user){
         return profileService.changeUserInfo(user)
                 .switchIfEmpty(Mono.error(new CustomHttpException("Не удалось изменить пользователя", HttpStatus.INTERNAL_SERVER_ERROR.value())));

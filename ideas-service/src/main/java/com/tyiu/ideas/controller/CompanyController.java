@@ -23,26 +23,26 @@ public class CompanyController {
     private final CompanyService companyService;
 
     @GetMapping("/{companyId}")
-    @PreAuthorize("hasRole('ADMIN') || hasRole('INITIATOR')")
+    @PreAuthorize("hasAnyRole('INITIATOR','ADMIN')")
     public Mono<CompanyDTO> getCompanyById(@PathVariable String companyId) {
         return companyService.getCompanyById(companyId)
-                .switchIfEmpty(Mono.error(new NotFoundException("Not found!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Компания не найдена")));
     }
 
     @GetMapping("/owner")
-    @PreAuthorize("hasRole('ADMIN') || hasRole('INITIATOR')")
+    @PreAuthorize("hasAnyRole('INITIATOR','ADMIN')")
     public Flux<CompanyDTO> getMemberListCompany(@AuthenticationPrincipal Jwt jwt) {
         return companyService.getMembersListCompany(jwt.getId());
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('ADMIN') || hasRole('INITIATOR')")
+    @PreAuthorize("hasAnyRole('INITIATOR','ADMIN')")
     public Flux<CompanyDTO> getCompanyList() {
         return companyService.getListCompany();
     }
 
     @GetMapping("/staff/{companyId}")
-    @PreAuthorize("hasRole('ADMIN') || hasRole('INITIATOR')")
+    @PreAuthorize("hasAnyRole('INITIATOR','ADMIN')")
     public Flux<UserDTO> getCompanyStaff(@PathVariable String companyId) {
         return companyService.getListStaff(companyId);
     }
@@ -51,15 +51,15 @@ public class CompanyController {
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<CompanyDTO> createCompany(@RequestBody CompanyDTO company) {
         return companyService.createCompany(company)
-                .switchIfEmpty(Mono.error(new NotFoundException("Create is not success!")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать компанию")));
     }
 
     @DeleteMapping("/delete/{companyId}")
     @PreAuthorize("hasRole('ADMIN')")
     public Mono<InfoResponse> deleteCompany(@PathVariable String companyId) {
         return companyService.deleteCompany(companyId)
-                .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))
-                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Delete is not success!"));
+                .thenReturn(new InfoResponse(HttpStatus.OK,"Компания успешно удалена"))
+                .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Ошибка при удалении компании"));
     }
 
     @PutMapping("/update/{companyId}")
@@ -67,6 +67,6 @@ public class CompanyController {
     public Mono<CompanyDTO> updateCompany(@PathVariable String companyId,
                                           @RequestBody CompanyDTO company) {
         return companyService.updateCompany(companyId, company)
-                .switchIfEmpty(Mono.error(new NotFoundException("Update is not success")));
+                .switchIfEmpty(Mono.error(new NotFoundException("Ошибки при обновлении компании")));
     }
 }
