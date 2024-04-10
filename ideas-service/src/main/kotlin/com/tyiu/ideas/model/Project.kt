@@ -8,16 +8,27 @@ import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.http.HttpStatus
-import org.springframework.http.HttpStatusCode
 import java.time.LocalDate
 
 interface ProjectRepository: CoroutineCrudRepository<Project, String>{
 
-        @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId and status = 'ACTIVE'")
+        @Query("""
+                SELECT *
+                FROM project 
+                    JOIN project_member ON project.id = project_member.project_id 
+                    JOIN idea ON idea.id = project.idea_id 
+                WHERE (project_member.user_id = :userId OR idea.initiator_id = :userId) and project.status = 'ACTIVE'
+        """)
         fun findByStatus(userId: String): Flow<Project>
 
         @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId")
         fun findProjectByUserId(userId: String): Flow<Project>
+
+        @Query("UPDATE project SET report = :report, status = 'DONE', finish_date = :finishDate WHERE id = :projectId")
+        suspend fun finishProjectById(projectId: String?, report: String?, finishDate: LocalDate = LocalDate.now())
+
+        @Query("UPDATE project SET status = 'PAUSED' WHERE id = :projectId")
+        suspend fun pauseProjectById(projectId: String?)
 
 }
 @Table
@@ -56,14 +67,9 @@ data class InfoResponse(
 )
 
 data class ReportProject(
-        val projectId:String? = null,
-        val marks:List<ProjectMarksDTO>? = null,
-        val report:String? = null,
-)
-
-data class ProjectFinishRequest(
-        val projectReport: String? = null,
-        val finishDate: LocalDate? = null,
+    val projectId:String? = null,
+    val marks:List<ProjectMarksDTO>? = null,
+    val report:String? = null,
 )
 
 fun Project.toDTO(): ProjectDTO=ProjectDTO(

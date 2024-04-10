@@ -94,11 +94,13 @@ public class IdeaMarketService {
     private IdeaMarketDTO buildIdeaMarket(Row row, ConcurrentHashMap<String, IdeaMarketDTO> map){
         String ideaMarketId = row.get("id", String.class);
         String skillId = row.get("s_id", String.class);
+        String teamId = row.get("t_id", String.class);
         IdeaMarketDTO ideaMarketDTO = map.get(ideaMarketId);
         if (ideaMarketDTO == null) {
             ideaMarketDTO = map.getOrDefault(ideaMarketId, IdeaMarketDTO.builder()
                     .id(ideaMarketId)
                     .ideaId(row.get("idea_id", String.class))
+                    .team(teamId != null ? TeamDTO.builder().id(teamId).build() : null)
                     .position(row.get("row_number", Integer.class))
                     .name(row.get("name", String.class))
                     .initiator(UserDTO.builder()
@@ -155,7 +157,8 @@ public class IdeaMarketService {
                     im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
                     fi.idea_market_id AS favorite,
                     s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                    i.name, i.solution, i.max_team_size
+                    i.name, i.solution, i.max_team_size,
+                    t.id AS t_id
                 FROM (
                     SELECT
                         im.*,
@@ -170,6 +173,7 @@ public class IdeaMarketService {
                 ) AS im_sub
                     LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
                     LEFT JOIN idea i ON i.id = im_sub.idea_id
+                    LEFT JOIN team t ON t.id = im_sub.team_id
                     LEFT JOIN users u ON u.id = i.initiator_id
                     LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
                     LEFT JOIN skill s ON s.id = ids.skill_id
@@ -294,6 +298,10 @@ public class IdeaMarketService {
                                 .build())
                         .checkedBy(List.of(Objects.requireNonNull(row.get("checked_by", String[].class))))
                         .build()).all().sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
+    }
+
+    public Mono<Boolean> checkOwnerAccessInMarket(String marketId, String userId){
+        return template.exists(query(where("market_id").is(marketId).and("owner_id").is(userId)), Team.class);
     }
 
     //////////////////////////////
@@ -428,16 +436,10 @@ public class IdeaMarketService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType, Jwt jwt){
-        return checkInitiator(ideaMarketId,jwt.getId())
-                .flatMap(isExists -> {
-                    if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
-                        return template.update(query(where("id").is(ideaMarketId)),
-                                update("status", statusType),
-                                IdeaMarket.class).then();
-                    }
-                    return Mono.error(new AccessException("Нет Прав"));
-                });
+    public Mono<Void> changeIdeaMarketStatus(String ideaMarketId, IdeaMarketStatusType statusType){
+        return template.update(query(where("id").is(ideaMarketId)),
+                update("status", statusType),
+                IdeaMarket.class).then();
     }
 
     @CacheEvict(allEntries = true)

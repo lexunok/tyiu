@@ -15,6 +15,7 @@ import java.time.LocalDate;
 public class Team {
     @Id
     private String id;
+    private String marketId;
     private String name;
     private String description;
     private Boolean closed;
@@ -23,8 +24,9 @@ public class Team {
     private String ownerId;
     private String leaderId;
 
+    public String getId() { return id; }
     public String getName() {
         return name;
     }
-    public String getId() { return id; }
+    public String getLeaderId() { return leaderId; }
 }

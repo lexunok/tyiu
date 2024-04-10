@@ -2,7 +2,6 @@ package com.tyiu.ideas.model
 
 import com.tyiu.ideas.model.dto.UserDTO
 import kotlinx.coroutines.flow.Flow
-import org.springframework.core.task.TaskExecutor
 import org.springframework.data.annotation.Id
 import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
@@ -11,21 +10,37 @@ import java.time.LocalDate
 
 interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
-    //вывод tasktagDTO как списка
-    //убрать лишние запросы
-    @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC") // ПОИСК ТАСКА ПО ПРОЕКТУ. СОРТИРОВКА ПО СОЗДАНИЮ ТАСКА
+    @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC")
     fun findAllByProjectId(projectId: String): Flow<Task>
-    @Query(" SELECT * FROM task WHERE project_id = :projectId and status = 'InBacklog'") // ПРОСМОТР ТАСКОВ В БЭКЛОГЕ ПРОЕКТА
+    @Query("SELECT * FROM task WHERE project_id = :projectId and status = 'InBackLog'")
     fun findAllInBacklog(projectId: String): Flow<Task>
 
-    @Query(" SELECT * FROM task WHERE project_id = :projectId and sprint_id = :sprintId ") // ПРОСМОТР ТАСКОВ В СПРИНТЕ ПРОЕКТА
-    fun findAllTaskBySprint(projectId: String, sprintId: String): Flow<Task>
+    fun findTaskByProjectIdAndStatusOrderByPosition(projectId: String, status: TaskStatus): Flow<Task>
 
-    @Query("SELECT * FROM task WHERE id = :id ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
-    fun findTaskById(id: String): Flow<Task>
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ")
+    fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
-    @Query("SELECT * FROM task WHERE executor_id = :executorId ") // ПОИСК ТАСКА ПО ЕГО АЙДИ
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId")
+    fun findTasksNotDoneBySprintId(sprintId: String?): Flow<Task>
+
+    @Query("SELECT * FROM task WHERE executor_id = :executorId ")
     fun findTaskByExecutorId(executorId: String): Flow<Task>
+
+    @Query("SELECT * FROM task_history JOIN task ON task.id = task_history.task_id WHERE task_history.sprint_id = :sprintId ")
+    fun findAllTaskHistoryBySprintId(sprintId: String): Flow<Task>
+
+    @Query("SELECT t.* FROM sprint_mark_task smt JOIN task t ON t.id = smt.task_id WHERE smt.sprint_mark_id = :sprintMarkId")
+    fun findTaskBySprintMarkTask(sprintMarkId: String): Flow<Task>
+
+    @Query("SELECT COUNT(*) FROM task WHERE project_id = :projectId AND status = 'InBackLog'")
+    suspend fun countTaskByProjectId(projectId: String): Int
+
+    @Query("UPDATE task SET position = :newPosition WHERE project_id = :projectId AND status = 'InBackLog' AND id = :taskId")
+    suspend fun updateTasksByProjectIdAndId(newPosition: Int, projectId: String, taskId: String)
+
+    @Query("UPDATE task SET sprint_id = NULL, position =:newPosition, executor_id = NULL, status = 'InBackLog' WHERE id = :taskId")
+    suspend fun finishTask(newPosition: Int?,taskId: String?)
+
 }
 
 @Table
@@ -35,39 +50,43 @@ data class Task (
     var sprintId: String? = null,
     val projectId: String? = null,
 
+    var position:Int? = null,
     val name: String? = null,
     val description: String? = null,
+    var leaderComment: String? = null,
 
     var initiatorId: String? = null,
     var executorId: String? = null,
 
-    val workHour: Long? = null,
+    val workHour: Int? = null,
 
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
 
-    var status: TaskStatus? = TaskStatus.InBacklog
+    var status: TaskStatus? = null
 )
 
 data class TaskDTO (
     val id: String? = null,
-    
+
     var sprintId: String? = null,
     val projectId: String? = null,
 
+    var position:Int? = null,
     val name:String? = null,
     val description: String? = null,
+    var leaderComment: String? = null,
 
     var initiator: UserDTO? = null,
-    var executor: UserDTO? = null, //firstName lastName
+    var executor: UserDTO? = null,
 
-    val workHour: Long? = null,
+    val workHour: Int? = null,
 
-    val startDate: LocalDate? = LocalDate.now(),
+    val startDate: LocalDate? = null,
     val finishDate: LocalDate? = null,
 
-    var tag: List<TaskTagDTO>? = null,
-    var status: TaskStatus? = TaskStatus.InBacklog
+    var tags: List<TagDTO>? = null,
+    var status: TaskStatus? = null
 )
 
 fun Task.toDTO(): TaskDTO = TaskDTO (
@@ -76,8 +95,10 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     sprintId = sprintId,
     projectId = projectId,
 
+    position = position,
     name = name,
     description = description,
+    leaderComment = leaderComment,
 
     workHour = workHour,
 
@@ -87,32 +108,6 @@ fun Task.toDTO(): TaskDTO = TaskDTO (
     status = status
 )
 
-enum class TaskStatus
-{
-    InBacklog, OnModification, New, InProgress, OnVerification, Done
+enum class TaskStatus {
+    InBackLog, OnModification, NewTask, InProgress, OnVerification, Done
 }
-
-data class TaskStatusRequest(
-    val taskId :String? = null,
-    val taskStatus: TaskStatus? = null,
-    val taskExecutor: String? = null
-)
-
-data class TaskInfoRequest(
-    val taskId :String? = null,
-    var taskName: String? = null,
-    var taskDescription: String? = null,
-    var taskWork_hour: Long? = null,
-    var taskStatus: String? = null,
-    var taskTag: List<TaskTagDTO>? = null
-)
-
-data class TaskCreateRequest(
-    val name:String? = null,
-    val description: String? = null,
-    val projectId: String? = null,
-    val workHour: Long? = null,
-    var initiatorId: String? = null,
-    var sprintId: String? = null,
-    val taskTags: List<String>? = null
-)

@@ -1,6 +1,10 @@
 package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.config.exception.AccessException;
+import com.tyiu.ideas.model.ProjectDTO;
+import com.tyiu.ideas.model.ProjectMember;
+import com.tyiu.ideas.model.ProjectRole;
+import com.tyiu.ideas.model.ProjectStatus;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.email.requests.NotificationEmailRequest;
 import com.tyiu.ideas.model.entities.Team;
@@ -361,6 +365,41 @@ public class TeamService {
                 .all().distinct();
     }
 
+    public Flux<ProjectDTO> getAllProjectsForTeam(String teamId){
+        String QUERY = """
+                SELECT
+                    p.id AS p_id, p.idea_id AS p_idea_id, p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                    i.name AS i_name, i.description AS i_description, i.customer AS i_customer,
+                    u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
+                FROM project p
+                    LEFT JOIN idea i ON i.id = p.idea_id
+                    LEFT JOIN users u ON u.id = i.initiator_id
+                WHERE p.team_id = :teamId
+                """;
+        return template.getDatabaseClient()
+                .sql(QUERY)
+                .bind("teamId", teamId)
+                .map((row, rowMetadata) -> new ProjectDTO(
+                        row.get("p_id", String.class),
+                        row.get("i_name", String.class),
+                        row.get("i_description", String.class),
+                        row.get("i_customer", String.class),
+                        UserDTO.builder()
+                                .id(row.get("u_id", String.class))
+                                .email(row.get("u_email", String.class))
+                                .firstName(row.get("u_first_name", String.class))
+                                .lastName(row.get("u_last_name", String.class))
+                                .build(),
+                        null,
+                        null,
+                        null,
+                        row.get("p_start_date", LocalDate.class),
+                        row.get("p_finish_date", LocalDate.class),
+                        ProjectStatus.valueOf(row.get("p_status", String.class)))
+                )
+                .all();
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -376,12 +415,9 @@ public class TeamService {
                 .closed(teamDTO.getClosed())
                 .hasActiveProject(false)
                 .ownerId(teamDTO.getOwner().getId())
+                .leaderId(teamDTO.getLeader() != null && teamDTO.getLeader().getId() != null ? teamDTO.getLeader().getId() : null)
                 .createdAt(LocalDate.now())
                 .build();
-
-        if (teamDTO.getLeader() != null && teamDTO.getLeader().getId() != null) {
-            team.setLeaderId(teamDTO.getLeader().getId());
-        }
 
         return template.insert(team)
                 .flatMap(t -> {
@@ -389,7 +425,11 @@ public class TeamService {
                     teamDTO.setMembersCount((teamDTO.getMembers() != null) ? teamDTO.getMembers().size() : 0);
                     teamDTO.setCreatedAt(team.getCreatedAt());
 
-                    return template.getDatabaseClient().inConnection(connection -> {
+                    return template.getDatabaseClient()
+                            .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
+                            .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
+                            .then()
+                            .then(template.getDatabaseClient().inConnection(connection -> {
                                 Batch batch = connection.createBatch();
                                 teamDTO.getMembers().forEach(u -> batch.add(
                                         String.format(
@@ -400,7 +440,7 @@ public class TeamService {
 
                                 return Mono.from(batch.execute());
 
-                            })
+                            }))
                             .then(template.getDatabaseClient().inConnection(connection -> {
                                 Batch batch = connection.createBatch();
                                 teamDTO.getWantedSkills().forEach(s -> batch.add(
@@ -412,7 +452,8 @@ public class TeamService {
 
                                 return Mono.from(batch.execute());
 
-                            })).thenReturn(teamDTO);
+                            }))
+                            .thenReturn(teamDTO);
                 });
     }
 
@@ -564,14 +605,24 @@ public class TeamService {
     ///_/    \____/  /_/
     ////////////////////////
 
-    @CacheEvict(allEntries = true)
+    public Mono<Void> setMarketForTeam(Flux<TeamDTO> teams, String marketId){
+        return teams.flatMap(t ->
+                template.update(query(where("id").is(t.getId())),
+                        update("market_id", marketId),
+                        Team.class)
+        ).then();
+    }
+
     public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, Jwt jwt) {
         return checkOwner(teamId, jwt.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
-                        Team team = mapper.map(teamDTO, Team.class);
-                        team.setId(teamId);
-                        return template.update(team).thenReturn(teamDTO);
+                        return template.update(query(where("id").is(teamId)),
+                                update("name", teamDTO.getName())
+                                        .set("description", teamDTO.getDescription())
+                                        .set("closed", teamDTO.getClosed()),
+                                Team.class)
+                                .thenReturn(teamDTO);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
@@ -594,9 +645,36 @@ public class TeamService {
         return checkOwner(teamId, jwt.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || jwt.getClaimAsStringList("roles").contains(String.valueOf(Role.ADMIN))) {
-                        return template.update(query(where("id").is(teamId)),
-                                update("leader_id", userId),
-                                Team.class);
+                        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                                .flatMap(t -> {
+                                    if (Objects.equals(userId, t.getLeaderId())){
+                                        return Mono.empty();
+                                    }
+                                    return template.getDatabaseClient()
+                                            .sql("UPDATE users SET roles = ARRAY_REMOVE(roles, 'TEAM_LEADER') WHERE id = :userId")
+                                            .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
+                                            .then()
+                                            .then(template.getDatabaseClient()
+                                                    .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
+                                                    .bind("userId", userId)
+                                                    .then())
+                                            .then(template.update(query(where("id").is(teamId)),
+                                                    update("leader_id", userId),
+                                                    Team.class))
+                                            .then(template.exists(query(where("team_id").is(t.getId())), ProjectMember.class)
+                                                    .flatMap(thisExists -> {
+                                                        if (Boolean.TRUE.equals(thisExists)){
+                                                            return template.update(query(where("user_id").is(t.getLeaderId())),
+                                                                            update("project_role", ProjectRole.MEMBER),
+                                                                            ProjectMember.class)
+                                                                    .then(template.update(query(where("user_id").is(userId)),
+                                                                            update("project_role", ProjectRole.TEAM_LEADER),
+                                                                            ProjectMember.class));
+                                                        }
+                                                        return Mono.empty();
+                                                    })
+                                            );
+                                });
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 })

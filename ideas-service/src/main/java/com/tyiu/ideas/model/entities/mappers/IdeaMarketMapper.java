@@ -33,6 +33,7 @@ public class IdeaMarketMapper implements BiFunction<Row, Object, IdeaMarketDTO> 
                             .firstName(row.get("u_fn", String.class))
                             .lastName(row.get("u_ln", String.class))
                             .build())
+                    .marketId(row.get("market_id", String.class))
                     .description(row.get("description", String.class))
                     .problem(row.get("problem", String.class))
                     .result(row.get("result", String.class))

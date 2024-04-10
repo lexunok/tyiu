@@ -33,5 +33,7 @@ public class IdeaMarketDTO {
 
     public String getIdeaId() { return ideaId; }
     public TeamDTO getTeam() { return team; }
+    public String getMarketId() { return marketId; }
+    public UserDTO getInitiator() { return initiator; }
 
 }

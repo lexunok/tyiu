@@ -29,19 +29,19 @@ public class MarketController {
     ///////////////////////
 
     @GetMapping("/all")
-    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('TEACHER') || hasRole('ADMIN')")
     public Flux<MarketDTO> getAll(){
         return marketService.getAll();
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Flux<MarketDTO> getActiveMarket(){
         return marketService.getActiveMarkets();
     }
 
     @GetMapping("/{marketId}")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('INITIATOR') || hasRole('TEAM_OWNER') || hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<MarketDTO> getMarket(@PathVariable String marketId){
         return marketService.getMarket(marketId);
     }

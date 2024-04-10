@@ -35,7 +35,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/market/{marketId}/all")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('PROJECT_OFFICE') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('PROJECT_OFFICE') || hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal Jwt jwt,
                                                           @PathVariable String marketId) {
         return ideaMarketService.getAllMarketIdeasForMarket(jwt.getId(), marketId);
@@ -69,6 +69,11 @@ public class IdeaMarketController {
     @GetMapping("/get/advertisements/{ideaMarketId}")
     public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(@PathVariable String ideaMarketId) {
         return ideaMarketService.getIdeaMarketAdvertisement(ideaMarketId);
+    }
+
+    @GetMapping("/access/check/{marketId}")
+    public Mono<Boolean> checkOwnerAccessInMarket(@PathVariable String marketId, @AuthenticationPrincipal User user){
+        return ideaMarketService.checkOwnerAccessInMarket(marketId, user.getId());
     }
 
     //////////////////////////////
@@ -150,11 +155,10 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/idea-status/{ideaMarketId}/{status}")
-    @PreAuthorize("hasRole('INITIATOR') || hasRole('ADMIN')")
+    @PreAuthorize("hasRole('PROJECT_OFFICE') || hasRole('ADMIN')")
     public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId,
-                                             @PathVariable IdeaMarketStatusType status,
-                                             @AuthenticationPrincipal Jwt jwt) {
-        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status, jwt);
+                                             @PathVariable IdeaMarketStatusType status) {
+        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status);
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")

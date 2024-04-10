@@ -7,13 +7,16 @@ import kotlinx.coroutines.flow.toList
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
+import java.time.LocalDateTime
 
 @Service
 class TaskService
     (
     private val repository: TaskRepository,
     private val userRepository: UserRepository,
-    private val taskTagRepository: TaskTagRepository,
+    private val tagRepository: TagRepository,
+    private val task2tagRepository: Task2TagRepository,
+    private val taskMovementLogRepository: TaskMovementLogRepository,
     val template: R2dbcEntityTemplate
     )
 {
@@ -23,7 +26,7 @@ class TaskService
 
         tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
         tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.tag = (task.id?.let{taskTagRepository.findAllByTaskId(it)})?.toList()
+        tasks.tags = task.id?.let { tagRepository.findAllTagByTaskId(it).toList().map { tag -> tag.toDTO() } }
         return tasks
     }
 
@@ -32,52 +35,112 @@ class TaskService
 
     fun getAllTasksInBacklog(projectId: String): Flow<TaskDTO> = repository.findAllInBacklog(projectId).map {taskToDTO(it)}
 
-    fun getAllTasksInSprint(projectId: String, sprintId: String): Flow<TaskDTO> =  repository.findAllTaskBySprint(projectId, sprintId).map {taskToDTO(it)}
+    fun getAllTasksInSprint(sprintId: String): Flow<TaskDTO> =  repository.findAllTaskBySprintId(sprintId).map {taskToDTO(it)}
 
-    fun getOneTaskById(id: String): Flow<TaskDTO> = repository.findTaskById(id).map {taskToDTO(it)}
+    suspend fun getOneTaskById(id: String): TaskDTO? = repository.findById(id)?.let { taskToDTO(it) }
 
     //post
-    suspend fun createTask(taskCreateRequest: TaskCreateRequest) {
-        val task = Task (
-            name = taskCreateRequest.name,
-            description = taskCreateRequest.description,
-            projectId = taskCreateRequest.projectId,
-            workHour = taskCreateRequest.workHour,
-            initiatorId = taskCreateRequest.initiatorId
+    suspend fun createTask(taskDTO: TaskDTO, userId: String): TaskDTO {
+        val createdTask = repository.save(
+            Task (
+                sprintId = taskDTO.sprintId,
+                projectId = taskDTO.projectId,
+                position = if (taskDTO.sprintId == null) taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.plus(1) else null,
+                name = taskDTO.name,
+                description = taskDTO.description,
+                leaderComment = taskDTO.leaderComment,
+                initiatorId = userId,
+                workHour = taskDTO.workHour,
+                status = if (taskDTO.sprintId == null) TaskStatus.InBackLog else TaskStatus.NewTask
+            )
         )
-        if (taskCreateRequest.sprintId == null){
-            task.status = TaskStatus.InBacklog
-        }
-        else {
-            task.sprintId = taskCreateRequest.sprintId
-            task.status = TaskStatus.New
-        }
-        val taskSave = taskToDTO(repository.save(task))
 
-        val task2tag =  Task2Tag(
-            taskId = taskSave.id,
-            tagId  = ""
+        taskMovementLogRepository.save(
+            TaskMovementLog(
+                taskId = createdTask.id,
+                executorId = taskDTO.executor?.id,
+                userId = taskDTO.initiator?.id,
+                startDate = LocalDateTime.now(),
+                status = createdTask.status
+            )
         )
-       return taskTagRepository.InsertValues(task2tag.taskId, task2tag.tagId) // не добавляет в task_to_tag
+
+        taskDTO.tags?.forEach {
+            task2tagRepository.save (
+                Task2Tag(
+                    taskId = createdTask.id,
+                    tagId = it.id
+                )
+            )
+        }
+        return taskToDTO(createdTask)
     }
 
     //put
-    suspend fun putUpdateTask(taskId: String, taskInfoRequest: TaskInfoRequest) {
+    suspend fun putUpdateTask(taskId: String, taskDTO: TaskDTO) {
         val query =
-            "UPDATE task SET name = :taskName, description = :taskDescription, work_hour = :taskWork_hour WHERE id = :taskId"
+            "UPDATE task SET name = :name, description = :description, work_hour = :workHour WHERE id = :taskId"
         return template.databaseClient.sql(query)
-            .bind("taskName", taskInfoRequest.taskName!!)
-            .bind("taskDescription", taskInfoRequest.taskDescription!!)
-            .bind("taskWork_hour", taskInfoRequest.taskWork_hour!!)
+            .bind("name", taskDTO.name!!)
+            .bind("description", taskDTO.description!!)
+            .bind("workHour", taskDTO.workHour!!)
             .bind("taskId", taskId).await()
     }
 
-    suspend fun putTaskStatus(TaskStatusRequest: TaskStatusRequest) {
-        val query = "UPDATE task SET status = :taskStatus, executor_Id = :taskExecutor WHERE id = :taskId"
-        return template.databaseClient.sql(query)
-            .bind("taskStatus", TaskStatusRequest.taskStatus.toString())
-            .bind("taskExecutor", TaskStatusRequest.taskExecutor.toString())
-            .bind("taskId", TaskStatusRequest.taskId!!).await()
+    suspend fun putUpdateExecutorTask(taskId: String, executorId: String){
+        return template.databaseClient
+            .sql("UPDATE task SET executor_id = :executorId WHERE id = :taskId")
+            .bind("executorId", executorId)
+            .bind("taskId", taskId).await()
+    }
+
+    suspend fun updateLeaderCommentInTask(taskId: String, leaderComment: String){
+        return template.databaseClient
+            .sql("UPDATE task SET leader_comment = :leaderComment WHERE id = :taskId")
+            .bind("leaderComment", leaderComment)
+            .bind("taskId", taskId).await()
+    }
+
+    suspend fun updateDescriptionInTask(taskId: String, description: String){
+        return template.databaseClient
+            .sql("UPDATE task SET description = :description WHERE id = :taskId")
+            .bind("description", description)
+            .bind("taskId", taskId).await()
+    }
+
+    suspend fun updateNameInTask(taskId: String, name: String){
+        return template.databaseClient
+            .sql("UPDATE task SET name = :name WHERE id = :taskId")
+            .bind("name", name)
+            .bind("taskId", taskId).await()
+    }
+
+    suspend fun changePosition(taskId: String, position: Int){
+        repository.findById(taskId).let {
+            template.databaseClient
+                .sql("UPDATE task SET position = :position WHERE id = :taskId")
+                .bind("position", position)
+                .bind("taskId", taskId)
+                .await()
+            if (it?.position!! > position){
+                template.databaseClient
+                    .sql("UPDATE task SET position = position + 1 WHERE project_id = :projectId AND id <> :taskId AND position < :position AND position >= :newPosition AND status = 'InBackLog'")
+                    .bind("projectId", it.projectId!!)
+                    .bind("taskId", taskId)
+                    .bind("position", it.position!!)
+                    .bind("newPosition", position)
+                    .await()
+            }
+            else if (it.position!! < position){
+                template.databaseClient
+                    .sql("UPDATE task SET position = position - 1 WHERE project_id = :projectId AND id <> :taskId AND position > :position AND position <= :newPosition AND status = 'InBackLog'")
+                    .bind("projectId", it.projectId!!)
+                    .bind("taskId", taskId)
+                    .bind("position", it.position!!)
+                    .bind("newPosition", position)
+                    .await()
+            }
+        }
     }
 
     //delete

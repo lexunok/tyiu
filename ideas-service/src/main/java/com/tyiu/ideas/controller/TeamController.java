@@ -2,6 +2,7 @@ package com.tyiu.ideas.controller;
 
 
 import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.ideas.model.ProjectDTO;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.TeamInvitation;
 import com.tyiu.ideas.model.entities.TeamRequest;
@@ -74,7 +75,7 @@ public class TeamController {
     }
 
     @GetMapping("/idea/requests/{teamId}")
-    @PreAuthorize("hasRole('MEMBER') || hasRole('INITIATOR') || hasRole('PROJECT_OFFICE') ||  hasRole('TEAM_OWNER') || hasRole('ADMIN')")
+    @PreAuthorize("hasRole('MEMBER') || hasRole('TEACHER') || hasRole('INITIATOR') || hasRole('PROJECT_OFFICE') ||  hasRole('TEAM_OWNER') || hasRole('ADMIN')")
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(@PathVariable String teamId){
         return teamService.getTeamMarketRequests(teamId);
     }
@@ -82,6 +83,12 @@ public class TeamController {
     @GetMapping("/users/consist")
     public Flux<TeamMemberDTO> getAllUsersInTeams(){
         return teamService.getAllUsersInTeams();
+    }
+
+    @GetMapping("/projects/{teamId}")
+    @PreAuthorize("hasAnyAuthority('MEMBER','TEACHER','INITIATOR','PROJECT_OFFICE','TEAM_OWNER','ADMIN')")
+    public Flux<ProjectDTO> getAllProjectsForTeam(@PathVariable String teamId){
+        return teamService.getAllProjectsForTeam(teamId);
     }
 
     //////////////////////////////
@@ -174,6 +181,12 @@ public class TeamController {
     // / ___// /_/ /  / /
     ///_/    \____/  /_/
     ////////////////////////
+
+    @PutMapping("/market/{marketId}")
+    @PreAuthorize("hasAnyAuthority('PROJECT_OFFICE', 'ADMIN')")
+    public Mono<Void> setMarketForTeam(@PathVariable String marketId, @RequestBody Flux<TeamDTO> teams){
+        return teamService.setMarketForTeam(teams, marketId);
+    }
 
     @PutMapping("/update/{teamId}")
     @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
