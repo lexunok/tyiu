@@ -50,6 +50,11 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
+    @GetMapping("/finished/{sprintId}")
+    suspend fun getFinishedSPrint(@PathVariable sprintId: String): SprintDTO? {
+        return sprintService.getFinishedSprint(sprintId)
+    }
+
     @GetMapping("/marks/{sprintId}/all")
     fun getAllSprintMarks(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): Flow<SprintMarkDTO> {
         return if (user.roles.roleCheck(roles)) {
