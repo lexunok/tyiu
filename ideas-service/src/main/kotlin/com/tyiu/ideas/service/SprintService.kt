@@ -116,6 +116,7 @@ class SprintService (
         sprintMarks.collect { sprintMark ->
             val createdSprintMark = sprintMarkRepository.save(
                 SprintMark(
+                    projectId = projectId,
                     sprintId = sprintId,
                     userId = sprintMark.userId,
                     projectRole = sprintMark.projectRole,
