@@ -131,7 +131,7 @@ class SprintService (
                 val cnt = marks.toList().size
                 if (projectMarksRepository.existsByUserIdAndProjectId(sprintMark.userId, projectId)){
                     template.databaseClient
-                        .sql("UPDATE project_marks SET mark = :mark WHERE id = :projectId AND user_id = :userId")
+                        .sql("UPDATE project_marks SET mark = :mark WHERE project_id = :projectId AND user_id = :userId")
                         .bind("mark", ((marks.toList().sumByDouble { it.mark!! }) / cnt))
                         .bind("projectId", projectId)
                         .bind("userId", sprintMark.userId!!)
