@@ -132,16 +132,17 @@ class SprintService (
                 if (projectMarksRepository.existsByUserIdAndProjectId(sprintMark.userId, projectId)){
                     template.databaseClient
                         .sql("UPDATE project_marks SET mark = :mark WHERE id = :projectId AND user_id = :userId")
-                        .bind("mark", ((marks.toList().sumByDouble { it.mark!! })/cnt))
+                        .bind("mark", ((marks.toList().sumByDouble { it.mark!! }) / cnt))
                         .bind("projectId", projectId)
                         .bind("userId", sprintMark.userId!!)
+                        .await()
                 }
                 else {
                     projectMarksRepository.save(
                         ProjectMarks(
                             projectId = projectId,
                             userId = sprintMark.userId,
-                            mark = ((marks.toList().sumByDouble { it.mark!! })/cnt)
+                            mark = ((marks.toList().sumByDouble { it.mark!! }) / cnt)
                         )
                     )
                 }
