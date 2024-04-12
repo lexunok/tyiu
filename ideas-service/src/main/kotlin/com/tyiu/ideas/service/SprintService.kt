@@ -25,7 +25,14 @@ class SprintService (
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
         val sprintDTO = sprint.toDTO()
-        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map { task ->
+        var tasks: Flow<Task>? = null
+        if (sprint.status == SprintStatus.ACTIVE){
+            tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }
+        }
+        else if (sprint.status == SprintStatus.DONE) {
+            tasks = sprint.id?.let { taskRepository.findAllTaskHistoryBySprintId(it) }
+        }
+        sprintDTO.tasks = tasks?.map { task ->
             val taskDTO = task.toDTO()
             taskDTO.tags = task.id?.let { tagRepository.findAllTagByTaskId(it) }?.map { it.toDTO() }?.toList()
             taskDTO.initiator = task.initiatorId?.let { userRepository.findById(it) }?.toDTO()
@@ -41,20 +48,6 @@ class SprintService (
 
     suspend fun getActiveSprint(projectId: String): SprintDTO? {
         return sprintRepository.findActiveSprint(projectId)?.let { sprintToDTO(it) }
-    }
-
-    suspend fun getFinishedSprint(sprintId: String): SprintDTO?{
-        return sprintRepository.findById(sprintId)?.let { sprint ->
-            val sprintDTO = sprint.toDTO()
-            sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskHistoryBySprintId(it) }?.map { task ->
-                val taskDTO = task.toDTO()
-                taskDTO.tags = task.id?.let { tagRepository.findAllTagByTaskId(it) }?.map { it.toDTO() }?.toList()
-                taskDTO.initiator = task.initiatorId?.let { userRepository.findById(it) }?.toDTO()
-                taskDTO.executor = task.executorId?.let { userRepository.findById(it) }?.toDTO()
-                return@map taskDTO
-            }?.toList()
-            return sprintDTO
-        }
     }
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> = sprintMarkRepository.findSprintMarksBySprintId(sprintId).map { sprintMark ->

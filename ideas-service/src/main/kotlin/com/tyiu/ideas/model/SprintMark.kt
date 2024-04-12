@@ -10,7 +10,7 @@ interface SprintMarkRepository: CoroutineCrudRepository<SprintMark, String>{
 
     fun findSprintMarksBySprintId(sprintId: String): Flow<SprintMark>
 
-    @Query("SELECT * FROM sprint_marks WHERE project_id =:projectId and user_id =:userId")
+    @Query("SELECT * FROM sprint_mark WHERE project_id =:projectId and user_id =:userId")
     fun findSprintMarksByProjectIdAndUserId(projectId: String, userId: String?): Flow<SprintMark>
 }
 @Table
