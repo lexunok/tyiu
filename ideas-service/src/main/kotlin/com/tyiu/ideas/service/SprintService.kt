@@ -25,11 +25,11 @@ class SprintService (
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
         val sprintDTO = sprint.toDTO()
-        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskHistoryBySprintId(it) }?.map {
-            val taskDTO = it.toDTO()
-            taskDTO.tags = it.id?.let { it1 -> tagRepository.findAllTagByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
-            taskDTO.initiator = it.initiatorId?.let { userRepository.findById(it) }?.toDTO()
-            taskDTO.executor = it.executorId?.let { userRepository.findById(it) }?.toDTO()
+        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }?.map { task ->
+            val taskDTO = task.toDTO()
+            taskDTO.tags = task.id?.let { tagRepository.findAllTagByTaskId(it) }?.map { it.toDTO() }?.toList()
+            taskDTO.initiator = task.initiatorId?.let { userRepository.findById(it) }?.toDTO()
+            taskDTO.executor = task.executorId?.let { userRepository.findById(it) }?.toDTO()
             return@map taskDTO
         }?.toList()
         return sprintDTO
@@ -40,11 +40,7 @@ class SprintService (
     suspend fun getSprintById(id: String): SprintDTO? = sprintRepository.findById(id)?.let { sprintToDTO(it) }
 
     suspend fun getActiveSprint(projectId: String): SprintDTO? {
-        val sprint = sprintRepository.findActiveSprint(projectId)
-        if (sprint != null) {
-            return sprintToDTO(sprint)
-        }
-        return null
+        return sprintRepository.findActiveSprint(projectId)?.let { sprintToDTO(it) }
     }
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> = sprintMarkRepository.findSprintMarksBySprintId(sprintId).map { sprintMark ->
@@ -168,12 +164,14 @@ class SprintService (
         val tasks = sprintId.let { taskRepository.findTasksNotDoneBySprintId(it) }
         var pos = tasks.first().projectId?.let { taskRepository.countTaskByProjectId(it) }
         tasks.toList().forEach {
-            taskHistoryRepository.save(TaskHistory(
-                taskId = it.id,
-                sprintId = it.sprintId,
-                status = it.status,
-                executorId = it.executorId
-            ))
+            taskHistoryRepository.save(
+                TaskHistory(
+                    taskId = it.id,
+                    sprintId = it.sprintId,
+                    status = it.status,
+                    executorId = it.executorId
+                )
+            )
             if (it.status!=TaskStatus.Done){
                 pos = pos?.plus(1)
                 taskRepository.finishTask(pos, it.id)

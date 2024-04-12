@@ -18,6 +18,9 @@ interface TaskRepository: CoroutineCrudRepository<Task, String>
     @Query("SELECT * FROM task WHERE executor_id = :executorId ")
     fun findTaskByExecutorId(executorId: String): Flow<Task>
 
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ")
+    fun findAllTaskBySprintId(sprintId: String): Flow<Task>
+
     @Query("SELECT * FROM task_history JOIN task ON task.id = task_history.task_id WHERE task_history.sprint_id = :sprintId ")
     fun findAllTaskHistoryBySprintId(sprintId: String): Flow<Task>
 
