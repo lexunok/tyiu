@@ -34,4 +34,6 @@ public class UserDTO {
     public String getEmail() { return email; }
     public String getLastName() { return lastName; }
     public String getFirstName() { return firstName; }
+
+    public void setId(String data) { id = data; }
 }

@@ -29,7 +29,7 @@ data class TagDTO (
     val id: String? = null,
     var name: String? = null,
     var color: String? = null,
-    var confirmed: Boolean,
+    var confirmed: Boolean?,
     var creatorId: String? = null,
     var updaterId: String? = null,
     var deleterId: String? = null
