@@ -14,6 +14,7 @@ class SprintService (
     private val sprintMarkRepository: SprintMarkRepository,
     private val taskRepository: TaskRepository,
     private val taskMovementLogRepository: TaskMovementLogRepository,
+    private val projectMarksRepository: ProjectMarksRepository,
     private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate,
     private val userRepository: UserRepository,
@@ -108,7 +109,7 @@ class SprintService (
         return sprintToDTO(createdSprint)
     }
 
-    suspend fun addSprintMarks(sprintId: String, sprintMarks: Flow<SprintMarkDTO>) {
+    suspend fun addSprintMarks(sprintId: String, projectId: String, sprintMarks: Flow<SprintMarkDTO>) {
         sprintMarks.collect { sprintMark ->
             val createdSprintMark = sprintMarkRepository.save(
                 SprintMark(
@@ -120,6 +121,26 @@ class SprintService (
             )
             sprintMark.tasks?.forEach {
                 sprintMarkTaskRepository.save(SprintMarkTask(createdSprintMark.id!!, it.id!!))
+            }
+            if (sprintMark.projectRole != ProjectRole.INITIATOR) {
+                val marks = sprintMarkRepository.findSprintMarksByProjectIdAndUserId(projectId,sprintMark.userId)
+                val cnt = marks.toList().size
+                if (projectMarksRepository.existsByUserIdAndProjectId(sprintMark.userId, projectId)){
+                    template.databaseClient
+                        .sql("UPDATE project_marks SET mark = :mark WHERE id = :projectId AND user_id = :userId")
+                        .bind("mark", ((marks.toList().sumByDouble { it.mark!! })/cnt))
+                        .bind("projectId", projectId)
+                        .bind("userId", sprintMark.userId!!)
+                }
+                else {
+                    projectMarksRepository.save(
+                        ProjectMarks(
+                            projectId = projectId,
+                            userId = sprintMark.userId,
+                            mark = ((marks.toList().sumByDouble { it.mark!! })/cnt)
+                        )
+                    )
+                }
             }
         }
     }

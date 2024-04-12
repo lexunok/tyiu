@@ -20,8 +20,7 @@ class ProjectService(
     private val taskRepository: TaskRepository,
     private val taskService: TaskService,
     private val marketRepository: MarketRepository,
-    private val teamToMemberRepository: TeamToMemberRepository,
-    private val sprintMarksRepository: SprintMarkRepository
+    private val teamToMemberRepository: TeamToMemberRepository
 ) {
     private suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
@@ -105,22 +104,6 @@ class ProjectService(
             finishDate = project?.finishDate
         )
         return projectMemberRepository.save(projectMember).toDTO()
-    }
-
-    suspend fun addMarksInProject(projectId: String){
-        val project = getOneProject(projectId)
-        val projectMembers = projectMemberRepository.findMemberByProjectId(projectId)
-        return projectMembers.toList().forEach { m->
-            val sprintMarks = sprintMarksRepository.findSprintMarksByProjectIdAndUserId(projectId,m.userId)
-            val cnt = sprintMarks.toList().size
-            if (project?.initiator?.id != m.userId) {
-                projectMarksRepository.save(ProjectMarks(
-                    projectId = projectId,
-                    userId = m.userId,
-                    mark = ((sprintMarks.toList().sumByDouble { it.mark!! })/cnt)
-                )).toDTO()
-            }
-        }
     }
 
     suspend fun pauseProject(projectId: String) = projectRepository.pauseProjectById(projectId)

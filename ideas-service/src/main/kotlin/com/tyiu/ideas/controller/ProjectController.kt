@@ -97,17 +97,6 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
-    @PutMapping("/{projectId}/add/marks")
-    suspend fun addMarksInProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User) {
-
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.ADMIN))) {
-            projectService.addMarksInProject(projectId)
-        }
-        else {
-            throw AccessException("Нет прав")
-        }
-    }
-
     @PutMapping("/{projectId}/status/change")
     suspend fun pauseProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User) : InfoResponse {
         return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {

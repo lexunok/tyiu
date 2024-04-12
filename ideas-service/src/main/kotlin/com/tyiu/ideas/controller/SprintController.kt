@@ -70,12 +70,13 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
-    @PostMapping("/{sprintId}/add/marks")
+    @PostMapping("/marks/{projectId}/{sprintId}/add")
     suspend fun  addSprintMarks(@PathVariable sprintId: String,
+                                @PathVariable projectId: String,
                                 @RequestBody sprintMarks: Flow<SprintMarkDTO>,
                                 @AuthenticationPrincipal user: User) {
         return if (user.roles.roleCheck(roles3)) {
-            sprintService.addSprintMarks(sprintId, sprintMarks)
+            sprintService.addSprintMarks(sprintId, projectId, sprintMarks)
         }
         else {
             throw AccessException("Нет прав")
