@@ -14,5 +14,6 @@ public class TeamMemberDTO {
     private String firstName;
     private String lastName;
     private List<SkillDTO> skills;
+    public String getUserId() { return userId; }
 
 }

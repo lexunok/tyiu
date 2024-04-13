@@ -1,5 +1,6 @@
 package com.tyiu.ideas.model.dto;
 
+import com.tyiu.ideas.model.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -39,6 +40,7 @@ public class TeamDTO {
     }
 
     public String getId() { return id; }
+    public UserDTO getLeader() { return leader; }
     public Integer getMembersCount() { return membersCount; }
     public void setMembersCount(Integer data) { membersCount = data; }
 }
