@@ -21,7 +21,6 @@ import com.tyiu.ideas.model.enums.SkillType;
 import io.r2dbc.spi.Batch;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -42,7 +41,6 @@ import static org.springframework.data.relational.core.query.Update.update;
 public class TeamService {
 
     private final R2dbcEntityTemplate template;
-    private final ModelMapper mapper;
     private final EmailService emailService;
 
     private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
@@ -542,6 +540,20 @@ public class TeamService {
 
     public Flux<SkillDTO> getSkillsByRequests(List<TeamRequest> users) {
         return getSkillsByList(users.stream().map(TeamRequest::getUserId).toList());
+    }
+
+    public Flux<TeamWithMembersDTO> getTeamMembers(List<String> teamIds) {
+
+        return Flux.fromIterable(teamIds)
+                .flatMap(teamId -> template.getDatabaseClient()
+                        .sql("SELECT tm.member_id FROM team_member tm WHERE tm.team_id = :teamId")
+                        .bind("teamId", teamId)
+                        .fetch()
+                        .all()
+                        .map(row -> row.get("member_id").toString())
+                        .collectList()
+                        .map(userIds -> new TeamWithMembersDTO(teamId, userIds))
+                );
     }
 
     ///////////////////////////////////////////
