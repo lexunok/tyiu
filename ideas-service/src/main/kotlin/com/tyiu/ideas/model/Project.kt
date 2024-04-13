@@ -44,7 +44,7 @@ data class Project(
 )
 
 data class ProjectDTO (
-        val id:String? = null,
+        var id:String? = null,
         var name: String?=null,
         var description: String?=null,
         var customer: String?=null,
@@ -67,9 +67,9 @@ data class InfoResponse(
 )
 
 data class ReportProject(
-    val projectId:String? = null,
-    val marks:List<ProjectMarksDTO>? = null,
-    val report:String? = null,
+        val projectId:String? = null,
+        var marks:List<ProjectMarksDTO>? = null,
+        val report:String? = null,
 )
 
 fun Project.toDTO(): ProjectDTO=ProjectDTO(

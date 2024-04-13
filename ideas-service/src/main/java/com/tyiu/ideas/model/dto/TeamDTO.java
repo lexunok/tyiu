@@ -32,9 +32,10 @@ public class TeamDTO {
     private List<SkillDTO> skills;
     private List<SkillDTO> wantedSkills;
 
-    public TeamDTO(String id, String name) {
+    public TeamDTO(String id, String name, Integer membersCount) {
         this.id = id;
         this.name = name;
+        this.membersCount = membersCount;
     }
 
     public String getId() { return id; }

@@ -29,10 +29,6 @@ data class ProjectMarksDTO(
         var tasks: List<TaskDTO>? = null,
 )
 
-data class ProjectMarksRequest(
-        val userId:String? = null,
-        val mark:Double? = null,
-)
 fun ProjectMarks.toDTO(): ProjectMarksDTO = ProjectMarksDTO(
         projectId = projectId,
         userId = userId,

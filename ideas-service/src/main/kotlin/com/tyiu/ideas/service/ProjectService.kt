@@ -1,12 +1,26 @@
 package com.tyiu.ideas.service
 
-import com.tyiu.ideas.config.exception.AccessException
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
+import com.tyiu.ideas.model.dto.TeamDTO
+import com.tyiu.ideas.model.dto.UserDTO
+import com.tyiu.ideas.model.entities.Market
+import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.r2dbc.core.insert
+import org.springframework.data.relational.core.query.Criteria
+import org.springframework.data.relational.core.query.Query
+import org.springframework.data.relational.core.query.Update
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
+import reactor.core.publisher.Flux
+import java.time.LocalDate
+import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class ProjectService(
@@ -29,33 +43,307 @@ class ProjectService(
         projects.description = ideaToProject?.description
         projects.customer = ideaToProject?.customer
         projects.initiator = ideaToProject?.initiatorId?.let { userRepository.findById(it)?.toDTO()}
-        projects.team = project.teamId?.let { teamRepository.findById(it)?.toDTO() }
         projects.team?.membersCount = projects.team?.id?.let { teamToMemberRepository.countTeam2MemberByTeamId(it) }
         projects.members = project.id?.let{ getProjectMembers(it) }?.toList()
         projects.report = ReportProject(project.id,project.id?.let { getProjectMarks(it).toList() },project.report)
         return projects
     }
 
-    fun getAllProjects(): Flow<ProjectDTO> = projectRepository.findAll().map { projectToDTO(it) }
+    private fun projectRow(row: Row, map: ConcurrentHashMap<String, ProjectDTO>): ProjectDTO?{
+        val memberId = row.get("pm_user_id", String::class.java)
+        val markUserId = row.get("m_user_id", String::class.java)
+        return row.get("p_id", String::class.java)?.let {
+            val project = map.getOrDefault(it,ProjectDTO(
+                it,
+                row.get("id_name", String::class.java),
+                row.get("id_description", String::class.java),
+                row.get("id_customer", String::class.java),
+                UserDTO(
+                    row.get("i_id", String::class.java),
+                    row.get("i_email", String::class.java),
+                    row.get("i_first_name", String::class.java),
+                    row.get("i_last_name", String::class.java)
+                ),
+                TeamDTO(
+                    row.get("t_id", String::class.java),
+                    row.get("t_name", String::class.java),
+                    row.get("t_members_count", Integer::class.java)?.toInt(),
+                ),
+                listOf(),
+                ReportProject(
+                    it,
+                    listOf(),
+                    row.get("p_report", String::class.java),
+                ),
+                row.get("p_start_date", LocalDate::class.java),
+                row.get("p_finish_date", LocalDate::class.java),
+                ProjectStatus.valueOf(row.get("p_status", String::class.java)!!)
+            ))
+            if (memberId!=null) {
+                val projectMemberDTO = ProjectMemberDTO(
+                    memberId,
+                    row.get("pm_team_id", String::class.java),
+                    row.get("pms_email", String::class.java),
+                    row.get("pms_first_name", String::class.java),
+                    row.get("pms_last_name", String::class.java),
+                    ProjectRole.valueOf(row.get("pm_project_role", String::class.java)!!),
+                    row.get("pm_start_date", LocalDate::class.java),
+                    row.get("pm_finish_date", LocalDate::class.java),
+                )
+                if (project.members?.stream()?.noneMatch{pm->pm.userId.equals(projectMemberDTO.userId)}!!) {
+                    project.members = project.members?.plus(projectMemberDTO)
+                }
+            }
+            if (markUserId!=null) {
+                val projectMarksDTO = ProjectMarksDTO(
+                    row.get("p_id", String::class.java),
+                    markUserId,
+                    row.get("mms_first_name", String::class.java),
+                    row.get("mms_last_name", String::class.java),
+                    ProjectRole.valueOf(row.get("pmms_project_role", String::class.java)!!),
+                    row.get("m_mark", String::class.java)?.toDouble(),
+                    listOf()
+                )
+                if (project.report?.marks?.stream()?.noneMatch { m -> m.userId.equals(projectMarksDTO.userId) }!!){//разобраться как убрать лишние
+                    project.report?.marks = project.report?.marks?.plus(projectMarksDTO)
+                }
+                val taskDTO = TaskDTO(
+                    id = row.get("tk_id", String::class.java),
+                    projectId = it,
+                    name = row.get("tk_name", String::class.java),
+                    tags = listOf()
+                )
+                val tagId = row.get("tag_id", String::class.java)
+                projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
+                if (tagId!=null){
+                    val tagDTO = TagDTO(
+                        tagId,
+                        row.get("tag_name", String::class.java),
+                        row.get("tag_color", String::class.java),
+                        null
+                    )
+                    taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                }
 
-    fun getYourProjects(userId: String): Flow<ProjectDTO> = projectRepository.findProjectByUserId(userId).map { projectToDTO(it) }.distinctUntilChangedBy { it.id }
+            }
 
-    fun getYourActiveProjects(userId: String): Flow<ProjectDTO> = projectRepository.findByStatus(userId).map { projectToDTO(it) }.distinctUntilChangedBy { it.id }
-
-    suspend fun getOneProject(projectId: String): ProjectDTO? = projectRepository.findById(projectId)?.let { projectToDTO(it) }
-
-    fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> =
-        projectMemberRepository.findMemberByProjectId(projectId).map { p ->
-            val projectMember = p.toDTO()
-            val userToProject = p.userId?.let { userRepository.findById(it) }?.toDTO()
-            projectMember.email = userToProject?.email
-            projectMember.firstName = userToProject?.firstName
-            projectMember.lastName = userToProject?.lastName
-            return@map projectMember
+            map[it] = project
+            project
         }
+    }
 
-    fun getProjectMarks(projectId: String): Flow<ProjectMarksDTO> =
-        projectMarksRepository.findMarksByProjectId(projectId).map{ m ->
+    ///////////////////////
+    //  _____   ____ ______
+    // / ___/  / __//_  __/
+    /// (_ /  / _/   / /
+    //\___/  /___/  /_/
+    ///////////////////////
+
+    fun getAllProjects(): Flow<ProjectDTO> {
+        val query = """
+            SELECT
+                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
+                t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
+                id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
+                pms.first_name AS pms_first_name, pms.last_name AS pms_last_name, pm.project_role AS pm_project_role,
+                pm.start_date AS pm_start_date, pm.finish_date AS pm_finish_date, m.user_id AS m_user_id,
+                mms.first_name AS mms_first_name, mms.last_name AS mms_last_name, pmms.project_role AS pmms_project_role, m.mark AS m_mark,
+                tk.id AS tk_id, tk.name AS tk_name, tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color,
+                (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) AS t_members_count
+            FROM project p
+                LEFT JOIN team t ON t.id = p.team_id
+                LEFT JOIN idea id ON id.id = p.idea_id
+                LEFT JOIN users i ON i.id = id.initiator_id
+                LEFT JOIN project_member pm ON pm.project_id = p.id
+                LEFT JOIN users pms ON pms.id = pm.user_id
+                LEFT JOIN project_marks m ON m.project_id = p.id
+                LEFT JOIN users mms ON mms.id = m.user_id
+                LEFT JOIN project_member pmms ON pmms.user_id = mms.id
+                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task_tag tg ON tg.task_id = tk.id
+                LEFT JOIN tag ON tag.id = tg.tag_id
+            ORDER BY p.start_date ASC
+        """.trimIndent()
+
+        val map = ConcurrentHashMap<String, ProjectDTO>()
+
+        return template.databaseClient
+            .sql(query)
+            .map { row, _ -> projectRow(row, map) }
+            .all()
+            .thenMany(Flux.fromIterable(map.values)).asFlow()
+    }
+
+    fun getYourProjects(userId: String): Flow<ProjectDTO> {
+        val query = """
+            SELECT
+                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
+                t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
+                id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
+                pms.first_name AS pms_first_name, pms.last_name AS pms_last_name, pm.project_role AS pm_project_role,
+                pm.start_date AS pm_start_date, pm.finish_date AS pm_finish_date, m.user_id AS m_user_id,
+                mms.first_name AS mms_first_name, mms.last_name AS mms_last_name, pmms.project_role AS pmms_project_role, m.mark AS m_mark,
+                tk.id AS tk_id, tk.name AS tk_name, tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color,
+                (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) AS t_members_count
+            FROM project p
+                LEFT JOIN team t ON t.id = p.team_id
+                LEFT JOIN idea id ON id.id = p.idea_id
+                LEFT JOIN users i ON i.id = id.initiator_id
+                LEFT JOIN project_member pm ON pm.project_id = p.id
+                LEFT JOIN users pms ON pms.id = pm.user_id
+                LEFT JOIN project_marks m ON m.project_id = p.id
+                LEFT JOIN users mms ON mms.id = m.user_id
+                LEFT JOIN project_member pmms ON pmms.user_id = mms.id
+                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task_tag tg ON tg.task_id = tk.id
+                LEFT JOIN tag ON tag.id = tg.tag_id
+                JOIN project_member ON p.id = project_member.project_id 
+            WHERE project_member.user_id = :userId
+            ORDER BY p.start_date ASC
+        """.trimIndent()
+
+        val map = ConcurrentHashMap<String, ProjectDTO>()
+
+        return template.databaseClient
+            .sql(query)
+            .bind("userId",userId)
+            .map { row, _ -> projectRow(row, map) }
+            .all()
+            .thenMany(Flux.fromIterable(map.values)).asFlow()
+    }
+
+    fun getYourActiveProjects(userId: String): Flow<ProjectDTO> {
+        val query = """
+            SELECT
+                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
+                t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
+                id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
+                pms.first_name AS pms_first_name, pms.last_name AS pms_last_name, pm.project_role AS pm_project_role,
+                pm.start_date AS pm_start_date, pm.finish_date AS pm_finish_date, m.user_id AS m_user_id,
+                mms.first_name AS mms_first_name, mms.last_name AS mms_last_name, pmms.project_role AS pmms_project_role, m.mark AS m_mark,
+                tk.id AS tk_id, tk.name AS tk_name, tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color,
+                (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) AS t_members_count
+            FROM project p
+                LEFT JOIN team t ON t.id = p.team_id
+                LEFT JOIN idea id ON id.id = p.idea_id
+                LEFT JOIN users i ON i.id = id.initiator_id
+                LEFT JOIN project_member pm ON pm.project_id = p.id
+                LEFT JOIN users pms ON pms.id = pm.user_id
+                LEFT JOIN project_marks m ON m.project_id = p.id
+                LEFT JOIN users mms ON mms.id = m.user_id
+                LEFT JOIN project_member pmms ON pmms.user_id = mms.id
+                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task_tag tg ON tg.task_id = tk.id
+                LEFT JOIN tag ON tag.id = tg.tag_id
+                JOIN project_member ON p.id = project_member.project_id 
+            WHERE project_member.user_id = :userId AND p.status = 'ACTIVE'
+            ORDER BY p.start_date ASC
+        """.trimIndent()
+
+        val map = ConcurrentHashMap<String, ProjectDTO>()
+
+        return template.databaseClient
+            .sql(query)
+            .bind("userId",userId)
+            .map { row, _ -> projectRow(row, map) }
+            .all()
+            .thenMany(Flux.fromIterable(map.values)).asFlow()
+    }
+
+    suspend fun getOneProject(projectId: String): ProjectDTO? {
+        val query = """
+            SELECT
+                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
+                t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
+                id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
+                pms.first_name AS pms_first_name, pms.last_name AS pms_last_name, pm.project_role AS pm_project_role,
+                pm.start_date AS pm_start_date, pm.finish_date AS pm_finish_date, m.user_id AS m_user_id,
+                mms.first_name AS mms_first_name, mms.last_name AS mms_last_name, pmms.project_role AS pmms_project_role, m.mark AS m_mark,
+                tk.id AS tk_id, tk.name AS tk_name, tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color,
+                (SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) AS t_members_count
+            FROM project p
+                LEFT JOIN team t ON t.id = p.team_id
+                LEFT JOIN idea id ON id.id = p.idea_id
+                LEFT JOIN users i ON i.id = id.initiator_id
+                LEFT JOIN project_member pm ON pm.project_id = p.id
+                LEFT JOIN users pms ON pms.id = pm.user_id
+                LEFT JOIN project_marks m ON m.project_id = p.id
+                LEFT JOIN users mms ON mms.id = m.user_id
+                LEFT JOIN project_member pmms ON pmms.user_id = mms.id
+                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task_tag tg ON tg.task_id = tk.id
+                LEFT JOIN tag ON tag.id = tg.tag_id 
+            WHERE p.id = :projectId
+            ORDER BY p.start_date ASC
+        """.trimIndent()
+
+        val map = ConcurrentHashMap<String, ProjectDTO>()
+
+        return template.databaseClient
+            .sql(query)
+            .bind("projectId",projectId)
+            .map { row, _ -> projectRow(row, map) }
+            .all()
+            .thenMany(Flux.fromIterable(map.values)).awaitFirst()
+    }
+
+    fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> { //не работает пока что
+        val query = """
+            SELECT
+                pm.project_id AS project_id, pm.user_id AS user_id, pm.team_id AS team_id, u.email AS email,
+                u.first_name AS first_name, u.last_name AS last_name, pm.project_role AS project_role,
+                pm.start_date AS start_date, pm.finish_date AS finish_date
+            FROM project_member pm
+                LEFT JOIN users u ON u.id = pm.user_id
+            WHERE pm.project_id = :projectId
+        """.trimIndent()
+
+        return template.databaseClient
+            .sql(query)
+            .bind("projectId",projectId)
+            .map { row, _ -> ProjectMemberDTO(
+                        row.get("user_id", String::class.java),
+                        row.get("team_id", String::class.java),
+                        row.get("email", String::class.java),
+                        row.get("first_name", String::class.java),
+                        row.get("last_name", String::class.java),
+                        ProjectRole.valueOf(row.get("project_role", String::class.java)!!),
+                        row.get("start_date", LocalDate::class.java),
+                        row.get("finish_date", LocalDate::class.java),
+                    )}
+            .all().asFlow()
+    }
+
+    fun getProjectMarks(projectId: String): Flow<ProjectMarksDTO> {
+        val query = """
+            SELECT
+                pms.project_id AS project_id, pms.user_id AS user_id,u.first_name AS first_name, u.last_name AS last_name,
+                pm.project_role AS project_role, pms.mark AS mark
+            FROM project_marks pms
+                LEFT JOIN users u ON u.id = pms.user_id
+                LEFT JOIN project_member pm ON pm.project_id = pms.project_id AND pm.user_id = pms.user_id
+            WHERE pm.project_id = :projectId
+        """.trimIndent()
+
+        return template.databaseClient
+            .sql(query)
+            .bind("projectId",projectId)
+            .map { row, _ -> ProjectMarksDTO(
+                row.get("project_id", String::class.java),
+                row.get("user_id", String::class.java),
+                row.get("first_name", String::class.java),
+                row.get("last_name", String::class.java),
+                ProjectRole.valueOf(row.get("project_role", String::class.java)!!),
+                row.get("mark", String::class.java)?.toDouble(),
+                listOf()
+            )}
+            .all().asFlow()
+    }
+        /*projectMarksRepository.findMarksByProjectId(projectId).map{ m ->
             val projectMarks = m.toDTO()
             val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
             val projectMember = m.userId?.let { projectMemberRepository.findMemberByUserIdAndProjectId(it,projectId) }?.first()
@@ -64,10 +352,27 @@ class ProjectService(
             projectMarks.lastName = userToProject?.lastName
             projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
             return@map projectMarks
-        }
+        }*/
+
+    //////////////////////////////
+    //   ___   ____    ____ ______
+    //  / _ \ / __ \  / __//_  __/
+    // / ___// /_/ / _\ \   / /
+    ///_/    \____/ /___/  /_/
+    //////////////////////////////
 
     suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
-        val market = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }
+        val createdProject = template.insert(Project(
+            ideaId = ideaMarketDTO.ideaId,
+            teamId = ideaMarketDTO.team.id,
+            /*finishDate = ideaMarketDTO.marketId?.let {template.selectOne(
+                Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),
+                Market::class.java)}.let {  }*/
+        )).awaitSingle()
+
+        val projectDTO = createdProject.toDTO()
+        return projectDTO
+        /*val market = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }
         val project = Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id,
@@ -92,7 +397,7 @@ class ProjectService(
                 finishDate = market?.finishDate
             ))
         }
-        return projectToDTO(createdProject)
+        return projectToDTO(createdProject)*/
     }
 
         suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
@@ -106,9 +411,26 @@ class ProjectService(
         return projectMemberRepository.save(projectMember).toDTO()
     }
 
-    suspend fun pauseProject(projectId: String) = projectRepository.pauseProjectById(projectId)
+    ////////////////////////
+    //   ___   __  __ ______
+    //  / _ \ / / / //_  __/
+    // / ___// /_/ /  / /
+    ///_/    \____/  /_/
+    ////////////////////////
 
-    suspend fun putFinishProject(projectId: String, report: String)= projectRepository.finishProjectById(projectId, report)
+    suspend fun pauseProject(projectId: String) {
+        template.update(
+            Query.query(Criteria.where("id").`is`(projectId)),
+            Update.update("status", "PAUSED"),
+            Project::class.java).awaitSingle()
+    }
+
+    suspend fun putFinishProject(projectId: String, report: String) {
+        template.update(
+            Query.query(Criteria.where("id").`is`(projectId)),
+            Update.update("report", report).set("status", "DONE"),
+            Project::class.java).awaitSingle()
+    }
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
         val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
