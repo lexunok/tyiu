@@ -44,7 +44,6 @@ class TaskService
     }
 
     private fun taskRow(row: Row, map: ConcurrentHashMap<String, TaskDTO>): TaskDTO?{
-        val tagId = row.get("tag_id", String::class.java)
         return row.get("t_id", String::class.java)?.let {
             val task = map.getOrDefault(it,TaskDTO(
                 it,
@@ -72,7 +71,7 @@ class TaskService
                 listOf(),
                 TaskStatus.valueOf(row.get("t_status", String::class.java)!!)
             ))
-            if (tagId != null){
+            row.get("tag_id", String::class.java)?.let { tagId ->
                 val tagDTO = TagDTO(
                     tagId,
                     row.get("tag_name", String::class.java),
