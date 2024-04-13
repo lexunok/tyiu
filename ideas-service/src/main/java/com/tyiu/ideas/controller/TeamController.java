@@ -182,6 +182,12 @@ public class TeamController {
     ///_/    \____/  /_/
     ////////////////////////
 
+    @PutMapping("/market/{marketId}")
+    @PreAuthorize("hasAnyAuthority('PROJECT_OFFICE', 'ADMIN')")
+    public Mono<Void> setMarketForTeam(@PathVariable String marketId, @RequestBody Flux<TeamDTO> teams){
+        return teamService.setMarketForTeam(teams, marketId);
+    }
+
     @PutMapping("/update/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
     public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team, @AuthenticationPrincipal User user) {

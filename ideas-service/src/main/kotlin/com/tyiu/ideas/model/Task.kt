@@ -10,21 +10,16 @@ import java.time.LocalDate
 
 interface TaskRepository: CoroutineCrudRepository<Task, String>
 {
-    @Query("SELECT * FROM task WHERE project_id = :projectId ORDER BY start_date ASC")
-    fun findAllByProjectId(projectId: String): Flow<Task>
-    @Query("SELECT * FROM task WHERE project_id = :projectId and status = 'InBackLog'")
-    fun findAllInBacklog(projectId: String): Flow<Task>
-
     fun findTaskByProjectIdAndStatusOrderByPosition(projectId: String, status: TaskStatus): Flow<Task>
-
-    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ")
-    fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task WHERE sprint_id = :sprintId")
     fun findTasksNotDoneBySprintId(sprintId: String?): Flow<Task>
 
     @Query("SELECT * FROM task WHERE executor_id = :executorId ")
     fun findTaskByExecutorId(executorId: String): Flow<Task>
+
+    @Query("SELECT * FROM task WHERE sprint_id = :sprintId ")
+    fun findAllTaskBySprintId(sprintId: String): Flow<Task>
 
     @Query("SELECT * FROM task_history JOIN task ON task.id = task_history.task_id WHERE task_history.sprint_id = :sprintId ")
     fun findAllTaskHistoryBySprintId(sprintId: String): Flow<Task>
@@ -67,7 +62,7 @@ data class Task (
 )
 
 data class TaskDTO (
-    val id: String? = null,
+    var id: String? = null,
 
     var sprintId: String? = null,
     val projectId: String? = null,

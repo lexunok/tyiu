@@ -41,7 +41,7 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/{projectId}/active")
-    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): SprintDTO {
+    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): SprintDTO? {
         return if (user.roles.roleCheck(roles)) {
             sprintService.getActiveSprint(projectId)
         }
@@ -70,12 +70,13 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
-    @PostMapping("/{sprintId}/add/marks")
+    @PostMapping("/marks/{projectId}/{sprintId}/add")
     suspend fun  addSprintMarks(@PathVariable sprintId: String,
+                                @PathVariable projectId: String,
                                 @RequestBody sprintMarks: Flow<SprintMarkDTO>,
                                 @AuthenticationPrincipal user: User) {
         return if (user.roles.roleCheck(roles3)) {
-            sprintService.addSprintMarks(sprintId, sprintMarks)
+            sprintService.addSprintMarks(sprintId, projectId, sprintMarks)
         }
         else {
             throw AccessException("Нет прав")
@@ -110,12 +111,13 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
-    @PutMapping("/finish")
-    suspend fun putSprintFinishWithoutTaskTransfer(@RequestBody sprintFinishRequest: SprintFinishRequest,
-                                @AuthenticationPrincipal user: User): InfoResponse {
+    @PutMapping("/finish/{sprintId}")
+    suspend fun putSprintFinishWithoutTaskTransfer(@PathVariable sprintId: String,
+                                                   @RequestBody report: String,
+                                                   @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles3)) {
             try {
-                sprintService.putSprintFinish(sprintFinishRequest)
+                sprintService.putSprintFinish(sprintId, report, user.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
             }
             catch(e: Exception){

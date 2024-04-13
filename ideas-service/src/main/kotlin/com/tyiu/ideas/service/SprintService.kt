@@ -14,6 +14,7 @@ class SprintService (
     private val sprintMarkRepository: SprintMarkRepository,
     private val taskRepository: TaskRepository,
     private val taskMovementLogRepository: TaskMovementLogRepository,
+    private val projectMarksRepository: ProjectMarksRepository,
     private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate,
     private val userRepository: UserRepository,
@@ -24,11 +25,18 @@ class SprintService (
 {
     private suspend fun sprintToDTO(sprint: Sprint): SprintDTO {
         val sprintDTO = sprint.toDTO()
-        sprintDTO.tasks = sprint.id?.let { taskRepository.findAllTaskHistoryBySprintId(it) }?.map {
-            val taskDTO = it.toDTO()
-            taskDTO.tags = it.id?.let { it1 -> tagRepository.findAllTagByTaskId(it1) }?.map { it1 -> it1.toDTO() }?.toList()
-            taskDTO.initiator = it.initiatorId?.let { userRepository.findById(it) }?.toDTO()
-            taskDTO.executor = it.executorId?.let { userRepository.findById(it) }?.toDTO()
+        var tasks: Flow<Task>? = null
+        if (sprint.status == SprintStatus.ACTIVE){
+            tasks = sprint.id?.let { taskRepository.findAllTaskBySprintId(it) }
+        }
+        else if (sprint.status == SprintStatus.DONE) {
+            tasks = sprint.id?.let { taskRepository.findAllTaskHistoryBySprintId(it) }
+        }
+        sprintDTO.tasks = tasks?.map { task ->
+            val taskDTO = task.toDTO()
+            taskDTO.tags = task.id?.let { tagRepository.findAllTagByTaskId(it) }?.map { it.toDTO() }?.toList()
+            taskDTO.initiator = task.initiatorId?.let { userRepository.findById(it) }?.toDTO()
+            taskDTO.executor = task.executorId?.let { userRepository.findById(it) }?.toDTO()
             return@map taskDTO
         }?.toList()
         return sprintDTO
@@ -38,7 +46,9 @@ class SprintService (
 
     suspend fun getSprintById(id: String): SprintDTO? = sprintRepository.findById(id)?.let { sprintToDTO(it) }
 
-    suspend fun getActiveSprint(projectId: String): SprintDTO = sprintToDTO(sprintRepository.findActiveSprint(projectId))
+    suspend fun getActiveSprint(projectId: String): SprintDTO? {
+        return sprintRepository.findActiveSprint(projectId)?.let { sprintToDTO(it) }
+    }
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> = sprintMarkRepository.findSprintMarksBySprintId(sprintId).map { sprintMark ->
         val sprintMarkDTO = sprintMark.toDTO()
@@ -102,10 +112,11 @@ class SprintService (
         return sprintToDTO(createdSprint)
     }
 
-    suspend fun addSprintMarks(sprintId: String, sprintMarks: Flow<SprintMarkDTO>) {
+    suspend fun addSprintMarks(sprintId: String, projectId: String, sprintMarks: Flow<SprintMarkDTO>) {
         sprintMarks.collect { sprintMark ->
             val createdSprintMark = sprintMarkRepository.save(
                 SprintMark(
+                    projectId = projectId,
                     sprintId = sprintId,
                     userId = sprintMark.userId,
                     projectRole = sprintMark.projectRole,
@@ -114,6 +125,27 @@ class SprintService (
             )
             sprintMark.tasks?.forEach {
                 sprintMarkTaskRepository.save(SprintMarkTask(createdSprintMark.id!!, it.id!!))
+            }
+            if (sprintMark.projectRole != ProjectRole.INITIATOR) {
+                val marks = sprintMarkRepository.findSprintMarksByProjectIdAndUserId(projectId,sprintMark.userId)
+                val cnt = marks.toList().size
+                if (projectMarksRepository.existsByUserIdAndProjectId(sprintMark.userId, projectId)){
+                    template.databaseClient
+                        .sql("UPDATE project_marks SET mark = :mark WHERE project_id = :projectId AND user_id = :userId")
+                        .bind("mark", (marks.toList().sumByDouble { it.mark!! } / cnt * 100.0).toLong() / 100.0)
+                        .bind("projectId", projectId)
+                        .bind("userId", sprintMark.userId!!)
+                        .await()
+                }
+                else {
+                    projectMarksRepository.save(
+                        ProjectMarks(
+                            projectId = projectId,
+                            userId = sprintMark.userId,
+                            mark = (marks.toList().sumByDouble { it.mark!! } / cnt * 100.0).toLong() / 100.0
+                        )
+                    )
+                }
             }
         }
     }
@@ -137,22 +169,32 @@ class SprintService (
             .bind("sprintId", sprintId).await()
     }
 
-    suspend fun putSprintFinish(sprintFinishRequest: SprintFinishRequest) {
-        val tasks = sprintFinishRequest.sprintId?.let { taskRepository.findTasksNotDoneBySprintId(it) }
-        var pos = tasks?.first()?.projectId?.let { taskRepository.countTaskByProjectId(it) }
-        tasks?.toList()?.forEach {
-            taskHistoryRepository.save(TaskHistory(
-                taskId = it.id,
-                sprintId = it.sprintId,
-                status = it.status,
-                executorId = it.executorId
-            ))
+    suspend fun putSprintFinish(sprintId: String, report: String, userId: String) {
+        val tasks = sprintId.let { taskRepository.findTasksNotDoneBySprintId(it) }
+        var pos = tasks.first().projectId?.let { taskRepository.countTaskByProjectId(it) }
+        tasks.toList().forEach {
+            taskHistoryRepository.save(
+                TaskHistory(
+                    taskId = it.id,
+                    sprintId = it.sprintId,
+                    status = it.status,
+                    executorId = it.executorId
+                )
+            )
             if (it.status!=TaskStatus.Done){
                 pos = pos?.plus(1)
                 taskRepository.finishTask(pos, it.id)
+                taskMovementLogRepository.save(
+                    TaskMovementLog(
+                        taskId = it.id,
+                        userId = userId,
+                        startDate = LocalDateTime.now(),
+                        status = TaskStatus.InBackLog
+                    )
+                )
             }
         }
-        sprintRepository.finishSprintById(sprintFinishRequest.sprintId,sprintFinishRequest.sprintReport)
+        sprintRepository.updateSprintById(sprintId,report)
     }
 
     suspend fun deleteSprint(id: String) = sprintRepository.deleteById(id)

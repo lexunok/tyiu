@@ -13,10 +13,10 @@ interface SprintRepository: CoroutineCrudRepository<Sprint, String>{
     fun findAllSprintsByProject(projectId: String): Flow<Sprint>
 
     @Query("SELECT * FROM sprint WHERE project_id =:projectId and status = 'ACTIVE'")
-    suspend fun findActiveSprint(projectId: String): Sprint
+    suspend fun findActiveSprint(projectId: String): Sprint?
 
-    @Query("UPDATE sprint SET report = :sprintReport, status = 'DONE' WHERE id = :sprintId")
-    suspend fun finishSprintById(sprintId: String?,sprintReport: String?)
+    @Query("UPDATE sprint SET report = :sprintReport, status = 'DONE', finish_date = :finishDate WHERE id = :sprintId")
+    suspend fun updateSprintById(sprintId: String?, sprintReport: String?, finishDate: LocalDate = LocalDate.now())
 
 
 }
@@ -50,11 +50,6 @@ data class SprintDTO(
     val finishDate:LocalDate? = null,
     val workingHours:Long? = null,
     var tasks:List<TaskDTO>? = null,
-)
-
-data class SprintFinishRequest(
-    val sprintId:String? = null,
-    val sprintReport: String? = null,
 )
 
 fun Sprint.toDTO(): SprintDTO = SprintDTO (

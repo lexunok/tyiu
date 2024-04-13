@@ -20,8 +20,7 @@ class ProjectService(
     private val taskRepository: TaskRepository,
     private val taskService: TaskService,
     private val marketRepository: MarketRepository,
-    private val teamToMemberRepository: TeamToMemberRepository,
-    private val sprintMarksRepository: SprintMarkRepository
+    private val teamToMemberRepository: TeamToMemberRepository
 ) {
     private suspend fun projectToDTO(project: Project): ProjectDTO {
         val projects = project.toDTO()
@@ -39,9 +38,9 @@ class ProjectService(
 
     fun getAllProjects(): Flow<ProjectDTO> = projectRepository.findAll().map { projectToDTO(it) }
 
-    fun getYourProjects(userId: String): Flow<ProjectDTO> = projectRepository.findProjectByUserId(userId).map { projectToDTO(it) }
+    fun getYourProjects(userId: String): Flow<ProjectDTO> = projectRepository.findProjectByUserId(userId).map { projectToDTO(it) }.distinctUntilChangedBy { it.id }
 
-    fun getYourActiveProjects(userId: String): Flow<ProjectDTO> = projectRepository.findByStatus(userId).map { projectToDTO(it) }
+    fun getYourActiveProjects(userId: String): Flow<ProjectDTO> = projectRepository.findByStatus(userId).map { projectToDTO(it) }.distinctUntilChangedBy { it.id }
 
     suspend fun getOneProject(projectId: String): ProjectDTO? = projectRepository.findById(projectId)?.let { projectToDTO(it) }
 
@@ -107,30 +106,13 @@ class ProjectService(
         return projectMemberRepository.save(projectMember).toDTO()
     }
 
-    suspend fun addMarksInProject(projectId: String){
-        val project = getOneProject(projectId)
-        val projectMembers = projectMemberRepository.findMemberByProjectId(projectId)
-        return projectMembers.toList().forEach { m->
-            val sprintMarks = sprintMarksRepository.findSprintMarksByProjectIdAndUserId(projectId,m.userId)
-            val cnt = sprintMarks.toList().size
-            if (project?.initiator?.id==m.userId) {
-                null
-            }
-            else projectMarksRepository.save(ProjectMarks(
-                    projectId = projectId,
-                    userId = m.userId,
-                    mark = ((sprintMarks.toList().sumByDouble { it.mark!! })/cnt)
-                )).toDTO()
-            }
-    }
-
     suspend fun pauseProject(projectId: String) = projectRepository.pauseProjectById(projectId)
 
-    suspend fun putFinishProject(projectFinishRequest:ProjectFinishRequest)= projectRepository.finishProjectById(projectFinishRequest.projectId,projectFinishRequest.projectReport)
+    suspend fun putFinishProject(projectId: String, report: String)= projectRepository.finishProjectById(projectId, report)
 
     suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
         val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
-        return if (projectLeader !=null){
+        return if (projectLeader != null){
             val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
             template.databaseClient.sql(query)
                 .bind("userId", projectLeader.userId!!)

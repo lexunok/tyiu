@@ -9,6 +9,8 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 interface ProjectMarksRepository: CoroutineCrudRepository<ProjectMarks, String>{
         @Query("SELECT * FROM project_marks WHERE project_id = :projectId")
         fun findMarksByProjectId(projectId: String): Flow<ProjectMarks>
+
+        suspend fun existsByUserIdAndProjectId(userId: String?, projectId: String?): Boolean
 }
 @Table
 data class ProjectMarks(

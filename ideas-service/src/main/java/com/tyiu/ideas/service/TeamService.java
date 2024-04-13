@@ -587,6 +587,14 @@ public class TeamService {
     ///_/    \____/  /_/
     ////////////////////////
 
+    public Mono<Void> setMarketForTeam(Flux<TeamDTO> teams, String marketId){
+        return teams.flatMap(t ->
+                template.update(query(where("id").is(t.getId())),
+                        update("market_id", marketId),
+                        Team.class)
+        ).then();
+    }
+
     public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, User user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {

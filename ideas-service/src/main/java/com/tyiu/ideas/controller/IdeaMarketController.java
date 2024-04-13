@@ -67,6 +67,11 @@ public class IdeaMarketController {
         return ideaMarketService.getIdeaMarketAdvertisement(ideaMarketId);
     }
 
+    @GetMapping("/access/check/{marketId}")
+    public Mono<Boolean> checkOwnerAccessInMarket(@PathVariable String marketId, @AuthenticationPrincipal User user){
+        return ideaMarketService.checkOwnerAccessInMarket(marketId, user.getId());
+    }
+
     //////////////////////////////
     //   ___   ____    ____ ______
     //  / _ \ / __ \  / __//_  __/
@@ -142,10 +147,9 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/idea-status/{ideaMarketId}/{status}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
-    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status,
-                                             @AuthenticationPrincipal User user) {
-        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status, user);
+    @PreAuthorize("hasAnyAuthority('PROJECT_OFFICE','ADMIN')")
+    public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status) {
+        return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status);
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")
