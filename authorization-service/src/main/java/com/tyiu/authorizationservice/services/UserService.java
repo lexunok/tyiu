@@ -1,5 +1,6 @@
-package com.tyiu.authorizationservice;
+package com.tyiu.authorizationservice.services;
 
+import com.tyiu.authorizationservice.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;

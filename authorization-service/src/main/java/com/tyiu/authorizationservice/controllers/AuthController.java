@@ -1,5 +1,7 @@
-package com.tyiu.authorizationservice;
+package com.tyiu.authorizationservice.controllers;
 
+import com.tyiu.authorizationservice.repositories.UserRepository;
+import com.tyiu.authorizationservice.models.User;
 import com.tyiu.client.connections.IdeasClient;
 import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
