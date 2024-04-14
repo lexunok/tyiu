@@ -548,10 +548,8 @@ public class TeamService {
                 .flatMap(teamId -> template.getDatabaseClient()
                         .sql("SELECT tm.member_id FROM team_member tm WHERE tm.team_id = :teamId")
                         .bind("teamId", teamId)
-                        .fetch()
-                        .all()
-                        .map(row -> row.get("member_id").toString())
-                        .collectList()
+                        .map((row, rowMetaData) -> row.get("member_id", String.class))
+                        .all().collectList()
                         .map(userIds -> new TeamWithMembersDTO(teamId, userIds))
                 );
     }

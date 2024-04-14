@@ -1,9 +1,6 @@
 package com.tyiu.ideas.model.dto;
 
-import lombok.Data;
-import lombok.Builder;
-import lombok.NoArgsConstructor;
-import lombok.AllArgsConstructor;
+import lombok.*;
 
 import java.util.List;
 
@@ -12,6 +9,6 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 public class TeamWithMembersDTO {
-    private String teamID;
+    private String teamId;
     private List<String> userIds;
 }
