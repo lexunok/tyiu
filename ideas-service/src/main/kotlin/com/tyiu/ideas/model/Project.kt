@@ -10,27 +10,7 @@ import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import org.springframework.http.HttpStatus
 import java.time.LocalDate
 
-interface ProjectRepository: CoroutineCrudRepository<Project, String>{
-
-        @Query("""
-                SELECT *
-                FROM project 
-                    JOIN project_member ON project.id = project_member.project_id 
-                    JOIN idea ON idea.id = project.idea_id 
-                WHERE (project_member.user_id = :userId OR idea.initiator_id = :userId) and project.status = 'ACTIVE'
-        """)
-        fun findByStatus(userId: String): Flow<Project>
-
-        @Query("SELECT * FROM project JOIN project_member ON project.id = project_member.project_id WHERE project_member.user_id = :userId")
-        fun findProjectByUserId(userId: String): Flow<Project>
-
-        @Query("UPDATE project SET report = :report, status = 'DONE', finish_date = :finishDate WHERE id = :projectId")
-        suspend fun finishProjectById(projectId: String?, report: String?, finishDate: LocalDate = LocalDate.now())
-
-        @Query("UPDATE project SET status = 'PAUSED' WHERE id = :projectId")
-        suspend fun pauseProjectById(projectId: String?)
-
-}
+interface ProjectRepository: CoroutineCrudRepository<Project, String>
 @Table
 data class Project(
         @Id

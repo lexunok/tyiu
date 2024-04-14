@@ -5,18 +5,16 @@ import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.ideas.model.dto.TeamDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Market
+import com.tyiu.ideas.model.entities.relations.Team2Member
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.reactive.awaitSingle
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.data.r2dbc.core.insert
 import org.springframework.data.relational.core.query.Criteria
 import org.springframework.data.relational.core.query.Query
 import org.springframework.data.relational.core.query.Update
-import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
 import java.time.LocalDate
@@ -24,30 +22,9 @@ import java.util.concurrent.ConcurrentHashMap
 
 @Service
 class ProjectService(
-    private val projectRepository: ProjectRepository,
-    private val ideaRepository: IdeaRepository,
-    private val teamRepository: TeamRepository,
-    private val projectMemberRepository: ProjectMemberRepository,
-    private val projectMarksRepository: ProjectMarksRepository,
     val template: R2dbcEntityTemplate,
-    private val userRepository: UserRepository,
-    private val taskRepository: TaskRepository,
-    private val taskService: TaskService,
-    private val marketRepository: MarketRepository,
-    private val teamToMemberRepository: TeamToMemberRepository
+
 ) {
-    private suspend fun projectToDTO(project: Project): ProjectDTO {
-        val projects = project.toDTO()
-        val ideaToProject = project.ideaId?.let { ideaRepository.findById(it) }
-        projects.name = ideaToProject?.name
-        projects.description = ideaToProject?.description
-        projects.customer = ideaToProject?.customer
-        projects.initiator = ideaToProject?.initiatorId?.let { userRepository.findById(it)?.toDTO()}
-        projects.team?.membersCount = projects.team?.id?.let { teamToMemberRepository.countTeam2MemberByTeamId(it) }
-        projects.members = project.id?.let{ getProjectMembers(it) }?.toList()
-        projects.report = ReportProject(project.id,project.id?.let { getProjectMarks(it).toList() },project.report)
-        return projects
-    }
 
     private fun projectRow(row: Row, map: ConcurrentHashMap<String, ProjectDTO>): ProjectDTO?{
         val memberId = row.get("pm_user_id", String::class.java)
@@ -104,29 +81,30 @@ class ProjectService(
                     row.get("m_mark", String::class.java)?.toDouble(),
                     listOf()
                 )
-                if (project.report?.marks?.stream()?.noneMatch { m -> m.userId.equals(projectMarksDTO.userId) }!!){//разобраться как убрать лишние
+                if (project.report?.marks?.stream()?.noneMatch { m -> m.userId.equals(projectMarksDTO.userId) }!!){
                     project.report?.marks = project.report?.marks?.plus(projectMarksDTO)
                 }
-                val taskDTO = TaskDTO(
-                    id = row.get("tk_id", String::class.java),
-                    projectId = it,
-                    name = row.get("tk_name", String::class.java),
-                    tags = listOf()
-                )
-                val tagId = row.get("tag_id", String::class.java)
-                projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
-                if (tagId!=null){
-                    val tagDTO = TagDTO(
-                        tagId,
-                        row.get("tag_name", String::class.java),
-                        row.get("tag_color", String::class.java),
-                        null
+                val taskId = row.get("tk_id", String::class.java)
+                if (taskId!=null){
+                    val taskDTO = TaskDTO(
+                        id = row.get("tk_id", String::class.java),
+                        projectId = it,
+                        name = row.get("tk_name", String::class.java),
+                        tags = listOf()
                     )
-                    taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                    val tagId = row.get("tag_id", String::class.java)
+                    projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
+                    if (tagId!=null){
+                        val tagDTO = TagDTO(
+                            tagId,
+                            row.get("tag_name", String::class.java),
+                            row.get("tag_color", String::class.java),
+                            null
+                        )
+                        taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                    }
                 }
-
             }
-
             map[it] = project
             project
         }
@@ -160,7 +138,7 @@ class ProjectService(
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
                 LEFT JOIN project_member pmms ON pmms.user_id = mms.id
-                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id
             ORDER BY p.start_date ASC
@@ -196,7 +174,7 @@ class ProjectService(
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
                 LEFT JOIN project_member pmms ON pmms.user_id = mms.id
-                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id
                 JOIN project_member ON p.id = project_member.project_id 
@@ -235,7 +213,7 @@ class ProjectService(
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
                 LEFT JOIN project_member pmms ON pmms.user_id = mms.id
-                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id
                 JOIN project_member ON p.id = project_member.project_id 
@@ -274,7 +252,7 @@ class ProjectService(
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
                 LEFT JOIN project_member pmms ON pmms.user_id = mms.id
-                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id 
             WHERE p.id = :projectId
@@ -291,7 +269,7 @@ class ProjectService(
             .thenMany(Flux.fromIterable(map.values)).awaitFirst()
     }
 
-    fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> { //не работает пока что
+    fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> {
         val query = """
             SELECT
                 pm.project_id AS project_id, pm.user_id AS user_id, pm.team_id AS team_id, u.email AS email,
@@ -322,37 +300,56 @@ class ProjectService(
         val query = """
             SELECT
                 pms.project_id AS project_id, pms.user_id AS user_id,u.first_name AS first_name, u.last_name AS last_name,
-                pm.project_role AS project_role, pms.mark AS mark
+                pm.project_role AS project_role, pms.mark AS mark, t.id AS t_id, t.name AS t_name, tag.id AS tag_id, 
+                tag.name AS tag_name, tag.color AS tag_color
             FROM project_marks pms
                 LEFT JOIN users u ON u.id = pms.user_id
                 LEFT JOIN project_member pm ON pm.project_id = pms.project_id AND pm.user_id = pms.user_id
-            WHERE pm.project_id = :projectId
+                LEFT JOIN task t ON t.project_id = pms.project_id AND t.executor_id = pms.user_id
+                LEFT JOIN task_tag tg ON tg.task_id = t.id 
+                LEFT JOIN tag ON tag.id = tg.tag_id
+            WHERE pms.project_id = :projectId
         """.trimIndent()
+
+        val map = ConcurrentHashMap<String, ProjectMarksDTO>()
 
         return template.databaseClient
             .sql(query)
             .bind("projectId",projectId)
-            .map { row, _ -> ProjectMarksDTO(
-                row.get("project_id", String::class.java),
-                row.get("user_id", String::class.java),
-                row.get("first_name", String::class.java),
-                row.get("last_name", String::class.java),
-                ProjectRole.valueOf(row.get("project_role", String::class.java)!!),
-                row.get("mark", String::class.java)?.toDouble(),
-                listOf()
-            )}
-            .all().asFlow()
+            .map { row, _ ->
+                row.get("user_id", String::class.java)?.let {
+                    val projectMarksDTO = map.getOrDefault(it,ProjectMarksDTO(
+                        row.get("project_id", String::class.java),
+                        it,
+                        row.get("first_name", String::class.java),
+                        row.get("last_name", String::class.java),
+                        ProjectRole.valueOf(row.get("project_role", String::class.java)!!),
+                        row.get("mark", String::class.java)?.toDouble(),
+                        listOf()
+                    ))
+                    val taskDTO = TaskDTO(
+                        id = row.get("t_id", String::class.java),
+                        projectId = it,
+                        name = row.get("t_name", String::class.java),
+                        tags = listOf()
+                    )
+                    val tagId = row.get("tag_id", String::class.java)
+                    projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
+                    if (tagId!=null){
+                        val tagDTO = TagDTO(
+                            tagId,
+                            row.get("tag_name", String::class.java),
+                            row.get("tag_color", String::class.java),
+                            null
+                        )
+                        taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                    }
+                    map[it] = projectMarksDTO
+                    projectMarksDTO
+
+            }}
+            .all().thenMany(Flux.fromIterable(map.values)).asFlow()
     }
-        /*projectMarksRepository.findMarksByProjectId(projectId).map{ m ->
-            val projectMarks = m.toDTO()
-            val userToProject = m.userId?.let { userRepository.findById(it) }?.toDTO()
-            val projectMember = m.userId?.let { projectMemberRepository.findMemberByUserIdAndProjectId(it,projectId) }?.first()
-            projectMarks.projectRole = if (projectMember?.projectRole == ProjectRole.TEAM_LEADER) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER
-            projectMarks.firstName = userToProject?.firstName
-            projectMarks.lastName = userToProject?.lastName
-            projectMarks.tasks = m.userId?.let{taskRepository.findTaskByExecutorId(it).map{taskService.taskToDTO(it)}}?.toList()
-            return@map projectMarks
-        }*/
 
     //////////////////////////////
     //   ___   ____    ____ ______
@@ -365,50 +362,40 @@ class ProjectService(
         val createdProject = template.insert(Project(
             ideaId = ideaMarketDTO.ideaId,
             teamId = ideaMarketDTO.team.id,
-            /*finishDate = ideaMarketDTO.marketId?.let {template.selectOne(
-                Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),
-                Market::class.java)}.let {  }*/
+            finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
         )).awaitSingle()
 
         val projectDTO = createdProject.toDTO()
-        return projectDTO
-        /*val market = ideaMarketDTO.marketId?.let {marketRepository.findById(it) }
-        val project = Project(
-            ideaId = ideaMarketDTO.ideaId,
-            teamId = ideaMarketDTO.team.id,
-            finishDate = market?.finishDate
-        )
-        val createdProject = projectRepository.save(project)
-        val team = teamRepository.findById(ideaMarketDTO.team.id)
-        teamToMemberRepository.findMembersByTeamId(ideaMarketDTO.team.id).toList().forEach { m ->
-            projectMemberRepository.save(ProjectMember(
-                projectId = createdProject.id,
-                userId = m.memberId,
-                teamId = ideaMarketDTO.team.id,
-                projectRole = if (m.memberId == team?.leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
-                finishDate = market?.finishDate
-            ))
-        }
-        userRepository.findById(ideaMarketDTO.initiator.id).let {
-            projectMemberRepository.save(ProjectMember(
+        val members = template.select(Query.query(Criteria.where("team_id").`is`(ideaMarketDTO.team.id)),Team2Member::class.java).asFlow().toList()
+        members.forEach {
+            template.insert(
+                ProjectMember(
+                    projectId = createdProject.id,
+                    userId = it.memberId,
+                    teamId = ideaMarketDTO.team.id,
+                    projectRole = if (it.memberId == ideaMarketDTO.team?.leader?.id) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
+                    finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
+                )).awaitSingle()}
+        template.insert(
+            ProjectMember(
                 projectId = createdProject.id,
                 userId = ideaMarketDTO.initiator.id,
                 projectRole = ProjectRole.INITIATOR,
-                finishDate = market?.finishDate
-            ))
+                finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
+            )).awaitSingle()
+        return projectDTO
         }
-        return projectToDTO(createdProject)*/
-    }
 
-        suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
-        val project = projectRepository.findById(projectId)
-        val projectMember = ProjectMember(
-            projectId = projectId,
-            userId = addToProjectRequest.userId,
-            teamId = addToProjectRequest.teamId,
-            finishDate = project?.finishDate
-        )
-        return projectMemberRepository.save(projectMember).toDTO()
+
+
+    suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
+            val newMember = template.insert(ProjectMember(
+                projectId = projectId,
+                userId = addToProjectRequest.userId,
+                teamId = addToProjectRequest.teamId,
+                finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(projectId)),Project::class.java).awaitSingle().finishDate
+            )).awaitSingle()
+            return newMember.toDTO()
     }
 
     ////////////////////////
@@ -432,7 +419,7 @@ class ProjectService(
             Project::class.java).awaitSingle()
     }
 
-    suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
+    /*suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
         val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
         return if (projectLeader != null){
             val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
@@ -450,7 +437,7 @@ class ProjectService(
                 .bind("userId", projectLeaderRequest.userId!!)
                 .bind("projectId",projectLeaderRequest.projectId!!).await()
         }
-    }
+    }*/
 }
 
 
