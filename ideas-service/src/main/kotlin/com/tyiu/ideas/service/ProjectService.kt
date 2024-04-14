@@ -84,22 +84,25 @@ class ProjectService(
                 if (project.report?.marks?.stream()?.noneMatch { m -> m.userId.equals(projectMarksDTO.userId) }!!){
                     project.report?.marks = project.report?.marks?.plus(projectMarksDTO)
                 }
-                val taskDTO = TaskDTO(
-                    id = row.get("tk_id", String::class.java),
-                    projectId = it,
-                    name = row.get("tk_name", String::class.java),
-                    tags = listOf()
-                )
-                val tagId = row.get("tag_id", String::class.java)
-                projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
-                if (tagId!=null){
-                    val tagDTO = TagDTO(
-                        tagId,
-                        row.get("tag_name", String::class.java),
-                        row.get("tag_color", String::class.java),
-                        null
+                val taskId = row.get("tk_id", String::class.java)
+                if (taskId!=null){
+                    val taskDTO = TaskDTO(
+                        id = row.get("tk_id", String::class.java),
+                        projectId = it,
+                        name = row.get("tk_name", String::class.java),
+                        tags = listOf()
                     )
-                    taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                    val tagId = row.get("tag_id", String::class.java)
+                    projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
+                    if (tagId!=null){
+                        val tagDTO = TagDTO(
+                            tagId,
+                            row.get("tag_name", String::class.java),
+                            row.get("tag_color", String::class.java),
+                            null
+                        )
+                        taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                    }
                 }
             }
             map[it] = project
@@ -249,7 +252,7 @@ class ProjectService(
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
                 LEFT JOIN project_member pmms ON pmms.user_id = mms.id
-                LEFT JOIN task tk ON tk.project_id = p.id
+                LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id 
             WHERE p.id = :projectId
