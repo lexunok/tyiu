@@ -45,7 +45,7 @@ class ProjectService(
                 TeamDTO(
                     row.get("t_id", String::class.java),
                     row.get("t_name", String::class.java),
-                    row.get("t_members_count", Integer::class.java)?.toInt(),
+                    row.get("t_members_count", Int::class.javaObjectType),
                 ),
                 listOf(),
                 ReportProject(
@@ -79,7 +79,7 @@ class ProjectService(
                     row.get("mms_first_name", String::class.java),
                     row.get("mms_last_name", String::class.java),
                     ProjectRole.valueOf(row.get("pmms_project_role", String::class.java)!!),
-                    row.get("m_mark", String::class.java)?.toDouble(),
+                    row.get("m_mark", Double::class.javaObjectType),
                     listOf()
                 )
                 if (project.report?.marks?.stream()?.noneMatch { m -> m.userId.equals(projectMarksDTO.userId) }!!){
@@ -325,7 +325,7 @@ class ProjectService(
                         row.get("first_name", String::class.java),
                         row.get("last_name", String::class.java),
                         ProjectRole.valueOf(row.get("project_role", String::class.java)!!),
-                        row.get("mark", String::class.java)?.toDouble(),
+                        row.get("mark", Double::class.javaObjectType),
                         listOf()
                     ))
                     val taskId = row.get("t_id", String::class.java)

@@ -27,7 +27,6 @@ import java.util.concurrent.ConcurrentHashMap
 @Service
 class TaskService
     (
-    private val repository: TaskRepository,
     private val userRepository: UserRepository,
     private val tagRepository: TagRepository,
     val template: R2dbcEntityTemplate
@@ -49,7 +48,7 @@ class TaskService
                 it,
                 row.get("t_sprint_id", String::class.java),
                 row.get("t_project_id", String::class.java),
-                row.get("t_position", Integer::class.java)?.toInt(),
+                row.get("t_position", Int::class.javaObjectType),
                 row.get("t_name", String::class.java),
                 row.get("t_description", String::class.java),
                 row.get("t_leader_comment", String::class.java),
@@ -65,7 +64,7 @@ class TaskService
                     row.get("e_first_name", String::class.java),
                     row.get("e_last_name", String::class.java)
                 ),
-                row.get("t_work_hour", Integer::class.java)?.toInt(),
+                row.get("t_work_hour", Int::class.javaObjectType),
                 row.get("t_start_date", LocalDate::class.java),
                 row.get("t_finish_date", LocalDate::class.java),
                 listOf(),
@@ -76,7 +75,7 @@ class TaskService
                     tagId,
                     row.get("tag_name", String::class.java),
                     row.get("tag_color", String::class.java),
-                    row.get("tag_confirmed", String::class.java)!![0] == 't',
+                    row.get("tag_confirmed", Boolean::class.javaObjectType),
                     row.get("tag_creator_id", String::class.java),
                     row.get("tag_updater_id", String::class.java),
                     row.get("tag_deleter_id", String::class.java)
@@ -210,7 +209,9 @@ class TaskService
             Task (
                 sprintId = taskDTO.sprintId,
                 projectId = taskDTO.projectId,
-                position = if (taskDTO.sprintId == null) taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.plus(1) else null,
+                position = if (taskDTO.sprintId == null) taskDTO.projectId?.let { template.count(query(where("project_id").`is`(it)
+                    .and("status").`is`(TaskStatus.InBackLog.name)),
+                    Task::class.java).awaitSingle().toInt() }?.plus(1) else null,
                 name = taskDTO.name,
                 description = taskDTO.description,
                 leaderComment = taskDTO.leaderComment,
