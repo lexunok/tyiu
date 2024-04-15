@@ -22,7 +22,7 @@ class NotificationRabbitMQ(private val notificationService: NotificationService,
     suspend fun receiveNotification(notification: NotificationDTO) {
         val createdNotification = notificationService.createNotification(notification).toNotificationRequest()
         createdNotification.link = path + createdNotification.link
-        notificationEmailRabbitMQ.makeNotification(createdNotification)
+//        notificationEmailRabbitMQ.makeNotification(createdNotification)
         notificationTelegramRabbitMQ.makeNotification(createdNotification)
     }
 }
