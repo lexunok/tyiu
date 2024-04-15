@@ -19,7 +19,7 @@ class TagService (val template: R2dbcEntityTemplate) {
             row.get("tag_id", String::class.java),
             row.get("name", String::class.java),
             row.get("color", String::class.java),
-            row.get("confirmed", String::class.java)?.toBoolean(),
+            row.get("confirmed", String::class.java)!![0] == 't',
             row.get("creator_id", String::class.java),
             row.get("updater_id", String::class.java),
             row.get("deleter_id", String::class.java)

@@ -76,7 +76,7 @@ class TaskService
                     tagId,
                     row.get("tag_name", String::class.java),
                     row.get("tag_color", String::class.java),
-                    row.get("tag_confirmed", String::class.java)?.toBoolean(),
+                    row.get("tag_confirmed", String::class.java)!![0] == 't',
                     row.get("tag_creator_id", String::class.java),
                     row.get("tag_updater_id", String::class.java),
                     row.get("tag_deleter_id", String::class.java)
