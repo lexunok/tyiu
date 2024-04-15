@@ -1,17 +1,22 @@
 package com.tyiu.client.models;
 
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class UserDTO {
     private String id;
     private String email;
     private String lastName;
     private String firstName;
     private String password;
+    private Boolean isDeleted;
     private List<Role> roles;
     private LocalDateTime createdAt;
 

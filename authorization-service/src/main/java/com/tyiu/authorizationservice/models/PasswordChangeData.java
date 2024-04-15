@@ -1,11 +1,7 @@
 package com.tyiu.authorizationservice.models;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
+import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.Id;
 
 import java.time.LocalDateTime;
 
@@ -22,9 +18,9 @@ public class PasswordChangeData {
     private String id;
     @Column(unique = true)
     private String email;
-    @Column(unique = true)
-    private Integer code;
-    private Integer wrongTries;
+    private String code;
+    @Builder.Default
+    private Integer wrongTries = 0;
     private LocalDateTime dateExpired;
 
 }
