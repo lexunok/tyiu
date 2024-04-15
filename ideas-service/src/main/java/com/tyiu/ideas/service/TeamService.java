@@ -348,6 +348,7 @@ public class TeamService {
                 .bind("teamId", teamId)
                 .map((row, rowMetadata) -> new ProjectDTO(
                         row.get("p_id", String.class),
+                        row.get("p_idea_id", String.class),
                         row.get("i_name", String.class),
                         row.get("i_description", String.class),
                         row.get("i_customer", String.class),

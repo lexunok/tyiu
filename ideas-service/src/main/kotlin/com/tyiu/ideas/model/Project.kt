@@ -25,6 +25,7 @@ data class Project(
 
 data class ProjectDTO (
         var id:String? = null,
+        val ideaId:String? = null,
         var name: String?=null,
         var description: String?=null,
         var customer: String?=null,
@@ -54,6 +55,7 @@ data class ReportProject(
 
 fun Project.toDTO(): ProjectDTO=ProjectDTO(
         id = id,
+        ideaId = ideaId,
         startDate = startDate,
         finishDate = finishDate,
         status = status,
