@@ -25,6 +25,7 @@ public class AuthController {
     public void register(@RequestBody UserDTO userDTO){
         User user = mapper.map(userDTO,User.class);
         user.setPassword(encoder.encode(user.getPassword()));
+        user.setIsDeleted(false);
         repository.save(user);
         ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
     }

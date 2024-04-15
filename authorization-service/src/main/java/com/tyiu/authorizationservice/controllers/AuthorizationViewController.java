@@ -1,13 +1,13 @@
 package com.tyiu.authorizationservice.controllers;
 
+import com.tyiu.authorizationservice.models.PasswordChangeRequest;
 import com.tyiu.authorizationservice.models.User;
 import com.tyiu.authorizationservice.services.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.ModelAndView;
 
 @Controller
 @RequiredArgsConstructor
@@ -35,17 +35,12 @@ public class AuthorizationViewController {
     }
 
     @PostMapping("/recovery-password")
-    public String recoveryPassword(@RequestParam String email) {
+    public ModelAndView recoveryPassword(@RequestParam String email) {
         return accountService.generateAndSendCode(email);
     }
 
-    @GetMapping("/new-password")
-    public String showNewPasswordForm() {
-        return "new-password";
-    }
-
     @PostMapping("/new-password")
-    public String newPassword(@RequestParam String code, @RequestParam String password) {
-        return "login";
+    public String newPassword(PasswordChangeRequest request) {
+        return accountService.changePassword(request);
     }
 }

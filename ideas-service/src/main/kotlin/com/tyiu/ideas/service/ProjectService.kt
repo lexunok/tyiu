@@ -32,6 +32,7 @@ class ProjectService(
         return row.get("p_id", String::class.java)?.let {
             val project = map.getOrDefault(it,ProjectDTO(
                 it,
+                row.get("p_idea_id", String::class.java),
                 row.get("id_name", String::class.java),
                 row.get("id_description", String::class.java),
                 row.get("id_customer", String::class.java),
@@ -120,7 +121,7 @@ class ProjectService(
     fun getAllProjects(): Flow<ProjectDTO> {
         val query = """
             SELECT
-                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                p.id AS p_id, id.id AS p_idea_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
                 id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
@@ -156,7 +157,7 @@ class ProjectService(
     fun getYourProjects(userId: String): Flow<ProjectDTO> {
         val query = """
             SELECT
-                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                p.id AS p_id, id.id AS p_idea_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
                 id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
@@ -195,7 +196,7 @@ class ProjectService(
     fun getYourActiveProjects(userId: String): Flow<ProjectDTO> {
         val query = """
             SELECT
-                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                p.id AS p_id, id.id AS p_idea_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
                 id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
@@ -234,7 +235,7 @@ class ProjectService(
     suspend fun getOneProject(projectId: String): ProjectDTO? {
         val query = """
             SELECT
-                p.id AS p_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
+                p.id AS p_id, id.id AS p_idea_id, p.report AS p_report,p.start_date AS p_start_date, p.finish_date AS p_finish_date, p.status AS p_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 t.id AS t_id, t.name AS t_name, id.name AS id_name, id.description AS id_description,
                 id.customer AS id_customer, pm.user_id AS pm_user_id, pm.team_id AS pm_team_id, pms.email AS pms_email,
@@ -327,22 +328,25 @@ class ProjectService(
                         row.get("mark", String::class.java)?.toDouble(),
                         listOf()
                     ))
-                    val taskDTO = TaskDTO(
-                        id = row.get("t_id", String::class.java),
-                        projectId = it,
-                        name = row.get("t_name", String::class.java),
-                        tags = listOf()
-                    )
-                    val tagId = row.get("tag_id", String::class.java)
-                    projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
-                    if (tagId!=null){
-                        val tagDTO = TagDTO(
-                            tagId,
-                            row.get("tag_name", String::class.java),
-                            row.get("tag_color", String::class.java),
-                            null
+                    val taskId = row.get("t_id", String::class.java)
+                    if (taskId!=null){
+                        val taskDTO = TaskDTO(
+                            id = taskId,
+                            projectId = it,
+                            name = row.get("t_name", String::class.java),
+                            tags = listOf()
                         )
-                        taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                        val tagId = row.get("tag_id", String::class.java)
+                        projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
+                        if (tagId!=null){
+                            val tagDTO = TagDTO(
+                                tagId,
+                                row.get("tag_name", String::class.java),
+                                row.get("tag_color", String::class.java),
+                                null
+                            )
+                            taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                        }
                     }
                     map[it] = projectMarksDTO
                     projectMarksDTO

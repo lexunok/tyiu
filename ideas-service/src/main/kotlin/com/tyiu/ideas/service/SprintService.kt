@@ -3,7 +3,11 @@ package com.tyiu.ideas.service
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.reactive.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.relational.core.query.Criteria.where
+import org.springframework.data.relational.core.query.Query.query
+import org.springframework.data.relational.core.query.Update.update
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -152,15 +156,31 @@ class SprintService (
 
     //TODO: добавить изменение списка задач
     suspend fun updateSprintInfo(sprintId: String, sprintDTO: SprintDTO){
-        val query =
-            "UPDATE sprint SET name = :name, goal = :goal, start_date = :start_date, finish_date = :finish_date, working_hours = :working_hours WHERE id = :sprintId"
-        return template.databaseClient.sql(query)
-            .bind("name", sprintDTO.name!!)
-            .bind("goal", sprintDTO.goal!!)
-            .bind("start_date", sprintDTO.startDate!!)
-            .bind("finish_date", sprintDTO.finishDate!!)
-            .bind("working_hours", sprintDTO.workingHours!!)
-            .bind("sprintId", sprintId).await()
+        if (sprintDTO.goal != null){
+            template.update(query(where("id").`is`(sprintId)),
+                update("name", sprintDTO.name!!)
+                    .set("goal", sprintDTO.goal)
+                    .set("start_date", sprintDTO.startDate!!)
+                    .set("finish_date", sprintDTO.finishDate!!)
+                    .set("working_hours", sprintDTO.workingHours!!),
+                Sprint::class.java).awaitSingle()
+        }
+        else {
+            template.update(query(where("id").`is`(sprintId)),
+                update("name", sprintDTO.name!!)
+                    .set("start_date", sprintDTO.startDate!!)
+                    .set("finish_date", sprintDTO.finishDate!!)
+                    .set("working_hours", sprintDTO.workingHours!!),
+                Sprint::class.java).awaitSingle()
+        }
+        template.update(query(where("sprint_id").`is`(sprintId)),
+            update("sprint_id", null),
+            Task::class.java).awaitSingle()
+        sprintDTO.tasks?.forEach {
+            template.update(query(where("id").`is`(it.id!!)),
+                update("sprint_id", sprintId),
+                Task::class.java).awaitSingle()
+        }
     }
 
     suspend fun changeSprintStatus(sprintId: String, status: SprintStatus){
