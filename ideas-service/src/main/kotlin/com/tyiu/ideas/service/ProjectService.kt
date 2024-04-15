@@ -327,22 +327,25 @@ class ProjectService(
                         row.get("mark", String::class.java)?.toDouble(),
                         listOf()
                     ))
-                    val taskDTO = TaskDTO(
-                        id = row.get("t_id", String::class.java),
-                        projectId = it,
-                        name = row.get("t_name", String::class.java),
-                        tags = listOf()
-                    )
-                    val tagId = row.get("tag_id", String::class.java)
-                    projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
-                    if (tagId!=null){
-                        val tagDTO = TagDTO(
-                            tagId,
-                            row.get("tag_name", String::class.java),
-                            row.get("tag_color", String::class.java),
-                            null
+                    val taskId = row.get("t_id", String::class.java)
+                    if (taskId!=null){
+                        val taskDTO = TaskDTO(
+                            id = taskId,
+                            projectId = it,
+                            name = row.get("t_name", String::class.java),
+                            tags = listOf()
                         )
-                        taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                        val tagId = row.get("tag_id", String::class.java)
+                        projectMarksDTO.tasks = projectMarksDTO.tasks?.plus(taskDTO)
+                        if (tagId!=null){
+                            val tagDTO = TagDTO(
+                                tagId,
+                                row.get("tag_name", String::class.java),
+                                row.get("tag_color", String::class.java),
+                                null
+                            )
+                            taskDTO.tags = taskDTO.tags?.plus(tagDTO)
+                        }
                     }
                     map[it] = projectMarksDTO
                     projectMarksDTO
