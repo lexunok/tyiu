@@ -154,13 +154,23 @@ class SprintService (
     suspend fun updateSprintInfo(sprintId: String, sprintDTO: SprintDTO){
         val query =
             "UPDATE sprint SET name = :name, goal = :goal, start_date = :start_date, finish_date = :finish_date, working_hours = :working_hours WHERE id = :sprintId"
-        return template.databaseClient.sql(query)
-            .bind("name", sprintDTO.name!!)
-            .bind("goal", sprintDTO.goal!!)
-            .bind("start_date", sprintDTO.startDate!!)
-            .bind("finish_date", sprintDTO.finishDate!!)
-            .bind("working_hours", sprintDTO.workingHours!!)
-            .bind("sprintId", sprintId).await()
+        if (sprintDTO.goal != null){
+            return template.databaseClient.sql(query)
+                .bind("name", sprintDTO.name!!)
+                .bind("goal", sprintDTO.goal)
+                .bind("start_date", sprintDTO.startDate!!)
+                .bind("finish_date", sprintDTO.finishDate!!)
+                .bind("working_hours", sprintDTO.workingHours!!)
+                .bind("sprintId", sprintId).await()
+        }
+        else {
+            return template.databaseClient.sql(query)
+                .bind("name", sprintDTO.name!!)
+                .bind("start_date", sprintDTO.startDate!!)
+                .bind("finish_date", sprintDTO.finishDate!!)
+                .bind("working_hours", sprintDTO.workingHours!!)
+                .bind("sprintId", sprintId).await()
+        }
     }
 
     suspend fun changeSprintStatus(sprintId: String, status: SprintStatus){
