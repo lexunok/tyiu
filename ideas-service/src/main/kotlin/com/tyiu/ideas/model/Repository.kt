@@ -34,8 +34,3 @@ fun Idea.toDTO(): IdeaDTO = IdeaDTO(
     customer,
     initiatorId,
 )
-
-fun Team.toDTO(): TeamDTO = TeamDTO(
-    id,
-    name,
-)

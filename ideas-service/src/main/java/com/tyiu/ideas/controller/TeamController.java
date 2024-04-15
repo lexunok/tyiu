@@ -150,6 +150,11 @@ public class TeamController {
         return teamService.getSkillsByRequests(users);
     }
 
+    @PostMapping("/get-team-members")
+    public Flux<TeamWithMembersDTO> getTeamMembers(@RequestBody List<String> teamIds) {
+        return teamService.getTeamMembers(teamIds);
+    }
+
     ///////////////////////////////////////////
     //   ___    ____   __    ____ ______   ____
     //  / _ \  / __/  / /   / __//_  __/  / __/

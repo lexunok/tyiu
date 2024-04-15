@@ -1,5 +1,6 @@
 package com.tyiu.ideas.model.dto;
 
+import com.tyiu.ideas.model.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -32,12 +33,14 @@ public class TeamDTO {
     private List<SkillDTO> skills;
     private List<SkillDTO> wantedSkills;
 
-    public TeamDTO(String id, String name) {
+    public TeamDTO(String id, String name, Integer membersCount) {
         this.id = id;
         this.name = name;
+        this.membersCount = membersCount;
     }
 
     public String getId() { return id; }
+    public UserDTO getLeader() { return leader; }
     public Integer getMembersCount() { return membersCount; }
     public void setMembersCount(Integer data) { membersCount = data; }
 }

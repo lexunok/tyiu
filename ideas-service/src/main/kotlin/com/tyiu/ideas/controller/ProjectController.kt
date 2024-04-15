@@ -130,8 +130,7 @@ class ProjectController (private val projectService: ProjectService) {
             throw AccessException("Нет прав")
         }
     }
-
-    @PutMapping("/leader/change")
+    /*@PutMapping("/leader/change")
     suspend fun putTeamLeader(@RequestBody projectLeaderRequest: ProjectLeaderRequest,@AuthenticationPrincipal user: User) : InfoResponse {
         return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
             try {
@@ -145,6 +144,6 @@ class ProjectController (private val projectService: ProjectService) {
         else {
             throw AccessException("Нет прав")
         }
-    }
+    }*/
 
 }
