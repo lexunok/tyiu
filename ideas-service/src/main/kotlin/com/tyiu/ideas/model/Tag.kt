@@ -45,11 +45,5 @@ fun Tag.toDTO(): TagDTO = TagDTO (
     deleterId = deleterId
 )
 
-data class TaskTagRequest(
-    var tagName: String? = null,
-    var tagColor: String? = null
-)
-
-
 
 

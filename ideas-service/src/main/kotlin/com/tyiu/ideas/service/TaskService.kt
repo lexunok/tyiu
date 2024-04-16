@@ -1,19 +1,13 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.dto.TeamMemberDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.data.r2dbc.core.delete
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
@@ -25,23 +19,8 @@ import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class TaskService
-    (
-    private val userRepository: UserRepository,
-    private val tagRepository: TagRepository,
-    val template: R2dbcEntityTemplate
-    )
+class TaskService(val template: R2dbcEntityTemplate)
 {
-    suspend fun taskToDTO(task: Task): TaskDTO
-    {
-        val tasks = task.toDTO()
-
-        tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.tags = task.id?.let { tagRepository.findAllTagByTaskId(it).toList().map { tag -> tag.toDTO() } }
-        return tasks
-    }
-
     private fun taskRow(row: Row, map: ConcurrentHashMap<String, TaskDTO>): TaskDTO?{
         return row.get("t_id", String::class.java)?.let {
             val task = map.getOrDefault(it,TaskDTO(
@@ -198,7 +177,7 @@ class TaskService
             .sql(query)
             .bind("taskId",taskId)
             .map { row, _ -> taskRow(row, map) }
-            .first()
+            .all()
             .thenMany(Flux.fromIterable(map.values))
             .awaitFirst()
     }

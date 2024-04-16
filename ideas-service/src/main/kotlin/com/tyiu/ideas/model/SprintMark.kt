@@ -1,17 +1,8 @@
 package com.tyiu.ideas.model
 
-import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
-import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
-import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 
-interface SprintMarkRepository: CoroutineCrudRepository<SprintMark, String>{
-
-    fun findSprintMarksBySprintId(sprintId: String): Flow<SprintMark>
-
-    fun findSprintMarksByProjectIdAndUserId(projectId: String, userId: String?): Flow<SprintMark>
-}
 @Table
 data class SprintMark(
     @Id
@@ -32,13 +23,4 @@ data class SprintMarkDTO(
     val projectRole: ProjectRole,
     val mark:Double? = null,
     var tasks: List<TaskDTO>? = null,
-)
-
-fun SprintMark.toDTO(): SprintMarkDTO = SprintMarkDTO(
-    id = id,
-    projectId = projectId,
-    sprintId = sprintId,
-    userId = userId,
-    projectRole = projectRole,
-    mark = mark,
 )
