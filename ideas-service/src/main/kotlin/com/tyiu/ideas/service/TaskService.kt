@@ -5,7 +5,7 @@ import com.tyiu.ideas.model.dto.UserDTO
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirst
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.data.relational.core.query.Criteria.where
@@ -179,7 +179,7 @@ class TaskService(val template: R2dbcEntityTemplate)
             .map { row, _ -> taskRow(row, map) }
             .all()
             .thenMany(Flux.fromIterable(map.values))
-            .awaitFirst()
+            .awaitFirstOrNull()
     }
 
     //post

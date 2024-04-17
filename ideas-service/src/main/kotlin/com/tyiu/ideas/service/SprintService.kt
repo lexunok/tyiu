@@ -6,18 +6,14 @@ import com.tyiu.ideas.model.entities.User
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirst
-import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.data.r2dbc.core.select
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
-import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux
-import reactor.core.publisher.Mono
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -130,7 +126,7 @@ class SprintService (val template: R2dbcEntityTemplate)
             .map { row, _ -> sprintRow(row, map, map2) }
             .all()
             .thenMany(Flux.fromIterable(map.values))
-            .awaitFirst()
+            .awaitFirstOrNull()
     }
 
     suspend fun getActiveSprint(projectId: String): SprintDTO? {
@@ -165,7 +161,7 @@ class SprintService (val template: R2dbcEntityTemplate)
             .map { row, _ -> sprintRow(row, map, map2) }
             .all()
             .thenMany(Flux.fromIterable(map.values))
-            .awaitFirst()
+            .awaitFirstOrNull()
     }
 
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> {
@@ -364,7 +360,7 @@ class SprintService (val template: R2dbcEntityTemplate)
         }
     }
 
-    suspend fun updateSprintInfo(sprintId: String, sprintDTO: SprintDTO){
+    suspend fun updateSprintInfo(sprintId: String, sprintDTO: SprintDTO, userId: String){
         if (sprintDTO.goal != null){
             template.update(query(where("id").`is`(sprintId)),
                 update("name", sprintDTO.name!!)
@@ -387,8 +383,48 @@ class SprintService (val template: R2dbcEntityTemplate)
             Task::class.java).awaitSingle()
         sprintDTO.tasks?.forEach {
             template.update(query(where("id").`is`(it.id!!)),
-                update("sprint_id", sprintId),
+                update("sprint_id", sprintId)
+                    .set("position", null)
+                    .set("status", if (it.status == TaskStatus.InBackLog) TaskStatus.NewTask.name else it.status!!.name),
                 Task::class.java).awaitSingle()
+            if (it.status == TaskStatus.InBackLog) {
+                template.update(query(where("task_id").`is`(it.id!!)
+                    .and("end_date").isNull),
+                    update("end_date", LocalDateTime.now()),
+                    TaskMovementLog::class.java).awaitSingle()
+                template.insert(
+                    TaskMovementLog(
+                        taskId = it.id,
+                        userId = userId,
+                        startDate = LocalDateTime.now(),
+                        status = TaskStatus.NewTask
+                    )
+                ).awaitSingle()
+            }
+            it.status = if (it.status == TaskStatus.InBackLog) TaskStatus.NewTask else it.status!!
+        }
+        val tasks = template.select(query(where("sprint_id").isNull
+            .and("status").not(TaskStatus.InBackLog.name)), Task::class.java).asFlow()
+        var pos = template.count(query(where("project_id").`is`(sprintDTO.projectId!!)
+            .and("status").`is`(TaskStatus.InBackLog.name)), Task::class.java).awaitSingle().toInt()
+        tasks.collect {
+            pos = pos.plus(1)
+            template.update(query(where("id").`is`(it.id!!)),
+                update("position", pos)
+                    .set("status", TaskStatus.InBackLog.name),
+                Task::class.java).awaitSingle()
+            template.update(query(where("task_id").`is`(it.id)
+                .and("end_date").isNull),
+                update("end_date", LocalDateTime.now()),
+                TaskMovementLog::class.java).awaitSingle()
+            template.insert(
+                TaskMovementLog(
+                    taskId = it.id,
+                    userId = userId,
+                    startDate = LocalDateTime.now(),
+                    status = TaskStatus.InBackLog
+                )
+            ).awaitSingle()
         }
     }
 

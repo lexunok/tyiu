@@ -105,7 +105,7 @@ class SprintController(private val sprintService: SprintService)
                                  @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles2)) {
             try {
-                sprintService.updateSprintInfo(sprintId, sprintDTO)
+                sprintService.updateSprintInfo(sprintId, sprintDTO, user.id)
                 InfoResponse(HttpStatus.OK,"Успешное изменение спринта")
             }
             catch(e: Exception){
