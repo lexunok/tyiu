@@ -4,7 +4,11 @@ import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.toList
+import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
+import org.springframework.data.relational.core.query.Criteria.where
+import org.springframework.data.relational.core.query.Query.query
+import org.springframework.data.relational.core.query.Update.update
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -36,7 +40,7 @@ class TaskMovementLogService
 
     suspend fun addNewTaskLog(taskMovementLogDTO: TaskMovementLogDTO): TaskMovementLogDTO {
         taskMovementLogDTO.let {
-            it.task?.id.let {taskId ->
+            it.task?.id.let { taskId ->
                 if (taskId?.let { it1 -> taskMovementLogRepository.existsTaskMovementLogByTaskId(it1) } == true) {
                     template.databaseClient
                         .sql("UPDATE task_movement_log SET end_date = :finishDate WHERE task_id = :taskId")
@@ -44,11 +48,17 @@ class TaskMovementLogService
                         .bind("taskId", taskId)
                         .await()
                 }
-                template.databaseClient
-                    .sql("UPDATE task SET status = :status WHERE id = :taskId")
-                    .bind("status", it.status!!.toString())
-                    .bind("taskId", taskId!!)
-                    .await()
+                if (it.status == TaskStatus.NewTask){
+                    template.update(query(where("id").`is`(taskId!!)),
+                        update("status", it.status!!.toString())
+                            .set("executor_id", null),
+                        Task::class.java).awaitSingle()
+                }
+                else {
+                    template.update(query(where("id").`is`(taskId!!)),
+                        update("status", it.status!!.toString()),
+                        Task::class.java).awaitSingle()
+                }
             }
             val taskMovementLog = TaskMovementLog(
                 taskId = it.task?.id,

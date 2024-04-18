@@ -233,6 +233,10 @@ class TaskService(val template: R2dbcEntityTemplate)
                 .set("description", taskDTO.description)
                 .set("work_hour", taskDTO.workHour),
             Task::class.java).awaitSingle()
+        template.delete(query(where("task_id").`is`(taskId)), Task2Tag::class.java).awaitSingle()
+        taskDTO.tags?.forEach {
+            template.insert(Task2Tag(taskId, it.id)).awaitSingle()
+        }
     }
 
     suspend fun putUpdateExecutorTask(taskId: String, executorId: String){
