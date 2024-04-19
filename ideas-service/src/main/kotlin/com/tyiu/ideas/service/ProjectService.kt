@@ -5,6 +5,7 @@ import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.ideas.model.dto.TeamDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Market
+import com.tyiu.ideas.model.entities.Team
 import com.tyiu.ideas.model.entities.relations.Team2Member
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
@@ -368,6 +369,8 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             )
         ).awaitSingle()
 
+        val leaderId = template.selectOne(query(where("id").`is`(ideaMarketDTO.team.id)), Team::class.java).awaitSingle().leaderId
+
         template.select(query(where("team_id").`is`(ideaMarketDTO.team.id)),Team2Member::class.java)
             .asFlow()
             .collect {
@@ -376,7 +379,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                         projectId = createdProject.id,
                         userId = it.memberId,
                         teamId = ideaMarketDTO.team.id,
-                        projectRole = if (it.memberId == ideaMarketDTO.team?.leader?.id) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
+                        projectRole = if (it.memberId == leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
                         finishDate = createdProject.finishDate
                     )
                 ).awaitSingle()
