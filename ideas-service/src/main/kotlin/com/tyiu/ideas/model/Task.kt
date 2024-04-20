@@ -38,8 +38,8 @@ data class TaskDTO (
     val projectId: String? = null,
 
     var position:Int? = null,
-    val name:String? = null,
-    val description: String? = null,
+    var name:String? = null,
+    var description: String? = null,
     var leaderComment: String? = null,
 
     var initiator: UserDTO? = null,
