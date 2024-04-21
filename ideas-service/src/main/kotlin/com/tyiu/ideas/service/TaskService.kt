@@ -54,10 +54,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                     tagId,
                     row.get("tag_name", String::class.java),
                     row.get("tag_color", String::class.java),
-                    row.get("tag_confirmed", Boolean::class.javaObjectType),
-                    row.get("tag_creator_id", String::class.java),
-                    row.get("tag_updater_id", String::class.java),
-                    row.get("tag_deleter_id", String::class.java)
+                    row.get("tag_confirmed", Boolean::class.javaObjectType)
                 )
                 task.tags = task.tags?.plus(tagDTO)
             }
@@ -87,8 +84,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -110,8 +106,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -132,8 +127,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -161,8 +155,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id

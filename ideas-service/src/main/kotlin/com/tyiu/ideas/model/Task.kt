@@ -3,10 +3,7 @@ package com.tyiu.ideas.model
 import com.tyiu.ideas.model.dto.UserDTO
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
-import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
-
-interface TaskRepository: CoroutineCrudRepository<Task, String>
 
 @Table
 data class Task (
