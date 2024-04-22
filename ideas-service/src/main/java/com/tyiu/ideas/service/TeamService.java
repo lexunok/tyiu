@@ -1,10 +1,7 @@
 package com.tyiu.ideas.service;
 
 import com.tyiu.ideas.config.exception.AccessException;
-import com.tyiu.ideas.model.ProjectDTO;
-import com.tyiu.ideas.model.ProjectMember;
-import com.tyiu.ideas.model.ProjectRole;
-import com.tyiu.ideas.model.ProjectStatus;
+import com.tyiu.ideas.model.*;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.email.requests.NotificationEmailRequest;
 import com.tyiu.ideas.model.entities.Team;
@@ -348,6 +345,7 @@ public class TeamService {
                 .bind("teamId", teamId)
                 .map((row, rowMetadata) -> new ProjectDTO(
                         row.get("p_id", String.class),
+                        row.get("p_idea_id", String.class),
                         row.get("i_name", String.class),
                         row.get("i_description", String.class),
                         row.get("i_customer", String.class),
@@ -503,6 +501,11 @@ public class TeamService {
 
 
         return template.insert(new Team2Member(teamId, userId, Boolean.TRUE, LocalDate.now(), null))
+                .then(template.selectOne(query(where("team_id").is(teamId)), Project.class)
+                        .flatMap(project ->
+                                template.insert(new ProjectMember(project.getId(), userId, teamId, ProjectRole.MEMBER, LocalDate.now(), null))
+                        )
+                )
                 .then(template.getDatabaseClient()
                         .sql(query)
                         .bind("userId", userId)
@@ -651,7 +654,7 @@ public class TeamService {
                                             .then(template.update(query(where("id").is(teamId)),
                                                     update("leader_id", userId),
                                                     Team.class))
-                                            .then(template.exists(query(where("team_id").is(t.getId())), ProjectMember.class)
+                                            .then(template.exists(query(where("team_id").is(t.getId())), Project.class)
                                                     .flatMap(thisExists -> {
                                                         if (Boolean.TRUE.equals(thisExists)){
                                                             return template.update(query(where("user_id").is(t.getLeaderId())),

@@ -102,9 +102,15 @@ class SprintController(private val sprintService: SprintService)
     @PutMapping("/{sprintId}/update")
     suspend fun updateSprintInfo(@PathVariable sprintId: String,
                                  @RequestBody sprintDTO: SprintDTO,
-                                 @AuthenticationPrincipal user: User) {
+                                 @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles2)) {
-            sprintService.updateSprintInfo(sprintId, sprintDTO)
+            try {
+                sprintService.updateSprintInfo(sprintId, sprintDTO, user.id)
+                InfoResponse(HttpStatus.OK,"Успешное изменение спринта")
+            }
+            catch(e: Exception){
+                InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить спринт")
+            }
         }
         else {
             throw AccessException("Нет прав")
