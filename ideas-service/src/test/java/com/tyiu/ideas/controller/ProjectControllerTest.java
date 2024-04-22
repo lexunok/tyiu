@@ -49,7 +49,6 @@ public class ProjectControllerTest extends TestContainers {
 
     private UserDTO admin;
     private UserDTO member;
-
     private UserDTO initiator;
 
     private GroupDTO groupExpert;
@@ -325,6 +324,16 @@ public class ProjectControllerTest extends TestContainers {
                 .get()
                 .uri(main_path + path)
                 .header("Authorization", jwt_admin)
+                .exchange()
+                .expectBodyList(ProjectDTO.class)
+                .returnResult().getResponseBody();
+    }
+
+    private List<ProjectDTO> getListPrivateProject(String path, String jwt){
+        return webTestClient
+                .get()
+                .uri(main_path + path)
+                .header("Authorization", jwt)
                 .exchange()
                 .expectBodyList(ProjectDTO.class)
                 .returnResult().getResponseBody();
@@ -620,7 +629,7 @@ public class ProjectControllerTest extends TestContainers {
         ProjectDTO prj2 = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin);
         ProjectDTO prj3 = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin);
         ProjectDTO prj4 = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin);
-        List<ProjectDTO> yourProjects = getListProject("/private/all");
+        List<ProjectDTO> yourProjects = getListPrivateProject("/private/all", jwt_member);
         assertNotNull(yourProjects);
         List<ProjectDTO> projects = getListProject("/all");
         assertNotNull(projects);
@@ -654,7 +663,7 @@ public class ProjectControllerTest extends TestContainers {
         ProjectDTO prj2 = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin);
         ProjectDTO prj3 = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin);
         ProjectDTO prj4 = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin);
-        List<ProjectDTO> activeProjects = getListProject("/active/all");
+        List<ProjectDTO> activeProjects = getListPrivateProject("/active/all", jwt_member);
         assertNotNull(activeProjects);
         List<ProjectDTO> projects = getListProject("/all");
         assertNotNull(projects);
