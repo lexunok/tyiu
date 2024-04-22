@@ -1,8 +1,8 @@
-package com.tyiu.authorizationservice.controllers;
+package com.tyiu.authorizationservice.controller;
 
-import com.tyiu.authorizationservice.models.PasswordChangeRequest;
-import com.tyiu.authorizationservice.models.User;
-import com.tyiu.authorizationservice.services.AccountService;
+import com.tyiu.authorizationservice.model.PasswordChangeRequest;
+import com.tyiu.authorizationservice.model.User;
+import com.tyiu.authorizationservice.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;

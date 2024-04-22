@@ -1,6 +1,6 @@
-package com.tyiu.authorizationservice.repositories;
+package com.tyiu.authorizationservice.repository;
 
-import com.tyiu.authorizationservice.models.PasswordChangeData;
+import com.tyiu.authorizationservice.model.PasswordChangeData;
 import jakarta.transaction.Transactional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -11,5 +11,5 @@ public interface PasswordChangeDataRepository extends JpaRepository<PasswordChan
     void deleteByEmail(String email);
     Boolean existsByEmail(String email);
     @Transactional
-    void deleteByDateExpiredEquals(LocalDateTime dateExpired);
+    void deleteByDateExpiredLessThan(LocalDateTime dateExpired);
 }

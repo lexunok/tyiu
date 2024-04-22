@@ -1,6 +1,6 @@
-package com.tyiu.authorizationservice.services;
+package com.tyiu.authorizationservice.service;
 
-import com.tyiu.authorizationservice.repositories.UserRepository;
+import com.tyiu.authorizationservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -13,7 +13,7 @@ public class UserService implements UserDetailsService {
     private final UserRepository repository;
 
     @Override
-    public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
-        return repository.findByEmail(email);
+    public UserDetails loadUserByUsername(String email) {
+        return repository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
     }
 }

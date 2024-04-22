@@ -1,10 +1,12 @@
-package com.tyiu.authorizationservice.services;
+package com.tyiu.authorizationservice.service;
 
-import com.tyiu.authorizationservice.models.PasswordChangeRequest;
-import com.tyiu.authorizationservice.models.PasswordChangeData;
-import com.tyiu.authorizationservice.models.User;
-import com.tyiu.authorizationservice.repositories.PasswordChangeDataRepository;
-import com.tyiu.authorizationservice.repositories.UserRepository;
+import com.tyiu.authorizationservice.model.Invitation;
+import com.tyiu.authorizationservice.model.PasswordChangeRequest;
+import com.tyiu.authorizationservice.model.PasswordChangeData;
+import com.tyiu.authorizationservice.model.User;
+import com.tyiu.authorizationservice.repository.InvitationRepository;
+import com.tyiu.authorizationservice.repository.PasswordChangeDataRepository;
+import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.connections.EmailClient;
 import com.tyiu.client.connections.IdeasClient;
 import com.tyiu.client.models.InvitationDTO;
@@ -22,6 +24,7 @@ import org.springframework.web.servlet.ModelAndView;
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
@@ -32,13 +35,14 @@ public class AccountService {
     private final IdeasClient ideasClient;
     private final EmailClient emailClient;
     private final UserRepository userRepository;
+    private final InvitationRepository invitationRepository;
     private final PasswordChangeDataRepository passwordChangeRepository;
-    //TODO: Код и почту админа вынести в конфиг
+    //TODO: Регистрация админа только в тестовой среде
     //TODO: Сделать обработку ошибок
 
-    @Scheduled(fixedRate = 600000)
-    void deleteExpiredData() {
-        passwordChangeRepository.deleteByDateExpiredEquals(LocalDateTime.now());
+    @Scheduled(fixedRate = 6000000)
+    void deleteExpiredPasswordChange() {
+        passwordChangeRepository.deleteByDateExpiredLessThan(LocalDateTime.now());
     }
 
     public ModelAndView generateAndSendCode(String email) {
@@ -100,7 +104,10 @@ public class AccountService {
             model.addAttribute("code", code);
             return "registration";
         }
-        InvitationDTO invitation = emailClient.findInvitationById(code);
+        //TODO: Error not found
+        Invitation invitation = invitationRepository.findById(code).orElseThrow();
+        invitation.setDateExpired(LocalDateTime.now().plusHours(3));
+        invitationRepository.save(invitation);
         if (invitation!=null) {
             model.addAttribute("email", invitation.getEmail());
             model.addAttribute("user", new User());
@@ -122,7 +129,8 @@ public class AccountService {
             ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
         }
         //TODO: Добавить проверку на существует ли пользователь
-        InvitationDTO invitation = emailClient.findInvitationById(code);
+        //TODO: Error not found
+        Invitation invitation = invitationRepository.findById(code).orElseThrow();
         if (invitation!=null) {
             user.setRoles(invitation.getRoles());
             user.setEmail(invitation.getEmail());
