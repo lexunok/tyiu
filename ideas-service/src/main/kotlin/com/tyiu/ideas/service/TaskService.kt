@@ -43,7 +43,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                     row.get("e_first_name", String::class.java),
                     row.get("e_last_name", String::class.java)
                 ),
-                row.get("t_work_hour", Int::class.javaObjectType),
+                row.get("t_work_hour", Double::class.javaObjectType),
                 row.get("t_start_date", LocalDate::class.java),
                 row.get("t_finish_date", LocalDate::class.java),
                 listOf(),

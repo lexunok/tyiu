@@ -79,7 +79,9 @@ public class TeamService {
                 .sql(QUERY)
                 .bind("skills",selectedSkills.stream().map(SkillDTO::getId).toList())
                 .bind("userId", userId)
-                .map((row, rowMetadata) -> buildTeamDTO(row)).all().distinct();
+                .map((row, rowMetadata) -> buildTeamDTO(row))
+                .all()
+                .distinct();
     }
 
     private TeamDTO buildTeamDTO(Row row) {
@@ -203,7 +205,7 @@ public class TeamService {
                 "l.id as leader_id, l.email as leader_email, l.first_name as leader_first_name, l.last_name as leader_last_name, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) as member_count " +
                 "FROM team t " +
-                "LEFT JOIN idea_market_refused imr ON imr.team_id = t.id AND imr.idea_market_id = :ideaMarketId  " +
+                "LEFT JOIN idea_market_refused imr ON imr.team_id = t.id AND imr.idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
                 "WHERE t.owner_id = :userId";
@@ -292,12 +294,15 @@ public class TeamService {
     }
 
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(String teamId) {
-        String QUERY = "SELECT tmr.id, tmr.idea_market_id, tmr.market_id, tmr.team_id, tmr.status, tmr.letter, " +
-                "i.name AS name " +
-                "FROM team_market_request tmr " +
-                "LEFT JOIN idea_market im ON im.id = tmr.idea_market_id " +
-                "LEFT JOIN idea i ON i.id = im.idea_id " +
-                "WHERE tmr.team_id = :teamId";
+        String QUERY = """
+                SELECT
+                    tmr.id, tmr.market_id, tmr.team_id, tmr.status, tmr.letter, 
+                    i.name AS name, im.id AS idea_market_id
+                FROM team_market_request tmr
+                    LEFT JOIN idea i ON i.id = tmr.idea_id
+                    LEFT JOIN idea_market im ON im.idea_id = tmr.idea_id
+                WHERE tmr.team_id = :teamId
+            """;
         return template.getDatabaseClient()
                 .sql(QUERY)
                 .bind("teamId",teamId)

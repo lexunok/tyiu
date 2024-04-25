@@ -48,8 +48,8 @@ public class IdeaMarketService {
                 "i.name, i.problem, i.description, i.solution, i.result, i.max_team_size, i.customer, " +
                 "fi.*, " +
                 "t.id AS t_id, t.name AS t_name, " +
-                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count, " +
-                "(SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count, " +
+                "(SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id AND status = 'ACCEPTED') AS accepted_request_count, " +
+                "(SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) AS request_count, " +
                 "(SELECT COUNT(*) FROM team_member WHERE team_id = t.id AND finish_date IS NULL) AS member_count " +
                 "FROM idea_market im " +
                 "LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im.id " +
@@ -129,7 +129,7 @@ public class IdeaMarketService {
                         SELECT EXISTS (
                             SELECT 1 
                             FROM idea_market im 
-                            LEFT JOIN idea i ON i.id = im.idea_id 
+                                LEFT JOIN idea i ON i.id = im.idea_id 
                             WHERE im.id = :ideaMarketId AND i.initiator_id = :userId
                         )
                         """;
@@ -156,24 +156,26 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
         String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
+                SELECT 
+                    im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
+                    fi.idea_market_id AS favorite,
+                    s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                    i.name, i.solution, i.max_team_size
                 FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
+                    SELECT 
+                        im.*,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) AS request_count,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id AND status = 'ACCEPTED') AS accepted_request_count,
+                        ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) DESC) AS row_number
                     FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
+                        INNER JOIN market m ON m.id = im.market_id
                     WHERE m.status = 'ACTIVE'
                 ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
+                    LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
+                    LEFT JOIN idea i ON i.id = im_sub.idea_id
+                    LEFT JOIN users u ON u.id = i.initiator_id
+                    LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
+                    LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
@@ -186,26 +188,28 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(String userId, String marketId){
         String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size,
-                       t.id AS t_id
+                SELECT 
+                    im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
+                    fi.idea_market_id AS favorite,
+                    s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                    i.name, i.solution, i.max_team_size,
+                    t.id AS t_id
                 FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
+                    SELECT 
+                        im.*,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) AS request_count,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id AND status = 'ACCEPTED') AS accepted_request_count,
+                        ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) DESC) AS row_number
                     FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
+                        INNER JOIN market m ON m.id = im.market_id
                     WHERE im.market_id = :marketId
                 ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN team t ON t.id = im_sub.team_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
+                    LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
+                    LEFT JOIN idea i ON i.id = im_sub.idea_id
+                    LEFT JOIN team t ON t.id = im_sub.team_id
+                    LEFT JOIN users u ON u.id = i.initiator_id
+                    LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
+                    LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
         ConcurrentHashMap<String, IdeaMarketDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
@@ -222,7 +226,7 @@ public class IdeaMarketService {
                                 .id(ideaMarketId)
                                 .ideaId(row.get("idea_id", String.class))
                                 .team(teamId != null ? TeamDTO.builder().id(teamId).build() : null)
-                                .marketId(row.get("market_id", String.class))
+                                .marketId(marketId)
                                 .position(row.get("row_number", Integer.class))
                                 .name(row.get("name", String.class))
                                 .initiator(UserDTO.builder()
@@ -257,25 +261,27 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(String userId, String marketId){
         String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
+                SELECT
+                    im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
+                    fi.idea_market_id AS favorite,
+                    s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                    i.name, i.solution, i.max_team_size
                 FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
+                    SELECT
+                        im.*,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) AS request_count,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id AND status = 'ACCEPTED') AS accepted_request_count,
+                        ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) DESC) AS row_number
                     FROM idea_market im
-                    INNER JOIN market m ON m.id = im.market_id
-                    LEFT JOIN idea i ON i.id = im.idea_id
+                        INNER JOIN market m ON m.id = im.market_id
+                        LEFT JOIN idea i ON i.id = im.idea_id
                     WHERE i.initiator_id = :userId AND im.market_id = :marketId
                 ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
+                    LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
+                    LEFT JOIN idea i ON i.id = im_sub.idea_id
+                    LEFT JOIN users u ON u.id = i.initiator_id
+                    LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
+                    LEFT JOIN skill s ON s.id = ids.skill_id
                 """;
         return getListMarketIdea(QUERY, userId, marketId);
     }
@@ -286,48 +292,52 @@ public class IdeaMarketService {
 
     public Flux<IdeaMarketDTO> getAllFavoriteMarketIdeas(String userId, String marketId){
         String QUERY = """
-                SELECT im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
-                       fi.idea_market_id AS favorite,
-                       s.id AS s_id, s.name AS s_name, s.type AS s_type,
-                       i.name, i.solution, i.max_team_size
+                SELECT
+                    im_sub.*, u.id AS u_id, u.first_name AS u_fn, u.last_name AS u_ln, u.email AS u_e,
+                    fi.idea_market_id AS favorite,
+                    s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                    i.name, i.solution, i.max_team_size
                 FROM (
-                    SELECT im.*,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) AS request_count,
-                           (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id AND status = 'ACCEPTED') AS accepted_request_count,
-                           ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_market_id = im.id) DESC) AS row_number
+                    SELECT
+                        im.*,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) AS request_count,
+                        (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id AND status = 'ACCEPTED') AS accepted_request_count,
+                        ROW_NUMBER() OVER (ORDER BY (SELECT COUNT(*) FROM team_market_request WHERE idea_id = im.idea_id) DESC) AS row_number
                     FROM idea_market im
                     INNER JOIN market m ON m.id = im.market_id
                     WHERE im.market_id = :marketId
                 ) AS im_sub
-                LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
-                LEFT JOIN idea i ON i.id = im_sub.idea_id
-                LEFT JOIN users u ON u.id = i.initiator_id
-                LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
-                LEFT JOIN skill s ON s.id = ids.skill_id
+                    LEFT JOIN favorite_idea fi ON fi.user_id = :userId AND fi.idea_market_id = im_sub.id
+                    LEFT JOIN idea i ON i.id = im_sub.idea_id
+                    LEFT JOIN users u ON u.id = i.initiator_id
+                    LEFT JOIN idea_skill ids ON ids.idea_id = im_sub.idea_id
+                    LEFT JOIN skill s ON s.id = ids.skill_id
                 WHERE fi.idea_market_id = im_sub.id
                 """;
         return getListMarketIdea(QUERY, userId, marketId);
     }
 
-    public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaId){
-        String QUERY = "SELECT tmr.*, " +
-                "s.id AS s_id, s.name AS s_name, s.type AS s_type, " +
-                "(SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id AND finish_date IS NULL) AS member_count " +
-                "FROM team_market_request tmr " +
-                "LEFT JOIN team_member tm ON tm.team_id = tmr.team_id AND tm.finish_date IS NULL " +
-                "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
-                "LEFT JOIN skill s ON s.id = us.skill_id " +
-                "WHERE tmr.idea_market_id = :ideaId";
+    public Flux<TeamMarketRequestDTO> getAllTeamsRequests(String ideaMarketId){
+        String QUERY = """
+                SELECT 
+                    tmr.*, s.id AS s_id, s.name AS s_name, s.type AS s_type,
+                    (SELECT COUNT(*) FROM team_member WHERE team_id = tmr.team_id AND finish_date IS NULL) AS member_count
+                FROM team_market_request tmr
+                    LEFT JOIN team_member tm ON tm.team_id = tmr.team_id AND tm.finish_date IS NULL
+                    LEFT JOIN user_skill us ON us.user_id = tm.member_id 
+                    LEFT JOIN skill s ON s.id = us.skill_id
+                WHERE tmr.idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId)
+            """;
         ConcurrentHashMap<String, TeamMarketRequestDTO> map = new ConcurrentHashMap<>();
         return template.getDatabaseClient()
                 .sql(QUERY)
-                .bind("ideaId",ideaId)
+                .bind("ideaMarketId",ideaMarketId)
                 .map((row, rowMetadata) -> {
                     String teamRequestId = row.get("id", String.class);
                     String skillId = row.get("s_id", String.class);
                     TeamMarketRequestDTO teamMarketRequestDTO = map.getOrDefault(teamRequestId, TeamMarketRequestDTO.builder()
                             .id(teamRequestId)
-                            .ideaMarketId(row.get("idea_market_id", String.class))
+                            .ideaMarketId(ideaMarketId)
                             .marketId(row.get("market_id", String.class))
                             .teamId(row.get("team_id", String.class))
                             .name(row.get("name", String.class))
@@ -347,7 +357,8 @@ public class IdeaMarketService {
                     map.put(teamRequestId, teamMarketRequestDTO);
                     return teamMarketRequestDTO;
                 })
-                .all().thenMany(Flux.fromIterable(map.values()));
+                .all()
+                .thenMany(Flux.fromIterable(map.values()));
     }
 
     public Flux<IdeaMarketAdvertisementDTO> getIdeaMarketAdvertisement(String ideaMarketId){
@@ -362,7 +373,7 @@ public class IdeaMarketService {
                 .bind("ideaMarketId", ideaMarketId)
                 .map((row, rowMetadata) -> IdeaMarketAdvertisementDTO.builder()
                         .id(row.get("id", String.class))
-                        .ideaMarketId(row.get("idea_market_id", String.class))
+                        .ideaMarketId(ideaMarketId)
                         .createdAt(row.get("created_at", LocalDateTime.class))
                         .text(row.get("text", String.class))
                         .sender(UserDTO.builder()
@@ -372,11 +383,14 @@ public class IdeaMarketService {
                                 .lastName(row.get("u_last_name", String.class))
                                 .build())
                         .checkedBy(List.of(Objects.requireNonNull(row.get("checked_by", String[].class))))
-                        .build()).all().sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
+                        .build())
+                .all()
+                .sort(Comparator.comparing(IdeaMarketAdvertisementDTO::getCreatedAt));
     }
 
     public Mono<Boolean> checkOwnerAccessInMarket(String marketId, String userId){
-        return template.exists(query(where("market_id").is(marketId).and("owner_id").is(userId)), Team.class);
+        return template.exists(query(where("market_id").is(marketId)
+                .and("owner_id").is(userId)), Team.class);
     }
 
     //////////////////////////////
@@ -417,12 +431,16 @@ public class IdeaMarketService {
         return checkOwner(teamMarketRequestDTO.getTeamId(), userId)
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)){
-                        teamMarketRequestDTO.setStatus(RequestStatus.NEW);
-                        TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
-                        return template.insert(teamMarketRequest).flatMap(r -> {
-                            teamMarketRequestDTO.setId(r.getId());
-                            return Mono.just(teamMarketRequestDTO);
-                        });
+                        return template.selectOne(query(where("id").is(teamMarketRequestDTO.getIdeaMarketId())), IdeaMarket.class)
+                                .flatMap(i -> {
+                                    teamMarketRequestDTO.setStatus(RequestStatus.NEW);
+                                    TeamMarketRequest teamMarketRequest = mapper.map(teamMarketRequestDTO, TeamMarketRequest.class);
+                                    teamMarketRequest.setIdeaId(i.getIdeaId());
+                                    return template.insert(teamMarketRequest).flatMap(r -> {
+                                        teamMarketRequestDTO.setId(r.getId());
+                                        return Mono.just(teamMarketRequestDTO);
+                                    });
+                                });
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 });
@@ -512,10 +530,11 @@ public class IdeaMarketService {
                     String userId = user.getId();
                     r.setStatus(status);
                     if (status.equals(RequestStatus.CANCELED)){
-                        return checkInitiator(r.getIdeaMarketId(),userId)
+                        return template.exists(query(where("id").is(r.getIdeaId())
+                                        .and("initiator_id").is(userId)), Idea.class)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
-                                        return template.insert(new IdeaMarket2Refused(r.getIdeaMarketId(), r.getTeamId()))
+                                        return template.insert(new IdeaMarket2Refused(r.getIdeaId(), r.getTeamId()))
                                                 .then(template.update(r))
                                                 .then();
                                     }
@@ -523,21 +542,19 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (status.equals(RequestStatus.ACCEPTED)) {
-                        return checkInitiator(r.getIdeaMarketId(),userId)
+                        return template.exists(query(where("id").is(r.getIdeaId())
+                                        .and("initiator_id").is(userId)), Idea.class)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(query(where("team_id").is(r.getTeamId())
-                                                                .or("idea_market_id").is(r.getIdeaMarketId())
+                                                                .or("idea_id").is(r.getIdeaId())
                                                                 .and("status").is(RequestStatus.NEW)),
                                                         update("status", RequestStatus.ANNULLED),
                                                         TeamMarketRequest.class)
-                                                .then(template.getDatabaseClient().sql("""
-                                                        UPDATE idea_invitation SET status = :status 
-                                                        WHERE idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) OR team_id = :teamId
-                                                        """)
-                                                        .bind("status", "ANNULLED")
-                                                        .bind("ideaMarketId", r.getIdeaMarketId())
-                                                        .bind("teamId", r.getTeamId()).fetch().all().then())
+                                                .then(template.update(query(where("team_id").is(r.getTeamId())
+                                                        .or("idea_id").is(r.getIdeaId())),
+                                                        update("status", RequestStatus.ANNULLED),
+                                                        IdeaInvitation.class))
                                                 .then(template.update(r))
                                                 .then();
                                     }

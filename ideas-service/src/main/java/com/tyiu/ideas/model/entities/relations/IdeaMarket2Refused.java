@@ -10,6 +10,6 @@ import org.springframework.data.relational.core.mapping.Table;
 @AllArgsConstructor
 @Table(name = "idea_market_refused")
 public class IdeaMarket2Refused {
-    private String ideaMarketId;
+    private String ideaId;
     private String teamId;
 }

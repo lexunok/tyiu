@@ -20,7 +20,7 @@ data class Task (
     var initiatorId: String? = null,
     var executorId: String? = null,
 
-    val workHour: Int? = null,
+    val workHour: Double? = null,
 
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
@@ -42,7 +42,7 @@ data class TaskDTO (
     var initiator: UserDTO? = null,
     var executor: UserDTO? = null,
 
-    val workHour: Int? = null,
+    val workHour: Double? = null,
 
     val startDate: LocalDate? = null,
     val finishDate: LocalDate? = null,

@@ -142,13 +142,6 @@ public class IdeaService {
                     return ideaDTO;
                 })
                 .all();
-//        return template.select(Idea.class).all()
-//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(userId)), Idea2Checked.class)
-//                        .flatMap(isExists -> {
-//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-//                            ideaDTO.setIsChecked(isExists);
-//                            return Mono.just(ideaDTO);
-//                        }));
     }
 
     @Cacheable
@@ -177,13 +170,6 @@ public class IdeaService {
                     return ideaDTO;
                 })
                 .all();
-//        return template.select(query(where("initiator_email").is(user.getEmail())), Idea.class)
-//                .flatMap(i -> template.exists(query(where("idea_id").is(i.getId()).and("user_id").is(user.getId())), Idea2Checked.class)
-//                        .flatMap(isExists -> {
-//                            IdeaDTO ideaDTO = mapper.map(i, IdeaDTO.class);
-//                            ideaDTO.setIsChecked(isExists);
-//                            return Mono.just(ideaDTO);
-//                        }));
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
