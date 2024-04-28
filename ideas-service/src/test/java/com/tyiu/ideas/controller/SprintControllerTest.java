@@ -61,7 +61,7 @@ public class SprintControllerTest extends TestContainers {
     private ProjectDTO createdProject;
 
     private RegisterRequest buildRegisterRequest(String email, String lastName, List<Role> roles){
-        return new RegisterRequest(email, lastName, "task", "password", roles);
+        return new RegisterRequest(email, lastName, "sprint", "password", roles);
     }
 
     private UserDTO buildUser(AuthenticationResponse response){
@@ -528,14 +528,14 @@ public class SprintControllerTest extends TestContainers {
 
     @BeforeAll
     public void setUp() {
-        RegisterRequest initiatorRequest = buildRegisterRequest("task.initiator@gmail.com", "initiator", List.of(Role.INITIATOR));
-        RegisterRequest expertRequest = buildRegisterRequest("task.expert@gmail.com", "expert", List.of(Role.EXPERT));
-        RegisterRequest officeRequest = buildRegisterRequest("task.office@gmail.com", "office", List.of(Role.PROJECT_OFFICE));
-        RegisterRequest adminRequest = buildRegisterRequest("task.admin@gmail.com", "admin", List.of(Role.ADMIN));
-        RegisterRequest memberRequest = buildRegisterRequest("task.member@gmail.com", "member", List.of(Role.MEMBER));
-        RegisterRequest leaderRequest = buildRegisterRequest("task.leader@gmail.com", "leader", List.of(Role.TEAM_LEADER));
-        RegisterRequest ownerRequest = buildRegisterRequest("task.owner@gmail.com", "owner", List.of(Role.TEAM_OWNER));
-        RegisterRequest teacherRequest = buildRegisterRequest("task.teacher@gmail.com", "teacher", List.of(Role.TEACHER));
+        RegisterRequest initiatorRequest = buildRegisterRequest("sprint.initiator@gmail.com", "initiator", List.of(Role.INITIATOR));
+        RegisterRequest expertRequest = buildRegisterRequest("sprint.expert@gmail.com", "expert", List.of(Role.EXPERT));
+        RegisterRequest officeRequest = buildRegisterRequest("sprint.office@gmail.com", "office", List.of(Role.PROJECT_OFFICE));
+        RegisterRequest adminRequest = buildRegisterRequest("sprint.admin@gmail.com", "admin", List.of(Role.ADMIN));
+        RegisterRequest memberRequest = buildRegisterRequest("sprint.member@gmail.com", "member", List.of(Role.MEMBER));
+        RegisterRequest leaderRequest = buildRegisterRequest("sprint.leader@gmail.com", "leader", List.of(Role.TEAM_LEADER));
+        RegisterRequest ownerRequest = buildRegisterRequest("sprint.owner@gmail.com", "owner", List.of(Role.TEAM_OWNER));
+        RegisterRequest teacherRequest = buildRegisterRequest("sprint.teacher@gmail.com", "teacher", List.of(Role.TEACHER));
 
         AuthenticationResponse initiatorResponse = createUser(initiatorRequest);
         AuthenticationResponse expertResponse = createUser(expertRequest);
