@@ -146,7 +146,6 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                 taskId = taskMovementLogDTO.task?.id,
                 executorId = if (taskMovementLogDTO.status == TaskStatus.NewTask) null else taskMovementLogDTO.executor?.id,
                 userId = taskMovementLogDTO.user?.id,
-                startDate = taskMovementLogDTO.startDate,
                 status = taskMovementLogDTO.status
             )
         ).awaitSingle()
