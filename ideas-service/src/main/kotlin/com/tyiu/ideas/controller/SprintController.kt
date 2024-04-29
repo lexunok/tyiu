@@ -76,28 +76,13 @@ class SprintController(private val sprintService: SprintService)
         }
     }
 
-    @PostMapping("/{sprintId}/add/marks")
-    suspend fun  addSprintMarks(@PathVariable sprintId: String,
+    @PostMapping("/marks/{projectId}/{sprintId}/add")
+    suspend fun addSprintMarks(@PathVariable sprintId: String,
+                                @PathVariable projectId: String,
                                 @RequestBody sprintMarks: Flow<SprintMarkDTO>,
                                 @AuthenticationPrincipal jwt: Jwt) {
         return if (jwt.getClaimAsStringList("roles").roleCheck(roles3)) {
-            sprintService.addSprintMarks(sprintId, sprintMarks)
-        }
-        else {
-            throw AccessException("Нет прав")
-        }
-    }
-
-    @PutMapping("/{sprintId}/status/{status}")
-    suspend fun changeSprintStatus(@PathVariable sprintId: String, @PathVariable status: SprintStatus, @AuthenticationPrincipal jwt: Jwt): InfoResponse {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(roles2)) {
-            try {
-                sprintService.changeSprintStatus(sprintId, status)
-                InfoResponse(HttpStatus.OK, "Статус спринта успешно изменён на $status")
-            }
-            catch(e: Exception){
-                InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить статус спринта")
-            }
+            sprintService.addSprintMarks(sprintId, projectId, sprintMarks)
         }
         else {
             throw AccessException("Нет прав")
@@ -107,9 +92,15 @@ class SprintController(private val sprintService: SprintService)
     @PutMapping("/{sprintId}/update")
     suspend fun updateSprintInfo(@PathVariable sprintId: String,
                                  @RequestBody sprintDTO: SprintDTO,
-                                 @AuthenticationPrincipal jwt: Jwt) {
+                                 @AuthenticationPrincipal jwt: Jwt): InfoResponse {
         return if (jwt.getClaimAsStringList("roles").roleCheck(roles2)) {
-            sprintService.updateSprintInfo(sprintId, sprintDTO)
+            try {
+                sprintService.updateSprintInfo(sprintId, sprintDTO, jwt.id)
+                InfoResponse(HttpStatus.OK,"Успешное изменение спринта")
+            }
+            catch(e: Exception){
+                InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить спринт")
+            }
         }
         else {
             throw AccessException("Нет прав")
@@ -117,9 +108,9 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @PutMapping("/finish/{sprintId}")
-    suspend fun putSprintFinishWithoutTaskTransfer(@PathVariable sprintId: String,
-                                                   @RequestBody report: String,
-                                                   @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+    suspend fun finishSprint(@PathVariable sprintId: String,
+                             @RequestBody report: String,
+                             @AuthenticationPrincipal jwt: Jwt): InfoResponse {
         return if (jwt.getClaimAsStringList("roles").roleCheck(roles3)) {
             try {
                 sprintService.putSprintFinish(sprintId, report, jwt.id)
@@ -138,7 +129,7 @@ class SprintController(private val sprintService: SprintService)
     suspend fun deleteSprint(@PathVariable sprintId: String, @AuthenticationPrincipal jwt: Jwt): InfoResponse {
         return if (jwt.getClaimAsStringList("roles").roleCheck(roles2)) {
             try {
-                sprintService.deleteSprint(sprintId)
+                sprintService.deleteSprint(sprintId, jwt.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно удалён")
             }
             catch(e: Exception){

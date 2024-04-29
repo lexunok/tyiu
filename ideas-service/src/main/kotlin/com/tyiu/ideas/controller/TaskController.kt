@@ -130,11 +130,11 @@ class TaskController (private val taskService: TaskService) {
         taskService.updateNameInTask(taskId, taskDTO.name!!)
     }
 
-    @DeleteMapping("/delete/{id}")
-    suspend fun deleteTask(@PathVariable id: String, @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+    @DeleteMapping("/delete/{taskId}")
+    suspend fun deleteTask(@PathVariable taskId: String, @AuthenticationPrincipal jwt: Jwt): InfoResponse {
         return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             try {
-                taskService.deleteTask(id)
+                taskService.deleteTask(taskId)
                 InfoResponse(HttpStatus.OK,"Задача успешно удалена")
             }
             catch(e: Exception){

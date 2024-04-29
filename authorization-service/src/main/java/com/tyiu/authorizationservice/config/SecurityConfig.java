@@ -1,11 +1,11 @@
-package com.tyiu.authorizationservice;
+package com.tyiu.authorizationservice.config;
 
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
-import com.tyiu.client.models.Role;
+import com.tyiu.authorizationservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -21,6 +21,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
@@ -84,7 +85,8 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( "/registration","/css/**", "/new-password", "/recovery-password").permitAll()
-                        .requestMatchers("/api/v1/authorization-service/register").hasRole(Role.ADMIN.name())
+//TODO:                        .requestMatchers("/api/v1/authorization-service/register").hasRole(Role.ADMIN.name())
+//TODO:                        .requestMatchers("/api/v1/authorization-service/invitation/**").hasRole(Role.ADMIN.name())
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
@@ -160,9 +162,9 @@ public class SecurityConfig {
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
         return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-                String userId = repository.findByEmail(context.getPrincipal().getName()).getId();
+                String userId = repository.findByEmail(context.getPrincipal().getName())
+                        .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!")).getId();
                 context.getClaims().id(userId);
-
                 context.getClaims().claim("roles", context.getPrincipal().getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList());

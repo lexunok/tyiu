@@ -1,0 +1,2 @@
+ALTER TABLE sprint_mark
+ADD COLUMN project_id TEXT REFERENCES project (id) ON DELETE CASCADE;

@@ -1,9 +1,7 @@
 package com.tyiu.client.connections;
 
-import com.tyiu.client.models.ChangePasswordRequest;
-import com.tyiu.client.models.InvitationDTO;
+import com.tyiu.client.models.UserDTO;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,10 +9,10 @@ import org.springframework.web.bind.annotation.RequestBody;
 @FeignClient(value = "email", url = "http://localhost:8084", path = "/api/v1/email-service")
 public interface EmailClient {
 
-    @GetMapping("/invitation/{invitationId}")
-    InvitationDTO findInvitationById(@PathVariable String invitationId);
+    @PostMapping("/account/password/{email}/code/{code}")
+    void sendCodeToChangePassword(@PathVariable String email, @PathVariable String code);
 
-    @PostMapping("/send/change/password")
-    String sendCodeToChangePassword(@RequestBody ChangePasswordRequest request);
+    @PostMapping("/invitation/send/{email}/{id}")
+    void sendInvitationToEmail(@PathVariable String email, @PathVariable String id, @RequestBody UserDTO user);
 
 }

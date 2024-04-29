@@ -110,17 +110,6 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
-    @PutMapping("/{projectId}/add/marks")
-    suspend fun addMarksInProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt) {
-
-        return if (jwt.getClaimAsStringList("roles").roleCheck(roles4)) {
-            projectService.addMarksInProject(projectId)
-        }
-        else {
-            throw AccessException("Нет прав")
-        }
-    }
-
     @PutMapping("/{projectId}/status/change")
     suspend fun pauseProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt) : InfoResponse {
         return if (jwt.getClaimAsStringList("roles").roleCheck(roles5)) {
@@ -155,9 +144,9 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
-    @PutMapping("/leader/change")
-    suspend fun putTeamLeader(@RequestBody projectLeaderRequest: ProjectLeaderRequest,@AuthenticationPrincipal jwt: Jwt) : InfoResponse {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(roles5)) {
+    /*@PutMapping("/leader/change")
+    suspend fun putTeamLeader(@RequestBody projectLeaderRequest: ProjectLeaderRequest,@AuthenticationPrincipal user: User) : InfoResponse {
+        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
             try {
                 projectService.putTeamLeader(projectLeaderRequest)
                 InfoResponse(HttpStatus.OK,"Лидер команды назначен")
@@ -169,6 +158,6 @@ class ProjectController (private val projectService: ProjectService) {
         else {
             throw AccessException("Нет прав")
         }
-    }
+    }*/
 
 }

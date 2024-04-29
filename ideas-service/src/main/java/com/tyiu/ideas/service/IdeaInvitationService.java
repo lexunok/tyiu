@@ -6,6 +6,7 @@ import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.IdeaInvitation;
 import com.tyiu.ideas.model.entities.IdeaMarket;
 import com.tyiu.ideas.model.entities.Team;
+import com.tyiu.ideas.model.entities.TeamMarketRequest;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.RequestStatus;
 import com.tyiu.ideas.model.enums.SkillType;
@@ -122,22 +123,20 @@ public class IdeaInvitationService {
                                     .or("idea_id").is(request.getIdeaId())
                                     .and(where("id").not(request.getId()))
                                     .and(where("status").is(RequestStatus.NEW))),
-                            update("status", RequestStatus.ANNULLED), IdeaInvitation.class)
-                            .then(template.getDatabaseClient().sql("""
-                                    UPDATE team_market_request SET status = :status 
-                                    WHERE idea_market_id = (SELECT id FROM idea_market WHERE idea_id = :ideaId) OR team_id = :teamId
-                                    """)
-                                    .bind("status", "ANNULLED")
-                                    .bind("ideaId", request.getIdeaId())
-                                    .bind("teamId", request.getTeamId()).fetch().all().then())
-                            .then(template.update(query(where("idea_id").is(request.getIdeaId())),
-                                    update("team_id", request.getTeamId())
-                                            .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
-                                    IdeaMarket.class))
-                            .then(template.update(query(where("id").is(request.getTeamId())),
-                                    update("has_active_project", true), Team.class))
-                            .then(template.update(query(where("id").is(request.getId())),
-                                    update("status",request.getStatus()), IdeaInvitation.class)).then();
+                            update("status", RequestStatus.ANNULLED),
+                            IdeaInvitation.class)
+                    .then(template.update(query(where("team_id").is(request.getTeamId())
+                                    .or("idea_id").is(request.getIdeaId())),
+                            update("status", RequestStatus.ANNULLED),
+                            TeamMarketRequest.class))
+                    .then(template.update(query(where("idea_id").is(request.getIdeaId())),
+                            update("team_id", request.getTeamId())
+                                    .set("status", IdeaMarketStatusType.RECRUITMENT_IS_CLOSED),
+                            IdeaMarket.class))
+                    .then(template.update(query(where("id").is(request.getTeamId())),
+                            update("has_active_project", true), Team.class))
+                    .then(template.update(query(where("id").is(request.getId())),
+                            update("status",request.getStatus()), IdeaInvitation.class)).then();
         }
         return template.update(query(where("id").is(request.getId())),
                 update("status",request.getStatus()), IdeaInvitation.class).then();

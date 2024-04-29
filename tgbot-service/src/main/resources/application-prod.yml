@@ -1,0 +1,25 @@
+server:
+  port: 7000
+
+bot:
+  name: hits_notification_bot
+  token: ${TG_TOKEN}
+
+spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_URL}
+          jwk-set-uri: ${AUTH_URL}/oauth2/jwks
+  r2dbc:
+    pool:
+      enabled: true
+      initial-size: 10
+      max-idle-time: 1m
+      max-size: 30
+    url: r2dbc:${postgres.url}
+    username: ${SERVICE_USERNAME}
+    password: ${SERVICE_PASSWORD}
+postgres:
+  url: postgresql://postgres-ideas/hits

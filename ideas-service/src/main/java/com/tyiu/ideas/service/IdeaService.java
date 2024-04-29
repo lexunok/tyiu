@@ -156,12 +156,56 @@ public class IdeaService {
 
     @Cacheable
     public Flux<IdeaDTO> getListIdea(String userId) {
-        return getList(listQUERY, userId);
+        String query = """
+                SELECT idea.*, i.first_name initiator_first_name,
+                i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
+                    EXISTS (
+                            SELECT 1 FROM idea_checked ic
+                            WHERE ic.user_id = :userId AND ic.idea_id = idea.id
+                        ) as is_checked
+                FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", userId)
+                .map((row, rowMetadata) -> {
+                    IdeaDTO ideaDTO = buildIdeaDTO(row);
+                    ideaDTO.setInitiator(UserDTO.builder()
+                            .email(row.get("initiator_email",String.class))
+                            .firstName(row.get("initiator_first_name",String.class))
+                            .lastName(row.get("initiator_last_name",String.class))
+                            .id(row.get("initiator_id",String.class))
+                            .build());
+                    return ideaDTO;
+                })
+                .all();
     }
 
     @Cacheable
-    public Flux<IdeaDTO> getListIdeaByInitiator(String userId) {
-        return getList(listQUERY + " WHERE idea.initiator_id = :userId", userId);
+    public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
+        String query = """
+                SELECT idea.*, i.first_name initiator_first_name,
+                i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
+                       EXISTS (
+                            SELECT 1 FROM idea_checked
+                            WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
+                        ) as is_checked
+                FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
+                WHERE idea.initiator_id = :id
+                """;
+        return template.getDatabaseClient().sql(query)
+                .bind("userId", user.getId())
+                .bind("id", user.getId())
+                .map((row, rowMetadata) -> {
+                    IdeaDTO ideaDTO = buildIdeaDTO(row);
+                    ideaDTO.setInitiator(UserDTO.builder()
+                            .email(row.get("initiator_email",String.class))
+                            .firstName(row.get("initiator_first_name",String.class))
+                            .lastName(row.get("initiator_last_name",String.class))
+                            .id(row.get("initiator_id",String.class))
+                            .build());
+                    return ideaDTO;
+                })
+                .all();
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {

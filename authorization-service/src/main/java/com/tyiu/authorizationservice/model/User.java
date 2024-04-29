@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice;
+package com.tyiu.authorizationservice.model;
 
 import com.tyiu.client.models.Role;
 import jakarta.persistence.*;

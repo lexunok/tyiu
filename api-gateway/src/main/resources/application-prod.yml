@@ -28,7 +28,7 @@ spring:
           predicates:
             - Path=/api/v1/email-service/**
         - id: tgbot-service
-          uri: http://tgbot-service:5321
+          uri: http://tgbot-service:7000
           predicates:
             - Path=/api/v1/tgbot-service/**
   security:

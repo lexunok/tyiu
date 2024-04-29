@@ -14,7 +14,7 @@ import org.springframework.data.relational.core.mapping.Table;
 public class TeamMarketRequest {
     @Id
     private String id;
-    private String ideaMarketId;
+    private String ideaId;
     private String teamId;
     private String marketId;
 

@@ -25,7 +25,7 @@ import java.util.Collection;
 public class SecurityConfig {
 
     @Bean
-    public SecurityWebFilterChain filterChain(ServerHttpSecurity http) {
+    public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
 
         http
                 .authorizeExchange(exchanges -> exchanges.anyExchange().authenticated())
@@ -36,25 +36,20 @@ public class SecurityConfig {
         return http.build();
     }
 
-    @Bean
-    private Converter<Jwt, ? extends Mono<? extends AbstractAuthenticationToken>> getJwtAuthenticationConverter() {
-
+    private Converter<Jwt, Mono<AbstractAuthenticationToken>> getJwtAuthenticationConverter(){
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(getJwtGrantedAuthoritiesConverter());
 
         return jwt -> {
-            AbstractAuthenticationToken token = jwtAuthenticationConverter.convert(jwt);
-            return Mono.just(token);
+            AbstractAuthenticationToken authenticationToken = jwtAuthenticationConverter.convert(jwt);
+            return Mono.justOrEmpty(authenticationToken);
         };
     }
 
-    @Bean
-    private Converter<Jwt, Collection<GrantedAuthority>> getJwtGrantedAuthoritiesConverter() {
-
+    private Converter<Jwt, Collection<GrantedAuthority>> getJwtGrantedAuthoritiesConverter(){
         JwtGrantedAuthoritiesConverter converter = new JwtGrantedAuthoritiesConverter();
         converter.setAuthorityPrefix("ROLE_");
         converter.setAuthoritiesClaimName("roles");
-
         return converter;
     }
 }
