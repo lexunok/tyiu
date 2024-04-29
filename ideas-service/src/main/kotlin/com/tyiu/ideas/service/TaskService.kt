@@ -13,7 +13,7 @@ import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
@@ -71,7 +71,7 @@ class TaskService(val template: R2dbcEntityTemplate)
             .bind("projectId",projectId)
             .map { row, _ -> taskRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     //get
@@ -143,7 +143,7 @@ class TaskService(val template: R2dbcEntityTemplate)
             .bind("sprintId",sprintId)
             .map { row, _ -> taskRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     suspend fun getOneTaskById(taskId: String): TaskDTO? {
@@ -171,7 +171,7 @@ class TaskService(val template: R2dbcEntityTemplate)
             .bind("taskId",taskId)
             .map { row, _ -> taskRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values))
+            .thenMany(fromIterable(map.values))
             .awaitFirstOrNull()
     }
 
@@ -227,9 +227,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                 .set("work_hour", taskDTO.workHour),
             Task::class.java).awaitSingle()
         template.delete(query(where("task_id").`is`(taskId)), Task2Tag::class.java).awaitSingle()
-        taskDTO.tags?.forEach {
-            template.insert(Task2Tag(taskId, it.id)).awaitSingle()
-        }
+        taskDTO.tags?.forEach { template.insert(Task2Tag(taskId, it.id)).awaitSingle() }
     }
 
     suspend fun putUpdateExecutorTask(taskId: String, executorId: String){

@@ -13,9 +13,10 @@ import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.Comparator.comparingInt
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
@@ -125,7 +126,7 @@ class SprintService (val template: R2dbcEntityTemplate)
             .bind("sprintId", id)
             .map { row, _ -> sprintRow(row, map, map2) }
             .all()
-            .thenMany(Flux.fromIterable(map.values))
+            .thenMany(fromIterable(map.values))
             .awaitFirstOrNull()
     }
 
@@ -160,7 +161,7 @@ class SprintService (val template: R2dbcEntityTemplate)
             .bind("projectId", projectId)
             .map { row, _ -> sprintRow(row, map, map2) }
             .all()
-            .thenMany(Flux.fromIterable(map.values))
+            .thenMany(fromIterable(map.values))
             .awaitFirstOrNull()
     }
 
@@ -260,7 +261,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                 }
             }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
@@ -306,7 +307,7 @@ class SprintService (val template: R2dbcEntityTemplate)
 
         sprintDTO.projectId?.let {
             val tasks = template.select(query(where("project_id").`is`(it)
-                .and("status").`is`(TaskStatus.InBackLog.name)), Task::class.java).sort(Comparator.comparingInt { task -> task.position!! })
+                .and("status").`is`(TaskStatus.InBackLog.name)), Task::class.java).sort(comparingInt { task -> task.position!! })
                 .asFlow()
             var i = 1
             tasks.collect { task ->

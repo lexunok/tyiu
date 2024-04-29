@@ -10,10 +10,11 @@ import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
 import java.time.Duration.between
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.util.Comparator.comparing
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -113,8 +114,8 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                 }
             }
             .all()
-            .thenMany(Flux.fromIterable(map.values))
-            .sort(Comparator.comparing(TaskMovementLogDTO::startDate))
+            .thenMany(fromIterable(map.values))
+            .sort(comparing(TaskMovementLogDTO::startDate))
             .asFlow()
     }
 
