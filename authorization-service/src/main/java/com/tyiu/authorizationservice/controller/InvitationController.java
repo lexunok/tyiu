@@ -1,7 +1,7 @@
 package com.tyiu.authorizationservice.controller;
 
-import com.tyiu.authorizationservice.model.InvitationDTO;
-import com.tyiu.authorizationservice.model.User;
+import com.tyiu.authorizationservice.model.request.InvitationRequest;
+import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.service.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -15,7 +15,7 @@ public class InvitationController {
     private final InvitationService invitationService;
 
     @PostMapping("/send/email")
-    public void sendInvitationToEmail(@RequestBody InvitationDTO invitation, @AuthenticationPrincipal User user) {
+    public void sendInvitationToEmail(@RequestBody InvitationRequest invitation, @AuthenticationPrincipal User user) {
         invitationService.sendInvitationToEmail(invitation, user);
     }
 

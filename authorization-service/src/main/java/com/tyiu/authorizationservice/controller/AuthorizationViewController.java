@@ -1,7 +1,7 @@
 package com.tyiu.authorizationservice.controller;
 
-import com.tyiu.authorizationservice.model.PasswordChangeRequest;
-import com.tyiu.authorizationservice.model.User;
+import com.tyiu.authorizationservice.model.request.PasswordChangeRequest;
+import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
@@ -14,6 +14,7 @@ import org.springframework.web.servlet.ModelAndView;
 public class AuthorizationViewController {
     private final AccountService accountService;
 
+    //TODO: Сделать при логине и других связанных с email to lowercase
     @GetMapping("/login")
     public String login() {
         return "login";

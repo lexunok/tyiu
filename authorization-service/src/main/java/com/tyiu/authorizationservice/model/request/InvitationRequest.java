@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.model;
+package com.tyiu.authorizationservice.model.request;
 
 import com.tyiu.client.models.Role;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import java.util.List;
 
 @Data
 @Builder
-public class InvitationDTO {
+public class InvitationRequest {
     private LocalDateTime dateExpired;
     private String email;
     private List<Role> roles;

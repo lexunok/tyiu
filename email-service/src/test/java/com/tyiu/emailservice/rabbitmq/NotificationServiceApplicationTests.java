@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public class EmailServiceApplicationTests {
+public class NotificationServiceApplicationTests {
     @Autowired
     @Qualifier("testEmailClient")
     private INotification fakeNotificationEmailRabbitMQ;

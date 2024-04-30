@@ -87,7 +87,8 @@ public class SecurityConfig {
                         .requestMatchers( "/registration","/css/**", "/new-password", "/recovery-password").permitAll()
 //TODO:                        .requestMatchers("/api/v1/authorization-service/register").hasRole(Role.ADMIN.name())
 //TODO:                        .requestMatchers("/api/v1/authorization-service/invitation/**").hasRole(Role.ADMIN.name())
-                        .anyRequest().authenticated())
+                  //      .anyRequest().authenticated())
+                        .anyRequest().permitAll())
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin

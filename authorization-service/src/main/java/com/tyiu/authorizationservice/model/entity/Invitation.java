@@ -1,9 +1,11 @@
-package com.tyiu.authorizationservice.model;
+package com.tyiu.authorizationservice.model.entity;
 
+import com.tyiu.client.models.Role;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Getter
 @Setter
@@ -11,16 +13,12 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 @Entity
-public class PasswordChangeData {
-
+public class Invitation {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     private String id;
-    @Column(unique = true)
-    private String email;
-    private String code;
-    @Builder.Default
-    private Integer wrongTries = 0;
     private LocalDateTime dateExpired;
-
+    private String email;
+    @Enumerated(EnumType.STRING)
+    private List<Role> roles;
 }

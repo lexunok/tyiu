@@ -1,4 +1,4 @@
-package com.tyiu.emailservice.model.responses;
+package com.tyiu.client.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ChangeDataEmailResponse {
+public class ChangeDataDTO {
     private String subject;
     private String text;
     private String to;

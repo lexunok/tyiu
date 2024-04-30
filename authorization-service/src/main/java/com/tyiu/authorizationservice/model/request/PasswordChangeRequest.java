@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.model;
+package com.tyiu.authorizationservice.model.request;
 
 import lombok.*;
 

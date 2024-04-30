@@ -12,6 +12,11 @@ public interface EmailClient {
     @PostMapping("/account/password/{email}/code/{code}")
     void sendCodeToChangePassword(@PathVariable String email, @PathVariable String code);
 
+
+    @PostMapping("/account/email/{email}/code/{code}")
+    void sendCodeToChangeEmail(@PathVariable String email, @PathVariable String code);
+
+
     @PostMapping("/invitation/send/{email}/{id}")
     void sendInvitationToEmail(@PathVariable String email, @PathVariable String id, @RequestBody UserDTO user);
 

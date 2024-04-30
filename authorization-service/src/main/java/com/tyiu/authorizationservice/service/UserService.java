@@ -16,4 +16,5 @@ public class UserService implements UserDetailsService {
     public UserDetails loadUserByUsername(String email) {
         return repository.findByEmail(email).orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
     }
+
 }
