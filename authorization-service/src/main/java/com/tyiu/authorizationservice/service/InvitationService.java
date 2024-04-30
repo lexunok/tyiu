@@ -22,10 +22,11 @@ public class InvitationService {
     private final EmailClient emailClient;
     private final ModelMapper mapper;
 
-    public void sendInvitationToEmail(InvitationRequest invitationRequest, User user) {
+    public void sendInvitationToEmail(InvitationRequest invitationRequest, User user) throws Exception {
         Boolean userIsExists = userRepository.existsByEmail(user.getEmail());
         if (Boolean.TRUE.equals(userIsExists)) {
             //TODO: Ошибка пользователь уже существует
+            throw new Exception("Пользователь уже существует");
         }
         Invitation invitation = mapper.map(invitationRequest, Invitation.class);
         invitation.setDateExpired(LocalDateTime.now().plusDays(1));

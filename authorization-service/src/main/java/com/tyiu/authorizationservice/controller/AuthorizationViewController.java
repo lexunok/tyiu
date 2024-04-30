@@ -41,7 +41,7 @@ public class AuthorizationViewController {
     }
 
     @PostMapping("/new-password")
-    public String newPassword(PasswordChangeRequest request) {
+    public String newPassword(PasswordChangeRequest request) throws ClassNotFoundException {
         return accountService.changePassword(request);
     }
 }

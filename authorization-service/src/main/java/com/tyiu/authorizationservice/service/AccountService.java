@@ -1,5 +1,6 @@
 package com.tyiu.authorizationservice.service;
 
+import com.tyiu.authorizationservice.config.exception.NotFoundException;
 import com.tyiu.authorizationservice.model.entity.EmailChangeData;
 import com.tyiu.authorizationservice.model.entity.Invitation;
 import com.tyiu.authorizationservice.model.entity.PasswordChangeData;
@@ -51,7 +52,7 @@ public class AccountService {
 
     @Scheduled(fixedRate = 6000000)
     @Transactional
-    void deleteExpiredData() {
+    public void deleteExpiredData() {
         //TODO проверить мало ли это не удаление а select :)
         LocalDateTime now = LocalDateTime.now();
         passwordChangeRepository.deleteByDateExpiredLessThan(now);
@@ -63,7 +64,7 @@ public class AccountService {
     public ModelAndView generateAndSendCode(String email) {
         Boolean isUserExists = userRepository.existsByEmail(email);
         if (Boolean.FALSE.equals(isUserExists)) {
-            //TODO: Ошибка что пользователя не существует
+            throw new NotFoundException("Пользователь не найден");
         }
         String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
         PasswordChangeData passwordChange = PasswordChangeData.builder()
@@ -81,12 +82,16 @@ public class AccountService {
     }
     //Сравнение кода с действительным и изменение пароля если сходится
     public String changePassword(PasswordChangeRequest request) {
-        //TODO: Ошибка если не существует
+        Boolean isPasswordChangeRequestExists = passwordChangeRepository.existsById(request.getId());
+        if (Boolean.FALSE.equals(isPasswordChangeRequestExists)) {
+            throw new NotFoundException("Запроса на смену пароля не существует");
+        }
         passwordChangeRepository.findById(request.getId()).ifPresent(passwordChangeData -> {
             if (encoder.matches(request.getCode(), passwordChangeData.getCode())) {
                 if (LocalDateTime.now().isAfter(passwordChangeData.getDateExpired())) {
                     //TODO: Ошибка что просрочено
                     passwordChangeRepository.delete(passwordChangeData);
+                    throw new RuntimeException("Время запроса истекло");
                 }
                 else {
                     String password = encoder.encode(request.getPassword());
@@ -98,11 +103,13 @@ public class AccountService {
                 if (passwordChangeData.getWrongTries()>=3) {
                     //TODO: Ошибка больше 3 попыток восстановления
                     passwordChangeRepository.delete(passwordChangeData);
+                    throw new RuntimeException("Было выполнено более трёх попыток восстановления");
                 }
                 else {
                     //TODO: Ошибка попробуйте еще раз
                     passwordChangeData.setWrongTries(passwordChangeData.getWrongTries() + 1);
                     passwordChangeRepository.save(passwordChangeData);
+                    throw new RuntimeException("Ошибка, попробуйте ещё раз");
                 }
             }
         });
@@ -117,16 +124,18 @@ public class AccountService {
             return "registration";
         }
         //TODO: Error not found
-        Invitation invitation = invitationRepository.findById(code).orElseThrow();
-        if (invitation!=null) {
-            invitation.setDateExpired(LocalDateTime.now().plusHours(3));
-            invitationRepository.save(invitation);
-            model.addAttribute("email", invitation.getEmail());
+        Optional<Invitation> invitation = invitationRepository.findById(code);
+        if (invitation.isPresent()) {
+            Invitation data = invitation.get();
+            data.setDateExpired(LocalDateTime.now().plusHours(3));
+            invitationRepository.save(data);
+            model.addAttribute("email", data.getEmail());
             model.addAttribute("user", new User());
             model.addAttribute("code", code);
             return "registration";
+        } else {
+            throw new NotFoundException("Приглашение не найдено");
         }
-        return "login";
     }
 
     //TODO: validation
@@ -142,21 +151,24 @@ public class AccountService {
             ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
         }
         //TODO: Error not found
-        Invitation invitation = invitationRepository.findById(code).orElseThrow();
-        if (invitation!=null) {
-            user.setRoles(invitation.getRoles());
-            user.setEmail(invitation.getEmail().toLowerCase());
+        Optional<Invitation> invitation = invitationRepository.findById(code);
+        if (invitation.isPresent()) {
+            Invitation data = invitation.get();
+            user.setRoles(data.getRoles());
+            user.setEmail(data.getEmail().toLowerCase());
             user.setIsDeleted(false);
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
             userRepository.save(user);
-            invitationRepository.deleteById(invitation.getId());
+            invitationRepository.deleteById(data.getId());
             ideasClient.registerUserToIdeas(mapper.map(user, UserDTO.class));
+        } else {
+            throw new NotFoundException("Приглашение не найдено");
         }
         return "redirect:/login";
     }
     //Генерирует и отправляет код на изменение почты
-    public void sendCodeToChangeEmail(String newEmail, String oldEmail) {
+    public void sendCodeToChangeEmail(String newEmail, String oldEmail) throws Exception {
         String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
         EmailChangeData data = EmailChangeData.builder()
                 .code(encoder.encode(code))
@@ -166,6 +178,7 @@ public class AccountService {
                 .build();
         if (emailChangeRepository.existsByNewEmail(data.getNewEmail())) {
             //TODO: Ошибка, письмо уже отправлено
+            throw new Exception("Письмо уже отправлено на почту");
         }
         emailChangeRepository.deleteByOldEmail(oldEmail);
         EmailChangeData saved = emailChangeRepository.save(data);
@@ -185,12 +198,16 @@ public class AccountService {
                 if (data.getWrongTries()>=3) {
                     //TODO: TOO MANY TRIES EXCEPTION
                     emailChangeRepository.deleteByOldEmail(data.getOldEmail());
+                    throw new RuntimeException("Превышено максимальное количество попыток");
                 }
                 //TODO: TRY AGAIN EXCEPTION
                 data.setWrongTries(data.getWrongTries() + 1);
                 emailChangeRepository.save(data);
+                throw new RuntimeException("Ошибка, повторить ещё раз");
             }
         }
-        else ; //TODO: NOT FOUND EXCEPTION
+        else {
+            throw new NotFoundException("Код не найден");
+        }; //TODO: NOT FOUND EXCEPTION
     }
 }
