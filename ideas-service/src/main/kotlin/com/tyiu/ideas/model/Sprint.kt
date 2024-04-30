@@ -27,7 +27,7 @@ data class SprintDTO(
     val projectId:String? = null,
     val name:String? = null,
     val report:String? = null,
-    val status:SprintStatus? = null,
+    var status:SprintStatus? = null,
     val goal:String? = null,
     val startDate:LocalDate? = null,
     val finishDate:LocalDate? = null,

@@ -17,7 +17,7 @@ import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 
@@ -149,7 +149,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             .sql(query)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     fun getYourProjects(userId: String): Flow<ProjectDTO> {
@@ -188,7 +188,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             .bind("userId",userId)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     fun getYourActiveProjects(userId: String): Flow<ProjectDTO> {
@@ -227,7 +227,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             .bind("userId",userId)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     suspend fun getOneProject(projectId: String): ProjectDTO? {
@@ -265,7 +265,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             .bind("projectId",projectId)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).awaitFirst()
+            .thenMany(fromIterable(map.values)).awaitFirst()
     }
 
     fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> {
@@ -350,7 +350,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                     projectMarksDTO
 
             }}
-            .all().thenMany(Flux.fromIterable(map.values)).asFlow()
+            .all().thenMany(fromIterable(map.values)).asFlow()
     }
 
     //////////////////////////////
@@ -419,35 +419,16 @@ class ProjectService(val template: R2dbcEntityTemplate) {
 
     suspend fun pauseProject(projectId: String) {
         template.update(query(where("id").`is`(projectId)),
-            update("status", "PAUSED"),
+            update("status", ProjectStatus.PAUSED.name),
             Project::class.java).awaitSingle()
     }
 
     suspend fun putFinishProject(projectId: String, report: String) {
         template.update(query(where("id").`is`(projectId)),
-            update("report", report).set("status", "DONE"),
+            update("report", report)
+                .set("status", ProjectStatus.DONE.name),
             Project::class.java).awaitSingle()
     }
-
-    /*suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
-        val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
-        return if (projectLeader != null){
-            val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
-            template.databaseClient.sql(query)
-                .bind("userId", projectLeader.userId!!)
-                .bind("projectId",projectLeaderRequest.projectId!!).await()
-            val query2 = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
-            template.databaseClient.sql(query2)
-                .bind("userId", projectLeaderRequest.userId!!)
-                .bind("projectId",projectLeaderRequest.projectId).await()
-        }
-        else {
-            val query = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
-            return template.databaseClient.sql(query)
-                .bind("userId", projectLeaderRequest.userId!!)
-                .bind("projectId",projectLeaderRequest.projectId!!).await()
-        }
-    }*/
 }
 
 

@@ -10,10 +10,11 @@ import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
+import java.time.Duration.between
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.util.Comparator
+import java.util.Comparator.comparing
 import java.util.concurrent.ConcurrentHashMap
 
 
@@ -52,6 +53,8 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
             .bind("taskId", taskId)
             .map { row, _ ->
                 row.get("tml_id", String::class.java)?.let {
+                    val startDate = row.get("tml_start_date", LocalDateTime::class.java)
+                    val endDate = row.get("tml_end_date", LocalDateTime::class.java)
                     val taskMovementLog = map.getOrDefault(it,TaskMovementLogDTO(
                         it,
                         TaskDTO(
@@ -92,8 +95,9 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                             row.get("tml_u_first_name", String::class.java),
                             row.get("tml_u_last_name", String::class.java)
                         ),
-                        row.get("tml_start_date", LocalDateTime::class.java),
-                        row.get("tml_end_date", LocalDateTime::class.java),
+                        startDate,
+                        endDate,
+                        if (endDate != null) between(startDate, endDate).let { t -> "${t.toHours()}:${t.toMinutes() % 60}" }  else null,
                         TaskStatus.valueOf(row.get("tml_status", String::class.java)!!)
                     ))
                     row.get("tag_id", String::class.java)?.let { tagId ->
@@ -110,8 +114,8 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                 }
             }
             .all()
-            .thenMany(Flux.fromIterable(map.values))
-            .sort(Comparator.comparing(TaskMovementLogDTO::startDate))
+            .thenMany(fromIterable(map.values))
+            .sort(comparing(TaskMovementLogDTO::startDate))
             .asFlow()
     }
 
