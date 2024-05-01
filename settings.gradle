@@ -8,4 +8,5 @@ include('tgbot-service')
 include('api-gateway')
 include('library')
 include 'client'
+include 'amqp'
 

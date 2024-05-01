@@ -1,6 +1,8 @@
 server:
     port: 7777
 spring:
+    rabbitmq:
+        addresses: localhost:5672
     datasource:
         url: jdbc:postgresql://localhost:5433/hits
         username: admin

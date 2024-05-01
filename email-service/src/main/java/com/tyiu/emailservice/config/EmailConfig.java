@@ -3,12 +3,41 @@ package com.tyiu.emailservice.config;
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.TemplateLoader;
 import org.modelmapper.ModelMapper;
+import org.springframework.amqp.core.Binding;
+import org.springframework.amqp.core.BindingBuilder;
+import org.springframework.amqp.core.Queue;
+import org.springframework.amqp.core.TopicExchange;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.reactive.result.view.freemarker.FreeMarkerConfigurer;
 
 @Configuration
-public class ApplicationConfig {
+public class EmailConfig {
+
+    @Value("${rabbitmq.exchanges.internal}")
+    private String internalExchange;
+    @Value("${rabbitmq.queues.invitation}")
+    private String invitationQueue;
+    @Value("${rabbitmq.routing-keys.internal-invitation}")
+    private String internalInvitationRoutingKey;
+
+    @Bean
+    public TopicExchange internalTopicExchange(){
+        return new TopicExchange(internalExchange);
+    }
+    @Bean
+    public Queue invitationQueue() {
+        return new Queue(invitationQueue);
+    }
+    @Bean
+    public Binding internalInvitationBinding(){
+        return BindingBuilder
+                .bind(invitationQueue())
+                .to(internalTopicExchange())
+                .with(internalInvitationRoutingKey);
+    }
+
     @Bean
     public ModelMapper modelMapper(){
         return new ModelMapper();
@@ -23,4 +52,5 @@ public class ApplicationConfig {
         freeMarkerConfigurer.setConfiguration(configuration);
         return freeMarkerConfigurer;
     }
+
 }

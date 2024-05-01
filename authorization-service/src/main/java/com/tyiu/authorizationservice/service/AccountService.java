@@ -168,7 +168,7 @@ public class AccountService {
         return "redirect:/login";
     }
     //Генерирует и отправляет код на изменение почты
-    public void sendCodeToChangeEmail(String newEmail, String oldEmail) throws Exception {
+    public void sendCodeToChangeEmail(String newEmail, String oldEmail) {
         String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
         EmailChangeData data = EmailChangeData.builder()
                 .code(encoder.encode(code))
@@ -178,7 +178,7 @@ public class AccountService {
                 .build();
         if (emailChangeRepository.existsByNewEmail(data.getNewEmail())) {
             //TODO: Ошибка, письмо уже отправлено
-            throw new Exception("Письмо уже отправлено на почту");
+            throw new RuntimeException("Письмо уже отправлено на почту");
         }
         emailChangeRepository.deleteByOldEmail(oldEmail);
         EmailChangeData saved = emailChangeRepository.save(data);

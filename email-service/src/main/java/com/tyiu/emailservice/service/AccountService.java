@@ -2,7 +2,7 @@ package com.tyiu.emailservice.service;
 
 import com.tyiu.client.models.ChangeDataDTO;
 import com.tyiu.client.models.UserDTO;
-import com.tyiu.emailservice.config.ApplicationConfig;
+import com.tyiu.emailservice.config.EmailConfig;
 
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
@@ -23,7 +23,7 @@ import java.util.Map;
 @Slf4j
 public class AccountService {
 
-    private final ApplicationConfig freeMarkerConfig;
+    private final EmailConfig freeMarkerConfig;
     private final JavaMailSender javaMailSender;
     private final NotificationService notificationService;
     @Value("${authorization.host}")

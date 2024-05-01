@@ -1,6 +1,6 @@
 package com.tyiu.emailservice.service;
 
-import com.tyiu.emailservice.config.ApplicationConfig;
+import com.tyiu.emailservice.config.EmailConfig;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,7 +17,7 @@ import java.util.Map;
 @Slf4j
 public class NotificationService {
 
-    private final ApplicationConfig freeMarkerConfig;
+    private final EmailConfig freeMarkerConfig;
     private final JavaMailSender javaMailSender;
 
     private String getNotificationContext(NotificationRequest notification) {

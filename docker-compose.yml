@@ -25,7 +25,7 @@ services:
       - postgres_auth:/data/postgres_auth
   rabbitmq:
     container_name: rabbitmq
-    image: rabbitmq:3.12.12-management
+    image: rabbitmq:3.12.12-management-alpine
     restart: always
     ports:
       - 5672:5672
