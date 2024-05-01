@@ -18,6 +18,9 @@ import com.tyiu.client.models.UserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -33,6 +36,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Service
 @EnableScheduling
+@CacheConfig(cacheNames = "accounts")
 public class AccountService {
 
     private final ModelMapper mapper;
@@ -47,9 +51,9 @@ public class AccountService {
     private final EmailChangeDataRepository emailChangeRepository;
 
     //TODO: Регистрация админа только в тестовой среде
-    //TODO: Сделать обработку ошибок
+    //TODO: Сделать обработку ошибок +
     //TODO: некоторые запросы на почту сделать с rabbit
-    //TODO: добавить кэширование
+    //TODO: добавить кэширование +
 
     @Scheduled(fixedRate = 6000000)
     @Transactional
@@ -62,6 +66,7 @@ public class AccountService {
     }
 
     //Генерация кода для изменения пароля и отправка на почту
+    @Cacheable
     public ModelAndView generateAndSendCode(String email) {
         Boolean isUserExists = userRepository.existsByEmail(email);
         if (Boolean.FALSE.equals(isUserExists)) {
@@ -82,6 +87,7 @@ public class AccountService {
         return modelAndView;
     }
     //Сравнение кода с действительным и изменение пароля если сходится
+    @CacheEvict(allEntries = true)
     public String changePassword(PasswordChangeRequest request) {
         Boolean isPasswordChangeRequestExists = passwordChangeRepository.existsById(request.getId());
         if (Boolean.FALSE.equals(isPasswordChangeRequestExists)) {
@@ -169,7 +175,8 @@ public class AccountService {
         return "redirect:/login";
     }
     //Генерирует и отправляет код на изменение почты
-    public void sendCodeToChangeEmail(String newEmail, String oldEmail) throws Exception {
+    @Cacheable
+    public void sendCodeToChangeEmail(String newEmail, String oldEmail) {
         String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
         EmailChangeData data = EmailChangeData.builder()
                 .code(encoder.encode(code))
@@ -179,7 +186,7 @@ public class AccountService {
                 .build();
         if (emailChangeRepository.existsByNewEmail(data.getNewEmail())) {
             //TODO: Ошибка, письмо уже отправлено
-            throw new Exception("Письмо уже отправлено на почту");
+            throw new AccessException("Письмо уже отправлено на почту");
         }
         emailChangeRepository.deleteByOldEmail(oldEmail);
         EmailChangeData saved = emailChangeRepository.save(data);
@@ -187,6 +194,7 @@ public class AccountService {
     }
 
     //Сверяет код и изменяет почту
+    @CacheEvict(allEntries = true)
     public void changeEmailByUser(String code, String oldEmail) {
         Optional<EmailChangeData> emailChangeData = emailChangeRepository.findByOldEmail(oldEmail);
         if (emailChangeData.isPresent()) {
