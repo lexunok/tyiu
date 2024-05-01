@@ -1,5 +1,7 @@
 package com.tyiu.amqp;
 
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.RequiredArgsConstructor;
 import org.springframework.amqp.core.AmqpTemplate;
@@ -10,7 +12,6 @@ import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.amqp.support.converter.MessageConverter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 
 @Configuration
 @RequiredArgsConstructor
@@ -25,7 +26,9 @@ public class RabbitMQConfig {
     }
     @Bean
     public MessageConverter messageConverter() {
-        return new Jackson2JsonMessageConverter(Jackson2ObjectMapperBuilder.json().modules(new JavaTimeModule()).build());
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.registerModule(new JavaTimeModule());
+        return new Jackson2JsonMessageConverter(objectMapper);
     }
     @Bean
     public SimpleRabbitListenerContainerFactory simpleRabbitListenerContainerFactory(){

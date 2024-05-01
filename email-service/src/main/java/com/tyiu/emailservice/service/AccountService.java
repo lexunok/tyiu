@@ -1,13 +1,14 @@
 package com.tyiu.emailservice.service;
 
 import com.tyiu.client.models.ChangeDataDTO;
-import com.tyiu.client.models.UserDTO;
+import com.tyiu.client.models.InvitationLinkRequest;
 import com.tyiu.emailservice.config.EmailConfig;
 
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
@@ -48,16 +49,18 @@ public class AccountService {
                 .map(this::sendMailCodeToChangeData).then();
     }
 
-    public Mono<Void> sendInvitation(String email, String invitationId, UserDTO user) {
+    @RabbitListener(queues = "${rabbitmq.queues.invitation}")
+    public Mono<Void> sendInvitation(InvitationLinkRequest request) {
         return Mono.fromCallable(() -> {
+            log.info("Consume link for invitation");
             String invitationText = "Вас пригласил(-а) зарегистрироваться на портал HITS " +
-                    user.getFirstName() + " " + user.getLastName() +
+                    request.getSenderFirstName() + " " + request.getSenderLastName() +
                     " в качестве пользователя. Для регистрации на сервисе перейдите по данной ссылке и заполните все поля.";
             NotificationRequest emailRequest = NotificationRequest.builder()
-                    .consumerEmail(email)
+                    .consumerEmail(request.getReceiver())
                     .title("Приглашение на регистрацию")
                     .message(invitationText)
-                    .link(authorizationHost + "registration?code=" + invitationId)
+                    .link(authorizationHost + "registration?code=" + request.getLinkId())
                     .buttonName("Зарегистрироваться")
                     .build();
             notificationService.sendMailNotification(emailRequest);
@@ -86,50 +89,4 @@ public class AccountService {
             throw new RuntimeException();
         }
     }
-    //    public void sendInvitations(InvitationsDTO invitations, User user) {
-//        Flux.fromIterable(invitations.getEmails())
-//                .flatMap(email -> template.exists(query(where("email").is(email)), User.class)
-//                        .flatMap(userExists -> {
-//                            if (Boolean.FALSE.equals(userExists)) {
-//                                return template.exists(query(where("email").is(email)), Invitation.class)
-//                                        .flatMap(invitationExists -> {
-//                                            Invitation invitation = Invitation.builder()
-//                                                    .roles(invitations.getRoles())
-//                                                    .email(email)
-//                                                    .dateExpired(LocalDateTime.now().plusDays(1))
-//                                                    .build();
-//
-//                                            if (Boolean.TRUE.equals(invitationExists))
-//                                                return template.delete(query(where("email").is(email)), Invitation.class)
-//                                                        .then(template.insert(invitation))
-//                                                        .flatMap(i ->
-//                                                                sendInvitation(
-//                                                                        i.getEmail(),
-//                                                                        String.format("register/%s", i.getId()),
-//                                                                        user)
-//                                                        )
-//                                                        .onErrorResume(e -> Mono.fromRunnable(() -> {
-//                                                            log.error("Error processing invitation for email {}: {}",
-//                                                                    email, e.getMessage());
-//                                                        }));
-//                                            return template.insert(invitation)
-//                                                    .flatMap(i ->
-//                                                            sendInvitation(
-//                                                                    i.getEmail(),
-//                                                                    String.format("register/%s", i.getId()),
-//                                                                    user)
-//                                                    )
-//                                                    .onErrorResume(e -> Mono.fromRunnable(() -> {
-//                                                        log.error("Error processing invitation for email {}: {}",
-//                                                                email, e.getMessage());
-//
-//                                                    }));
-//                                        });
-//                            }
-//                            return Mono.empty();
-//                        })
-//                )
-//                .publishOn(Schedulers.boundedElastic())
-//                .subscribe();
-//    }
 }

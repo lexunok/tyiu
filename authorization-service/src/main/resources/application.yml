@@ -14,6 +14,11 @@ spring:
               dialect: org.hibernate.dialect.PostgreSQLDialect
         hibernate:
             ddl-auto: update
+rabbitmq:
+    exchanges:
+        internal: internal.exchange
+    routing-keys:
+        internal-invitation: internal.invitation.routing-key
 oauth:
     secret: secret
     redirect: http://localhost/login/oauth2/code/gateway

@@ -46,6 +46,7 @@ public class NotificationService {
         catch (Exception e) {
             log.error("Failed to send email {} with subject {}, due to {}",
                     notificationRequest.getConsumerEmail(), notificationRequest.getTitle(), e.getMessage());
+            //TODO: Обработку исключений нормальную сюда нада
             throw new RuntimeException();
         }
     }
