@@ -1,5 +1,6 @@
 package com.tyiu.authorizationservice.service;
 
+import com.tyiu.authorizationservice.config.exception.AccessException;
 import com.tyiu.authorizationservice.config.exception.NotFoundException;
 import com.tyiu.authorizationservice.model.entity.EmailChangeData;
 import com.tyiu.authorizationservice.model.entity.Invitation;
