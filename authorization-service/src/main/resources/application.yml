@@ -12,6 +12,10 @@ spring:
               dialect: org.hibernate.dialect.PostgreSQLDialect
         hibernate:
             ddl-auto: update
+    data:
+        redis:
+            host: localhost
+            port: 6379
 oauth:
     secret: secret
     redirect: http://localhost/login/oauth2/code/gateway
