@@ -1,5 +1,6 @@
 package com.tyiu.authorizationservice.service;
 
+import com.tyiu.authorizationservice.config.exception.AccessException;
 import com.tyiu.authorizationservice.config.exception.NotFoundException;
 import com.tyiu.authorizationservice.model.entity.EmailChangeData;
 import com.tyiu.authorizationservice.model.entity.Invitation;
@@ -91,7 +92,7 @@ public class AccountService {
                 if (LocalDateTime.now().isAfter(passwordChangeData.getDateExpired())) {
                     //TODO: Ошибка что просрочено
                     passwordChangeRepository.delete(passwordChangeData);
-                    throw new RuntimeException("Время запроса истекло");
+                    throw new AccessException("Время запроса истекло");
                 }
                 else {
                     String password = encoder.encode(request.getPassword());
@@ -103,13 +104,13 @@ public class AccountService {
                 if (passwordChangeData.getWrongTries()>=3) {
                     //TODO: Ошибка больше 3 попыток восстановления
                     passwordChangeRepository.delete(passwordChangeData);
-                    throw new RuntimeException("Было выполнено более трёх попыток восстановления");
+                    throw new AccessException("Превышено максимальное количество попыток");
                 }
                 else {
                     //TODO: Ошибка попробуйте еще раз
                     passwordChangeData.setWrongTries(passwordChangeData.getWrongTries() + 1);
                     passwordChangeRepository.save(passwordChangeData);
-                    throw new RuntimeException("Ошибка, попробуйте ещё раз");
+                    throw new AccessException("Ошибка, попробуйте ещё раз");
                 }
             }
         });
@@ -198,16 +199,16 @@ public class AccountService {
                 if (data.getWrongTries()>=3) {
                     //TODO: TOO MANY TRIES EXCEPTION
                     emailChangeRepository.deleteByOldEmail(data.getOldEmail());
-                    throw new RuntimeException("Превышено максимальное количество попыток");
+                    throw new AccessException("Превышено максимальное количество попыток");
                 }
                 //TODO: TRY AGAIN EXCEPTION
                 data.setWrongTries(data.getWrongTries() + 1);
                 emailChangeRepository.save(data);
-                throw new RuntimeException("Ошибка, повторить ещё раз");
+                throw new AccessException("Ошибка, попробуйте ещё раз");
             }
         }
         else {
             throw new NotFoundException("Код не найден");
-        }; //TODO: NOT FOUND EXCEPTION
+        } //TODO: NOT FOUND EXCEPTION
     }
 }
