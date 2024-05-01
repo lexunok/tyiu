@@ -1,6 +1,7 @@
 package com.tyiu.authorizationservice.service;
 
 import com.tyiu.amqp.RabbitMQMessageProducer;
+import com.tyiu.authorizationservice.config.exception.AccessException;
 import com.tyiu.authorizationservice.model.entity.Invitation;
 import com.tyiu.authorizationservice.model.request.InvitationRequest;
 import com.tyiu.authorizationservice.model.entity.User;
@@ -9,6 +10,9 @@ import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.models.InvitationLinkRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -16,6 +20,7 @@ import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "invitation")
 public class InvitationService {
 
     @Value("${rabbitmq.exchanges.internal}")
@@ -32,7 +37,7 @@ public class InvitationService {
         Boolean userIsExists = userRepository.existsByEmail(invitationRequest.getEmail());
         if (Boolean.TRUE.equals(userIsExists)) {
             //TODO: Ошибка пользователь уже существует
-            throw new RuntimeException("Пользователь уже существует");
+            throw new AccessException("Пользователь уже существует");
         }
         Invitation invitation = mapper.map(invitationRequest, Invitation.class);
         invitation.setDateExpired(LocalDateTime.now().plusDays(1));

@@ -14,6 +14,10 @@ spring:
               dialect: org.hibernate.dialect.PostgreSQLDialect
         hibernate:
             ddl-auto: update
+    data:
+        redis:
+            host: localhost
+            port: 6379
 rabbitmq:
     exchanges:
         internal: internal.exchange

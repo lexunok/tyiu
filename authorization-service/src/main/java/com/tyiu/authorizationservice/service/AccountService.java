@@ -17,6 +17,9 @@ import com.tyiu.client.models.UserDTO;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -32,6 +35,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Service
 @EnableScheduling
+@CacheConfig(cacheNames = "accounts")
 public class AccountService {
 
     private final ModelMapper mapper;
@@ -46,9 +50,9 @@ public class AccountService {
     private final EmailChangeDataRepository emailChangeRepository;
 
     //TODO: Регистрация админа только в тестовой среде
-    //TODO: Сделать обработку ошибок
+    //TODO: Сделать обработку ошибок +
     //TODO: некоторые запросы на почту сделать с rabbit
-    //TODO: добавить кэширование
+    //TODO: добавить кэширование +
 
     @Scheduled(fixedRate = 6000000)
     @Transactional
@@ -61,6 +65,7 @@ public class AccountService {
     }
 
     //Генерация кода для изменения пароля и отправка на почту
+    @Cacheable
     public ModelAndView generateAndSendCode(String email) {
         Boolean isUserExists = userRepository.existsByEmail(email);
         if (Boolean.FALSE.equals(isUserExists)) {
@@ -81,6 +86,7 @@ public class AccountService {
         return modelAndView;
     }
     //Сравнение кода с действительным и изменение пароля если сходится
+    @CacheEvict(allEntries = true)
     public String changePassword(PasswordChangeRequest request) {
         Boolean isPasswordChangeRequestExists = passwordChangeRepository.existsById(request.getId());
         if (Boolean.FALSE.equals(isPasswordChangeRequestExists)) {
@@ -91,7 +97,7 @@ public class AccountService {
                 if (LocalDateTime.now().isAfter(passwordChangeData.getDateExpired())) {
                     //TODO: Ошибка что просрочено
                     passwordChangeRepository.delete(passwordChangeData);
-                    throw new RuntimeException("Время запроса истекло");
+                    throw new AccessException("Время запроса истекло");
                 }
                 else {
                     String password = encoder.encode(request.getPassword());
@@ -103,13 +109,13 @@ public class AccountService {
                 if (passwordChangeData.getWrongTries()>=3) {
                     //TODO: Ошибка больше 3 попыток восстановления
                     passwordChangeRepository.delete(passwordChangeData);
-                    throw new RuntimeException("Было выполнено более трёх попыток восстановления");
+                    throw new AccessException("Превышено максимальное количество попыток");
                 }
                 else {
                     //TODO: Ошибка попробуйте еще раз
                     passwordChangeData.setWrongTries(passwordChangeData.getWrongTries() + 1);
                     passwordChangeRepository.save(passwordChangeData);
-                    throw new RuntimeException("Ошибка, попробуйте ещё раз");
+                    throw new AccessException("Ошибка, попробуйте ещё раз");
                 }
             }
         });
@@ -168,6 +174,7 @@ public class AccountService {
         return "redirect:/login";
     }
     //Генерирует и отправляет код на изменение почты
+    @Cacheable
     public void sendCodeToChangeEmail(String newEmail, String oldEmail) {
         String code = String.valueOf(new SecureRandom().nextInt(900000)+100000);
         EmailChangeData data = EmailChangeData.builder()
@@ -178,7 +185,7 @@ public class AccountService {
                 .build();
         if (emailChangeRepository.existsByNewEmail(data.getNewEmail())) {
             //TODO: Ошибка, письмо уже отправлено
-            throw new RuntimeException("Письмо уже отправлено на почту");
+            throw new AccessException("Письмо уже отправлено на почту");
         }
         emailChangeRepository.deleteByOldEmail(oldEmail);
         EmailChangeData saved = emailChangeRepository.save(data);
@@ -186,6 +193,7 @@ public class AccountService {
     }
 
     //Сверяет код и изменяет почту
+    @CacheEvict(allEntries = true)
     public void changeEmailByUser(String code, String oldEmail) {
         Optional<EmailChangeData> emailChangeData = emailChangeRepository.findByOldEmail(oldEmail);
         if (emailChangeData.isPresent()) {
@@ -198,16 +206,16 @@ public class AccountService {
                 if (data.getWrongTries()>=3) {
                     //TODO: TOO MANY TRIES EXCEPTION
                     emailChangeRepository.deleteByOldEmail(data.getOldEmail());
-                    throw new RuntimeException("Превышено максимальное количество попыток");
+                    throw new AccessException("Превышено максимальное количество попыток");
                 }
                 //TODO: TRY AGAIN EXCEPTION
                 data.setWrongTries(data.getWrongTries() + 1);
                 emailChangeRepository.save(data);
-                throw new RuntimeException("Ошибка, повторить ещё раз");
+                throw new AccessException("Ошибка, попробуйте ещё раз");
             }
         }
         else {
             throw new NotFoundException("Код не найден");
-        }; //TODO: NOT FOUND EXCEPTION
+        } //TODO: NOT FOUND EXCEPTION
     }
 }
