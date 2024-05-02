@@ -14,3 +14,13 @@ dependencies {
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
+tasks.named("bootBuildImage") {
+	imageName.set("lexunok/email-service")
+	publish = true
+	docker {
+		publishRegistry {
+			username ='lexunok'
+			password = System.getProperty('token')
+		}
+	}
+}

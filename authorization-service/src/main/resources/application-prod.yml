@@ -4,7 +4,7 @@ spring:
     rabbitmq:
         addresses: rabbitmq
     datasource:
-        url: jdbc:postgresql://postgres-authorization/hits
+        url: jdbc:postgresql://db-authorization/hits
         username: ${SERVICE_USERNAME}
         password: ${SERVICE_PASSWORD}
     jpa:

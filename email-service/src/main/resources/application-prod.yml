@@ -1,0 +1,28 @@
+server:
+  port: 8084
+authorization:
+  host: http://localhost:7777/ #change
+spring:
+  rabbitmq:
+    addresses: rabbitmq:5672
+  mail:
+    host: smtp.tsogu.ru
+    port: 25
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+rabbitmq:
+  exchanges:
+    internal: internal.exchange
+  queues:
+    invitation: invitation.queue
+  routing-keys:
+    internal-invitation: internal.invitation.routing-key
+
+
+
+
+

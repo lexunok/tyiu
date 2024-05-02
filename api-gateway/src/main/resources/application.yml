@@ -24,7 +24,7 @@ spring:
           predicates:
             - Path=/api/v1/notification-service/**
         - id: email-service
-          uri: http://localhost:3000
+          uri: http://localhost:8084
           predicates:
             - Path=/api/v1/email-service/**
         - id: tgbot-service
