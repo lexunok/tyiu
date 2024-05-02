@@ -3,11 +3,10 @@ package com.tyiu.emailservice.service;
 import com.tyiu.client.models.ChangeDataDTO;
 import com.tyiu.client.models.InvitationLinkRequest;
 import com.tyiu.emailservice.config.EmailConfig;
-
+import com.tyiu.emailservice.config.exception.ServerProcessException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -68,7 +67,7 @@ public class AccountService {
         }).then();
     }
 
-    private String sendMailCodeToChangeData(ChangeDataDTO changeRequest){
+    private String sendMailCodeToChangeData(ChangeDataDTO changeRequest) {
         try {
             String html = FreeMarkerTemplateUtils
                     .processTemplateIntoString(freeMarkerConfig.freemarkerClassLoaderConfig().getConfiguration()
@@ -83,10 +82,9 @@ public class AccountService {
             return html;
         }
         catch (Exception e) {
-            log.error("Failed to send email {} with subject {}, due to {}",
-                    changeRequest.getTo(), changeRequest.getSubject(), e.getMessage());
-            //TODO: exception
-            throw new RuntimeException();
+            throw new ServerProcessException("Failed to send email " + changeRequest.getTo() +
+                    " with subject " + changeRequest.getSubject() +
+                    ", due to " + e.getMessage());
         }
     }
 }
