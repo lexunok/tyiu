@@ -50,14 +50,16 @@ public class ProjectControllerTest extends TestContainers {
     private UserDTO admin;
     private UserDTO member;
     private UserDTO initiator;
+    private UserDTO leader;
 
     private GroupDTO groupExpert;
     private GroupDTO groupProjectOffice;
     private SkillDTO skill1;
     private SkillDTO skill2;
+    private TagDTO tag1;
+    private TagDTO tag2;
     private String marketId;
     private TeamDTO createdTeam;
-    private SprintDTO createdSprint;
     private IdeaMarketDTO createdIdeaMarket;
 
     private RegisterRequest buildRegisterRequest(String email, String lastName, List<Role> roles){
@@ -103,6 +105,82 @@ public class ProjectControllerTest extends TestContainers {
 
     private IdeaSkillRequest buildSkillRequest(String id, List<SkillDTO> skills){
         return IdeaSkillRequest.builder().ideaId(id).skills(skills).build();
+    }
+
+    private SprintMarkDTO buildSprintMarkDTO(String sprintId, String projectId, UserDTO user, ProjectRole role, List<TaskDTO> tasks){
+        return new SprintMarkDTO(
+                null,
+                projectId,
+                sprintId,
+                user.getId(),
+                user.getFirstName(),
+                user.getLastName(),
+                role,
+                5.0,
+                tasks
+        );
+    }
+
+    private TagDTO buildTag(String name, String color){
+        return new TagDTO(null,name, color, true, null, null, null);
+    }
+
+    private TaskDTO buildTask(String projectId, List<TagDTO> tags){
+        return new TaskDTO(
+                null,
+                null,
+                projectId,
+                null,
+                "задача",
+                "мега описание задачи",
+                null,
+                null,
+                null,
+                22.0,
+                LocalDate.now(),
+                LocalDate.now().plusDays(2),
+                tags,
+                null
+        );
+    }
+
+
+    private TaskDTO getTask(String id, String jwt){
+        TaskDTO taskDTO = webTestClient
+                .get()
+                .uri("/api/v1/scrum-service/task/{taskId}", id)
+                .header("Authorization", jwt)
+                .exchange()
+                .expectBody(TaskDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(taskDTO);
+        return  taskDTO;
+    }
+
+    private TaskDTO createTask(TaskDTO buildTask, String jwt){
+        TaskDTO createdTask = webTestClient
+                .post()
+                .uri("/api/v1/scrum-service/task/add")
+                .header("Authorization", jwt)
+                .body(Mono.just(buildTask), TaskDTO.class)
+                .exchange()
+                .expectBody(TaskDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(createdTask);
+        return getTask(createdTask.getId(), jwt_admin);
+    }
+
+    private TagDTO createTagDTO(TagDTO buildTag, String jwt){
+        TagDTO tagDTO = webTestClient
+                .post()
+                .uri("/api/v1/scrum-service/tag/add")
+                .header("Authorization", jwt)
+                .body(Mono.just(buildTag), TagDTO.class)
+                .exchange()
+                .expectBody(TagDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(tagDTO);
+        return tagDTO;
     }
 
     private ProjectMemberDTO createProjectMember(String projectId, AddToProjectRequest add, String jwt){
@@ -492,6 +570,18 @@ public class ProjectControllerTest extends TestContainers {
                 .expectStatus();
     }
 
+    private StatusAssertions checkAddSprintMarks(String jwt, String sprintId, String projectId, List<TaskDTO> tasks){
+        return webTestClient
+                .post()
+                .uri("/api/v1/scrum-service/sprint/marks/{projectId}/{sprintId}/add", projectId, sprintId)
+                .header("Authorization", jwt)
+                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, projectId, member, ProjectRole.MEMBER, List.of(tasks.get(0))),
+                                buildSprintMarkDTO(sprintId, projectId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1))))),
+                        SprintMarkDTO.class)
+                .exchange()
+                .expectStatus();
+    }
+
     @BeforeAll
     public void setUp() {
         RegisterRequest initiatorRequest = buildRegisterRequest("project.initiator@gmail.com", "initiator", List.of(Role.INITIATOR));
@@ -522,6 +612,7 @@ public class ProjectControllerTest extends TestContainers {
         jwt_teacher = "Bearer " + teacherResponse.getToken();
 
         admin = buildUser(adminResponse);
+        leader = buildUser(leaderResponse);
         initiator = buildUser(initiatorResponse);
         member = buildUser(memberResponse);
 
@@ -530,6 +621,9 @@ public class ProjectControllerTest extends TestContainers {
 
         skill1 = createSkill(buildSkill("skill1"), jwt_admin);
         skill2 = createSkill(buildSkill("skill2"), jwt_admin);
+
+        tag1 = createTagDTO(buildTag("Frontend","blue"), jwt_admin);
+        tag2 = createTagDTO(buildTag("Backend","orange"), jwt_admin);
 
         webTestClient
                 .post()
@@ -724,22 +818,27 @@ public class ProjectControllerTest extends TestContainers {
     }
 
     @Test
-    void testGetAllProjectMarks(){ //переделать оценки выставляются со спринтов
+    void testGetAllProjectMarks() {
         String projectId = getProject(createProject(getMarketIdea(createdIdeaMarket.getId(),jwt_admin),jwt_admin).getId(),jwt_admin).getId();
+
+        List<TaskDTO> tasks = List.of(
+                createTask(buildTask(projectId, List.of(tag1, tag2)), jwt_admin),
+                createTask(buildTask(projectId, List.of(tag1, tag2)), jwt_admin)
+        );
 
         SprintDTO sprintDTO = new SprintDTO(
                 null,
                 projectId,
                 "спринт",
-                null,
-                null,
+                "Завершён",
+                SprintStatus.DONE,
                 "мега цель",
                 LocalDate.now(),
                 LocalDate.now().plusDays(20),
                 2L,
                 List.of()
         );
-        createdSprint = webTestClient
+        SprintDTO createdSprint = webTestClient
                 .post()
                 .uri("/api/v1/scrum-service/sprint/add")
                 .header("Authorization", jwt_admin)
@@ -749,16 +848,13 @@ public class ProjectControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(createdSprint);
 
-        List<ProjectMarksDTO> marks = getListProjectMarks("/marks/{projectId}/all",projectId);
-        assertNotNull(marks);
-        assertTrue(marks.size() >= 0);
-        checkGetAllMembers(jwt_initiator,projectId).isOk();
-        checkGetAllMembers(jwt_office,projectId).isOk();
-        checkGetAllMembers(jwt_member,projectId).isOk();
-        checkGetAllMembers(jwt_owner,projectId).isOk();
-        checkGetAllMembers(jwt_leader,projectId).isOk();
-        checkGetAllMembers(jwt_expert,projectId).isForbidden();
-        checkGetAllMembers(jwt_teacher,projectId).isForbidden();
+        checkAddSprintMarks(jwt_initiator,createdSprint.getId(),projectId,tasks).isOk();
+        checkAddSprintMarks(jwt_office,createdSprint.getId(),projectId,tasks).isOk();
+        checkAddSprintMarks(jwt_member,createdSprint.getId(),projectId,tasks).isForbidden();
+        checkAddSprintMarks(jwt_owner,createdSprint.getId(),projectId,tasks).isForbidden();
+        checkAddSprintMarks(jwt_leader,createdSprint.getId(),projectId,tasks).isForbidden();
+        checkAddSprintMarks(jwt_expert,createdSprint.getId(),projectId,tasks).isForbidden();
+        checkAddSprintMarks(jwt_teacher,createdSprint.getId(),projectId,tasks).isForbidden();
     }
 
     @Test
