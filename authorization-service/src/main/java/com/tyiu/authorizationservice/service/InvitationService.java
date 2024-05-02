@@ -5,6 +5,7 @@ import com.tyiu.authorizationservice.config.exception.AccessException;
 import com.tyiu.authorizationservice.model.entity.Invitation;
 import com.tyiu.authorizationservice.model.request.InvitationRequest;
 import com.tyiu.authorizationservice.model.entity.User;
+import com.tyiu.authorizationservice.model.request.ManyInvitationsRequest;
 import com.tyiu.authorizationservice.repository.InvitationRepository;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.models.InvitationLinkRequest;
@@ -52,50 +53,25 @@ public class InvitationService {
         invitationRepository.deleteById(id);
     }
 
-    //    public void sendInvitations(InvitationsDTO invitations, User user) {
-//        Flux.fromIterable(invitations.getEmails())
-//                .flatMap(email -> template.exists(query(where("email").is(email)), User.class)
-//                        .flatMap(userExists -> {
-//                            if (Boolean.FALSE.equals(userExists)) {
-//                                return template.exists(query(where("email").is(email)), Invitation.class)
-//                                        .flatMap(invitationExists -> {
-//                                            Invitation invitation = Invitation.builder()
-//                                                    .roles(invitations.getRoles())
-//                                                    .email(email)
-//                                                    .dateExpired(LocalDateTime.now().plusDays(1))
-//                                                    .build();
-//
-//                                            if (Boolean.TRUE.equals(invitationExists))
-//                                                return template.delete(query(where("email").is(email)), Invitation.class)
-//                                                        .then(template.insert(invitation))
-//                                                        .flatMap(i ->
-//                                                                sendInvitation(
-//                                                                        i.getEmail(),
-//                                                                        String.format("register/%s", i.getId()),
-//                                                                        user)
-//                                                        )
-//                                                        .onErrorResume(e -> Mono.fromRunnable(() -> {
-//                                                            log.error("Error processing invitation for email {}: {}",
-//                                                                    email, e.getMessage());
-//                                                        }));
-//                                            return template.insert(invitation)
-//                                                    .flatMap(i ->
-//                                                            sendInvitation(
-//                                                                    i.getEmail(),
-//                                                                    String.format("register/%s", i.getId()),
-//                                                                    user)
-//                                                    )
-//                                                    .onErrorResume(e -> Mono.fromRunnable(() -> {
-//                                                        log.error("Error processing invitation for email {}: {}",
-//                                                                email, e.getMessage());
-//
-//                                                    }));
-//                                        });
-//                            }
-//                            return Mono.empty();
-//                        })
-//                )
-//                .publishOn(Schedulers.boundedElastic())
-//                .subscribe();
-//    }
+    public void sendManyInvitations(ManyInvitationsRequest request, User user) {
+        request.getEmail().forEach(email -> {
+            Boolean userIsExists = userRepository.existsByEmail(email);
+            if (Boolean.FALSE.equals(userIsExists)) {
+                Invitation invitation = Invitation.builder()
+                        .roles(request.getRoles())
+                        .email(email)
+                        .dateExpired(LocalDateTime.now().plusDays(1))
+                        .build();
+                invitationRepository.deleteByEmail(email);
+                Invitation saved = invitationRepository.save(invitation);
+                InvitationLinkRequest linkRequest = InvitationLinkRequest.builder()
+                        .linkId(saved.getId())
+                        .receiver(saved.getEmail())
+                        .senderFirstName(user.getFirstName())
+                        .senderLastName(user.getLastName())
+                        .build();
+                rabbitProducer.publish(linkRequest, internalExchange, internalInvitationRoutingKey);
+            }
+        });
+    }
 }

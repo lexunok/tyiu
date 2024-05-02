@@ -2,6 +2,7 @@ package com.tyiu.authorizationservice.controller;
 
 import com.tyiu.authorizationservice.model.request.InvitationRequest;
 import com.tyiu.authorizationservice.model.entity.User;
+import com.tyiu.authorizationservice.model.request.ManyInvitationsRequest;
 import com.tyiu.authorizationservice.service.InvitationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -17,6 +18,11 @@ public class InvitationController {
     @PostMapping("/send/email")
     public void sendInvitationToEmail(@RequestBody InvitationRequest invitation, @AuthenticationPrincipal User user) {
         invitationService.sendInvitationToEmail(invitation, user);
+    }
+
+    @PostMapping("/send/many")
+    public void sendManyInvitations(@RequestBody ManyInvitationsRequest request, @AuthenticationPrincipal User user) {
+        invitationService.sendManyInvitations(request, user);
     }
 
     @DeleteMapping("/delete/{id}")
