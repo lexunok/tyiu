@@ -1,0 +1,9 @@
+spring:
+  cloud:
+    openfeign:
+      client:
+        config:
+          email:
+            url: http://localhost:8084
+          ideas:
+            url: http://localhost:8082

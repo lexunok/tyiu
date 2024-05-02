@@ -9,8 +9,6 @@ dependencies {
 	implementation 'org.postgresql:postgresql'
 	implementation project(':client')
 	implementation project(':amqp')
-    compileOnly 'org.projectlombok:lombok'
-	annotationProcessor 'org.projectlombok:lombok'
 }
 tasks.named("bootBuildImage") {
 	imageName.set("lexunok/authorization-service")

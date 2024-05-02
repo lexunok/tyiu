@@ -2,7 +2,6 @@ package com.tyiu.emailservice.config;
 
 import freemarker.cache.ClassTemplateLoader;
 import freemarker.cache.TemplateLoader;
-import org.modelmapper.ModelMapper;
 import org.springframework.amqp.core.Binding;
 import org.springframework.amqp.core.BindingBuilder;
 import org.springframework.amqp.core.Queue;
@@ -36,11 +35,6 @@ public class EmailConfig {
                 .bind(invitationQueue())
                 .to(internalTopicExchange())
                 .with(internalInvitationRoutingKey);
-    }
-
-    @Bean
-    public ModelMapper modelMapper(){
-        return new ModelMapper();
     }
 
     @Bean
