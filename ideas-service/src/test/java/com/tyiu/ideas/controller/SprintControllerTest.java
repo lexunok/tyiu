@@ -159,7 +159,7 @@ public class SprintControllerTest extends TestContainers {
         );
     }
 
-    private SprintMarkDTO buildSprintMarkDTO(String sprintId, UserDTO user, ProjectRole role, List<TaskDTO> tasks){
+    private SprintMarkDTO buildSprintMarkDTO(String sprintId, UserDTO user, ProjectRole role, Integer tasksSize){
         return new SprintMarkDTO(
                 null,
                 createdProject.getId(),
@@ -169,7 +169,7 @@ public class SprintControllerTest extends TestContainers {
                 user.getLastName(),
                 role,
                 5.0,
-                tasks
+                tasksSize
         );
     }
 
@@ -490,8 +490,8 @@ public class SprintControllerTest extends TestContainers {
                 .post()
                 .uri(main_path + "/marks/{projectId}/{sprintId}/add", createdProject.getId(), sprintId)
                 .header("Authorization", jwt)
-                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, member, ProjectRole.MEMBER, List.of(tasks.get(0))),
-                                buildSprintMarkDTO(sprintId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1))))),
+                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, member, ProjectRole.MEMBER, List.of(tasks.get(0)).size()),
+                                buildSprintMarkDTO(sprintId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1)).size()))),
                         SprintMarkDTO.class)
                 .exchange()
                 .expectStatus();
@@ -807,23 +807,7 @@ public class SprintControllerTest extends TestContainers {
                 assertEquals(ProjectRole.TEAM_LEADER, m.getProjectRole());
             }
             assertEquals(5.0, m.getMark());
-            assertNotNull(m.getTasks());
-            m.getTasks().forEach(t -> {
-                if (Objects.equals(t.getId(), task1.getId())){
-                    assertEquals(sprintId, t.getSprintId());
-                    assertEquals(TaskStatus.NewTask, t.getStatus());
-                    assertTask(t,task1);
-                }
-                else if (Objects.equals(t.getId(), task2.getId())){
-                    assertEquals(sprintId, t.getSprintId());
-                    assertEquals(TaskStatus.NewTask, t.getStatus());
-                    assertTask(t,task2);
-                }
-                else {
-                    fail();
-                }
-            });
-            assertEquals(1, m.getTasks().size());
+            assertEquals(1, m.getCountCompletedTasks());
         });
         checkGetAllSprintMarks(jwt_initiator, sprintId).isOk();
         checkGetAllSprintMarks(jwt_expert, sprintId).isForbidden();

@@ -12,6 +12,7 @@ data class SprintMark(
     val userId:String? = null,
     val projectRole: ProjectRole,
     val mark:Double? = null,
+    val countCompletedTasks:Int? = null
 )
 data class SprintMarkDTO(
     val id: String? = null,
@@ -22,5 +23,5 @@ data class SprintMarkDTO(
     var lastName: String? = null,
     val projectRole: ProjectRole,
     val mark:Double? = null,
-    var tasks: List<TaskDTO>? = null,
+    val countCompletedTasks:Int? = null
 )

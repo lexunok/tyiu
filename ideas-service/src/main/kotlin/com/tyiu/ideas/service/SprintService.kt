@@ -168,31 +168,15 @@ class SprintService (val template: R2dbcEntityTemplate)
     fun getAllSprintMarks(sprintId: String): Flow<SprintMarkDTO> {
         val query = """
             SELECT
-                sm.id AS sm_id, sm.project_id AS sm_project_id, sm.sprint_id AS sm_sprint_id,
-                sm.user_id AS sm_user_id, sm.project_role AS sm_project_role, sm.mark AS sm_mark,
-                u.first_name AS u_first_name, u.last_name AS u_last_name,
-                t.id AS t_id, th.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
-                t.initiator_id AS t_initiator_id, th.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
-                t.start_date AS t_start_date, t.finish_date AS t_finish_date, th.status AS t_status,
-                i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
-                e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                sm.id AS sm_id, sm.project_id AS sm_project_id, sm.sprint_id AS sm_sprint_id, sm.user_id AS sm_user_id, 
+                sm.project_role AS sm_project_role, sm.mark AS sm_mark, sm.count_completed_tasks AS sm_count_completed_tasks,
+                u.first_name AS u_first_name, u.last_name AS u_last_name
             FROM sprint_mark sm
                 LEFT JOIN users u ON u.id = sm.user_id
-                LEFT JOIN sprint_mark_task smt ON smt.sprint_mark_id = sm.id
-                LEFT JOIN task_history th ON th.sprint_id = sm.sprint_id AND th.task_id = smt.task_id
-                LEFT JOIN task t ON t.id = th.task_id
-                LEFT JOIN users i ON i.id = t.initiator_id
-                LEFT JOIN users e ON e.id = t.executor_id
-                LEFT JOIN task_tag tg ON tg.task_id = t.id
-                LEFT JOIN tag ON tag.id = tg.tag_id
             WHERE sm.sprint_id = :sprintId
         """.trimIndent()
 
         val map = ConcurrentHashMap<String, SprintMarkDTO>()
-        val map2 = ConcurrentHashMap<String, TaskDTO>()
 
         return template.databaseClient
             .sql(query)
@@ -208,54 +192,8 @@ class SprintService (val template: R2dbcEntityTemplate)
                         row.get("u_last_name", String::class.java),
                         ProjectRole.valueOf(row.get("sm_project_role", String::class.java)!!),
                         row.get("sm_mark", Double::class.javaObjectType),
-                        listOf()
+                        row.get("sm_count_completed_tasks", Int::class.javaObjectType),
                     ))
-                    row.get("t_id", String::class.java)?.let { taskId ->
-                        val task = map2.getOrDefault(taskId, TaskDTO(
-                            taskId,
-                            row.get("t_sprint_id", String::class.java),
-                            row.get("t_project_id", String::class.java),
-                            row.get("t_position", Int::class.javaObjectType),
-                            row.get("t_name", String::class.java),
-                            row.get("t_description", String::class.java),
-                            row.get("t_leader_comment", String::class.java),
-                            UserDTO(
-                                row.get("i_id", String::class.java),
-                                row.get("i_email", String::class.java),
-                                row.get("i_first_name", String::class.java),
-                                row.get("i_last_name", String::class.java)
-                            ),
-                            UserDTO(
-                                row.get("e_id", String::class.java),
-                                row.get("e_email", String::class.java),
-                                row.get("e_first_name", String::class.java),
-                                row.get("e_last_name", String::class.java)
-                            ),
-                            row.get("t_work_hour", Double::class.javaObjectType),
-                            row.get("t_start_date", LocalDate::class.java),
-                            row.get("t_finish_date", LocalDate::class.java),
-                            listOf(),
-                            TaskStatus.valueOf(row.get("t_status", String::class.java)!!)
-                        ))
-                        row.get("tag_id", String::class.java)?.let { tagId ->
-                            val tagDTO = TagDTO(
-                                tagId,
-                                row.get("tag_name", String::class.java),
-                                row.get("tag_color", String::class.java),
-                                row.get("tag_confirmed", Boolean::class.javaObjectType),
-                                row.get("tag_creator_id", String::class.java),
-                                row.get("tag_updater_id", String::class.java),
-                                row.get("tag_deleter_id", String::class.java)
-                            )
-                            if (task.tags?.stream()?.noneMatch { t -> t.id.equals(tagDTO.id) }!!){
-                                task.tags = task.tags?.plus(tagDTO)
-                            }
-                        }
-                        map2[taskId] = task
-                        if (sprintMark.tasks?.stream()?.noneMatch { t -> t.id.equals(task.id) }!!){
-                            sprintMark.tasks = sprintMark.tasks?.plus(task)
-                        }
-                    }
                     map[sprintMarkId] = sprintMark
                     sprintMark
                 }
@@ -328,18 +266,16 @@ class SprintService (val template: R2dbcEntityTemplate)
 
     suspend fun addSprintMarks(sprintId: String, projectId: String, sprintMarks: Flow<SprintMarkDTO>) {
         sprintMarks.collect { sprintMark ->
-            val createdSprintMark = template.insert(
+            template.insert(
                 SprintMark(
                     projectId = projectId,
                     sprintId = sprintId,
                     userId = sprintMark.userId,
                     projectRole = sprintMark.projectRole,
-                    mark = sprintMark.mark
+                    mark = sprintMark.mark,
+                    countCompletedTasks = sprintMark.countCompletedTasks
                 )
             ).awaitSingle()
-            sprintMark.tasks?.forEach {
-                template.insert(SprintMarkTask(createdSprintMark.id!!, it.id!!)).awaitSingle()
-            }
             if (sprintMark.projectRole != ProjectRole.INITIATOR) {
                 val marks = template.select(query(where("project_id").`is`(projectId)
                     .and("user_id").`is`(sprintMark.userId!!)), SprintMark::class.java).asFlow()
