@@ -97,9 +97,15 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                         ),
                         startDate,
                         endDate,
-                        if (endDate != null) between(startDate, endDate).let { t -> "${t.toHours()}:${t.toMinutes() % 60}" }  else null,
+                        null,
                         TaskStatus.valueOf(row.get("tml_status", String::class.java)!!)
                     ))
+                    if (endDate != null && taskMovementLog.wastedTime == null) {
+                        val duration = between(startDate, endDate)
+                        val hours = if (duration.toHours() < 10) "0${duration.toHours()}" else "${duration.toHours()}"
+                        val minutes = if (duration.toMinutes() % 60 < 10) "0${duration.toMinutes() % 60}" else "${duration.toMinutes() % 60}"
+                        taskMovementLog.wastedTime = "${hours}ч ${minutes}мин"
+                    }
                     row.get("tag_id", String::class.java)?.let { tagId ->
                         val tagDTO = TagDTO(
                             tagId,
