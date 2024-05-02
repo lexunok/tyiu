@@ -665,7 +665,7 @@ public class ProjectControllerTest extends TestContainers {
                 .closed(false)
                 .owner(buildUser(ownerResponse))
                 .leader(buildUser(leaderResponse))
-                .members(List.of(member))
+                .members(List.of(member,leader))
                 .wantedSkills(List.of(skill1, skill2))
                 .build();
         createdTeam = webTestClient
