@@ -32,7 +32,7 @@ spring:
           predicates:
             - Path=/api/v1/authorization-service/**
         - id: authorization-service-view
-          uri: http://authorization-service
+          uri: http://authorization-service:7777
           predicates:
             - Path=/auth/**
   security:
