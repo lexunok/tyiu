@@ -68,7 +68,7 @@ public class SecurityConfig {
         http
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/login"),
+                                new LoginUrlAuthenticationEntryPoint("/auth/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
@@ -84,7 +84,7 @@ public class SecurityConfig {
             throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers( "/registration","/css/**", "/new-password", "/recovery-password").permitAll()
+                        .requestMatchers( "/auth/registration","/css/**", "/auth/new-password", "/auth/recovery-password").permitAll()
 //TODO:                        .requestMatchers("/api/v1/authorization-service/register").hasRole(Role.ADMIN.name())
 //TODO:                        .requestMatchers("/api/v1/authorization-service/invitation/**").hasRole(Role.ADMIN.name())
                   //      .anyRequest().authenticated())
@@ -92,7 +92,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin
-                                .loginPage("/login")
+                                .loginPage("/auth/login")
                                 .permitAll()
                 );
         return http.build();

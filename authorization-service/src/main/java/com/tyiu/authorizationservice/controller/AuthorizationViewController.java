@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
 
 @Controller
+@RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthorizationViewController {
     private final AccountService accountService;

@@ -12,23 +12,23 @@ spring:
           predicates:
             - Path=/api/v1/ideas-service/**
         - id: scrum-service
-          uri: http://scrum-service:8081
+          uri: http://ideas-service
           predicates:
             - Path=/api/v1/scrum-service/**
         - id: notification-service
-          uri: http://notification-service:1337
+          uri: http://notification-service
           predicates:
             - Path=/api/v1/notification-service/**
         - id: email-service
-          uri: http://email-service:8084
+          uri: http://email-service
           predicates:
             - Path=/api/v1/email-service/**
         - id: tgbot-service
-          uri: http://tgbot-service:7000
+          uri: http://tgbot-service
           predicates:
             - Path=/api/v1/tgbot-service/**
         - id: authorization-service
-          uri: http://authorization-service:7777
+          uri: http://authorization-service
           predicates:
             - Path=/api/v1/authorization-service/**
             - Path=/**
