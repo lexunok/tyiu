@@ -31,7 +31,7 @@ spring:
           uri: http://authorization-service
           predicates:
             - Path=/api/v1/authorization-service/**
-            - Path=/**
+            - Path=/auth/**
   security:
     oauth2:
       client:
