@@ -84,11 +84,10 @@ public class SecurityConfig {
             throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers( "/auth/registration","/auth/css/**", "/auth/new-password", "/auth/recovery-password").permitAll()
+                        .requestMatchers( "/auth/**").permitAll()
 //TODO:                        .requestMatchers("/api/v1/authorization-service/register").hasRole(Role.ADMIN.name())
 //TODO:                        .requestMatchers("/api/v1/authorization-service/invitation/**").hasRole(Role.ADMIN.name())
-                  //      .anyRequest().authenticated())
-                        .anyRequest().permitAll())
+                        .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin

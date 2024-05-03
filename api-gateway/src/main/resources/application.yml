@@ -8,17 +8,13 @@ spring:
         - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
-          uri: http://localhost:8081
+          uri: http://localhost:8082
           predicates:
             - Path=/api/v1/ideas-service/**
         - id: scrum-service
-          uri: http://localhost:8081
+          uri: http://localhost:8082
           predicates:
             - Path=/api/v1/scrum-service/**
-        - id: notification-service
-          uri: http://localhost:1337
-          predicates:
-            - Path=/api/v1/notification-service/**
         - id: email-service
           uri: http://localhost:8084
           predicates:
