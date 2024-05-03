@@ -15,10 +15,6 @@ spring:
           uri: http://scrum-service:8081
           predicates:
             - Path=/api/v1/scrum-service/**
-        - id: authorization-service
-          uri: http://authorization-service:7777
-          predicates:
-            - Path=/api/v1/authorization-service/**
         - id: notification-service
           uri: http://notification-service:1337
           predicates:
@@ -31,6 +27,11 @@ spring:
           uri: http://tgbot-service:7000
           predicates:
             - Path=/api/v1/tgbot-service/**
+        - id: authorization-service
+          uri: http://authorization-service:7777
+          predicates:
+            - Path=/api/v1/authorization-service/**
+            - Path=/**
   security:
     oauth2:
       client:
