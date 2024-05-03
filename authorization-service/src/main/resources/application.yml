@@ -8,6 +8,7 @@ spring:
         username: admin
         password: admin
     jpa:
+        open-in-view: false
         show-sql: true
         properties:
           hibernate:
@@ -16,6 +17,8 @@ spring:
             ddl-auto: update
     data:
         redis:
+            repositories:
+                enabled: false
             host: localhost
             port: 6379
 rabbitmq:

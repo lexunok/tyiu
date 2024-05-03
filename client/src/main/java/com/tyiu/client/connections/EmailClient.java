@@ -4,7 +4,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 
-@FeignClient(value = "email", path = "/api/v1/email-service")
+@FeignClient(value = "email",  url = "${service.email.url}", path = "/api/v1/email-service")
 public interface EmailClient {
 
     @PostMapping("/account/password/{email}/code/{code}")

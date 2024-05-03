@@ -1,9 +1,0 @@
-spring:
-  cloud:
-    openfeign:
-      client:
-        config:
-          email:
-            url: http://email-service
-          ideas:
-            url: http://ideas-service

@@ -37,5 +37,5 @@ services:
     ports:
       - 6379:6379
 volumes:
-  db_ideas:
-  db_auth:
+  db-ideas:
+  db-auth:
