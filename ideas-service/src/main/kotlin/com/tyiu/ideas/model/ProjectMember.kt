@@ -1,22 +1,7 @@
 package com.tyiu.ideas.model
 
-import kotlinx.coroutines.flow.Flow
-import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
-import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
-
-interface ProjectMemberRepository: CoroutineCrudRepository<ProjectMember, String>{
-
-    @Query("SELECT * FROM project_member WHERE project_id = :projectId")
-    fun findMemberByProjectId(projectId: String): Flow<ProjectMember>
-
-    @Query("SELECT * FROM project_member WHERE user_id = :userId and project_id = :projectId")
-    fun findMemberByUserIdAndProjectId(userId: String, projectId: String): Flow<ProjectMember>
-
-    @Query("SELECT * FROM project_member WHERE project_id = :projectId and project_role = 'TEAM_LEADER'")
-    suspend fun findProjectMemberByProjectIdAndProjectRole(projectId: String?): ProjectMember
-}
 
 @Table
 data class ProjectMember (
@@ -37,11 +22,6 @@ data class ProjectMemberDTO(
     var projectRole:ProjectRole?,
     val startDate:LocalDate?,
     val finishDate:LocalDate?,
-)
-
-data class ProjectLeaderRequest(
-    val projectId:String?=null,
-    val userId:String?=null,
 )
 
 data class AddToProjectRequest(

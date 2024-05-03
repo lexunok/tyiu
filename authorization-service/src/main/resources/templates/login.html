@@ -4,13 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Авторизация</title>
-    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+    <link rel="stylesheet" th:href="@{/auth/css/style.css}"/>
   </head>
   <body>
   <div class="page-layout">
     <div class="page-layout__content-wrapper w-100 overflow-y-scroll">
       <div class="page-layout__content page-layout__content--no-header login-page__content p-3">
-        <form class="form-layout p-3 rounded-3 shadow" method="post" th:action="@{/login}">
+        <form class="form-layout p-3 rounded-3 shadow" method="post" th:action="@{/auth/login}">
           <span class="fs-3 text-primary text-center">Авторизация</span>
           <div class="w-100">
             <div class="input-group">
@@ -38,7 +38,7 @@
               <div class="invalid-feedback"></div>
             </div>
           </div>
-          <a href="/recovery-password" class="text-center"> Забыли пароль? </a>
+          <a href="/auth/recovery-password" class="text-center"> Забыли пароль? </a>
           <button
                   data-v-5bd6bdd4=""
                   type="submit"

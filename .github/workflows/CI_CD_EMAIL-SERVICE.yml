@@ -1,0 +1,30 @@
+name: EMAIL-SERVICE
+
+on:
+  workflow_dispatch:
+    branches:
+      - go-to-prod
+jobs:
+  build-and-push-email-service:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      - name: Set up Docker
+        uses: docker/setup-buildx-action@v2
+
+      - name: Change wrapper permissions
+        run: chmod +x ./email-service/gradlew
+
+      - name: Build JAR file
+        run:  | 
+          cd email-service
+          ./gradlew -Dtoken=${{ secrets.DOCKERHUB_TOKEN }} bootBuildImage
+

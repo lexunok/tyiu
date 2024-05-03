@@ -71,28 +71,12 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @PostMapping("/marks/{projectId}/{sprintId}/add")
-    suspend fun  addSprintMarks(@PathVariable sprintId: String,
+    suspend fun addSprintMarks(@PathVariable sprintId: String,
                                 @PathVariable projectId: String,
                                 @RequestBody sprintMarks: Flow<SprintMarkDTO>,
                                 @AuthenticationPrincipal user: User) {
         return if (user.roles.roleCheck(roles3)) {
             sprintService.addSprintMarks(sprintId, projectId, sprintMarks)
-        }
-        else {
-            throw AccessException("Нет прав")
-        }
-    }
-
-    @PutMapping("/{sprintId}/status/{status}")
-    suspend fun changeSprintStatus(@PathVariable sprintId: String, @PathVariable status: SprintStatus, @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles2)) {
-            try {
-                sprintService.changeSprintStatus(sprintId, status)
-                InfoResponse(HttpStatus.OK, "Статус спринта успешно изменён на $status")
-            }
-            catch(e: Exception){
-                InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось изменить статус спринта")
-            }
         }
         else {
             throw AccessException("Нет прав")
@@ -105,7 +89,7 @@ class SprintController(private val sprintService: SprintService)
                                  @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles2)) {
             try {
-                sprintService.updateSprintInfo(sprintId, sprintDTO)
+                sprintService.updateSprintInfo(sprintId, sprintDTO, user.id)
                 InfoResponse(HttpStatus.OK,"Успешное изменение спринта")
             }
             catch(e: Exception){
@@ -118,9 +102,9 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @PutMapping("/finish/{sprintId}")
-    suspend fun putSprintFinishWithoutTaskTransfer(@PathVariable sprintId: String,
-                                                   @RequestBody report: String,
-                                                   @AuthenticationPrincipal user: User): InfoResponse {
+    suspend fun finishSprint(@PathVariable sprintId: String,
+                             @RequestBody report: String,
+                             @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles3)) {
             try {
                 sprintService.putSprintFinish(sprintId, report, user.id)
@@ -139,7 +123,7 @@ class SprintController(private val sprintService: SprintService)
     suspend fun deleteSprint(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): InfoResponse {
         return if (user.roles.roleCheck(roles2)) {
             try {
-                sprintService.deleteSprint(sprintId)
+                sprintService.deleteSprint(sprintId, user.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно удалён")
             }
             catch(e: Exception){

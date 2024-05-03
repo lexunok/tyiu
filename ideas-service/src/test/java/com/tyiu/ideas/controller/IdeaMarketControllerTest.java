@@ -134,6 +134,7 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(createdTeamMarketRequest);
         assertEquals(teamMarketRequest.getName(),createdTeamMarketRequest.getName());
+        assertEquals(ideaMarketId, createdTeamMarketRequest.getIdeaMarketId());
         return createdTeamMarketRequest;
     }
 
@@ -453,9 +454,8 @@ public class IdeaMarketControllerTest extends TestContainers {
                 .returnResult().getResponseBody();
         assertNotNull(marketTeamsRequests);
         assertEquals(1, marketTeamsRequests.size());
-        marketTeamsRequests.stream().forEach(request -> {
-            assertTrue(request.getSkills().size() >= 2);
-        });
+        assertEquals(ideaMarketId, marketTeamsRequests.get(0).getIdeaMarketId());
+        marketTeamsRequests.forEach(request -> assertTrue(request.getSkills().size() >= 2));
     }
 
     @Test
@@ -568,6 +568,9 @@ public class IdeaMarketControllerTest extends TestContainers {
     @Test
     void testChangeRequestStatus() {
         changeRequestStatus(createMarketTeamRequest(createMarketIdea().getId()).getId(), RequestStatus.ACCEPTED);
+        changeRequestStatus(createMarketTeamRequest(createMarketIdea().getId()).getId(), RequestStatus.CANCELED);
+        changeRequestStatus(createMarketTeamRequest(createMarketIdea().getId()).getId(), RequestStatus.WITHDRAWN);
+        changeRequestStatus(createMarketTeamRequest(createMarketIdea().getId()).getId(), RequestStatus.NEW);
     }
 
     @Test

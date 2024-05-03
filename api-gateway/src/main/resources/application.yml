@@ -15,22 +15,26 @@ spring:
           uri: http://localhost:8081
           predicates:
             - Path=/api/v1/scrum-service/**
-        - id: authorization-service
-          uri: http://localhost:7777
-          predicates:
-            - Path=/api/v1/authorization-service/**
         - id: notification-service
           uri: http://localhost:1337
           predicates:
             - Path=/api/v1/notification-service/**
         - id: email-service
-          uri: http://localhost:3000
+          uri: http://localhost:8084
           predicates:
             - Path=/api/v1/email-service/**
         - id: tgbot-service
-          uri: http://localhost:5321
+          uri: http://localhost:7000
           predicates:
             - Path=/api/v1/tgbot-service/**
+        - id: authorization-service
+          uri: http://authorization-service
+          predicates:
+            - Path=/api/v1/authorization-service/**
+        - id: authorization-service-view
+          uri: http://authorization-service
+          predicates:
+            - Path=/auth/**
   security:
     oauth2:
       client:

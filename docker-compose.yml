@@ -1,6 +1,6 @@
 services:
-  postgres:
-    container_name: postgres
+  db_ideas:
+    container_name: db-ideas
     image: postgres
     restart: always
     environment:
@@ -10,9 +10,9 @@ services:
     ports:
       - 5432:5432
     volumes:
-      - postgres:/data/postgres
-  postgres_auth:
-    container_name: postgres_auth
+      - db-ideas:/data/db-ideas
+  db_auth:
+    container_name: db-auth
     image: postgres
     restart: always
     environment:
@@ -22,14 +22,20 @@ services:
     ports:
       - 5433:5432
     volumes:
-      - postgres_auth:/data/postgres_auth
+      - db-auth:/data/db-auth
   rabbitmq:
     container_name: rabbitmq
-    image: rabbitmq:3.12.12-management
+    image: rabbitmq:3.12.12-management-alpine
     restart: always
     ports:
       - 5672:5672
       - 15672:15672
+  redis:
+    container_name: redis
+    image: redis:latest
+    restart: always
+    ports:
+      - 6379:6379
 volumes:
-  postgres:
-  postgres_auth:
+  db-ideas:
+  db-auth:

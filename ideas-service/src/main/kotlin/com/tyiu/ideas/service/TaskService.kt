@@ -1,55 +1,33 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.dto.TeamMemberDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.reactive.asFlow
-import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitFirstOrNull
 import kotlinx.coroutines.reactor.awaitSingle
-import kotlinx.coroutines.reactor.awaitSingleOrNull
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.data.r2dbc.core.delete
 import org.springframework.data.relational.core.query.Criteria.where
 import org.springframework.data.relational.core.query.Query.query
 import org.springframework.data.relational.core.query.Update.update
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class TaskService
-    (
-    private val repository: TaskRepository,
-    private val userRepository: UserRepository,
-    private val tagRepository: TagRepository,
-    val template: R2dbcEntityTemplate
-    )
+class TaskService(val template: R2dbcEntityTemplate)
 {
-    suspend fun taskToDTO(task: Task): TaskDTO
-    {
-        val tasks = task.toDTO()
-
-        tasks.initiator = (task.initiatorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.executor = (task.executorId?.let{userRepository.findById(it)})?.toDTO()
-        tasks.tags = task.id?.let { tagRepository.findAllTagByTaskId(it).toList().map { tag -> tag.toDTO() } }
-        return tasks
-    }
-
     private fun taskRow(row: Row, map: ConcurrentHashMap<String, TaskDTO>): TaskDTO?{
         return row.get("t_id", String::class.java)?.let {
             val task = map.getOrDefault(it,TaskDTO(
                 it,
                 row.get("t_sprint_id", String::class.java),
                 row.get("t_project_id", String::class.java),
-                row.get("t_position", Integer::class.java)?.toInt(),
+                row.get("t_position", Int::class.javaObjectType),
                 row.get("t_name", String::class.java),
                 row.get("t_description", String::class.java),
                 row.get("t_leader_comment", String::class.java),
@@ -65,7 +43,7 @@ class TaskService
                     row.get("e_first_name", String::class.java),
                     row.get("e_last_name", String::class.java)
                 ),
-                row.get("t_work_hour", Integer::class.java)?.toInt(),
+                row.get("t_work_hour", Double::class.javaObjectType),
                 row.get("t_start_date", LocalDate::class.java),
                 row.get("t_finish_date", LocalDate::class.java),
                 listOf(),
@@ -76,10 +54,7 @@ class TaskService
                     tagId,
                     row.get("tag_name", String::class.java),
                     row.get("tag_color", String::class.java),
-                    row.get("tag_confirmed", String::class.java)!![0] == 't',
-                    row.get("tag_creator_id", String::class.java),
-                    row.get("tag_updater_id", String::class.java),
-                    row.get("tag_deleter_id", String::class.java)
+                    row.get("tag_confirmed", Boolean::class.javaObjectType)
                 )
                 task.tags = task.tags?.plus(tagDTO)
             }
@@ -96,7 +71,7 @@ class TaskService
             .bind("projectId",projectId)
             .map { row, _ -> taskRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     //get
@@ -109,8 +84,7 @@ class TaskService
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -132,8 +106,7 @@ class TaskService
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -154,8 +127,7 @@ class TaskService
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -171,7 +143,7 @@ class TaskService
             .bind("sprintId",sprintId)
             .map { row, _ -> taskRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     suspend fun getOneTaskById(taskId: String): TaskDTO? {
@@ -183,8 +155,7 @@ class TaskService
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
                 e.id AS e_id, e.email AS e_email, e.first_name AS e_first_name, e.last_name AS e_last_name,
-                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed,
-                tag.creator_id AS tag_creator_id, tag.updater_id AS tag_updater_id, tag.deleter_id AS tag_deleter_id
+                tag.id AS tag_id, tag.name AS tag_name, tag.color AS tag_color, tag.confirmed AS tag_confirmed
             FROM task t
                 LEFT JOIN users i ON i.id = t.initiator_id
                 LEFT JOIN users e ON e.id = t.executor_id
@@ -199,9 +170,9 @@ class TaskService
             .sql(query)
             .bind("taskId",taskId)
             .map { row, _ -> taskRow(row, map) }
-            .first()
-            .thenMany(Flux.fromIterable(map.values))
-            .awaitFirst()
+            .all()
+            .thenMany(fromIterable(map.values))
+            .awaitFirstOrNull()
     }
 
     //post
@@ -210,7 +181,9 @@ class TaskService
             Task (
                 sprintId = taskDTO.sprintId,
                 projectId = taskDTO.projectId,
-                position = if (taskDTO.sprintId == null) taskDTO.projectId?.let { repository.countTaskByProjectId(it) }?.plus(1) else null,
+                position = if (taskDTO.sprintId == null) taskDTO.projectId?.let { template.count(query(where("project_id").`is`(it)
+                    .and("status").`is`(TaskStatus.InBackLog.name)),
+                    Task::class.java).awaitSingle().toInt() }?.plus(1) else null,
                 name = taskDTO.name,
                 description = taskDTO.description,
                 leaderComment = taskDTO.leaderComment,
@@ -253,6 +226,8 @@ class TaskService
                 .set("description", taskDTO.description)
                 .set("work_hour", taskDTO.workHour),
             Task::class.java).awaitSingle()
+        template.delete(query(where("task_id").`is`(taskId)), Task2Tag::class.java).awaitSingle()
+        taskDTO.tags?.forEach { template.insert(Task2Tag(taskId, it.id)).awaitSingle() }
     }
 
     suspend fun putUpdateExecutorTask(taskId: String, executorId: String){

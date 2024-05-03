@@ -10,12 +10,10 @@ dependencies {
 	annotationProcessor 'org.projectlombok:lombok'
 
 	compileOnly 'org.projectlombok:lombok'
-	compileOnly 'io.jsonwebtoken:jjwt-api:0.11.5'
+
 
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	implementation project(path: ':library')
 	implementation project(path: ':client')
@@ -28,4 +26,14 @@ dependencies {
 	testImplementation group: 'org.testcontainers', name: 'postgresql', version: '1.18.3'
 	testImplementation group: 'org.testcontainers', name: 'rabbitmq', version: '1.18.3'
 
+}
+tasks.named("bootBuildImage") {
+	imageName.set("lexunok/tg-bot-service")
+	publish = true
+	docker {
+		publishRegistry {
+			username ='lexunok'
+			password = System.getProperty('token')
+		}
+	}
 }

@@ -5,7 +5,7 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@FeignClient(value = "ideas", url = "http://localhost:8082", path = "/api/v1/ideas-service")
+@FeignClient(value = "ideas",  url = "${service.ideas.url}", path = "/api/v1/ideas-service")
 public interface IdeasClient {
 
     @GetMapping("/register")

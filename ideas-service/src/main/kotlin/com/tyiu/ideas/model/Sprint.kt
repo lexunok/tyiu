@@ -1,27 +1,10 @@
 package com.tyiu.ideas.model
 
-
-import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id
-import org.springframework.data.r2dbc.repository.Query
 import org.springframework.data.relational.core.mapping.Table
-import org.springframework.data.repository.kotlin.CoroutineCrudRepository
 import java.time.LocalDate
 
-interface SprintRepository: CoroutineCrudRepository<Sprint, String>{
-    @Query("SELECT * FROM sprint WHERE project_id =:projectId")
-    fun findAllSprintsByProject(projectId: String): Flow<Sprint>
-
-    @Query("SELECT * FROM sprint WHERE project_id =:projectId and status = 'ACTIVE'")
-    suspend fun findActiveSprint(projectId: String): Sprint?
-
-    @Query("UPDATE sprint SET report = :sprintReport, status = 'DONE', finish_date = :finishDate WHERE id = :sprintId")
-    suspend fun updateSprintById(sprintId: String?, sprintReport: String?, finishDate: LocalDate = LocalDate.now())
-
-
-}
 @Table
-
 data class Sprint(
     @Id
     val id:String? = null,
@@ -40,11 +23,11 @@ enum class SprintStatus{
 }
 
 data class SprintDTO(
-    val id:String? = null,
+    var id:String? = null,
     val projectId:String? = null,
     val name:String? = null,
     val report:String? = null,
-    val status:SprintStatus? = null,
+    var status:SprintStatus? = null,
     val goal:String? = null,
     val startDate:LocalDate? = null,
     val finishDate:LocalDate? = null,

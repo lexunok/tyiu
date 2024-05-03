@@ -5,6 +5,7 @@ import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.ideas.model.dto.TeamDTO
 import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Market
+import com.tyiu.ideas.model.entities.Team
 import com.tyiu.ideas.model.entities.relations.Team2Member
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
@@ -12,19 +13,16 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactor.awaitSingle
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
-import org.springframework.data.relational.core.query.Criteria
-import org.springframework.data.relational.core.query.Query
-import org.springframework.data.relational.core.query.Update
+import org.springframework.data.relational.core.query.Criteria.where
+import org.springframework.data.relational.core.query.Query.query
+import org.springframework.data.relational.core.query.Update.update
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Flux
+import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 
 @Service
-class ProjectService(
-    val template: R2dbcEntityTemplate,
-
-) {
+class ProjectService(val template: R2dbcEntityTemplate) {
 
     private fun projectRow(row: Row, map: ConcurrentHashMap<String, ProjectDTO>): ProjectDTO?{
         val memberId = row.get("pm_user_id", String::class.java)
@@ -45,7 +43,7 @@ class ProjectService(
                 TeamDTO(
                     row.get("t_id", String::class.java),
                     row.get("t_name", String::class.java),
-                    row.get("t_members_count", Integer::class.java)?.toInt(),
+                    row.get("t_members_count", Int::class.javaObjectType),
                 ),
                 listOf(),
                 ReportProject(
@@ -79,7 +77,7 @@ class ProjectService(
                     row.get("mms_first_name", String::class.java),
                     row.get("mms_last_name", String::class.java),
                     ProjectRole.valueOf(row.get("pmms_project_role", String::class.java)!!),
-                    row.get("m_mark", String::class.java)?.toDouble(),
+                    row.get("m_mark", Double::class.javaObjectType),
                     listOf()
                 )
                 if (project.report?.marks?.stream()?.noneMatch { m -> m.userId.equals(projectMarksDTO.userId) }!!){
@@ -151,7 +149,7 @@ class ProjectService(
             .sql(query)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     fun getYourProjects(userId: String): Flow<ProjectDTO> {
@@ -190,7 +188,7 @@ class ProjectService(
             .bind("userId",userId)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     fun getYourActiveProjects(userId: String): Flow<ProjectDTO> {
@@ -229,7 +227,7 @@ class ProjectService(
             .bind("userId",userId)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).asFlow()
+            .thenMany(fromIterable(map.values)).asFlow()
     }
 
     suspend fun getOneProject(projectId: String): ProjectDTO? {
@@ -267,7 +265,7 @@ class ProjectService(
             .bind("projectId",projectId)
             .map { row, _ -> projectRow(row, map) }
             .all()
-            .thenMany(Flux.fromIterable(map.values)).awaitFirst()
+            .thenMany(fromIterable(map.values)).awaitFirst()
     }
 
     fun getProjectMembers(projectId: String): Flow<ProjectMemberDTO> {
@@ -325,7 +323,7 @@ class ProjectService(
                         row.get("first_name", String::class.java),
                         row.get("last_name", String::class.java),
                         ProjectRole.valueOf(row.get("project_role", String::class.java)!!),
-                        row.get("mark", String::class.java)?.toDouble(),
+                        row.get("mark", Double::class.javaObjectType),
                         listOf()
                     ))
                     val taskId = row.get("t_id", String::class.java)
@@ -352,7 +350,7 @@ class ProjectService(
                     projectMarksDTO
 
             }}
-            .all().thenMany(Flux.fromIterable(map.values)).asFlow()
+            .all().thenMany(fromIterable(map.values)).asFlow()
     }
 
     //////////////////////////////
@@ -363,43 +361,53 @@ class ProjectService(
     //////////////////////////////
 
     suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
-        val createdProject = template.insert(Project(
-            ideaId = ideaMarketDTO.ideaId,
-            teamId = ideaMarketDTO.team.id,
-            finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
-        )).awaitSingle()
+        val createdProject = template.insert(
+            Project(
+                ideaId = ideaMarketDTO.ideaId,
+                teamId = ideaMarketDTO.team.id,
+                finishDate = template.selectOne(query(where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
+            )
+        ).awaitSingle()
 
-        val projectDTO = createdProject.toDTO()
-        val members = template.select(Query.query(Criteria.where("team_id").`is`(ideaMarketDTO.team.id)),Team2Member::class.java).asFlow().toList()
-        members.forEach {
-            template.insert(
-                ProjectMember(
-                    projectId = createdProject.id,
-                    userId = it.memberId,
-                    teamId = ideaMarketDTO.team.id,
-                    projectRole = if (it.memberId == ideaMarketDTO.team?.leader?.id) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
-                    finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
-                )).awaitSingle()}
+        val leaderId = template.selectOne(query(where("id").`is`(ideaMarketDTO.team.id)), Team::class.java).awaitSingle().leaderId
+
+        template.select(query(where("team_id").`is`(ideaMarketDTO.team.id)),Team2Member::class.java)
+            .asFlow()
+            .collect {
+                template.insert(
+                    ProjectMember(
+                        projectId = createdProject.id,
+                        userId = it.memberId,
+                        teamId = ideaMarketDTO.team.id,
+                        projectRole = if (it.memberId == leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
+                        finishDate = createdProject.finishDate
+                    )
+                ).awaitSingle()
+            }
+
         template.insert(
             ProjectMember(
                 projectId = createdProject.id,
                 userId = ideaMarketDTO.initiator.id,
                 projectRole = ProjectRole.INITIATOR,
-                finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(ideaMarketDTO.marketId)),Market::class.java).awaitSingle().finishDate
-            )).awaitSingle()
-        return projectDTO
-        }
+                finishDate = createdProject.finishDate
+            )
+        ).awaitSingle()
+
+        return createdProject.toDTO()
+    }
 
 
 
     suspend fun addMembersInProject(projectId: String, addToProjectRequest: AddToProjectRequest ): ProjectMemberDTO {
-            val newMember = template.insert(ProjectMember(
-                projectId = projectId,
-                userId = addToProjectRequest.userId,
-                teamId = addToProjectRequest.teamId,
-                finishDate = template.selectOne(Query.query(Criteria.where("id").`is`(projectId)),Project::class.java).awaitSingle().finishDate
-            )).awaitSingle()
-            return newMember.toDTO()
+            return template.insert(
+                ProjectMember(
+                    projectId = projectId,
+                    userId = addToProjectRequest.userId,
+                    teamId = addToProjectRequest.teamId,
+                    finishDate = template.selectOne(query(where("id").`is`(projectId)),Project::class.java).awaitSingle().finishDate
+                )
+            ).awaitSingle().toDTO()
     }
 
     ////////////////////////
@@ -410,38 +418,17 @@ class ProjectService(
     ////////////////////////
 
     suspend fun pauseProject(projectId: String) {
-        template.update(
-            Query.query(Criteria.where("id").`is`(projectId)),
-            Update.update("status", "PAUSED"),
+        template.update(query(where("id").`is`(projectId)),
+            update("status", ProjectStatus.PAUSED.name),
             Project::class.java).awaitSingle()
     }
 
     suspend fun putFinishProject(projectId: String, report: String) {
-        template.update(
-            Query.query(Criteria.where("id").`is`(projectId)),
-            Update.update("report", report).set("status", "DONE"),
+        template.update(query(where("id").`is`(projectId)),
+            update("report", report)
+                .set("status", ProjectStatus.DONE.name),
             Project::class.java).awaitSingle()
     }
-
-    /*suspend fun putTeamLeader(projectLeaderRequest:ProjectLeaderRequest){
-        val projectLeader = projectMemberRepository.findProjectMemberByProjectIdAndProjectRole(projectLeaderRequest.projectId)
-        return if (projectLeader != null){
-            val query = "UPDATE project_member SET project_role = 'MEMBER' WHERE user_id = :userId and project_id =:projectId"
-            template.databaseClient.sql(query)
-                .bind("userId", projectLeader.userId!!)
-                .bind("projectId",projectLeaderRequest.projectId!!).await()
-            val query2 = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
-            template.databaseClient.sql(query2)
-                .bind("userId", projectLeaderRequest.userId!!)
-                .bind("projectId",projectLeaderRequest.projectId).await()
-        }
-        else {
-            val query = "UPDATE project_member SET project_role = 'TEAM_LEADER' WHERE user_id = :userId and project_id =:projectId"
-            return template.databaseClient.sql(query)
-                .bind("userId", projectLeaderRequest.userId!!)
-                .bind("projectId",projectLeaderRequest.projectId!!).await()
-        }
-    }*/
 }
 
 
