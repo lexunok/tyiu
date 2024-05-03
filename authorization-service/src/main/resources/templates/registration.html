@@ -95,7 +95,7 @@
       <form
               class="form-layout p-3 rounded-3 shadow"
               id="myForm"
-              th:action="@{/registration?code={code}(code=${code})}"
+              th:action="@{/auth/registration?code={code}(code=${code})}"
               th:object="${user}"
               method="post"
       >
