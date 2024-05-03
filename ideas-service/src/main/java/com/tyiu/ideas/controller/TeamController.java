@@ -1,23 +1,22 @@
 package com.tyiu.ideas.controller;
 
-
-import com.tyiu.ideas.config.exception.NotFoundException;
-import com.tyiu.ideas.model.ProjectDTO;
+import com.tyiu.ideas.model.*;
 import com.tyiu.ideas.model.dto.*;
-import com.tyiu.ideas.model.entities.TeamInvitation;
-import com.tyiu.ideas.model.entities.TeamRequest;
-import com.tyiu.ideas.model.entities.User;
-import com.tyiu.ideas.model.enums.RequestStatus;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.responses.InfoResponse;
+import com.tyiu.ideas.model.enums.*;
+import com.tyiu.ideas.model.entities.*;
+import com.tyiu.ideas.model.requests.*;
+import com.tyiu.ideas.config.exception.*;
 import com.tyiu.ideas.service.TeamService;
-import lombok.RequiredArgsConstructor;
+import com.tyiu.ideas.model.responses.InfoResponse;
+
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 import org.springframework.http.HttpStatus;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.*;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 import java.util.List;
 
@@ -151,8 +150,13 @@ public class TeamController {
     }
 
     @PostMapping("/get-team-members")
-    public Flux<TeamWithMembersDTO> getTeamMembers(@RequestBody List<String> teamIds) {
+    public Flux<TeamWithMembersDTO> getTeamMembers(@RequestBody Flux<String> teamIds) {
         return teamService.getTeamMembers(teamIds);
+    }
+
+    @PostMapping("/get-full-names")
+    public Flux<UsersFullNamesDTO> getUsersFullNames(@RequestBody Flux<UsersFromAndToByResultIdRequest> requests) {
+        return teamService.getUsersFullNames(requests);
     }
 
     ///////////////////////////////////////////

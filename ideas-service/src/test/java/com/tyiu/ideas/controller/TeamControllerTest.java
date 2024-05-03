@@ -1,29 +1,22 @@
 package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.*;
-import com.tyiu.ideas.model.entities.Idea;
-import com.tyiu.ideas.model.entities.TeamInvitation;
-import com.tyiu.ideas.model.entities.TeamRequest;
-import com.tyiu.ideas.model.enums.MarketStatus;
-import com.tyiu.ideas.model.enums.RequestStatus;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.enums.SkillType;
-import com.tyiu.ideas.model.requests.IdeaSkillRequest;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
-import com.tyiu.ideas.model.responses.InfoResponse;
-import org.junit.jupiter.api.*;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
+import com.tyiu.ideas.model.enums.*;
+import com.tyiu.ideas.model.requests.*;
+import com.tyiu.ideas.model.entities.*;
+import com.tyiu.ideas.model.responses.*;
+
+import reactor.core.publisher.Mono;
+import reactor.core.publisher.Flux;
 import org.springframework.http.HttpStatus;
 import org.springframework.test.web.reactive.server.WebTestClient;
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
-import java.time.Duration;
-import java.time.LocalDate;
-import java.util.List;
-import java.util.Objects;
+import org.junit.jupiter.api.*;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.beans.factory.annotation.Autowired;
+
+import java.time.*;
+import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
@@ -804,6 +797,69 @@ public class TeamControllerTest extends TestContainers {
         String teamId = createTeam(List.of(leader)).getId();
         assertEquals(0, getSkillsByRequests(List.of(sendTeamRequest(teamId, randomUser, jwt_randomUser))).size());
         assertEquals(1, getSkillsByRequests(List.of(sendTeamRequest(teamId, kostya, jwt_kostya))).size());
+    }
+
+    @Test
+    void testGetTeamWithUsers() {
+        String team1Id = createTeam(List.of(leader, member)).getId();
+        String team2Id = createTeam(List.of(randomUser, kostya)).getId();
+        System.out.println("team 1 " + team1Id);
+        System.out.println("team 2 " + team2Id);
+        System.out.println("users in team 1 " + leader.getId() + " & " + member.getId());
+        System.out.println("users in team 2 " + randomUser.getId() + " & " + kostya.getId());
+        TeamWithMembersDTO teamWithMembers1DTO = TeamWithMembersDTO.builder()
+                .teamId(team1Id)
+                .userIds(List.of(leader.getId(), member.getId()))
+                .build();
+        TeamWithMembersDTO teamWithMembers2DTO = TeamWithMembersDTO.builder()
+                .teamId(team2Id)
+                .userIds(List.of(randomUser.getId(), kostya.getId()))
+                .build();
+        List<TeamWithMembersDTO> teamWithMembers = postRequest("/api/v1/ideas-service/team/get-team-members", "Bearer " + jwt_initiator)
+                .body(Flux.fromIterable(List.of(team1Id, team2Id)), String.class)
+                .exchange()
+                .expectBodyList(TeamWithMembersDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(teamWithMembers);
+//        assertEquals(2, teamWithMembers.size());
+        teamWithMembers.forEach(currentModel -> {
+            System.out.println(currentModel);
+            if (currentModel.getTeamId().equals(team1Id))
+                assertEquals(currentModel.getUserIds(), teamWithMembers1DTO.getUserIds());
+            if (currentModel.getTeamId().equals(team2Id))
+                assertEquals(currentModel.getUserIds(), teamWithMembers2DTO.getUserIds());
+        });
+    }
+
+    @Test
+    void getUsersFullNames() {
+        UsersFromAndToByResultIdRequest request1 = UsersFromAndToByResultIdRequest.builder()
+                .resultId(123)
+                .toIdToUser(leader.getId())
+                .fromIdUser(owner.getId())
+                .build();
+        UsersFromAndToByResultIdRequest request2 = UsersFromAndToByResultIdRequest.builder()
+                .resultId(1234)
+                .toIdToUser(randomUser.getId())
+                .fromIdUser(initiator.getId())
+                .build();
+        List<UsersFullNamesDTO> usersFullNames = postRequest("/api/v1/ideas-service/team/get-full-names", "Bearer " + jwt_admin)
+                .body(Flux.just(request1, request2), UsersFromAndToByResultIdRequest.class)
+                .exchange()
+                .expectBodyList(UsersFullNamesDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(usersFullNames);
+        assertEquals(2, usersFullNames.size());
+        usersFullNames.forEach(currentModel -> {
+            if (currentModel.getResultId().equals(123)) {
+                assertEquals(currentModel.getFullNameToUser(), leader.getFirstName() + " " + leader.getLastName());
+                assertEquals(currentModel.getFullNameFromUser(), owner.getFirstName() + " " + owner.getLastName());
+            }
+            if (currentModel.getResultId().equals(1234)) {
+                assertEquals(currentModel.getFullNameToUser(), randomUser.getFirstName() + " " + randomUser.getLastName());
+                assertEquals(currentModel.getFullNameFromUser(), initiator.getFirstName() + " " + initiator.getLastName());
+            }
+        });
     }
 
     ///////////////////////////////////////////
