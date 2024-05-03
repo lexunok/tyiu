@@ -8,27 +8,27 @@ spring:
         - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
-          uri: http://ideas-service
+          uri: http://ideas-service:8082
           predicates:
             - Path=/api/v1/ideas-service/**
         - id: scrum-service
-          uri: http://ideas-service
+          uri: http://ideas-service:8082
           predicates:
             - Path=/api/v1/scrum-service/**
         - id: notification-service
-          uri: http://notification-service
+          uri: http://notification-service:8083
           predicates:
             - Path=/api/v1/notification-service/**
         - id: email-service
-          uri: http://email-service
+          uri: http://email-service:8084
           predicates:
             - Path=/api/v1/email-service/**
         - id: tgbot-service
-          uri: http://tgbot-service
+          uri: http://tgbot-service:7000
           predicates:
             - Path=/api/v1/tgbot-service/**
         - id: authorization-service
-          uri: http://authorization-service
+          uri: http://authorization-service:7777
           predicates:
             - Path=/api/v1/authorization-service/**
         - id: authorization-service-view
