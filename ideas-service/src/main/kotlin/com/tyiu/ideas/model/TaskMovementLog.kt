@@ -24,7 +24,7 @@ data class TaskMovementLogDTO (
     var user: UserDTO? = null,
     var startDate: LocalDateTime? = null,
     val endDate: LocalDateTime? = null,
-    val wastedTime: String? = null,
+    var wastedTime: String? = null,
     var status: TaskStatus? = null
 )
 

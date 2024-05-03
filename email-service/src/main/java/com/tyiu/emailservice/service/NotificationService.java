@@ -1,6 +1,7 @@
 package com.tyiu.emailservice.service;
 
 import com.tyiu.emailservice.config.EmailConfig;
+import com.tyiu.emailservice.config.exception.ServerProcessException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -26,9 +27,7 @@ public class NotificationService {
                     freeMarkerConfig.freemarkerClassLoaderConfig().getConfiguration()
                             .getTemplate("notification.ftl"), Map.of("notification", notification));
         } catch (Exception e) {
-            log.error("Failed to parse html, due to {}", e.getMessage());
-            //TODO: Обработку исключений нормальную сюда нада
-            throw new RuntimeException();
+            throw new ServerProcessException("Failed to parse html, due to " + e.getMessage());
         }
     }
 
@@ -44,10 +43,9 @@ public class NotificationService {
             javaMailSender.send(message);
         }
         catch (Exception e) {
-            log.error("Failed to send email {} with subject {}, due to {}",
-                    notificationRequest.getConsumerEmail(), notificationRequest.getTitle(), e.getMessage());
-            //TODO: Обработку исключений нормальную сюда нада
-            throw new RuntimeException();
+            throw new ServerProcessException("Failed to send email " + notificationRequest.getConsumerEmail() +
+                    " with subject " + notificationRequest.getTitle() +
+                    ", due to " + e.getMessage());
         }
     }
 
