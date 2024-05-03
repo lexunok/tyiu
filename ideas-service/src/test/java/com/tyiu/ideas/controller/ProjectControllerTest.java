@@ -107,8 +107,8 @@ public class ProjectControllerTest extends TestContainers {
         return IdeaSkillRequest.builder().ideaId(id).skills(skills).build();
     }
 
-    private SprintMarkDTO buildSprintMarkDTO(String sprintId, String projectId, UserDTO user, ProjectRole role, Integer tasksSize){
-        return new SprintMarkDTO(
+    private SprintMarkRequest buildSprintMarkDTO(String sprintId, String projectId, UserDTO user, ProjectRole role, List<TaskDTO> tasks){
+        return new SprintMarkRequest(
                 null,
                 projectId,
                 sprintId,
@@ -117,7 +117,7 @@ public class ProjectControllerTest extends TestContainers {
                 user.getLastName(),
                 role,
                 5.0,
-                tasksSize
+                tasks
         );
     }
 
@@ -133,6 +133,7 @@ public class ProjectControllerTest extends TestContainers {
                 null,
                 "задача",
                 "мега описание задачи",
+                null,
                 null,
                 null,
                 null,
@@ -575,9 +576,9 @@ public class ProjectControllerTest extends TestContainers {
                 .post()
                 .uri("/api/v1/scrum-service/sprint/marks/{projectId}/{sprintId}/add", projectId, sprintId)
                 .header("Authorization", jwt)
-                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, projectId, member, ProjectRole.MEMBER, List.of(tasks.get(0)).size()),
-                                buildSprintMarkDTO(sprintId, projectId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1)).size()))),
-                        SprintMarkDTO.class)
+                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, projectId, member, ProjectRole.MEMBER, List.of(tasks.get(0))),
+                                buildSprintMarkDTO(sprintId, projectId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1))))),
+                        SprintMarkRequest.class)
                 .exchange()
                 .expectStatus();
     }

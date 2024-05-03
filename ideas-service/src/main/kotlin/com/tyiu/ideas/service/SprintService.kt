@@ -45,6 +45,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                     row.get("t_name", String::class.java),
                     row.get("t_description", String::class.java),
                     row.get("t_leader_comment", String::class.java),
+                    row.get("t_executor_comment", String::class.java),
                     UserDTO(
                         row.get("i_id", String::class.java),
                         row.get("i_email", String::class.java),
@@ -101,7 +102,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                 s.report AS s_report, s.start_date AS s_start_date, s.finish_date AS s_finish_date,
                 s.working_hours AS s_working_hours, s.status AS s_status,
                 t.id AS t_id, th.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, th.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, th.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
@@ -137,7 +138,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                 s.report AS s_report, s.start_date AS s_start_date, s.finish_date AS s_finish_date,
                 s.working_hours AS s_working_hours, s.status AS s_status,
                 t.id AS t_id, t.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, t.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
@@ -264,7 +265,7 @@ class SprintService (val template: R2dbcEntityTemplate)
         return sprintDTO
     }
 
-    suspend fun addSprintMarks(sprintId: String, projectId: String, sprintMarks: Flow<SprintMarkDTO>) {
+    suspend fun addSprintMarks(sprintId: String, projectId: String, sprintMarks: Flow<SprintMarkRequest>) {
         sprintMarks.collect { sprintMark ->
             template.insert(
                 SprintMark(
@@ -273,7 +274,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                     userId = sprintMark.userId,
                     projectRole = sprintMark.projectRole,
                     mark = sprintMark.mark,
-                    countCompletedTasks = sprintMark.countCompletedTasks
+                    countCompletedTasks = sprintMark.tasks?.size
                 )
             ).awaitSingle()
             if (sprintMark.projectRole != ProjectRole.INITIATOR) {

@@ -15,8 +15,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.http.HttpStatus;
-import org.springframework.test.web.reactive.server.StatusAssertions;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -38,14 +36,18 @@ public class TaskMovementLogControllerTest extends TestContainers {
     private final String main_path = "/api/v1/scrum-service/log";
     private String jwt_admin;
     private UserDTO member;
+    private UserDTO admin;
 
     private GroupDTO groupExpert;
     private GroupDTO groupProjectOffice;
     private SkillDTO skill1;
     private SkillDTO skill2;
+    private TagDTO tag1;
+    private TagDTO tag2;
     private String marketId;
     private TeamDTO createdTeam;
-    private TaskDTO createdTask;
+    private ProjectDTO createdProject;
+    private SprintDTO createdSprint;
 
     private RegisterRequest buildRegisterRequest(String email, String lastName, List<Role> roles){
         return new RegisterRequest(email, lastName, "sprint", "password", roles);
@@ -96,16 +98,16 @@ public class TaskMovementLogControllerTest extends TestContainers {
         return new TagDTO(null,name, color, true, null, null, null);
     }
 
-    private TaskMovementLogDTO buildLog(TaskDTO task, UserDTO user){
+    private TaskMovementLogDTO buildLog(TaskDTO task, UserDTO user, UserDTO executor, TaskStatus status){
         return new TaskMovementLogDTO(
                 null,
                 task,
-                null,
+                executor,
                 user,
                 null,
                 null,
-                "10часов",
-                TaskStatus.NewTask
+                null,
+                status
         );
     }
 
@@ -297,46 +299,53 @@ public class TaskMovementLogControllerTest extends TestContainers {
     }
 
     private void assertLog(TaskMovementLogDTO expected, TaskMovementLogDTO actual){
+        assertEquals(expected.getId(), actual.getId());
         assertNotNull(actual.getTask());
+        assertNotNull(expected.getTask());
         assertEquals(expected.getTask().getId(), actual.getTask().getId());
+        if (expected.getExecutor() != null && actual.getExecutor() != null){
+            assertEquals(expected.getExecutor().getId(), actual.getExecutor().getId());
+            assertEquals(expected.getExecutor().getEmail(), actual.getExecutor().getEmail());
+            assertEquals(expected.getExecutor().getFirstName(), actual.getExecutor().getFirstName());
+            assertEquals(expected.getExecutor().getLastName(), actual.getExecutor().getLastName());
+        }
         assertNotNull(actual.getUser());
+        assertNotNull(expected.getUser());
         assertEquals(expected.getUser().getId(), actual.getUser().getId());
         assertEquals(expected.getUser().getEmail(), actual.getUser().getEmail());
         assertEquals(expected.getUser().getFirstName(), actual.getUser().getFirstName());
         assertEquals(expected.getUser().getLastName(), actual.getUser().getLastName());
-        //assertEquals(expected.getStartDate(), actual.getStartDate());
-        //assertEquals(expected.getEndDate(), actual.getEndDate());
-        //assertEquals(expected.getWastedTime(), actual.getWastedTime());
+        assertNotNull(expected.getStartDate());
+        assertNotNull(actual.getStartDate());
+        assertEquals(expected.getStartDate().getHour(), actual.getStartDate().getHour());
+        assertEquals(expected.getStartDate().getMinute(), actual.getStartDate().getMinute());
+        assertEquals(expected.getStartDate().getSecond(), actual.getStartDate().getSecond());
+        if (actual.getEndDate() != null){
+            assertNotNull(actual.getWastedTime());
+        }
         assertEquals(expected.getStatus(), actual.getStatus());
     }
 
     @BeforeAll
     public void setUp() {
-        RegisterRequest initiatorRequest = buildRegisterRequest("log.initiator@gmail.com", "initiator", List.of(Role.INITIATOR));
         RegisterRequest expertRequest = buildRegisterRequest("log.expert@gmail.com", "expert", List.of(Role.EXPERT));
         RegisterRequest officeRequest = buildRegisterRequest("log.office@gmail.com", "office", List.of(Role.PROJECT_OFFICE));
         RegisterRequest adminRequest = buildRegisterRequest("log.admin@gmail.com", "admin", List.of(Role.ADMIN));
         RegisterRequest memberRequest = buildRegisterRequest("log.member@gmail.com", "member", List.of(Role.MEMBER));
         RegisterRequest leaderRequest = buildRegisterRequest("log.leader@gmail.com", "leader", List.of(Role.TEAM_LEADER));
         RegisterRequest ownerRequest = buildRegisterRequest("log.owner@gmail.com", "owner", List.of(Role.TEAM_OWNER));
-        RegisterRequest teacherRequest = buildRegisterRequest("log.teacher@gmail.com", "teacher", List.of(Role.TEACHER));
 
-        AuthenticationResponse initiatorResponse = createUser(initiatorRequest);
         AuthenticationResponse expertResponse = createUser(expertRequest);
         AuthenticationResponse officeResponse = createUser(officeRequest);
         AuthenticationResponse adminResponse = createUser(adminRequest);
         AuthenticationResponse memberResponse = createUser(memberRequest);
         AuthenticationResponse leaderResponse = createUser(leaderRequest);
         AuthenticationResponse ownerResponse = createUser(ownerRequest);
-        AuthenticationResponse teacherResponse = createUser(teacherRequest);
 
         jwt_admin = "Bearer " + adminResponse.getToken();
-        String jwt_member = "Bearer " + memberResponse.getToken();
-        String jwt_owner = "Bearer " + ownerResponse.getToken();
 
-        UserDTO admin = buildUser(adminResponse);
+        admin = buildUser(adminResponse);
         member = buildUser(memberResponse);
-        UserDTO leader = buildUser(leaderResponse);
 
         groupExpert = createGroup(buildGroup("exp",List.of(Role.EXPERT), buildUser(expertResponse)), jwt_admin);
         groupProjectOffice = createGroup(buildGroup("pro",List.of(Role.PROJECT_OFFICE), buildUser(officeResponse)), jwt_admin);
@@ -344,13 +353,13 @@ public class TaskMovementLogControllerTest extends TestContainers {
         skill1 = createSkill(buildSkill("skill1"), jwt_admin);
         skill2 = createSkill(buildSkill("skill2"), jwt_admin);
 
-        TagDTO tag1 = createTagDTO(buildTag("Frontend", "blue"), jwt_admin);
-        TagDTO tag2 = createTagDTO(buildTag("Backend", "orange"), jwt_admin);
+        tag1 = createTagDTO(buildTag("Frontend", "blue"), jwt_admin);
+        tag2 = createTagDTO(buildTag("Backend", "orange"), jwt_admin);
 
         webTestClient
                 .post()
                 .uri("/api/v1/ideas-service/profile/skills/save")
-                .header("Authorization", jwt_member)
+                .header("Authorization", "Bearer " + memberResponse.getToken())
                 .body(Flux.just(skill1, skill2), SkillDTO.class)
                 .exchange()
                 .expectStatus().isOk();
@@ -386,14 +395,14 @@ public class TaskMovementLogControllerTest extends TestContainers {
                 .description("description")
                 .closed(false)
                 .owner(buildUser(ownerResponse))
-                .leader(leader)
-                .members(List.of(leader, member))
+                .leader(buildUser(leaderResponse))
+                .members(List.of(buildUser(leaderResponse), member))
                 .wantedSkills(List.of(skill1, skill2))
                 .build();
         createdTeam = webTestClient
                 .post()
                 .uri("/api/v1/ideas-service/team/add")
-                .header("Authorization", jwt_owner)
+                .header("Authorization", "Bearer " + ownerResponse.getToken())
                 .body(Mono.just(teamDTO), TeamDTO.class)
                 .exchange()
                 .expectBody(TeamDTO.class)
@@ -403,8 +412,8 @@ public class TaskMovementLogControllerTest extends TestContainers {
 
         String ideaMarketDTOId = createMarketIdea(admin, jwt_admin).getId();
         assertNull(getMarketIdea(ideaMarketDTOId, jwt_admin).getTeam());
-        acceptTeam(ideaMarketDTOId, createMarketTeamRequest(ideaMarketDTOId, jwt_owner).getTeamId(), jwt_admin);
-        ProjectDTO createdProject = webTestClient
+        acceptTeam(ideaMarketDTOId, createMarketTeamRequest(ideaMarketDTOId, "Bearer " + ownerResponse.getToken()).getTeamId(), jwt_admin);
+        createdProject = webTestClient
                 .post()
                 .uri("/api/v1/scrum-service/project/send")
                 .header("Authorization", jwt_admin)
@@ -426,7 +435,7 @@ public class TaskMovementLogControllerTest extends TestContainers {
                 2L,
                 List.of()
         );
-        SprintDTO createdSprint = webTestClient
+        createdSprint = webTestClient
                 .post()
                 .uri("/api/v1/scrum-service/sprint/add")
                 .header("Authorization", jwt_admin)
@@ -435,7 +444,10 @@ public class TaskMovementLogControllerTest extends TestContainers {
                 .expectBody(SprintDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(createdSprint);
+    }
 
+    @Test
+    void testGetAllLogs(){
         TaskDTO taskDTO = new TaskDTO(
                 null,
                 createdSprint.getId(),
@@ -445,6 +457,7 @@ public class TaskMovementLogControllerTest extends TestContainers {
                 "мега описание задачи",
                 null,
                 null,
+                admin,
                 null,
                 22.0,
                 LocalDate.now(),
@@ -452,7 +465,7 @@ public class TaskMovementLogControllerTest extends TestContainers {
                 List.of(tag1, tag2),
                 null
         );
-        createdTask = webTestClient
+        TaskDTO createdTask = webTestClient
                 .post()
                 .uri("/api/v1/scrum-service/task/add")
                 .header("Authorization", jwt_admin)
@@ -461,16 +474,12 @@ public class TaskMovementLogControllerTest extends TestContainers {
                 .expectBody(TaskDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(createdTask);
-    }
-
-    @Test
-    void testGetAllLogs(){
-        TaskMovementLogDTO log1 = createLog(buildLog(createdTask,member),jwt_admin);
-        TaskMovementLogDTO log2 = createLog(buildLog(createdTask,member),jwt_admin);
-        TaskMovementLogDTO log3 = createLog(buildLog(createdTask,member),jwt_admin);
+        TaskMovementLogDTO log1 = createLog(buildLog(createdTask,admin, member, TaskStatus.InProgress),jwt_admin);
+        TaskMovementLogDTO log2 = createLog(buildLog(createdTask,admin, member, TaskStatus.OnVerification),jwt_admin);
+        TaskMovementLogDTO log3 = createLog(buildLog(createdTask,admin, member, TaskStatus.Done),jwt_admin);
         List<TaskMovementLogDTO> logs = getListLog(createdTask.getId());
         assertNotNull(logs);
-        assertTrue(logs.size() >= 3);
+        assertTrue(logs.size() >= 4);
         logs.forEach(l -> {
             if (Objects.equals(log1.getId(), l.getId())){
                 assertLog(log1, l);
@@ -486,14 +495,47 @@ public class TaskMovementLogControllerTest extends TestContainers {
 
     @Test
     void testAddTaskLog() {
+        TaskDTO taskDTO = new TaskDTO(
+                null,
+                createdSprint.getId(),
+                createdProject.getId(),
+                null,
+                "задача",
+                "мега описание задачи",
+                null,
+                null,
+                admin,
+                null,
+                22.0,
+                LocalDate.now(),
+                LocalDate.now().plusDays(2),
+                List.of(tag1, tag2),
+                null
+        );
+        TaskDTO createdTask = webTestClient
+                .post()
+                .uri("/api/v1/scrum-service/task/add")
+                .header("Authorization", jwt_admin)
+                .body(Mono.just(taskDTO), TaskDTO.class)
+                .exchange()
+                .expectBody(TaskDTO.class)
+                .returnResult().getResponseBody();
+        assertNotNull(createdTask);
+        TaskMovementLogDTO buildLog = buildLog(createdTask, admin, member, TaskStatus.InProgress);
         TaskMovementLogDTO createdLog = webTestClient
                 .post()
                 .uri(main_path + "/add")
                 .header("Authorization", jwt_admin)
-                .body(Mono.just(buildLog(createdTask,member)), TaskMovementLogDTO.class)
+                .body(Mono.just(buildLog), TaskMovementLogDTO.class)
                 .exchange()
                 .expectBody(TaskMovementLogDTO.class)
                 .returnResult().getResponseBody();
         assertNotNull(createdLog);
+        assertNotNull(buildLog.getTask());
+        assertNotNull(createdLog.getTask());
+        assertEquals(buildLog.getTask().getId(), createdLog.getTask().getId());
+        assertEquals(buildLog.getExecutor(), createdLog.getExecutor());
+        assertEquals(buildLog.getUser(), createdLog.getUser());
+        assertEquals(buildLog.getStatus(), createdLog.getStatus());
     }
 }

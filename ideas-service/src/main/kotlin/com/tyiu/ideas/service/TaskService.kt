@@ -31,6 +31,7 @@ class TaskService(val template: R2dbcEntityTemplate)
                 row.get("t_name", String::class.java),
                 row.get("t_description", String::class.java),
                 row.get("t_leader_comment", String::class.java),
+                row.get("t_executor_comment", String::class.java),
                 UserDTO(
                     row.get("i_id", String::class.java),
                     row.get("i_email", String::class.java),
@@ -79,7 +80,7 @@ class TaskService(val template: R2dbcEntityTemplate)
         val query = """
             SELECT
                 t.id AS t_id, t.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, t.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
@@ -101,7 +102,7 @@ class TaskService(val template: R2dbcEntityTemplate)
         val query = """
             SELECT
                 t.id AS t_id, t.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, t.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
@@ -122,7 +123,7 @@ class TaskService(val template: R2dbcEntityTemplate)
         val query = """
             SELECT
                 t.id AS t_id, t.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, t.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
@@ -150,7 +151,7 @@ class TaskService(val template: R2dbcEntityTemplate)
         val query = """
             SELECT
                 t.id AS t_id, t.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, t.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 i.id AS i_id, i.email AS i_email, i.first_name AS i_first_name, i.last_name AS i_last_name,
@@ -239,6 +240,12 @@ class TaskService(val template: R2dbcEntityTemplate)
     suspend fun updateLeaderCommentInTask(taskId: String, leaderComment: String){
         template.update(query(where("id").`is`(taskId)),
             update("leader_comment", leaderComment),
+            Task::class.java).awaitSingle()
+    }
+
+    suspend fun updateExecutorCommentInTask(taskId: String, executorComment: String){
+        template.update(query(where("id").`is`(taskId)),
+            update("executor_comment", executorComment),
             Task::class.java).awaitSingle()
     }
 

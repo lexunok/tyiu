@@ -121,6 +121,7 @@ public class TaskControllerTest extends TestContainers {
                 null,
                 null,
                 null,
+                null,
                 22.0,
                 LocalDate.now(),
                 LocalDate.now().plusDays(2),
@@ -806,6 +807,7 @@ public class TaskControllerTest extends TestContainers {
                 "ЗАДАЧА НОВОГО УРОВНЯ",
                 "ОПИСАНИЕ НОВОГО УРОВНЯ",
                 task1.getLeaderComment(),
+                task1.getExecutorComment(),
                 task1.getInitiator(),
                 task1.getExecutor(),
                 45.0,
@@ -894,8 +896,18 @@ public class TaskControllerTest extends TestContainers {
         String comment = "коммент???";
         assertNotEquals(task1.getLeaderComment(), comment);
         task1.setLeaderComment(comment);
-        updateSomething("/comment/{taskId}", task1);
+        updateSomething("/leader/comment/{taskId}", task1);
         assertEquals(getTask(task1.getId(), jwt_admin).getLeaderComment(), comment);
+    }
+
+    @Test
+    void testUpdateExecutorCommentInTask(){
+        TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
+        String comment = "коммент???";
+        assertNotEquals(task1.getExecutorComment(), comment);
+        task1.setExecutorComment(comment);
+        updateSomething("/executor/comment/{taskId}", task1);
+        assertEquals(getTask(task1.getId(), jwt_admin).getExecutorComment(), comment);
     }
 
     @Test
