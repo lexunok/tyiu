@@ -8,6 +8,7 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 @EnableFeignClients(basePackages = "com.tyiu.client.connections")
 public class AuthorizationServiceApplication {
 	//TODO: Реализовать запросы которые раньше были в аккаунт чендже, но только те что реал нужны, удаление пользователя, список всех и тд
+	//TODO: Показывать ошибки на страничках и сделать валидацию для логина
 	public static void main(String[] args) {
 		SpringApplication.run(AuthorizationServiceApplication.class, args);
 	}
