@@ -73,7 +73,7 @@ class SprintController(private val sprintService: SprintService)
     @PostMapping("/marks/{projectId}/{sprintId}/add")
     suspend fun addSprintMarks(@PathVariable sprintId: String,
                                 @PathVariable projectId: String,
-                                @RequestBody sprintMarks: Flow<SprintMarkDTO>,
+                                @RequestBody sprintMarks: Flow<SprintMarkRequest>,
                                 @AuthenticationPrincipal user: User) {
         return if (user.roles.roleCheck(roles3)) {
             sprintService.addSprintMarks(sprintId, projectId, sprintMarks)

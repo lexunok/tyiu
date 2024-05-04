@@ -27,7 +27,7 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                 tml.id AS tml_id, tml.task_id AS tml_task_id, tml.executor_id AS tml_executor_id, tml.user_id AS tml_user_id,
                 tml.start_date AS tml_start_date, tml.end_date AS tml_end_date, tml.status AS tml_status,
                 t.id AS t_id, t.sprint_id AS t_sprint_id, t.project_id AS t_project_id, t.position AS t_position,
-                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment,
+                t.name AS t_name, t.description AS t_description, t.leader_comment AS t_leader_comment, t.executor_comment AS t_executor_comment,
                 t.initiator_id AS t_initiator_id, t.executor_id AS t_executor_id, t.work_hour AS t_work_hour,
                 t.start_date AS t_start_date, t.finish_date AS t_finish_date, t.status AS t_status,
                 ti.id AS ti_id, ti.email AS ti_email, ti.first_name AS ti_first_name, ti.last_name AS ti_last_name,
@@ -65,6 +65,7 @@ class TaskMovementLogService(val template: R2dbcEntityTemplate)
                             row.get("t_name", String::class.java),
                             row.get("t_description", String::class.java),
                             row.get("t_leader_comment", String::class.java),
+                            row.get("t_executor_comment", String::class.java),
                             UserDTO(
                                 row.get("ti_id", String::class.java),
                                 row.get("ti_email", String::class.java),

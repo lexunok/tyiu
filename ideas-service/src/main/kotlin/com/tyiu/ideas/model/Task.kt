@@ -11,62 +11,49 @@ data class Task (
     val id: String? = null,
     var sprintId: String? = null,
     val projectId: String? = null,
-
     var position:Int? = null,
     val name: String? = null,
     val description: String? = null,
     var leaderComment: String? = null,
-
+    var executorComment: String? = null,
     var initiatorId: String? = null,
     var executorId: String? = null,
-
     val workHour: Double? = null,
-
     val startDate: LocalDate? = LocalDate.now(),
     val finishDate: LocalDate? = null,
-
     var status: TaskStatus? = null
 )
 
 data class TaskDTO (
     var id: String? = null,
-
     var sprintId: String? = null,
     val projectId: String? = null,
-
     var position:Int? = null,
     var name:String? = null,
     var description: String? = null,
     var leaderComment: String? = null,
-
+    var executorComment: String? = null,
     var initiator: UserDTO? = null,
     var executor: UserDTO? = null,
-
     val workHour: Double? = null,
-
     val startDate: LocalDate? = null,
     val finishDate: LocalDate? = null,
-
     var tags: List<TagDTO>? = null,
     var status: TaskStatus? = null
 )
 
 fun Task.toDTO(): TaskDTO = TaskDTO (
     id = id,
-
     sprintId = sprintId,
     projectId = projectId,
-
     position = position,
     name = name,
     description = description,
     leaderComment = leaderComment,
-
+    executorComment = executorComment,
     workHour = workHour,
-
     startDate = startDate,
     finishDate = finishDate,
-
     status = status
 )
 

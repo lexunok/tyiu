@@ -120,6 +120,7 @@ public class SprintControllerTest extends TestContainers {
                 null,
                 null,
                 null,
+                null,
                 22.0,
                 LocalDate.now(),
                 LocalDate.now().plusDays(2),
@@ -159,8 +160,8 @@ public class SprintControllerTest extends TestContainers {
         );
     }
 
-    private SprintMarkDTO buildSprintMarkDTO(String sprintId, UserDTO user, ProjectRole role, Integer tasksSize){
-        return new SprintMarkDTO(
+    private SprintMarkRequest buildSprintMarkDTO(String sprintId, UserDTO user, ProjectRole role, List<TaskDTO> tasks){
+        return new SprintMarkRequest(
                 null,
                 createdProject.getId(),
                 sprintId,
@@ -169,7 +170,7 @@ public class SprintControllerTest extends TestContainers {
                 user.getLastName(),
                 role,
                 5.0,
-                tasksSize
+                tasks
         );
     }
 
@@ -490,9 +491,9 @@ public class SprintControllerTest extends TestContainers {
                 .post()
                 .uri(main_path + "/marks/{projectId}/{sprintId}/add", createdProject.getId(), sprintId)
                 .header("Authorization", jwt)
-                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, member, ProjectRole.MEMBER, List.of(tasks.get(0)).size()),
-                                buildSprintMarkDTO(sprintId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1)).size()))),
-                        SprintMarkDTO.class)
+                .body(Flux.fromIterable(List.of(buildSprintMarkDTO(sprintId, member, ProjectRole.MEMBER, List.of(tasks.get(0))),
+                                buildSprintMarkDTO(sprintId, leader, ProjectRole.TEAM_LEADER, List.of(tasks.get(1))))),
+                        SprintMarkRequest.class)
                 .exchange()
                 .expectStatus();
     }

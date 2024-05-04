@@ -1,0 +1,1 @@
+ALTER TABLE task ADD COLUMN executor_comment TEXT;

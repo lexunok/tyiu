@@ -108,9 +108,14 @@ class TaskController (private val taskService: TaskService) {
         taskService.changePosition(taskId, position)
     }
 
-    @PutMapping("/comment/{taskId}")
+    @PutMapping("/leader/comment/{taskId}")
     suspend fun updateLeaderCommentInTask(@PathVariable taskId: String, @RequestBody taskDTO: TaskDTO){
         taskService.updateLeaderCommentInTask(taskId, taskDTO.leaderComment!!)
+    }
+
+    @PutMapping("/executor/comment/{taskId}")
+    suspend fun updateExecutorCommentInTask(@PathVariable taskId: String, @RequestBody taskDTO: TaskDTO){
+        taskService.updateExecutorCommentInTask(taskId, taskDTO.executorComment!!)
     }
 
     @PutMapping("/description/{taskId}")
