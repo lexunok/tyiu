@@ -1,7 +1,7 @@
 server:
   port: 8084
 authorization:
-  host: http://localhost:7777/ #change
+  host: http://localhost #change
 spring:
   rabbitmq:
     addresses: rabbitmq:5672

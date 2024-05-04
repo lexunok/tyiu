@@ -32,6 +32,7 @@ public class User implements UserDetails {
     private String lastName;
     private String firstName;
     private LocalDateTime createdAt;
+    @Builder.Default
     private Boolean isDeleted = Boolean.FALSE;
 
     @Override

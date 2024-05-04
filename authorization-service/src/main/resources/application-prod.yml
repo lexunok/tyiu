@@ -31,6 +31,6 @@ rabbitmq:
         internal-invitation: internal.invitation.routing-key
 oauth:
     secret: ${SERVICE_PASSWORD}
-    redirect: ${GATEWAY_URL}/login/oauth2/code/gateway
+    redirect: ${REDIRECT_URL}/login/oauth2/code/gateway
     issuer: ${AUTH_URL}
 

@@ -31,6 +31,6 @@ rabbitmq:
         internal-invitation: internal.invitation.routing-key
 oauth:
     secret: secret
-    redirect: http://localhost/login/oauth2/code/gateway
-    issuer: http://127.0.0.1:7777
+    redirect: https://tyuiu.hits.ru/login/oauth2/code/gateway
+    issuer: http://localhost
 

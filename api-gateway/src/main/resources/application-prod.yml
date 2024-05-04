@@ -4,7 +4,6 @@ spring:
   cloud:
     gateway:
       default-filters:
-        - TokenRelay=
         - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
@@ -26,25 +25,5 @@ spring:
         - id: authorization-service
           uri: http://authorization-service:7777
           predicates:
-            - Path=/api/v1/authorization-service/**
-        - id: authorization-service-view
-          uri: http://authorization-service:7777
-          predicates:
-            - Path=/auth/**
-  security:
-    oauth2:
-      client:
-        registration:
-          gateway:
-            provider: spring
-            client-id: gateway
-            client-secret: ${SERVICE_PASSWORD}
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid
-        provider:
-          spring:
-            authorization-uri: ${AUTH_URL}/oauth2/authorize
-            token-uri: ${AUTH_URL_TOKEN}/oauth2/token
-            jwk-set-uri: ${AUTH_URL_TOKEN}/oauth2/jwks
+            - Path=/api/v1/authorization-service/**, /auth/**, /oauth2/**
 

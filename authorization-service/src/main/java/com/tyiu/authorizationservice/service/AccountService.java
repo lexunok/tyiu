@@ -145,7 +145,7 @@ public class AccountService {
         } else {
             throw new NotFoundException("Приглашение не найдено");
         }
-        return "redirect:/login";
+        return "login";
     }
 
     public void registerForAdmin(UserDTO userDTO) {
@@ -161,7 +161,6 @@ public class AccountService {
             User user = User.builder()
                     .email(adminUsername)
                     .password(encoder.encode(adminPassword))
-                    .isDeleted(false)
                     .roles(List.of(Role.values()))
                     .createdAt(LocalDateTime.now())
                     .build();

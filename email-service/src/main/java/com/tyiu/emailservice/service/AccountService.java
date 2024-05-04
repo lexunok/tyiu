@@ -59,7 +59,7 @@ public class AccountService {
                     .consumerEmail(request.getReceiver())
                     .title("Приглашение на регистрацию")
                     .message(invitationText)
-                    .link(authorizationHost + "registration?code=" + request.getLinkId())
+                    .link(authorizationHost + "/auth/registration?code=" + request.getLinkId())
                     .buttonName("Зарегистрироваться")
                     .build();
             notificationService.sendMailNotification(emailRequest);

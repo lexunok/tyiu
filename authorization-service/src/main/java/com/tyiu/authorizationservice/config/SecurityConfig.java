@@ -68,7 +68,7 @@ public class SecurityConfig {
         http
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
-                                new LoginUrlAuthenticationEntryPoint("/auth/login"),
+                                new LoginUrlAuthenticationEntryPoint(issuer + "/auth/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
@@ -91,6 +91,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin
+                                .loginProcessingUrl("/auth/login")
                                 .loginPage("/auth/login")
                                 .permitAll()
                 );
@@ -112,7 +113,7 @@ public class SecurityConfig {
     @Bean
     public RegisteredClientRepository registeredClientRepository(PasswordEncoder encoder) {
         RegisteredClient oidcClient = RegisteredClient.withId(UUID.randomUUID().toString())
-                .clientId("gateway")
+                .clientId("hits")
                 .clientSecret(encoder.encode(secret))
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
