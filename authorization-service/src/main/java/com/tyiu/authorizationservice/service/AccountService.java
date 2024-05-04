@@ -157,14 +157,16 @@ public class AccountService {
 
     @PostConstruct
     public void registerAdminOnInit() {
-        User user = User.builder()
-                .email(adminUsername)
-                .password(encoder.encode(adminPassword))
-                .isDeleted(false)
-                .roles(List.of(Role.values()))
-                .createdAt(LocalDateTime.now())
-                .build();
-        userRepository.save(user);
+        if (Boolean.FALSE.equals(userRepository.existsByEmail(adminUsername))) {
+            User user = User.builder()
+                    .email(adminUsername)
+                    .password(encoder.encode(adminPassword))
+                    .isDeleted(false)
+                    .roles(List.of(Role.values()))
+                    .createdAt(LocalDateTime.now())
+                    .build();
+            userRepository.save(user);
+        }
     }
 
     public void sendCodeToChangeEmail(String newEmail, String oldEmail) {
