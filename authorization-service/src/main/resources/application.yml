@@ -1,5 +1,8 @@
 server:
     port: 7777
+    admin:
+        username: admin@admin.com
+        password: password
 spring:
     rabbitmq:
         addresses: localhost:5672

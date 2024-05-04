@@ -12,9 +12,13 @@ import com.tyiu.authorizationservice.repository.InvitationRepository;
 import com.tyiu.authorizationservice.repository.PasswordChangeDataRepository;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.connections.EmailClient;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
+import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.CacheConfig;
+import org.modelmapper.ModelMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,16 +29,22 @@ import org.springframework.web.servlet.ModelAndView;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 @RequiredArgsConstructor
 @Service
 @EnableScheduling
-@CacheConfig(cacheNames = "accounts")
 public class AccountService {
+
+    @Value("${server.admin.username}")
+    private String adminUsername;
+    @Value("${server.admin.password}")
+    private String adminPassword;
 
     private final PasswordEncoder encoder;
     private final EmailClient emailClient;
+    private final ModelMapper mapper;
 
     private final UserRepository userRepository;
     private final InvitationRepository invitationRepository;
@@ -52,7 +62,7 @@ public class AccountService {
         emailChangeRepository.deleteByDateExpiredLessThan(now);
         invitationRepository.deleteByDateExpiredLessThan(now);
     }
-    @Cacheable(key = "#email")
+    @Cacheable(value = "password", key = "#email")
     public ModelAndView generateAndSendCode(String email) {
         Boolean isUserExists = userRepository.existsByEmail(email);
         if (Boolean.FALSE.equals(isUserExists)) {
@@ -104,7 +114,7 @@ public class AccountService {
         });
         return "login";
     }
-    @Cacheable(key = "#code")
+    @Cacheable(value = "registration", key = "#code")
     public String showRegistration(String code, Model model) {
         Optional<Invitation> invitation = invitationRepository.findById(code);
         if (invitation.isPresent()) {
@@ -136,6 +146,25 @@ public class AccountService {
             throw new NotFoundException("Приглашение не найдено");
         }
         return "redirect:/login";
+    }
+
+    public void registerForAdmin(UserDTO userDTO) {
+        User user = mapper.map(userDTO,User.class);
+        user.setPassword(encoder.encode(user.getPassword()));
+        user.setIsDeleted(false);
+        userRepository.save(user);
+    }
+
+    @PostConstruct
+    public void registerAdminOnInit() {
+        User user = User.builder()
+                .email(adminUsername)
+                .password(encoder.encode(adminPassword))
+                .isDeleted(false)
+                .roles(List.of(Role.values()))
+                .createdAt(LocalDateTime.now())
+                .build();
+        userRepository.save(user);
     }
 
     public void sendCodeToChangeEmail(String newEmail, String oldEmail) {

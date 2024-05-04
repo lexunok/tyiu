@@ -1,5 +1,8 @@
 server:
     port: 7777
+    admin:
+        username: ideasmanager15@gmail.com
+        password: ${SERVICE_PASSWORD}
 spring:
     rabbitmq:
         addresses: rabbitmq
