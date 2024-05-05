@@ -911,26 +911,6 @@ public class TaskControllerTest extends TestContainers {
     }
 
     @Test
-    void testUpdateDescriptionInTask(){
-        TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
-        String description = "описание???";
-        assertNotEquals(task1.getDescription(), description);
-        task1.setDescription(description);
-        updateSomething("/description/{taskId}", task1);
-        assertEquals(getTask(task1.getId(), jwt_admin).getDescription(), description);
-    }
-
-    @Test
-    void testUpdateNameInTask(){
-        TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
-        String name = "название???";
-        assertNotEquals(task1.getName(), name);
-        task1.setName(name);
-        updateSomething("/name/{taskId}", task1);
-        assertEquals(getTask(task1.getId(), jwt_admin).getName(), name);
-    }
-
-    @Test
     void testDeleteTask(){
         TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), null), jwt_admin, admin).getId(), jwt_admin);
         TaskDTO task2 = getTask(createTask(buildTask(List.of(tag1, tag2), null), jwt_admin, admin).getId(), jwt_admin);

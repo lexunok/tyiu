@@ -424,10 +424,16 @@ class ProjectService(val template: R2dbcEntityTemplate) {
     }
 
     suspend fun putFinishProject(projectId: String, report: String) {
-        template.update(query(where("id").`is`(projectId)),
-            update("report", report)
-                .set("status", ProjectStatus.DONE.name),
-            Project::class.java).awaitSingle()
+        template.selectOne(query(where("id").`is`(projectId)), Project::class.java)
+            .awaitSingle()
+            .let {
+                template.update(query(where("id").`is`(it.teamId!!)),
+                    update("has_active_project", false),
+                    Team::class.java).awaitSingle()
+                it.status = ProjectStatus.DONE
+                it.report = report
+                template.update(it)
+            }
     }
 }
 
