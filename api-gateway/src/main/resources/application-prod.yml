@@ -3,8 +3,6 @@ server:
 spring:
   cloud:
     gateway:
-      default-filters:
-        - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
           uri: http://ideas-service:8082

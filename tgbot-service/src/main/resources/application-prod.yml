@@ -22,4 +22,4 @@ spring:
     username: ${SERVICE_USERNAME}
     password: ${SERVICE_PASSWORD}
 postgres:
-  url: postgresql://postgres-ideas/hits
+  url: postgresql://db-ideas/hits

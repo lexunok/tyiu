@@ -21,6 +21,12 @@ public class AuthorizationViewController {
         return "login";
     }
 
+    @GetMapping("/success")
+    @ResponseBody
+    public String success(@CookieValue(name = "JSESSIONID") String session){
+        return session;
+    }
+
     @GetMapping("/registration")
     public String showRegistration(@RequestParam(name = "code") String code, Model model) {
         return accountService.showRegistration(code, model);

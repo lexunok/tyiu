@@ -5,12 +5,14 @@ import com.nimbusds.jose.jwk.RSAKey;
 import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
 import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
+import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
@@ -52,6 +54,7 @@ import java.util.UUID;
 @EnableWebSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
+    private final RedisTemplate<String, Object> template;
     private final UserRepository repository;
     @Value("${oauth.secret}")
     String secret;
@@ -91,8 +94,9 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin
+                                .defaultSuccessUrl(issuer + "/auth/success")
                                 .loginProcessingUrl("/auth/login")
-                                .loginPage("/auth/login")
+                                .loginPage(issuer + "/auth/login")
                                 .permitAll()
                 );
         return http.build();
@@ -163,8 +167,16 @@ public class SecurityConfig {
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
         return context -> {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
-                String userId = repository.findByEmail(context.getPrincipal().getName())
-                        .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!")).getId();
+                String email = context.getPrincipal().getName();
+                User user = (User) template.opsForHash().get("user", email);
+                String userId;
+                if (user == null) {
+                    user = repository.findByEmail(email.toLowerCase())
+                            .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
+                    userId = user.getId();
+                    template.opsForHash().put("user", email, user);
+                }
+                else userId = user.getId();
                 context.getClaims().id(userId);
                 context.getClaims().claim("roles", context.getPrincipal().getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
