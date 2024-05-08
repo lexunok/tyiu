@@ -16,12 +16,12 @@ import org.springframework.web.servlet.ModelAndView;
 public class AuthorizationViewController {
     private final AccountService accountService;
 
-    //TODO: Сделать при логине и других связанных с email to lowercase
     @GetMapping("/login")
     public String login() {
         return "login";
     }
 
+    //TODO: LAST поменять на что нибудь другое
     @GetMapping("/success")
     @ResponseBody
     public String success(@CookieValue(name = "JSESSIONID") String session){

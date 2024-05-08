@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(),ex.getMessage()));
     }
     @ExceptionHandler
-    public ResponseEntity<ErrorResponse> existException(NotFoundException ex) {
+    public ResponseEntity<ErrorResponse> existException(ExistException ex) {
         log.error(ex.getMessage(), ex);
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST.value())

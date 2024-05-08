@@ -88,7 +88,7 @@ public class SecurityConfig {
         http
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( "/auth/**").permitAll()
-//TODO:                        .requestMatchers("/api/v1/authorization-service/register").hasRole(Role.ADMIN.name())
+//TODO:                        .requestMatchers("/api/v1/authorization-service/account/register").hasRole(Role.ADMIN.name())
 //TODO:                        .requestMatchers("/api/v1/authorization-service/invitation/**").hasRole(Role.ADMIN.name())
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)

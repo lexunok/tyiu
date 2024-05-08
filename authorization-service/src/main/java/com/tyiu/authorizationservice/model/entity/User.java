@@ -3,9 +3,9 @@ package com.tyiu.authorizationservice.model.entity;
 import com.tyiu.client.models.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import lombok.*;
+import org.hibernate.validator.constraints.Length;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -33,7 +33,7 @@ public class User implements UserDetails {
     @NotBlank(message = "Почта не может быть пустым полем")
     @Email
     private String email;
-    @Min(value = 8, message = "Пароль должен быть больше 8 символов")
+    @Length(min = 8, message = "Пароль должен быть больше 8 символов")
     @NotBlank(message = "Пароль не может быть пустым полем")
     private String password;
     @NotBlank(message = "Фамилия не может быть пустым полем")

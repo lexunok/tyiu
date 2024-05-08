@@ -16,7 +16,6 @@ import com.tyiu.client.connections.EmailClient;
 import com.tyiu.client.models.Role;
 import com.tyiu.client.models.UserDTO;
 import jakarta.annotation.PostConstruct;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -53,9 +52,7 @@ public class AccountService {
     private final EmailChangeDataRepository emailChangeRepository;
 
     @Scheduled(fixedRate = 6000000)
-    @Transactional
     public void deleteExpiredData() {
-        //TODO проверить мало ли это не удаление а select :)
         LocalDateTime now = LocalDateTime.now();
         passwordChangeRepository.deleteByDateExpiredLessThan(now);
         emailChangeRepository.deleteByDateExpiredLessThan(now);
@@ -157,6 +154,8 @@ public class AccountService {
     public void registerAdminOnInit() {
         if (Boolean.FALSE.equals(userRepository.existsByEmail(adminUsername))) {
             User user = User.builder()
+                    .firstName("Живая")
+                    .lastName("Легенда")
                     .email(adminUsername)
                     .password(encoder.encode(adminPassword))
                     .roles(List.of(Role.values()))
@@ -174,7 +173,7 @@ public class AccountService {
                 .dateExpired(LocalDateTime.now().plusHours(2))
                 .oldEmail(oldEmail)
                 .build();
-        if (emailChangeRepository.existsByNewEmail(data.getNewEmail())) {
+        if (Boolean.TRUE.equals(emailChangeRepository.existsByNewEmail(data.getNewEmail()))) {
             throw new ExistException("Письмо уже отправлено на почту");
         }
         emailChangeRepository.deleteByOldEmail(oldEmail);
