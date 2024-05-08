@@ -1,13 +1,13 @@
 package com.tyiu.authorizationservice.service;
 
 import com.tyiu.amqp.RabbitMQMessageProducer;
-import com.tyiu.authorizationservice.config.exception.ExistException;
 import com.tyiu.authorizationservice.model.entity.Invitation;
 import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.InvitationRequest;
 import com.tyiu.authorizationservice.model.request.ManyInvitationsRequest;
 import com.tyiu.authorizationservice.repository.InvitationRepository;
 import com.tyiu.authorizationservice.repository.UserRepository;
+import com.tyiu.client.exceptions.ExistException;
 import com.tyiu.client.models.InvitationLinkRequest;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;

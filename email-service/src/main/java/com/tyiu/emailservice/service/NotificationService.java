@@ -1,7 +1,7 @@
 package com.tyiu.emailservice.service;
 
+import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.emailservice.config.EmailConfig;
-import com.tyiu.emailservice.config.exception.ServerProcessException;
 import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

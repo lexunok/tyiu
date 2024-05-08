@@ -1,8 +1,5 @@
 package com.tyiu.authorizationservice.service;
 
-import com.tyiu.authorizationservice.config.exception.AccessException;
-import com.tyiu.authorizationservice.config.exception.ExistException;
-import com.tyiu.authorizationservice.config.exception.NotFoundException;
 import com.tyiu.authorizationservice.model.entity.EmailChangeData;
 import com.tyiu.authorizationservice.model.entity.Invitation;
 import com.tyiu.authorizationservice.model.entity.PasswordChangeData;
@@ -13,6 +10,9 @@ import com.tyiu.authorizationservice.repository.InvitationRepository;
 import com.tyiu.authorizationservice.repository.PasswordChangeDataRepository;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.connections.EmailClient;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.exceptions.ExistException;
+import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.models.Role;
 import com.tyiu.client.models.UserDTO;
 import jakarta.annotation.PostConstruct;

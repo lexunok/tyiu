@@ -1,6 +1,9 @@
-package com.tyiu.authorizationservice.config.exception;
+package com.tyiu.authorizationservice.config;
 
-import com.tyiu.authorizationservice.model.responses.ErrorResponse;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.exceptions.ExistException;
+import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.models.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;

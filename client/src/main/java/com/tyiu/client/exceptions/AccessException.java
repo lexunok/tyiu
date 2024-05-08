@@ -1,4 +1,4 @@
-package com.tyiu.authorizationservice.config.exception;
+package com.tyiu.client.exceptions;
 
 public class AccessException extends RuntimeException{
     public AccessException(String message){

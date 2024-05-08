@@ -1,4 +1,4 @@
-package com.tyiu.emailservice.model;
+package com.tyiu.client.models;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

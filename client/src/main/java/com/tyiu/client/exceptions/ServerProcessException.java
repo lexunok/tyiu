@@ -1,4 +1,4 @@
-package com.tyiu.emailservice.config.exception;
+package com.tyiu.client.exceptions;
 
 public class ServerProcessException extends RuntimeException {
     public ServerProcessException(String message){
