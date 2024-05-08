@@ -249,18 +249,6 @@ class TaskService(val template: R2dbcEntityTemplate)
             Task::class.java).awaitSingle()
     }
 
-    suspend fun updateDescriptionInTask(taskId: String, description: String){
-        template.update(query(where("id").`is`(taskId)),
-            update("description", description),
-            Task::class.java).awaitSingle()
-    }
-
-    suspend fun updateNameInTask(taskId: String, name: String){
-        template.update(query(where("id").`is`(taskId)),
-            update("name", name),
-            Task::class.java).awaitSingle()
-    }
-
     suspend fun changePosition(taskId: String, position: Int){
         template.selectOne(query(where("id").`is`(taskId)), Task::class.java)
             .awaitSingle()

@@ -9,14 +9,14 @@ import java.time.LocalDate
 
 @Table
 data class Project(
-        @Id
+    @Id
         val id:String? = null,
-        val ideaId:String? = null,
-        val teamId:String? = null,
-        val report: String?= null,
-        val startDate:LocalDate? = LocalDate.now(),
-        val finishDate:LocalDate? = null,
-        val status: ProjectStatus? = ProjectStatus.ACTIVE,
+    val ideaId:String? = null,
+    val teamId:String? = null,
+    var report: String?= null,
+    val startDate:LocalDate? = LocalDate.now(),
+    val finishDate:LocalDate? = null,
+    var status: ProjectStatus? = ProjectStatus.ACTIVE,
 )
 
 data class ProjectDTO (

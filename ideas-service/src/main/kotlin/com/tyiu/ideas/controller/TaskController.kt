@@ -109,23 +109,13 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @PutMapping("/leader/comment/{taskId}")
-    suspend fun updateLeaderCommentInTask(@PathVariable taskId: String, @RequestBody taskDTO: TaskDTO){
-        taskService.updateLeaderCommentInTask(taskId, taskDTO.leaderComment!!)
+    suspend fun updateLeaderCommentInTask(@PathVariable taskId: String, @RequestBody leaderComment: String){
+        taskService.updateLeaderCommentInTask(taskId, leaderComment)
     }
 
     @PutMapping("/executor/comment/{taskId}")
-    suspend fun updateExecutorCommentInTask(@PathVariable taskId: String, @RequestBody taskDTO: TaskDTO){
-        taskService.updateExecutorCommentInTask(taskId, taskDTO.executorComment!!)
-    }
-
-    @PutMapping("/description/{taskId}")
-    suspend fun updateDescriptionInTask(@PathVariable taskId: String, @RequestBody taskDTO: TaskDTO){
-        taskService.updateDescriptionInTask(taskId, taskDTO.description!!)
-    }
-
-    @PutMapping("/name/{taskId}")
-    suspend fun updateNameInTask(@PathVariable taskId: String, @RequestBody taskDTO: TaskDTO){
-        taskService.updateNameInTask(taskId, taskDTO.name!!)
+    suspend fun updateExecutorCommentInTask(@PathVariable taskId: String, @RequestBody executorComment: String){
+        taskService.updateExecutorCommentInTask(taskId, executorComment)
     }
 
     @DeleteMapping("/delete/{taskId}")

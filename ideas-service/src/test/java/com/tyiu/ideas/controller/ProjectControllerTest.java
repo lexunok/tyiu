@@ -925,6 +925,8 @@ public class ProjectControllerTest extends TestContainers {
         assertNotNull(response);
         assertEquals(response.getStatusCode(), HttpStatus.OK);
         assertEquals(response.getMessage(), "Проект успешно завершён");
+        assertNotNull(prj.getTeam());
+        assertEquals(false, getTeam(prj.getTeam().getId(), jwt_admin).getHasActiveProject());
         checkPutFinishProject("крутой",prj.getId(),jwt_initiator).isOk();
         checkPutFinishProject("крутой",prj.getId(),jwt_office).isOk();
         checkPutFinishProject("крутой",prj.getId(),jwt_member).isForbidden();

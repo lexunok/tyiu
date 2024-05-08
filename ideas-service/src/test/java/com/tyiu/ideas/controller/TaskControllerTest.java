@@ -390,11 +390,11 @@ public class TaskControllerTest extends TestContainers {
                 .expectStatus().isOk();
     }
 
-    private void updateSomething(String path, TaskDTO task){
+    private void updateSomething(String path, String taskId, String data){
         webTestClient
                 .put()
-                .uri(main_path + path, task.getId())
-                .body(Mono.just(task), TaskDTO.class)
+                .uri(main_path + path, taskId)
+                .body(Mono.just(data), String.class)
                 .header("Authorization", jwt_admin)
                 .exchange()
                 .expectStatus().isOk();
@@ -895,8 +895,7 @@ public class TaskControllerTest extends TestContainers {
         TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
         String comment = "коммент???";
         assertNotEquals(task1.getLeaderComment(), comment);
-        task1.setLeaderComment(comment);
-        updateSomething("/leader/comment/{taskId}", task1);
+        updateSomething("/leader/comment/{taskId}", task1.getId(), comment);
         assertEquals(getTask(task1.getId(), jwt_admin).getLeaderComment(), comment);
     }
 
@@ -905,29 +904,8 @@ public class TaskControllerTest extends TestContainers {
         TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
         String comment = "коммент???";
         assertNotEquals(task1.getExecutorComment(), comment);
-        task1.setExecutorComment(comment);
-        updateSomething("/executor/comment/{taskId}", task1);
+        updateSomething("/executor/comment/{taskId}", task1.getId(), comment);
         assertEquals(getTask(task1.getId(), jwt_admin).getExecutorComment(), comment);
-    }
-
-    @Test
-    void testUpdateDescriptionInTask(){
-        TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
-        String description = "описание???";
-        assertNotEquals(task1.getDescription(), description);
-        task1.setDescription(description);
-        updateSomething("/description/{taskId}", task1);
-        assertEquals(getTask(task1.getId(), jwt_admin).getDescription(), description);
-    }
-
-    @Test
-    void testUpdateNameInTask(){
-        TaskDTO task1 = getTask(createTask(buildTask(List.of(tag1, tag2), createdSprint.getId()), jwt_admin, admin).getId(), jwt_admin);
-        String name = "название???";
-        assertNotEquals(task1.getName(), name);
-        task1.setName(name);
-        updateSomething("/name/{taskId}", task1);
-        assertEquals(getTask(task1.getId(), jwt_admin).getName(), name);
     }
 
     @Test
