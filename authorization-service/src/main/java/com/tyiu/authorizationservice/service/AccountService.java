@@ -1,6 +1,7 @@
 package com.tyiu.authorizationservice.service;
 
 import com.tyiu.authorizationservice.config.exception.AccessException;
+import com.tyiu.authorizationservice.config.exception.ExistException;
 import com.tyiu.authorizationservice.config.exception.NotFoundException;
 import com.tyiu.authorizationservice.model.entity.EmailChangeData;
 import com.tyiu.authorizationservice.model.entity.Invitation;
@@ -50,8 +51,6 @@ public class AccountService {
     private final InvitationRepository invitationRepository;
     private final PasswordChangeDataRepository passwordChangeRepository;
     private final EmailChangeDataRepository emailChangeRepository;
-
-    //TODO: Сделать обработку ошибок +
 
     @Scheduled(fixedRate = 6000000)
     @Transactional
@@ -130,7 +129,6 @@ public class AccountService {
         }
     }
 
-    //TODO: validation
     public String register(String code, User user) {
         Optional<Invitation> invitation = invitationRepository.findById(code);
         if (invitation.isPresent()) {
@@ -177,8 +175,7 @@ public class AccountService {
                 .oldEmail(oldEmail)
                 .build();
         if (emailChangeRepository.existsByNewEmail(data.getNewEmail())) {
-            //TODO: Ошибка, письмо уже отправлено
-            throw new AccessException("Письмо уже отправлено на почту");
+            throw new ExistException("Письмо уже отправлено на почту");
         }
         emailChangeRepository.deleteByOldEmail(oldEmail);
         EmailChangeData saved = emailChangeRepository.save(data);

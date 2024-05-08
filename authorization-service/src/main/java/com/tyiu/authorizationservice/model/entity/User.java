@@ -2,6 +2,9 @@ package com.tyiu.authorizationservice.model.entity;
 
 import com.tyiu.client.models.Role;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -27,9 +30,15 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private List<Role> roles;
     @Column(unique = true)
+    @NotBlank(message = "Почта не может быть пустым полем")
+    @Email
     private String email;
+    @Min(value = 8, message = "Пароль должен быть больше 8 символов")
+    @NotBlank(message = "Пароль не может быть пустым полем")
     private String password;
+    @NotBlank(message = "Фамилия не может быть пустым полем")
     private String lastName;
+    @NotBlank(message = "Имя не может быть пустым полем")
     private String firstName;
     private LocalDateTime createdAt;
     @Builder.Default

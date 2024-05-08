@@ -1,10 +1,10 @@
 package com.tyiu.authorizationservice.service;
 
 import com.tyiu.amqp.RabbitMQMessageProducer;
-import com.tyiu.authorizationservice.config.exception.AccessException;
+import com.tyiu.authorizationservice.config.exception.ExistException;
 import com.tyiu.authorizationservice.model.entity.Invitation;
-import com.tyiu.authorizationservice.model.request.InvitationRequest;
 import com.tyiu.authorizationservice.model.entity.User;
+import com.tyiu.authorizationservice.model.request.InvitationRequest;
 import com.tyiu.authorizationservice.model.request.ManyInvitationsRequest;
 import com.tyiu.authorizationservice.repository.InvitationRepository;
 import com.tyiu.authorizationservice.repository.UserRepository;
@@ -33,8 +33,7 @@ public class InvitationService {
     public void sendInvitationToEmail(InvitationRequest invitationRequest, User user) {
         Boolean userIsExists = userRepository.existsByEmail(invitationRequest.getEmail());
         if (Boolean.TRUE.equals(userIsExists)) {
-            //TODO: Ошибка пользователь уже существует
-            throw new AccessException("Пользователь уже существует");
+            throw new ExistException("Пользователь уже существует");
         }
         Invitation invitation = mapper.map(invitationRequest, Invitation.class);
         invitation.setDateExpired(LocalDateTime.now().plusDays(1));

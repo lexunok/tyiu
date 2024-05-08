@@ -1,8 +1,9 @@
 package com.tyiu.authorizationservice.controller;
 
-import com.tyiu.authorizationservice.model.request.PasswordChangeRequest;
 import com.tyiu.authorizationservice.model.entity.User;
+import com.tyiu.authorizationservice.model.request.PasswordChangeRequest;
 import com.tyiu.authorizationservice.service.AccountService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -33,7 +34,7 @@ public class AuthorizationViewController {
     }
 
     @PostMapping("/registration")
-    public String register(@RequestParam(name = "code") String code, User user) {
+    public String register(@RequestParam(name = "code") String code, @Valid User user) {
         return accountService.register(code, user);
     }
 
