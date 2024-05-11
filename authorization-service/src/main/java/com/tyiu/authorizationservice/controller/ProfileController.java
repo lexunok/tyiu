@@ -7,6 +7,7 @@ import com.tyiu.authorizationservice.service.ProfileService;
 import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -17,6 +18,11 @@ import java.util.List;
 public class ProfileController {
 
     private final ProfileService profileService;
+
+    @GetMapping("/")
+    public Jwt getJwt(@AuthenticationPrincipal Jwt jwt){
+        return jwt;
+    }
 
     @GetMapping("/users/all")
     public List<UserDTO> getAllUsers() {

@@ -94,7 +94,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin
-                                .defaultSuccessUrl(issuer + "/auth/success")
+                                .defaultSuccessUrl(issuer + "/api/v1/authorization-service")
                                 .loginProcessingUrl("/auth/login")
                                 .loginPage(issuer + "/auth/login")
                                 .permitAll()
