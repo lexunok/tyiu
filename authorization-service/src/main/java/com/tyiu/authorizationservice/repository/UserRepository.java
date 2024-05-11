@@ -21,7 +21,7 @@ public interface UserRepository extends JpaRepository<User,String> {
     void setUserPasswordByEmail(String password, String email);
 
     @Modifying
-    @Query("update User u set u.is_deleted = ?1 where u.id = ?2")
+    @Query("update User u set u.isDeleted = ?1 where u.id = ?2")
     @Transactional
     void setUserIsDeletedById(Boolean isDeleted, String id);
 
@@ -29,6 +29,11 @@ public interface UserRepository extends JpaRepository<User,String> {
     @Query("update User u set u.email = ?1 where u.email = ?2")
     @Transactional
     void setUserEmailByEmail(String newEmail, String oldEmail);
+
+    @Modifying
+    @Query("update User u set u.firstName = ?1, u.lastName = ?2, u.telephone = ?3, u.studyGroup = ?4 where u.id = ?5")
+    @Transactional
+    void updateProfileById(String firstName, String lastName, String telephone, String studyGroup, String id);
 
     List<User> findByIsDeletedFalse();
 

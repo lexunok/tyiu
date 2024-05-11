@@ -19,12 +19,13 @@ public class AuthenticationController {
 
     private final AuthenticationService authenticationService;
 
+    //TODO: SNOS
     @PostMapping("/login")
     public Mono<AuthenticationResponse> signIn(@RequestBody LoginRequest request) {
         log.info("/login by " + request.getEmail());
         return authenticationService.login(request);
     }
-
+    //TODO: CHANGE
     @PostMapping("/register")
     public Mono<AuthenticationResponse> signUp(@RequestBody RegisterRequest request) {
         log.info("/register by " + request.getEmail());

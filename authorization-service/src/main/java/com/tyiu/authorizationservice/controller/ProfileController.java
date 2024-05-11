@@ -1,9 +1,12 @@
 package com.tyiu.authorizationservice.controller;
 
 
+import com.tyiu.authorizationservice.model.entity.User;
+import com.tyiu.authorizationservice.model.request.ProfileUpdateRequest;
 import com.tyiu.authorizationservice.service.ProfileService;
 import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -23,6 +26,16 @@ public class ProfileController {
     @GetMapping("/users/all/email")
     public List<String> getAllUserEmails(){
         return profileService.getAllUserEmails();
+    }
+
+    @PutMapping("/{id}")
+    public void updateProfile(@RequestBody ProfileUpdateRequest request, @AuthenticationPrincipal User user) {
+        profileService.updateProfile(user.getId(), request);
+    }
+
+    @PutMapping("/user/{id}")
+    public UserDTO updateUserByAdmin(@RequestBody UserDTO user) {
+        return profileService.updateUserByAdmin(user);
     }
 
     @DeleteMapping("/user/{id}")

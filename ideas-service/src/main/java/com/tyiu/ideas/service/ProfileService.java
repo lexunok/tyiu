@@ -44,6 +44,7 @@ public class ProfileService {
     private final R2dbcEntityTemplate template;
     private final ResourceLoader loader;
 
+    //TODO: SNOS
     @Value("${file.path}")
     String path;
     public Mono<FileSystemResource> uploadAvatar(String userId, FilePart file) {
@@ -64,11 +65,12 @@ public class ProfileService {
             return Mono.error(new RuntimeException("Ошибка загрузки аватара", e));
         }
     }
-
+    //TODO: SNOS
     private boolean isValidImageFile(FilePart file) {
         MediaType contentType = file.headers().getContentType();
         return contentType != null && (contentType.isCompatibleWith(MediaType.IMAGE_JPEG) && contentType.isCompatibleWith(MediaType.IMAGE_PNG));
     }
+    //TODO: SNOS
     public Mono<Resource> getAvatar(String userId){
         Path basePath = Paths.get(path, userId + "_avatar.jpg");
         try {
@@ -153,7 +155,7 @@ public class ProfileService {
                         )
                 );
     }
-
+    //TODO: SNOS
     public Mono<Void> updateProfile(String userId, ProfileUpdateRequest request){
         return template.update(query(where("id").is(userId)),
                 update("first_name", request.getFirstName())

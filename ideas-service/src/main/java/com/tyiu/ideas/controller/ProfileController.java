@@ -26,6 +26,7 @@ import java.util.Base64;
 public class ProfileController {
 
     private final ProfileService profileService;
+    //TODO: SNOS
     @GetMapping("/avatar/get/{userId}")
     public Mono<ResponseEntity<String>> getAvatar(@PathVariable String userId) {
         return profileService.getAvatar(userId)
@@ -42,7 +43,7 @@ public class ProfileController {
                     }
                 });
     }
-
+    //TODO: SNOS
     @PostMapping("/avatar/upload")
     public Mono<ResponseEntity<Mono<FileSystemResource>>> uploadAvatar(@AuthenticationPrincipal User user,
                                                                        @RequestPart("file") FilePart file) {
@@ -62,6 +63,7 @@ public class ProfileController {
     public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal User user, @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(user.getId(), skills);
     }
+    //TODO: SNOS
     @PutMapping("/update/{userId}")
     public Mono<InfoResponse> updateProfile(@RequestBody ProfileUpdateRequest request, @PathVariable String userId) {
         return profileService.updateProfile(userId, request)
