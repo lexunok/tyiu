@@ -46,7 +46,7 @@ public class AccountChangeService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
     private final EmailService emailService;
-
+    //TODO: SNOS
     private Mono<Void> sendInvitation(String receiver, String link, User user) {
         String invitationText = "Вас пригласил(-а) зарегистрироваться на портал HITS " +
                 user.getFirstName() + " " + user.getLastName() +
@@ -62,7 +62,7 @@ public class AccountChangeService {
 
         return emailService.sendMailNotification(emailRequest);
     }
-
+    //TODO: SNOS
     private Mono<Void> sendChangeDateCode(String subject, String text, String to, String code){
         return Mono.just(ChangeDataEmailRequest.builder()
                         .code(code).to(to)
@@ -71,7 +71,7 @@ public class AccountChangeService {
                         .build())
                 .flatMap(emailService::sendMailCodeToChangeData);
     }
-
+    //TODO: SNOS
     @Scheduled(fixedRate = 28800000)
     private void deleteExpiredData() {
         template.delete(query(where("dateExpired").is(LocalDateTime.now())), Invitation.class).subscribe();
@@ -79,13 +79,7 @@ public class AccountChangeService {
         template.delete(query(where("dateExpired").is(LocalDateTime.now())), ChangePasswordData.class).subscribe();
     }
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
-
+    //TODO: SNOS
     public Mono<InvitationResponse> findInvitationByUrl(String url) {
         return template.selectOne(query(where("id").is(url)), Invitation.class)
                 .flatMap(i -> {
@@ -96,7 +90,7 @@ public class AccountChangeService {
                             .build()));
                 });
     }
-
+    //TODO: SNOS
     public Mono<ChangeResponse> findByUrlAndSendCode(String url) {
         return template.selectOne(query(where("id").is(url)), ChangeEmailData.class)
                 .flatMap(e -> sendChangeDateCode(
@@ -111,7 +105,7 @@ public class AccountChangeService {
                         ))
                 );
     }
-
+    //TODO: SNOS
     public Flux<UserDTO> getUsersInfo(){
         return template.select(User.class).matching(query(where("is_deleted").isFalse())).all()
                 .flatMap(u -> Mono.just(UserDTO.builder()
@@ -126,24 +120,18 @@ public class AccountChangeService {
                             .build())
         );
     }
+    //TODO: SNOS
     public Mono<Void> deleteUser(String userId){
         return template.update(query(where("id").is(userId)),
                 update("is_deleted", Boolean.TRUE), User.class)
                 .then(template.delete(query(where("member_id").is(userId)), Team2Member.class)).then();
     }
-
+    //TODO: SNOS
     public Flux<String> getAllEmails(){
         return template.select(User.class).matching(query(where("is_deleted").isFalse())).all()
                 .flatMap(u -> Mono.just(u.getEmail()));
     }
-
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
-
+    //TODO: SNOS
     public Mono<Void> sendInvitation(InvitationDTO invitationDTO, User user) {
         return Mono.just(invitationDTO.getEmail())
                 .flatMap(e -> template.exists(query(where("email").is(e)), User.class)
@@ -174,7 +162,7 @@ public class AccountChangeService {
 
         }));
     }
-
+    //TODO: SNOS
     public void sendInvitations(InvitationsDTO invitations, User user) {
         Flux.fromIterable(invitations.getEmails())
                 .flatMap(email -> template.exists(query(where("email").is(email)), User.class)
@@ -221,7 +209,7 @@ public class AccountChangeService {
                 .publishOn(Schedulers.boundedElastic())
                 .subscribe();
     }
-
+    //TODO: SNOS
     public Mono<Void> sendEmailToChangeEmail(ChangeEmailDataDTO changeEmailDataDTO, String email){
         return Mono.just(mapper.map(changeEmailDataDTO, ChangeEmailData.class))
             .flatMap(emailChange ->
@@ -261,7 +249,7 @@ public class AccountChangeService {
                     );
             }));
     }
-
+    //TODO: SNOS
     public Mono<String> sendEmailToChangePassword(ChangePasswordDataDTO changePasswordDataDTO) {
         return Mono.just(mapper.map(changePasswordDataDTO, ChangePasswordData.class))
                 .flatMap(passwordChange -> template.exists(query(where("email").is(changePasswordDataDTO.getEmail())), User.class)
@@ -296,25 +284,12 @@ public class AccountChangeService {
                         })
                 );
     }
-
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
-
+    //TODO: SNOS
     public Mono<Void> deleteInvitationByUrl(String url){
         return template.delete(query(where("url").is(url)), Invitation.class).then();
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
-
+    //TODO: SNOS
     public Mono<Void> changePasswordByUser(ChangeRequest request){
         return template.exists(query(where("id").is(request.getKey())), ChangePasswordData.class)
                 .flatMap(exists -> {
@@ -345,7 +320,7 @@ public class AccountChangeService {
                 })
                 ;
     }
-
+    //TODO: SNOS
     public Mono<Void> changeEmailByUser(ChangeRequest request){
         return template.exists(query(where("id").is(request.getKey())), ChangeEmailData.class)
                 .flatMap(exists -> {
@@ -376,7 +351,7 @@ public class AccountChangeService {
                             );
                 });
     }
-
+    //TODO: SNOS
     public Mono<UserDTO> changeUserInfo(UserDTO userDTO){
         return template.update(query(where("id").is(userDTO.getId())),
                 update("email", userDTO.getEmail())

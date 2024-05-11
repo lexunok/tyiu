@@ -8,10 +8,14 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 public interface EmailChangeDataRepository extends JpaRepository<EmailChangeData, String> {
+
     @Transactional
     void deleteByOldEmail(String oldEmail);
+
     Boolean existsByNewEmail(String newEmail);
+
     Optional<EmailChangeData> findByOldEmail(String oldEmail);
+
     @Transactional
     void deleteByDateExpiredLessThan(LocalDateTime dateExpired);
 }
