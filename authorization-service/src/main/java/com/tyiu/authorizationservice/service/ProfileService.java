@@ -3,6 +3,7 @@ package com.tyiu.authorizationservice.service;
 import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.ProfileUpdateRequest;
 import com.tyiu.authorizationservice.repository.UserRepository;
+import com.tyiu.client.exceptions.MediaException;
 import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
@@ -67,7 +68,7 @@ public class ProfileService {
         Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
 
         if (!isValidImageFile(file) || file.getSize() > MAX_FILE_SIZE_BYTES) {
-            throw new ServerProcessException("Недопустимый тип или размер файла");
+            throw new MediaException("Недопустимый тип или размер файла");
         }
 
         try {

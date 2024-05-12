@@ -1,9 +1,6 @@
 package com.tyiu.authorizationservice.config;
 
-import com.tyiu.client.exceptions.AccessException;
-import com.tyiu.client.exceptions.ExistException;
-import com.tyiu.client.exceptions.NotFoundException;
-import com.tyiu.client.exceptions.ServerProcessException;
+import com.tyiu.client.exceptions.*;
 import com.tyiu.client.models.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -36,10 +33,10 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse(HttpStatus.FORBIDDEN.value(),ex.getMessage()));
     }
     @ExceptionHandler
-    public ResponseEntity<ErrorResponse> serverProcessException(ServerProcessException ex) {
+    public ResponseEntity<ErrorResponse> mediaException(MediaException ex) {
         log.error(ex.getMessage(), ex);
         return ResponseEntity
-                .status(HttpStatus.FORBIDDEN.value())
-                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),ex.getMessage()));
+                .status(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value())
+                .body(new ErrorResponse(HttpStatus.UNSUPPORTED_MEDIA_TYPE.value(),ex.getMessage()));
     }
 }
