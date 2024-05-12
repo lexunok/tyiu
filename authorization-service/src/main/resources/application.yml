@@ -3,6 +3,8 @@ server:
     admin:
         username: admin@admin.com
         password: password
+file:
+    path: "./src/main/resources/files/"
 spring:
     rabbitmq:
         addresses: localhost:5672

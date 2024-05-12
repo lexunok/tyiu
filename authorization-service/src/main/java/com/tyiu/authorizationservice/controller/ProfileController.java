@@ -4,12 +4,18 @@ package com.tyiu.authorizationservice.controller;
 import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.ProfileUpdateRequest;
 import com.tyiu.authorizationservice.service.ProfileService;
+import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
+import jakarta.servlet.http.Part;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Base64;
 import java.util.List;
 
 @RestController
@@ -32,6 +38,30 @@ public class ProfileController {
     @GetMapping("/users/all/email")
     public List<String> getAllUserEmails(){
         return profileService.getAllUserEmails();
+    }
+
+    //TODO: нужно проверить
+    @GetMapping("/avatar/get/{userId}")
+    public ResponseEntity<String> getAvatar(@PathVariable String userId) {
+        try {
+            return ResponseEntity
+                    .ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(Base64.getEncoder().encodeToString(profileService.getAvatar(userId).getContentAsByteArray()));
+        }
+        catch (Exception e) {
+            throw new ServerProcessException("Ошибка при получении аватара");
+        }
+    }
+
+    //TODO: нужно проверить
+    @PostMapping("/avatar/upload")
+    public ResponseEntity<FileSystemResource> uploadAvatar(@AuthenticationPrincipal User user,
+                                                           @RequestPart("file") Part file) {
+        return ResponseEntity
+                .ok()
+                .contentType(MediaType.IMAGE_JPEG)
+                .body(profileService.uploadAvatar(user.getId(),file));
     }
 
     @PutMapping("/{id}")
