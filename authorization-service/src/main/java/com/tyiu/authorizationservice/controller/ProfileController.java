@@ -39,7 +39,6 @@ public class ProfileController {
         return profileService.getAllUserEmails();
     }
 
-    //TODO: нужно проверить
     @GetMapping("/avatar/get/{userId}")
     public ResponseEntity<String> getAvatar(@PathVariable String userId) {
         try {
@@ -53,7 +52,6 @@ public class ProfileController {
         }
     }
 
-    //TODO: нужно проверить
     @PostMapping("/avatar/upload")
     public ResponseEntity<FileSystemResource> uploadAvatar(@AuthenticationPrincipal User user,
                                                            @RequestPart("file") Part file) {
