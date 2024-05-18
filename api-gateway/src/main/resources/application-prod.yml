@@ -5,7 +5,6 @@ spring:
     gateway:
       default-filters:
         - TokenRelay=
-        - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
           uri: http://ideas-service:8082
@@ -31,7 +30,7 @@ spring:
     oauth2:
       client:
         registration:
-          gateway:
+          hits:
             provider: spring
             client-id: hits
             client-secret: ${SERVICE_PASSWORD}
@@ -41,5 +40,5 @@ spring:
         provider:
           spring:
             authorization-uri: ${AUTH_URL}/oauth2/authorize
-            token-uri: ${AUTH_URL_TOKEN}/oauth2/token
-            jwk-set-uri: ${AUTH_URL_TOKEN}/oauth2/jwks
+            token-uri: ${AUTH_URL}/oauth2/token
+            jwk-set-uri: ${AUTH_URL}/oauth2/jwks

@@ -12,7 +12,6 @@ import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Base64;
@@ -25,9 +24,9 @@ public class ProfileController {
 
     private final ProfileService profileService;
 
-    @GetMapping("/")
-    public Jwt getJwt(@AuthenticationPrincipal Jwt jwt){
-        return jwt;
+    @GetMapping
+    public User getJwt(@AuthenticationPrincipal User user){
+        return user;
     }
 
     @GetMapping("/users/all")

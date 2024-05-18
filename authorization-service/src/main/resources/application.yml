@@ -33,6 +33,6 @@ rabbitmq:
         internal-invitation: internal.invitation.routing-key
 oauth:
     secret: secret
-    redirect: https://localhost/login/oauth2/code/gateway
+    redirect: http://localhost/login/oauth2/code/hits
     issuer: http://localhost
 

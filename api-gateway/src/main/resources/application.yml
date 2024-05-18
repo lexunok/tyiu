@@ -5,7 +5,6 @@ spring:
     gateway:
       default-filters:
         - TokenRelay=
-        - RemoveRequestHeader=Cookie
       routes:
         - id: ideas-service
           uri: http://localhost:8082
@@ -26,12 +25,12 @@ spring:
         - id: authorization-service
           uri: http://localhost:7777
           predicates:
-            - Path=/auth/**, /oauth2/**, /api/v1/authorization-service/**
+            - Path=/api/v1/authorization-service/**, /auth/**, /oauth2/**
   security:
     oauth2:
       client:
         registration:
-          gateway:
+          hits:
             provider: spring
             client-id: hits
             client-secret: secret
