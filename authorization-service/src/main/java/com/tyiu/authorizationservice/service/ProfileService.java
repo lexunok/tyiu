@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
 import java.io.InputStream;
@@ -33,11 +34,6 @@ public class ProfileService {
     @Value("${file.path}")
     String path;
 
-    private boolean isValidImageFile(Part file) {
-        String contentType = file.getContentType();
-        return "image/jpeg".equals(contentType) || "image/png".equals(contentType);
-    }
-
     public List<UserDTO> getAllUsers(){
         return userRepository.findByIsDeletedFalse().stream().map(u ->
                 UserDTO.builder()
@@ -56,26 +52,25 @@ public class ProfileService {
     }
 
     public Resource getAvatar(String userId){
-        try {
-            return new FileSystemResource(Paths.get(path, userId + "_avatar.jpg"));
-        } catch (Exception e) {
+        Path avatarPath = Paths.get(path, userId + "_avatar.jpg");
+        if (!Files.exists(avatarPath)){
             throw new NotFoundException("Аватар не найден");
         }
+        return new FileSystemResource(avatarPath);
     }
 
     public FileSystemResource uploadAvatar(String userId, Part file) {
         Path basePath = Paths.get(path);
         Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
 
-        if (!isValidImageFile(file) || file.getSize() > MAX_FILE_SIZE_BYTES) {
+        if (!(MediaType.IMAGE_JPEG_VALUE.equals(file.getContentType()) || MediaType.IMAGE_PNG_VALUE.equals(file.getContentType()))
+                || file.getSize() > MAX_FILE_SIZE_BYTES) {
             throw new MediaException("Недопустимый тип или размер файла");
         }
 
-        try {
+        try (InputStream fileStream = file.getInputStream()) {
             Files.createDirectories(basePath);
-            InputStream fileStream = file.getInputStream();
             Files.copy(fileStream, avatarPath, StandardCopyOption.REPLACE_EXISTING);
-            fileStream.close();
             return new FileSystemResource(avatarPath);
         } catch (Exception e) {
             throw new ServerProcessException("Ошибка загрузки аватара");
