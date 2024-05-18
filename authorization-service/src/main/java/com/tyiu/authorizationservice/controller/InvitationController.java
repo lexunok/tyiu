@@ -5,6 +5,7 @@ import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.ManyInvitationsRequest;
 import com.tyiu.authorizationservice.service.InvitationService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,16 +16,19 @@ public class InvitationController {
 
     private final InvitationService invitationService;
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/send/email")
     public void sendInvitationToEmail(@RequestBody InvitationRequest invitation, @AuthenticationPrincipal User user) {
         invitationService.sendInvitationToEmail(invitation, user);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/send/many")
     public void sendManyInvitations(@RequestBody ManyInvitationsRequest request, @AuthenticationPrincipal User user) {
         invitationService.sendManyInvitations(request, user);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/delete/{id}")
     public void deleteInvitation(@PathVariable String id) {
         invitationService.deleteInvitation(id);

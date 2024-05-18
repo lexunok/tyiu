@@ -47,10 +47,6 @@ public class ProfileService {
                 .toList();
     }
 
-    public List<String> getAllUserEmails(){
-        return userRepository.findAllEmails();
-    }
-
     public Resource getAvatar(String userId){
         Path avatarPath = Paths.get(path, userId + "_avatar.jpg");
         if (!Files.exists(avatarPath)){

@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -32,11 +33,6 @@ public class ProfileController {
     @GetMapping("/users/all")
     public List<UserDTO> getAllUsers() {
         return profileService.getAllUsers();
-    }
-
-    @GetMapping("/users/all/email")
-    public List<String> getAllUserEmails(){
-        return profileService.getAllUserEmails();
     }
 
     @GetMapping("/avatar/get/{userId}")
@@ -66,11 +62,13 @@ public class ProfileController {
         profileService.updateProfile(user.getId(), request);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PutMapping("/user/{id}")
     public UserDTO updateUserByAdmin(@RequestBody UserDTO user) {
         return profileService.updateUserByAdmin(user);
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @DeleteMapping("/user/{id}")
     public void deleteUser(@PathVariable String id) {
         profileService.deleteUser(id);

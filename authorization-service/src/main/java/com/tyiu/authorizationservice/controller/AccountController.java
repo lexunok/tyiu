@@ -4,6 +4,7 @@ import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.service.AccountService;
 import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -23,6 +24,7 @@ public class AccountController {
         service.changeEmailByUser(code, user.getEmail());
     }
 
+    @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/register")
     public void register(@RequestBody UserDTO userDTO){
         service.registerForAdmin(userDTO);

@@ -36,7 +36,4 @@ public interface UserRepository extends JpaRepository<User,String> {
     void updateProfileById(String firstName, String lastName, String telephone, String studyGroup, String id);
 
     List<User> findByIsDeletedFalse();
-
-    @Query("select u.email from User u")
-    List<String> findAllEmails();
 }
