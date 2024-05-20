@@ -1,6 +1,6 @@
 package com.tyiu.ideas.controller;
 
-import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
@@ -21,12 +21,6 @@ import reactor.core.publisher.Mono;
 public class IdeaMarketController {
     private final IdeaMarketService ideaMarketService;
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
     @GetMapping("/all")
     public Flux<IdeaMarketDTO> getAllMarketIdeas(@AuthenticationPrincipal User user) {
@@ -72,12 +66,6 @@ public class IdeaMarketController {
         return ideaMarketService.checkOwnerAccessInMarket(marketId, user.getId());
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     @PostMapping("/send/{marketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
@@ -102,12 +90,6 @@ public class IdeaMarketController {
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось создать объявление")));
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
     @DeleteMapping("/delete/idea/{ideaMarketId}")
     @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
@@ -132,12 +114,6 @@ public class IdeaMarketController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     @PutMapping("/favorite/{ideaMarketId}")
     public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal User user, @PathVariable String ideaMarketId) {

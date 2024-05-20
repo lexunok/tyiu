@@ -1,6 +1,6 @@
 package com.tyiu.ideas.controller;
 
-import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.ideas.model.dto.RatingDTO;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.responses.InfoResponse;

@@ -1,7 +1,6 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.dto.UserDTO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactor.awaitSingle
@@ -17,6 +16,7 @@ import java.time.LocalDateTime
 import java.util.Comparator.comparing
 import java.util.concurrent.ConcurrentHashMap
 
+import com.tyiu.client.models.UserDTO
 
 @Service
 class TaskMovementLogService(val template: R2dbcEntityTemplate)

@@ -1,17 +1,17 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.AccessException;
-import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.GroupDTO;
 import com.tyiu.ideas.model.dto.IdeaDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.entities.Idea;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.relations.Group2User;
 import com.tyiu.ideas.model.entities.relations.Idea2Checked;
 import com.tyiu.ideas.model.entities.relations.Idea2Skill;
-import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaSkillRequest;
 import com.tyiu.ideas.model.requests.StatusIdeaRequest;

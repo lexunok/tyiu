@@ -1,8 +1,8 @@
 package com.tyiu.ideas.controller;
 
-import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.CompanyDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;

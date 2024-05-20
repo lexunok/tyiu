@@ -1,11 +1,13 @@
 package com.tyiu.ideas.controller;
 
+import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.*;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.enums.*;
 import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.requests.*;
-import com.tyiu.ideas.config.exception.*;
 import com.tyiu.ideas.service.TeamService;
 import com.tyiu.ideas.model.responses.InfoResponse;
 
@@ -27,12 +29,6 @@ public class TeamController {
 
     private final TeamService teamService;
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
     @GetMapping("/{teamId}")
     public Mono<TeamDTO> getTeam(@PathVariable String teamId, @AuthenticationPrincipal User user) {
@@ -90,12 +86,6 @@ public class TeamController {
         return teamService.getAllProjectsForTeam(teamId);
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     @PostMapping("/add")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
@@ -122,12 +112,12 @@ public class TeamController {
         return teamService.sendTeamRequest(teamId, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
-
-    @PostMapping("/send-invites")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
-    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
-        return teamService.sendInvitesToUsers(users, user);
-    }
+//TODO
+//    @PostMapping("/send-invites")
+//    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+//    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
+//        return teamService.sendInvitesToUsers(users, user);
+//    }
 
     @PostMapping("/invite/{teamId}/{userId}")
     public Mono<TeamMemberDTO> inviteInTeam(@PathVariable String teamId, @PathVariable String userId) {
@@ -159,12 +149,6 @@ public class TeamController {
         return teamService.getUsersFullNames(requests);
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
     @DeleteMapping("/delete/{teamId}")
     @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
@@ -184,12 +168,6 @@ public class TeamController {
         return teamService.leaveFromTeam(teamId, user.getId());
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     @PutMapping("/market/{marketId}")
     @PreAuthorize("hasAnyAuthority('PROJECT_OFFICE', 'ADMIN')")

@@ -1,9 +1,9 @@
 package com.tyiu.ideas.model
 
-import com.tyiu.ideas.model.dto.UserDTO
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import java.time.LocalDate
+import com.tyiu.client.models.UserDTO
 
 @Table
 data class Task (

@@ -4,9 +4,7 @@ logging:
       springframework:
         r2dbc: DEBUG
 postgres:
-  url: postgresql://postgres:5432/hits
-file:
-  path: "/data/spring"
+  url: postgresql://db-ideas:5432/hits
 spring:
   r2dbc:
     pool:
@@ -30,17 +28,12 @@ spring:
       port: 7000
       transport: websocket
       mapping-path: /rs
-  mail:
-    host: smtp.tsogu.ru
-    port: 25
-    properties:
-      mail:
-        debug: true
-        smtp:
-          auth: false
-          starttls:
-            enable: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${AUTH_URL}
+          jwk-set-uri: ${AUTH_URL}/oauth2/jwks
 server:
-  port: 80
-jwt:
-  secret: ${JWT_SECRET}
+  port: 8082
+

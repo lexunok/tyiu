@@ -3,11 +3,10 @@ package com.tyiu.ideas.model.entities.mappers;
 import com.tyiu.ideas.model.dto.IdeaMarketDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.dto.TeamDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.SkillType;
 import io.r2dbc.spi.Row;
-
+import com.tyiu.client.models.UserDTO;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;

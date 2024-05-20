@@ -4,8 +4,6 @@ import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.Idea;
 import com.tyiu.ideas.model.enums.*;
 import com.tyiu.ideas.model.requests.IdeaSkillRequest;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

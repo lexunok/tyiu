@@ -3,6 +3,8 @@ server:
     admin:
         username: ideasmanager15@gmail.com
         password: ${SERVICE_PASSWORD}
+file:
+    path: "/data/auth"
 spring:
     rabbitmq:
         addresses: rabbitmq

@@ -3,7 +3,6 @@ package com.tyiu.ideas.service
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.ideas.model.dto.TeamDTO
-import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.Market
 import com.tyiu.ideas.model.entities.Team
 import com.tyiu.ideas.model.entities.relations.Team2Member
@@ -20,6 +19,7 @@ import org.springframework.stereotype.Service
 import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
+import com.tyiu.client.models.UserDTO
 
 @Service
 class ProjectService(val template: R2dbcEntityTemplate) {
@@ -109,12 +109,6 @@ class ProjectService(val template: R2dbcEntityTemplate) {
         }
     }
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
     fun getAllProjects(): Flow<ProjectDTO> {
         val query = """
@@ -353,12 +347,6 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             .all().thenMany(fromIterable(map.values)).asFlow()
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     suspend fun createProject(ideaMarketDTO: IdeaMarketDTO): ProjectDTO {
         val createdProject = template.insert(
@@ -410,12 +398,6 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             ).awaitSingle().toDTO()
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     suspend fun pauseProject(projectId: String) {
         template.update(query(where("id").`is`(projectId)),

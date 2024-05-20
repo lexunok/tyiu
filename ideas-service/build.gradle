@@ -2,15 +2,14 @@ plugins {
 	id 'org.jetbrains.kotlin.jvm'
 }
 kotlin {
-	jvmToolchain(17)
+	jvmToolchain(19)
 }
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-webflux'
 	implementation 'org.springframework.boot:spring-boot-starter-rsocket'
-	implementation 'org.springframework.boot:spring-boot-starter-mail'
 	implementation 'org.springframework.boot:spring-boot-starter-data-r2dbc'
-	implementation "org.springframework.boot:spring-boot-starter-security"
-	implementation "org.springframework.boot:spring-boot-starter-freemarker"
+	implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.modelmapper:modelmapper:3.1.1'
 	implementation 'com.github.ben-manes.caffeine:caffeine:3.1.5'
 	implementation 'org.flywaydb:flyway-core:9.21.0'
@@ -19,13 +18,10 @@ dependencies {
 	implementation "org.jetbrains.kotlinx:kotlinx-coroutines-reactor"
 	implementation "org.jetbrains.kotlin:kotlin-reflect"
 	implementation "io.projectreactor.kotlin:reactor-kotlin-extensions:1.0.2.RELEASE"
-
-	compileOnly 'io.jsonwebtoken:jjwt-api:0.11.5'
+	implementation project(path: ':client')
 
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'
-	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.11.5'
-	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.11.5'
 
 	testImplementation 'io.projectreactor:reactor-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

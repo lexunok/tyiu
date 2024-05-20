@@ -2,8 +2,7 @@ package com.tyiu.ideas.model.requests;
 
 import java.util.List;
 
-import com.tyiu.ideas.model.enums.Role;
-
+import com.tyiu.client.models.Role;
 import lombok.Builder;
 import lombok.Data;
 

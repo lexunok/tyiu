@@ -1,10 +1,11 @@
 package com.tyiu.ideas.model.entities.mappers;
 
-import com.tyiu.ideas.model.dto.UserDTO;
 import io.r2dbc.spi.Row;
 import org.springframework.stereotype.Component;
+import com.tyiu.client.models.UserDTO;
 
 import java.util.function.BiFunction;
+
 @Component
 public class UserMapper implements BiFunction<Row, Object, UserDTO> {
 

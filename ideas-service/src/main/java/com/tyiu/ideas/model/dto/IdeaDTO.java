@@ -1,5 +1,6 @@
 package com.tyiu.ideas.model.dto;
 
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.entities.Idea;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

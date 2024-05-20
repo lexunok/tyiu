@@ -1,8 +1,6 @@
 package com.tyiu.notificationservice.rabbitmq.telegram
 
-import com.tyiu.ideas.config.exception.CustomHttpException
 import com.tyiu.ideas.model.entities.User
-import com.tyiu.ideas.model.enums.Role
 import com.tyiu.notificationservice.model.Notification
 import com.tyiu.notificationservice.model.NotificationDTO
 import com.tyiu.notificationservice.model.NotificationType

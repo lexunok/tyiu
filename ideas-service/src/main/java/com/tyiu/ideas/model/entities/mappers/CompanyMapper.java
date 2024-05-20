@@ -1,7 +1,6 @@
 package com.tyiu.ideas.model.entities.mappers;
 
 import com.tyiu.ideas.model.dto.CompanyDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
 import io.r2dbc.spi.Row;
 import org.springframework.stereotype.Component;
 
@@ -9,7 +8,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.BiFunction;
-
+import com.tyiu.client.models.UserDTO;
 @Component
 public class CompanyMapper implements BiFunction<Row, Object, CompanyDTO> {
 

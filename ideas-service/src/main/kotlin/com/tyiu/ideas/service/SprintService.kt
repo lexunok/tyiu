@@ -1,7 +1,6 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.User
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
@@ -18,6 +17,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Comparator.comparingInt
 import java.util.concurrent.ConcurrentHashMap
+import com.tyiu.client.models.UserDTO
 
 @Service
 class SprintService (val template: R2dbcEntityTemplate)

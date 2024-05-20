@@ -1,6 +1,6 @@
 package com.tyiu.ideas.model.entities;
 
-import com.tyiu.ideas.model.enums.Role;
+import com.tyiu.client.models.Role;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.relational.core.mapping.Table;

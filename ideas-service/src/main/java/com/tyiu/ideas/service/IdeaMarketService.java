@@ -1,6 +1,8 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.AccessException;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.entities.mappers.IdeaMarketMapper;
@@ -8,7 +10,6 @@ import com.tyiu.ideas.model.entities.relations.Favorite2Idea;
 import com.tyiu.ideas.model.entities.relations.IdeaMarket2Refused;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.RequestStatus;
-import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
@@ -146,12 +147,6 @@ public class IdeaMarketService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
@@ -393,12 +388,6 @@ public class IdeaMarketService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList) {
         return ideaDTOList.flatMap(ideaDTO -> {
@@ -474,12 +463,6 @@ public class IdeaMarketService {
                 });
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
     public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
         return checkInitiator(ideaMarketId,user.getId())
@@ -507,12 +490,6 @@ public class IdeaMarketService {
                 }).then();
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();

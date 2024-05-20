@@ -1,7 +1,7 @@
 package com.tyiu.ideas.service
 
+import com.tyiu.client.models.UserDTO
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.dto.UserDTO
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.reactive.asFlow

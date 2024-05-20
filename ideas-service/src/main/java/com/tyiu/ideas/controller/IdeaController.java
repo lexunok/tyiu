@@ -1,6 +1,6 @@
 package com.tyiu.ideas.controller;
 
-import com.tyiu.ideas.config.exception.AccessException;
+import com.tyiu.client.exceptions.AccessException;
 import com.tyiu.ideas.model.dto.IdeaDTO;
 
 import com.tyiu.ideas.model.entities.Idea;

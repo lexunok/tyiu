@@ -1,7 +1,7 @@
 package com.tyiu.ideas.model.entities.mappers;
 
+import com.tyiu.client.models.Role;
 import com.tyiu.ideas.model.dto.GroupDTO;
-import com.tyiu.ideas.model.enums.Role;
 import io.r2dbc.spi.Row;
 import org.springframework.stereotype.Component;
 

@@ -1,10 +1,6 @@
 package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.CompanyDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
 
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

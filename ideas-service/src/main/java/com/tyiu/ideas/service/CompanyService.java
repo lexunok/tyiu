@@ -1,5 +1,6 @@
 package com.tyiu.ideas.service;
 
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.CompanyDTO;
 import com.tyiu.ideas.model.entities.mappers.CompanyMapper;
 import com.tyiu.ideas.model.entities.relations.Company2User;
@@ -10,7 +11,6 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
-import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.entities.Company;
 
 import static org.springframework.data.relational.core.query.Criteria.where;

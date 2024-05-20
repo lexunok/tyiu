@@ -1,7 +1,9 @@
 package com.tyiu.ideas.model.dto;
 
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import lombok.*;
-import com.tyiu.ideas.model.enums.Role;
+
 import java.util.List;
 
 

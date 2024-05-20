@@ -1,7 +1,7 @@
 package com.tyiu.ideas.service;
 
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.GroupDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.entities.mappers.GroupMapper;
 import com.tyiu.ideas.model.entities.mappers.UserMapper;
 import com.tyiu.ideas.model.entities.relations.Group2User;

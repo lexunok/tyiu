@@ -1,9 +1,5 @@
 package com.tyiu.ideas.controller;
 
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.requests.LoginRequest;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
 import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 
