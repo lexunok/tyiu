@@ -34,7 +34,7 @@ dependencies {
 	implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
 }
 tasks.named("bootBuildImage") {
-	imageName.set("lexunok/ideas-service")
+	imageName.set("lexunok/ideas-service:working")
 	publish = true
 	docker {
 		publishRegistry {
