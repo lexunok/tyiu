@@ -42,7 +42,7 @@ public class ProfileService {
                         .email(u.getEmail())
                         .firstName(u.getFirstName())
                         .lastName(u.getLastName())
-                        .createdAt(u.getCreatedAt())
+                        .createdAt(u.getCreatedAt().toString())
                         .build())
                 .toList();
     }

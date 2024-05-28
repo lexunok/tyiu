@@ -28,13 +28,13 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/market/{marketId}/all")
-    @PreAuthorize("hasAuthority('MEMBER')|| hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'PROJECT_OFFICE', 'TEAM_OWNER', 'ADMIN')")
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal User user, @PathVariable String marketId) {
         return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
     }
 
     @GetMapping("/market/{marketId}/initiator")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'ADMIN')")
     public Flux<IdeaMarketDTO> getAllInitiatorMarketIdeas(@AuthenticationPrincipal User user, @PathVariable String marketId) {
         return ideaMarketService.getAllInitiatorMarketIdeas(user.getId(), marketId);
     }
@@ -51,7 +51,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/requests/{ideaMarketId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamMarketRequestDTO> getAllTeamMarketIdeaRequests(@PathVariable String ideaMarketId) {
         return ideaMarketService.getAllTeamsRequests(ideaMarketId);
     }
@@ -68,14 +68,14 @@ public class IdeaMarketController {
 
 
     @PostMapping("/send/{marketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE', 'ADMIN')")
     public Flux<IdeaMarketDTO> createMarketIdea(@PathVariable String marketId, @RequestBody Flux<IdeaDTO> ideaDTOList) {
         return ideaMarketService.sendIdeaOnMarket(marketId, ideaDTOList)
                 .switchIfEmpty(Mono.error(new NotFoundException("Не удалось отправить идею на биржу")));
     }
 
     @PostMapping("/declare")
-    @PreAuthorize("hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO,
                                                               @AuthenticationPrincipal User user) {
         return ideaMarketService.declareTeam(teamMarketRequestDTO, user.getId())
@@ -83,7 +83,7 @@ public class IdeaMarketController {
     }
 
     @PostMapping("/add/advertisement")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'ADMIN')")
     public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(@RequestBody IdeaMarketAdvertisementDTO ideaMarketAdvertisementDTO,
                                                              @AuthenticationPrincipal User user) {
         return ideaMarketService.addAdvertisement(ideaMarketAdvertisementDTO, user)
@@ -92,7 +92,7 @@ public class IdeaMarketController {
 
 
     @DeleteMapping("/delete/idea/{ideaMarketId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE', 'ADMIN')")
     public Mono<InfoResponse> deleteMarketIdea(@PathVariable String ideaMarketId, @AuthenticationPrincipal User user) {
         return ideaMarketService.deleteMarketIdea(ideaMarketId, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
@@ -107,7 +107,7 @@ public class IdeaMarketController {
     }
 
     @DeleteMapping("/delete/advertisement/{ideaMarketAdvertisementId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'ADMIN')")
     public Mono<InfoResponse> deleteIdeaMarketAdvertisement(@PathVariable String ideaMarketAdvertisementId, @AuthenticationPrincipal User user) {
         return ideaMarketService.deleteIdeaMarketAdvertisement(ideaMarketAdvertisementId, user)
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"))
@@ -123,20 +123,20 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/idea-status/{ideaMarketId}/{status}")
-    @PreAuthorize("hasAnyAuthority('PROJECT_OFFICE','ADMIN')")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE','ADMIN')")
     public Mono<Void> changeIdeaMarketStatus(@PathVariable String ideaMarketId, @PathVariable IdeaMarketStatusType status) {
         return ideaMarketService.changeIdeaMarketStatus(ideaMarketId, status);
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('TEAM_OWNER') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'TEAM_OWNER', 'ADMIN')")
     public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status,
                                           @AuthenticationPrincipal User user) {
         return ideaMarketService.changeRequestStatus(teamMarketId, status, user);
     }
 
     @PutMapping("/accept/request/{ideaMarketId}/{teamId}")
-    @PreAuthorize("hasAuthority('INITIATOR') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'ADMIN')")
     public Mono<TeamDTO> setAcceptedTeam(@PathVariable String ideaMarketId, @PathVariable String teamId,
                                          @AuthenticationPrincipal User user) {
         return ideaMarketService.setAcceptedTeam(ideaMarketId, teamId, user);

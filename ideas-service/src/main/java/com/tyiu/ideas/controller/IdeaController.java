@@ -25,13 +25,13 @@ public class IdeaController {
     private final IdeaService ideaService;
 
     @GetMapping("/{ideaId}")
-    @PreAuthorize("hasAuthority('MEMBER') || hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'PROJECT_OFFICE', 'EXPERT', 'ADMIN')")
     public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId, user.getId());
     }
 
     @GetMapping("/initiator/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR')")
+    @PreAuthorize("hasRole('INITIATOR')")
     public Mono<IdeaDTO> getIdeaForInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.getIdea(ideaId, user.getId())
                 .filter(i -> i.getInitiator().getId().equals(user.getId()))
@@ -40,19 +40,19 @@ public class IdeaController {
     }
 
     @GetMapping("/all")
-    @PreAuthorize("hasAuthority('MEMBER')|| hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'PROJECT_OFFICE', 'EXPERT', 'ADMIN')")
     public Flux<IdeaDTO> showListIdea(@AuthenticationPrincipal User user){
         return ideaService.getListIdea(user.getId());
     }
 
     @GetMapping("/all/on-confirmation")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('EXPERT', 'ADMIN')")
     public Flux<IdeaDTO> showListIdeaOnConfirmation(@AuthenticationPrincipal User user){
         return ideaService.getListIdeaOnConfirmation(user.getId());
     }
 
     @GetMapping("/initiator/all")
-    @PreAuthorize("hasAuthority('INITIATOR')")
+    @PreAuthorize("hasRole('INITIATOR')")
     public Flux<IdeaDTO> showListIdeaByInitiator(@AuthenticationPrincipal User user){
         return ideaService.getListIdeaByInitiator(user);
     }
@@ -78,7 +78,7 @@ public class IdeaController {
 
 
     @PutMapping("/initiator/send/{ideaId}")
-    @PreAuthorize("hasAuthority('INITIATOR')")
+    @PreAuthorize("hasRole('INITIATOR')")
     public Mono<InfoResponse> updateStatusByInitiator(@PathVariable String ideaId, @AuthenticationPrincipal User user) {
         return ideaService.updateStatusByInitiator(ideaId, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешная отправка идеи"))
@@ -86,7 +86,7 @@ public class IdeaController {
     }
 
     @PutMapping("/status/update/{ideaId}")
-    @PreAuthorize("hasAuthority('PROJECT_OFFICE') || hasAuthority('EXPERT') || hasAuthority('ADMIN') ")
+    @PreAuthorize("hasAnyRole('PROJECT_OFFICE', 'EXPERT', 'ADMIN')")
     public Mono<InfoResponse> updateStatusIdea(@PathVariable String ideaId,
                                                               @RequestBody StatusIdeaRequest status){
         return ideaService.updateStatusIdea(ideaId, status)
@@ -95,7 +95,7 @@ public class IdeaController {
     }
 
     @PutMapping("/admin/update/{ideaId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<InfoResponse> updateIdeaByAdmin(@PathVariable String ideaId,
                                                 @RequestBody IdeaDTO updatedIdea) {
         return ideaService.updateIdeaByAdmin(ideaId, updatedIdea)

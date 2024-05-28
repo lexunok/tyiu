@@ -41,7 +41,7 @@ public class SkillController {
     }
 
     @PostMapping("/add")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill, Principal principal) {
         return skillService.addSkill(skill, principal.getName())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not add!")));
@@ -54,7 +54,7 @@ public class SkillController {
     }
 
     @PutMapping("/update/{skillId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable String skillId, Principal principal) {
         return skillService.updateSkill(skillDTO, skillId, principal.getName())
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
@@ -62,7 +62,7 @@ public class SkillController {
     }
 
     @PutMapping("/confirm/{skillId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<InfoResponse> confirmSkill(@PathVariable String skillId, Principal principal) {
         return skillService.confirmSkill(skillId, principal.getName())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming"))
@@ -70,7 +70,7 @@ public class SkillController {
     }
     
     @DeleteMapping("/delete/{skillId}")
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     public Mono<InfoResponse> deleteSkill(@PathVariable String skillId) {
         return skillService.deleteSkill(skillId)
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success deleting"))

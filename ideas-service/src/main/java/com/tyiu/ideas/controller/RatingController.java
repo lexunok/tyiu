@@ -22,20 +22,20 @@ public class RatingController {
     private final RatingService ratingService;
 
     @GetMapping("/all/{ideaId}")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('EXPERT', 'TEACHER', 'PROJECT_OFFICE', 'ADMIN')")
     public Flux<RatingDTO> getAllIdeasRatings(@PathVariable String ideaId){
         return ratingService.getRatings(ideaId);
     }
 
     @GetMapping("/{ideaId}")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('TEACHER') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('EXPERT', 'TEACHER', 'PROJECT_OFFICE', 'ADMIN')")
     public Mono<RatingDTO> getExpertRatingForIdea(@PathVariable String ideaId, @AuthenticationPrincipal User user){
         return ratingService.getExpertRating(ideaId, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Рейтинг не найден")));
     }
 
     @PutMapping("/save")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('EXPERT', 'PROJECT_OFFICE', 'ADMIN')")
     public Mono<InfoResponse> saveRating(@RequestBody RatingDTO ratingDTO, @AuthenticationPrincipal User user) {
         return ratingService.saveRating(ratingDTO, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное сохранение рейтинга"))
@@ -43,7 +43,7 @@ public class RatingController {
     }
 
     @PutMapping("/confirm")
-    @PreAuthorize("hasAuthority('EXPERT') || hasAuthority('PROJECT_OFFICE') || hasAuthority('ADMIN')")
+    @PreAuthorize("hasAnyRole('EXPERT', 'PROJECT_OFFICE', 'ADMIN')")
     public Mono<InfoResponse> confirmRating(@RequestBody RatingDTO ratingDTO, @AuthenticationPrincipal User user) {
         return ratingService.confirmRating(ratingDTO, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Успешное утверждение рейтинга"))

@@ -7,6 +7,7 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.repository.UserRepository;
+import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -169,15 +170,21 @@ public class SecurityConfig {
             if (OAuth2TokenType.ACCESS_TOKEN.equals(context.getTokenType())) {
                 String email = context.getPrincipal().getName();
                 User user = (User) template.opsForHash().get("user", email);
-                String userId;
                 if (user == null) {
                     user = repository.findByEmail(email.toLowerCase())
                             .orElseThrow(() -> new UsernameNotFoundException("Пользователь не найден!"));
-                    userId = user.getId();
                     template.opsForHash().put("user", email, user);
                 }
-                else userId = user.getId();
-                context.getClaims().id(userId);
+                UserDTO userDTO = UserDTO.builder()
+                        .id(user.getId())
+                        .firstName(user.getFirstName())
+                        .lastName(user.getLastName())
+                        .email(user.getEmail())
+                        .studyGroup(user.getStudyGroup())
+                        .telephone(user.getTelephone())
+                        .build();
+                context.getClaims().id(user.getId());
+                context.getClaims().claim("user", userDTO);
                 context.getClaims().claim("roles", context.getPrincipal().getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList());
