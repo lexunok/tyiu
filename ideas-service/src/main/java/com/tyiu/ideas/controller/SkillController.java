@@ -8,12 +8,13 @@ import com.tyiu.ideas.service.SkillService;
 
 import lombok.RequiredArgsConstructor;
 
-import java.security.Principal;
 import java.util.Collection;
 import java.util.Map;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import reactor.core.publisher.Flux;
@@ -31,8 +32,8 @@ public class SkillController {
     }
 
     @GetMapping("/all-confirmed-or-creator")
-    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(Principal principal) {
-        return skillService.getAllConfirmedOrCreatorSkills(principal.getName());
+    public Mono<Map<SkillType, Collection<SkillDTO>>> getAllConfirmedSkills(@AuthenticationPrincipal Jwt user) {
+        return skillService.getAllConfirmedOrCreatorSkills(user.getId());
     }
 
     @GetMapping("/{skillType}")
@@ -42,29 +43,29 @@ public class SkillController {
 
     @PostMapping("/add")
     @PreAuthorize("hasRole('ADMIN')")
-    public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill, Principal principal) {
-        return skillService.addSkill(skill, principal.getName())
+    public Mono<SkillDTO> addSkill(@RequestBody SkillDTO skill, @AuthenticationPrincipal Jwt user) {
+        return skillService.addSkill(skill, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not add!")));
     }
 
     @PostMapping("/add/no-confirmed")
-    public Mono<SkillDTO> addNoConfirmedSkill(@RequestBody SkillDTO skill, Principal principal) {
-        return skillService.addNoConfirmedSkill(skill, principal.getName())
+    public Mono<SkillDTO> addNoConfirmedSkill(@RequestBody SkillDTO skill, @AuthenticationPrincipal Jwt user) {
+        return skillService.addNoConfirmedSkill(skill, user.getId())
                 .switchIfEmpty(Mono.error(new NotFoundException("Not add!")));
     }
 
     @PutMapping("/update/{skillId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable String skillId, Principal principal) {
-        return skillService.updateSkill(skillDTO, skillId, principal.getName())
+    public Mono<InfoResponse> updateSkill(@RequestBody SkillDTO skillDTO, @PathVariable String skillId, @AuthenticationPrincipal Jwt user) {
+        return skillService.updateSkill(skillDTO, skillId, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK, "Success updating"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Update is not success"));
     }
 
     @PutMapping("/confirm/{skillId}")
     @PreAuthorize("hasRole('ADMIN')")
-    public Mono<InfoResponse> confirmSkill(@PathVariable String skillId, Principal principal) {
-        return skillService.confirmSkill(skillId, principal.getName())
+    public Mono<InfoResponse> confirmSkill(@PathVariable String skillId, @AuthenticationPrincipal Jwt user) {
+        return skillService.confirmSkill(skillId, user.getId())
                 .thenReturn(new InfoResponse(HttpStatus.OK,"Success confirming"))
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Confirm is not success"));
     }

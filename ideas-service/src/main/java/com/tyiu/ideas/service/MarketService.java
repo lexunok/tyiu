@@ -2,10 +2,10 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.client.exceptions.AccessException;
 import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.MarketDTO;
 import com.tyiu.ideas.model.entities.IdeaMarket;
 import com.tyiu.ideas.model.entities.Market;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.MarketStatus;
 import lombok.RequiredArgsConstructor;
@@ -90,7 +90,7 @@ public class MarketService {
                 });
     }
 
-    public Mono<MarketDTO> updateStatus(String id, MarketStatus status, User user){
+    public Mono<MarketDTO> updateStatus(String id, MarketStatus status, UserDTO user){
         return template.selectOne(query(where("id").is(id)), Market.class)
                 .flatMap(m -> {
                     m.setStatus(status);

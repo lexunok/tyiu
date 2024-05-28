@@ -464,7 +464,7 @@ public class TeamService {
 //        });
 //    }
 
-    public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
+    public Mono<TeamRequest> sendTeamRequest(String teamId, UserDTO user) {
         return template.insert(TeamRequest.builder()
                 .teamId(teamId)
                 .userId(user.getId())
@@ -562,7 +562,7 @@ public class TeamService {
     }
 
 
-    public Mono<Void> deleteTeam(String teamId, User user) {
+    public Mono<Void> deleteTeam(String teamId, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -600,7 +600,7 @@ public class TeamService {
         ).then();
     }
 
-    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, User user) {
+    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
@@ -615,7 +615,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
+    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
@@ -626,7 +626,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> changeTeamLeader(String teamId, String userId, User user) {
+    public Mono<Void> changeTeamLeader(String teamId, String userId, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
@@ -665,7 +665,7 @@ public class TeamService {
                 }).then();
     }
 
-    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, User user) {
+    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, UserDTO user) {
         return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
                 .flatMap(invitation -> {
                     invitation.setStatus(newStatus);
@@ -706,7 +706,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, User user) {
+    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, UserDTO user) {
         return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
                     request.setStatus(newStatus);

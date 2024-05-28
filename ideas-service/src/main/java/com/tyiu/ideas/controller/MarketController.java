@@ -1,8 +1,9 @@
 package com.tyiu.ideas.controller;
 
+import com.nimbusds.jose.shaded.gson.Gson;
 import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.MarketDTO;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.MarketStatus;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import com.tyiu.ideas.service.MarketService;
@@ -10,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -68,7 +70,9 @@ public class MarketController {
     @PreAuthorize("hasAnyRole('PROJECT_OFFICE', 'ADMIN')")
     public Mono<MarketDTO> updateStatus(@PathVariable String marketId,
                                         @PathVariable MarketStatus status,
-                                        @AuthenticationPrincipal User user){
+                                        @AuthenticationPrincipal Jwt jwt){
+        Gson gson = new Gson();
+        UserDTO user = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
         return marketService.updateStatus(marketId, status, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка")));
     }

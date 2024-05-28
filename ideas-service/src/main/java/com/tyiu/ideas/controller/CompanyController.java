@@ -1,14 +1,13 @@
 package com.tyiu.ideas.controller;
 
-import com.nimbusds.jose.shaded.gson.Gson;
 import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.CompanyDTO;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import com.tyiu.ideas.service.CompanyService;
 import lombok.RequiredArgsConstructor;
@@ -22,8 +21,7 @@ import reactor.core.publisher.Mono;
 public class CompanyController {
 
     private final CompanyService companyService;
-//    Gson gson = new Gson();
-//    UserDTO user = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
+
     @GetMapping("/{companyId}")
     @PreAuthorize("hasAnyRole('ADMIN', 'INITIATOR')")
     public Mono<CompanyDTO> getCompanyById(@PathVariable String companyId) {
@@ -33,7 +31,7 @@ public class CompanyController {
 
     @GetMapping("/owner")
     @PreAuthorize("hasAnyRole('ADMIN', 'INITIATOR')")
-    public Flux<CompanyDTO> getMemberListCompany(@AuthenticationPrincipal User user) {
+    public Flux<CompanyDTO> getMemberListCompany(@AuthenticationPrincipal Jwt user) {
         return companyService.getMembersListCompany(user.getId());
     }
 

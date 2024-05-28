@@ -435,7 +435,7 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, UserDTO user){
         advertisementDTO.setCreatedAt(LocalDateTime.now());
         advertisementDTO.setCheckedBy(List.of(user.getEmail()));
         return checkInitiator(advertisementDTO.getIdeaMarketId(), user.getId())
@@ -464,7 +464,7 @@ public class IdeaMarketService {
     }
 
 
-    public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
+    public Mono<Void> deleteMarketIdea(String ideaMarketId, UserDTO user){
         return checkInitiator(ideaMarketId,user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -479,7 +479,7 @@ public class IdeaMarketService {
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
     }
 
-    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, User user){
+    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, UserDTO user){
         return template.exists(query(where("id").is(ideaMarketAdvertisementId)
                         .and("sender_id").is(user.getId())), IdeaMarketAdvertisement.class)
                 .flatMap(isExists -> {
@@ -501,7 +501,7 @@ public class IdeaMarketService {
                 IdeaMarket.class).then();
     }
 
-    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user){
+    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, UserDTO user){
         return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
                 .flatMap(r -> {
                     String userId = user.getId();
@@ -556,7 +556,7 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user){
+    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, UserDTO user){
         return template.exists(query(where("team_id").is(teamId)), IdeaMarket.class)
                 .flatMap(isExistsTeam -> {
                     if (Boolean.FALSE.equals(isExistsTeam)) {

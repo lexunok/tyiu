@@ -2,10 +2,10 @@ package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.service.ProfileService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -19,12 +19,12 @@ public class ProfileController {
 
     @GetMapping("/{userId}")
     public Mono<ProfileDTO> getUserProfile(@PathVariable String userId,
-                                           @AuthenticationPrincipal User user) {
+                                           @AuthenticationPrincipal Jwt user) {
         return profileService.getUserProfile(userId, user.getId());
     }
 
     @PostMapping("/skills/save")
-    public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal User user, @RequestBody Flux<SkillDTO> skills) {
+    public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal Jwt user, @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(user.getId(), skills);
     }
 }
