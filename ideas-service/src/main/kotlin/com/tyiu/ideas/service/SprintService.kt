@@ -1,7 +1,6 @@
 package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.dto.UserDTO
 import com.tyiu.ideas.model.entities.User
 import io.r2dbc.spi.Row
 import kotlinx.coroutines.flow.*
@@ -18,6 +17,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.util.Comparator.comparingInt
 import java.util.concurrent.ConcurrentHashMap
+import com.tyiu.client.models.UserDTO
 
 @Service
 class SprintService (val template: R2dbcEntityTemplate)
@@ -203,7 +203,7 @@ class SprintService (val template: R2dbcEntityTemplate)
             .thenMany(fromIterable(map.values)).asFlow()
     }
 
-    suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
+    suspend fun createSprint(sprintDTO: SprintDTO, userId: String): SprintDTO {
         sprintDTO.projectId?.let {
             template.update(query(where("status").`is`(SprintStatus.ACTIVE.name)
                 .and("project_id").`is`(it)),
@@ -237,7 +237,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                 TaskMovementLog(
                     taskId = it.id,
                     executorId = it.executor?.id,
-                    userId = user.id,
+                    userId = userId,
                     startDate = LocalDateTime.now(),
                     status = TaskStatus.NewTask
                 )

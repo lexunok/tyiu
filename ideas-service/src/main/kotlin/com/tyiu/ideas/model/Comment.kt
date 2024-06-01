@@ -1,6 +1,6 @@
 package com.tyiu.ideas.model
 
-import com.tyiu.ideas.model.dto.UserDTO
+import com.tyiu.client.models.UserDTO
 import com.tyiu.ideas.model.entities.User
 import kotlinx.coroutines.flow.Flow
 import org.springframework.data.annotation.Id

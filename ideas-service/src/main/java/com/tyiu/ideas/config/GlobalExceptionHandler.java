@@ -1,12 +1,14 @@
-package com.tyiu.ideas.config.exception;
+package com.tyiu.ideas.config;
 
-import com.tyiu.ideas.model.responses.ErrorResponse;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.exceptions.ServerProcessException;
+import com.tyiu.client.models.ErrorResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-
 import reactor.core.publisher.Mono;
 
 @ControllerAdvice
@@ -16,8 +18,8 @@ public class GlobalExceptionHandler {
     public Mono<ResponseEntity<ErrorResponse>> notFoundException(NotFoundException ex) {
         log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity
-                .status(HttpStatus.BAD_REQUEST.value())
-                .body(new ErrorResponse(HttpStatus.BAD_REQUEST.value(),ex.getMessage())));
+                .status(HttpStatus.NOT_FOUND.value())
+                .body(new ErrorResponse(HttpStatus.NOT_FOUND.value(),ex.getMessage())));
     }
     @ExceptionHandler
     public Mono<ResponseEntity<ErrorResponse>> accessException(AccessException ex) {
@@ -28,10 +30,10 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
-    public Mono<ResponseEntity<ErrorResponse>> customHttpException(CustomHttpException ex){
-        log.error(ex.getMessage(), ex.getStatusCode(), ex);
+    public Mono<ResponseEntity<ErrorResponse>> serverProccessException(ServerProcessException ex){
+        log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity
-                .status(ex.getStatusCode())
-                .body(new ErrorResponse(ex.getStatusCode() ,ex.getMessage())));
+                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
+                .body(new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(),ex.getMessage())));
     }
 }

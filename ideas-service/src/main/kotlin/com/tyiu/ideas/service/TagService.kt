@@ -14,23 +14,11 @@ import org.springframework.stereotype.Service
 @Service
 class TagService (val template: R2dbcEntityTemplate) {
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
     fun getAllTags(): Flow<TagDTO> {
         return template.select(Tag::class.java).all().asFlow().map { it.toDTO() }
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     suspend fun createTag(tagDTO: TagDTO, userId: String): TagDTO {
         return template.insert(
@@ -54,12 +42,6 @@ class TagService (val template: R2dbcEntityTemplate) {
         ).awaitSingle().toDTO()
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     suspend fun confirmTag(userId: String, tagId: String) {
         template.update(query(where("id").`is`(tagId)),
@@ -76,12 +58,6 @@ class TagService (val template: R2dbcEntityTemplate) {
             Tag::class.java).awaitSingle()
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
     suspend fun deleteTag(tagId: String) {
         template.delete(query(where("id").`is`(tagId)), Tag::class.java).awaitSingle()

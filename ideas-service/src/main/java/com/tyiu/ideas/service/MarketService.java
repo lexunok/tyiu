@@ -1,13 +1,13 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.AccessException;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.MarketDTO;
 import com.tyiu.ideas.model.entities.IdeaMarket;
 import com.tyiu.ideas.model.entities.Market;
-import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.MarketStatus;
-import com.tyiu.ideas.model.enums.Role;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -50,13 +50,6 @@ public class MarketService {
                 }).subscribe();
     }
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
-
     public Flux<MarketDTO> getAll(){
         return template.select(Market.class).all()
                 .flatMap(m -> Flux.just(mapper.map(m, MarketDTO.class)));
@@ -72,12 +65,6 @@ public class MarketService {
                 .flatMap(m -> Mono.just(mapper.map(m, MarketDTO.class)));
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     public Mono<MarketDTO> createMarket(MarketDTO marketDTO){
         marketDTO.setStatus(MarketStatus.NEW);
@@ -88,23 +75,10 @@ public class MarketService {
         });
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
     public Mono<Void> deleteMarket(String id){
         return template.delete(query(where("id").is(id)),Market.class).then();
     }
-
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     public Mono<MarketDTO> updateMarket(String marketId, MarketDTO marketDTO){
         return template.selectOne(query(where("id").is(marketId)), Market.class)
@@ -116,7 +90,7 @@ public class MarketService {
                 });
     }
 
-    public Mono<MarketDTO> updateStatus(String id, MarketStatus status, User user){
+    public Mono<MarketDTO> updateStatus(String id, MarketStatus status, UserDTO user){
         return template.selectOne(query(where("id").is(id)), Market.class)
                 .flatMap(m -> {
                     m.setStatus(status);

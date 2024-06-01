@@ -1,17 +1,17 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.AccessException;
-import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.exceptions.NotFoundException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.GroupDTO;
 import com.tyiu.ideas.model.dto.IdeaDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.dto.UserDTO;
 import com.tyiu.ideas.model.entities.Idea;
 import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.relations.Group2User;
 import com.tyiu.ideas.model.entities.relations.Idea2Checked;
 import com.tyiu.ideas.model.entities.relations.Idea2Skill;
-import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaSkillRequest;
 import com.tyiu.ideas.model.requests.StatusIdeaRequest;
@@ -145,7 +145,7 @@ public class IdeaService {
     }
 
     @Cacheable
-    public Flux<IdeaDTO> getListIdeaByInitiator(User user) {
+    public Flux<IdeaDTO> getListIdeaByInitiator(String userId) {
         String query = """
                 SELECT idea.*, i.first_name initiator_first_name,
                 i.last_name initiator_last_name, i.id initiator_id, i.email initiator_email,
@@ -157,8 +157,8 @@ public class IdeaService {
                 WHERE idea.initiator_id = :id
                 """;
         return template.getDatabaseClient().sql(query)
-                .bind("userId", user.getId())
-                .bind("id", user.getId())
+                .bind("userId", userId)
+                .bind("id", userId)
                 .map((row, rowMetadata) -> {
                     IdeaDTO ideaDTO = buildIdeaDTO(row);
                     ideaDTO.setInitiator(UserDTO.builder()
@@ -273,7 +273,7 @@ public class IdeaService {
     }
 
     @CacheEvict(allEntries = true)
-    public Mono<Void> deleteIdea(String ideaId, User user) {
+    public Mono<Void> deleteIdea(String ideaId, UserDTO user) {
         if (user.getRoles().contains(Role.ADMIN)) {
             return template.delete(query(where("id").is(ideaId)), Idea.class).then();
         }
@@ -304,7 +304,7 @@ public class IdeaService {
         return template.update(ideaToSave).then();
     }
 
-    public Mono<Void> addIdeaSkills(IdeaSkillRequest request, User user) {
+    public Mono<Void> addIdeaSkills(IdeaSkillRequest request, UserDTO user) {
         if (user.getRoles().contains(Role.ADMIN)) {
             return template.getDatabaseClient().inConnection(connection -> {
                 Batch batch = connection.createBatch();
@@ -332,7 +332,7 @@ public class IdeaService {
                 }).then();
     }
 
-    public Mono<Void> updateIdeaSkills(IdeaSkillRequest request, User user) {
+    public Mono<Void> updateIdeaSkills(IdeaSkillRequest request, UserDTO user) {
         if (user.getRoles().contains(Role.ADMIN)) {
             return template.delete(query(where("idea_id").is(request.getIdeaId())), Idea2Skill.class)
                     .flatMap(r ->
@@ -370,7 +370,7 @@ public class IdeaService {
                 });
     }
 
-    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, User user) {
+    public Mono<IdeaSkillRequest> getIdeaSkills(String ideaId, UserDTO user) {
         String query = """
                 SELECT skill.*, i.skill_id skill_id FROM idea_skill i
                 LEFT JOIN skill ON skill.id = skill_id WHERE i.idea_id =:ideaId""";

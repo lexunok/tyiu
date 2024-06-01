@@ -1,10 +1,7 @@
 package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.SkillDTO;
-import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Order;
 import org.junit.jupiter.api.Test;

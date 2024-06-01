@@ -2,9 +2,6 @@ package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.MarketDTO;
 import com.tyiu.ideas.model.enums.MarketStatus;
-import com.tyiu.ideas.model.enums.Role;
-import com.tyiu.ideas.model.requests.RegisterRequest;
-import com.tyiu.ideas.model.responses.AuthenticationResponse;
 import com.tyiu.ideas.model.responses.InfoResponse;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;

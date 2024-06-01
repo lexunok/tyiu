@@ -1,17 +1,21 @@
 package com.tyiu.ideas.service;
 
+import com.tyiu.amqp.RabbitMQMessageProducer;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.TeamInvitationRequest;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.*;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.enums.*;
 import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.requests.*;
-import com.tyiu.ideas.config.exception.*;
-import com.tyiu.ideas.model.email.requests.*;
 import com.tyiu.ideas.model.entities.relations.*;
 import com.tyiu.ideas.model.entities.mappers.TeamMapper;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Batch;
+import org.springframework.beans.factory.annotation.Value;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -31,24 +35,29 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 @RequiredArgsConstructor
 public class TeamService {
 
-    private final R2dbcEntityTemplate template;
-    private final EmailService emailService;
+    @Value("${rabbitmq.exchanges.internal}")
+    private String internalExchange;
+    @Value("${rabbitmq.routing-keys.internal-team-invitation}")
+    private String internalTeamInvitationRoutingKey;
 
-    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
+    private final R2dbcEntityTemplate template;
+    private final RabbitMQMessageProducer rabbitProducer;
+
+
+    private Mono<Void> sendMailToInviteUserInTeam(String userId, UserDTO userInviter, String teamId) {
         return template.selectOne(query(where("id").is(teamId)), Team.class)
                 .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
                         .flatMap(u -> {
-                            String message = String.format("Вас пригласил(-а) %s %s в команду \"%s\" в качестве участника.",
-                                    userInviter.getFirstName(), userInviter.getLastName(), t.getName());
-                            return Mono.just(NotificationEmailRequest.builder()
-                                    .to(u.getEmail())
-                                    .title("Приглашение в команду")
-                                    .message(message)
-                                    .link("teams/list/" + t.getId())
-                                    .buttonName("Перейти в команду")
-                                    .build());
-                        })
-                        .flatMap(emailService::sendMailNotification));
+                            TeamInvitationRequest request = TeamInvitationRequest.builder()
+                                    .teamId(teamId)
+                                    .teamName(t.getName())
+                                    .receiver(u.getEmail())
+                                    .senderFirstName(userInviter.getFirstName())
+                                    .senderLastName(userInviter.getLastName())
+                                    .build();
+                            rabbitProducer.publish(request, internalExchange, internalTeamInvitationRoutingKey);
+                            return Mono.empty();
+                        }));
     }
 
     private Flux<SkillDTO> getSkillsByList(List<String> skills) {
@@ -128,13 +137,6 @@ public class TeamService {
         return template.exists(query(where("id").is(invitationId)
                 .and("user_id").is(userId)), TeamInvitation.class);
     }
-
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
     public Mono<TeamDTO> getTeam(String teamId, String userId) {
         String QUERY = "SELECT " +
@@ -364,13 +366,6 @@ public class TeamService {
                 .all();
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
-
     public Mono<TeamDTO> addTeam(TeamDTO teamDTO) {
         Team team = Team.builder()
                 .name(teamDTO.getName())
@@ -469,7 +464,7 @@ public class TeamService {
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
 
-    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, User userInviter) {
+    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, UserDTO userInviter) {
         return users.flatMap(user -> {
             user.setStatus(RequestStatus.NEW);
             return template.insert(user)
@@ -478,7 +473,7 @@ public class TeamService {
         });
     }
 
-    public Mono<TeamRequest> sendTeamRequest(String teamId, User user) {
+    public Mono<TeamRequest> sendTeamRequest(String teamId, UserDTO user) {
         return template.insert(TeamRequest.builder()
                 .teamId(teamId)
                 .userId(user.getId())
@@ -575,14 +570,8 @@ public class TeamService {
                 );
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
-    public Mono<Void> deleteTeam(String teamId, User user) {
+    public Mono<Void> deleteTeam(String teamId, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -611,12 +600,6 @@ public class TeamService {
                 .then();
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     public Mono<Void> setMarketForTeam(Flux<TeamDTO> teams, String marketId){
         return teams.flatMap(t ->
@@ -626,7 +609,7 @@ public class TeamService {
         ).then();
     }
 
-    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, User user) {
+    public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
@@ -641,7 +624,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, User user) {
+    public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
@@ -652,7 +635,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<Void> changeTeamLeader(String teamId, String userId, User user) {
+    public Mono<Void> changeTeamLeader(String teamId, String userId, UserDTO user) {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
@@ -691,7 +674,7 @@ public class TeamService {
                 }).then();
     }
 
-    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, User user) {
+    public Mono<TeamInvitation> updateTeamInvitationStatus(String invitationId, RequestStatus newStatus, UserDTO user) {
         return template.selectOne(query(where("id").is(invitationId)), TeamInvitation.class)
                 .flatMap(invitation -> {
                     invitation.setStatus(newStatus);
@@ -732,7 +715,7 @@ public class TeamService {
                 });
     }
 
-    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, User user) {
+    public Mono<TeamRequest> updateTeamRequestStatus(String requestId, RequestStatus newStatus, UserDTO user) {
         return template.selectOne(query(where("id").is(requestId)), TeamRequest.class)
                 .flatMap(request -> {
                     request.setStatus(newStatus);

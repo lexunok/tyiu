@@ -1,6 +1,8 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.AccessException;
+import com.tyiu.client.exceptions.AccessException;
+import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.entities.mappers.IdeaMarketMapper;
@@ -8,7 +10,6 @@ import com.tyiu.ideas.model.entities.relations.Favorite2Idea;
 import com.tyiu.ideas.model.entities.relations.IdeaMarket2Refused;
 import com.tyiu.ideas.model.enums.IdeaMarketStatusType;
 import com.tyiu.ideas.model.enums.RequestStatus;
-import com.tyiu.ideas.model.enums.Role;
 import com.tyiu.ideas.model.enums.SkillType;
 import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
@@ -146,12 +147,6 @@ public class IdeaMarketService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
-    ///////////////////////
-    //  _____   ____ ______
-    // / ___/  / __//_  __/
-    /// (_ /  / _/   / /
-    //\___/  /___/  /_/
-    ///////////////////////
 
 
     public Flux<IdeaMarketDTO> getAllMarketIdeas(String userId){
@@ -393,12 +388,6 @@ public class IdeaMarketService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
-    //////////////////////////////
-    //   ___   ____    ____ ______
-    //  / _ \ / __ \  / __//_  __/
-    // / ___// /_/ / _\ \   / /
-    ///_/    \____/ /___/  /_/
-    //////////////////////////////
 
     public Flux<IdeaMarketDTO> sendIdeaOnMarket(String marketId, Flux<IdeaDTO> ideaDTOList) {
         return ideaDTOList.flatMap(ideaDTO -> {
@@ -446,7 +435,7 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, User user){
+    public Mono<IdeaMarketAdvertisementDTO> addAdvertisement(IdeaMarketAdvertisementDTO advertisementDTO, UserDTO user){
         advertisementDTO.setCreatedAt(LocalDateTime.now());
         advertisementDTO.setCheckedBy(List.of(user.getEmail()));
         return checkInitiator(advertisementDTO.getIdeaMarketId(), user.getId())
@@ -474,14 +463,8 @@ public class IdeaMarketService {
                 });
     }
 
-    ///////////////////////////////////////////
-    //   ___    ____   __    ____ ______   ____
-    //  / _ \  / __/  / /   / __//_  __/  / __/
-    // / // / / _/   / /__ / _/   / /    / _/
-    ///____/ /___/  /____//___/  /_/    /___/
-    ///////////////////////////////////////////
 
-    public Mono<Void> deleteMarketIdea(String ideaMarketId, User user){
+    public Mono<Void> deleteMarketIdea(String ideaMarketId, UserDTO user){
         return checkInitiator(ideaMarketId,user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
@@ -496,7 +479,7 @@ public class IdeaMarketService {
                 .and("idea_market_id").is(ideaMarketId)), Favorite2Idea.class).then();
     }
 
-    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, User user){
+    public Mono<Void> deleteIdeaMarketAdvertisement(String ideaMarketAdvertisementId, UserDTO user){
         return template.exists(query(where("id").is(ideaMarketAdvertisementId)
                         .and("sender_id").is(user.getId())), IdeaMarketAdvertisement.class)
                 .flatMap(isExists -> {
@@ -507,12 +490,6 @@ public class IdeaMarketService {
                 }).then();
     }
 
-    ////////////////////////
-    //   ___   __  __ ______
-    //  / _ \ / / / //_  __/
-    // / ___// /_/ /  / /
-    ///_/    \____/  /_/
-    ////////////////////////
 
     public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
@@ -524,7 +501,7 @@ public class IdeaMarketService {
                 IdeaMarket.class).then();
     }
 
-    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, User user){
+    public Mono<Void> changeRequestStatus(String teamMarketId, RequestStatus status, UserDTO user){
         return template.selectOne(query(where("id").is(teamMarketId)), TeamMarketRequest.class)
                 .flatMap(r -> {
                     String userId = user.getId();
@@ -579,7 +556,7 @@ public class IdeaMarketService {
                 });
     }
 
-    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, User user){
+    public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, UserDTO user){
         return template.exists(query(where("team_id").is(teamId)), IdeaMarket.class)
                 .flatMap(isExistsTeam -> {
                     if (Boolean.FALSE.equals(isExistsTeam)) {

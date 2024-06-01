@@ -1,6 +1,6 @@
 package com.tyiu.ideas.service;
 
-import com.tyiu.ideas.config.exception.NotFoundException;
+import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.entities.Skill;
 import com.tyiu.ideas.model.enums.SkillType;

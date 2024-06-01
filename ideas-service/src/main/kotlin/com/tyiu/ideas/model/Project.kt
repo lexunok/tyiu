@@ -1,7 +1,7 @@
 package com.tyiu.ideas.model
+import com.tyiu.client.models.UserDTO
 
 import com.tyiu.ideas.model.dto.TeamDTO
-import com.tyiu.ideas.model.dto.UserDTO
 import org.springframework.data.annotation.Id
 import org.springframework.data.relational.core.mapping.Table
 import org.springframework.http.HttpStatus

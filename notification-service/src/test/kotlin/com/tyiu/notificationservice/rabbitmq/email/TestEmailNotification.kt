@@ -1,6 +1,5 @@
 package com.tyiu.notificationservice.rabbitmq.email
 
-import com.tyiu.ideas.config.exception.CustomHttpException
 import com.tyiu.ideas.model.entities.User
 import interfaces.INotification
 import org.springframework.beans.factory.annotation.Autowired

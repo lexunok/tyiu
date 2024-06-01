@@ -3,10 +3,13 @@ logging:
     org:
       springframework:
         r2dbc: DEBUG
+rabbitmq:
+  exchanges:
+    internal: internal.exchange
+  routing-keys:
+    internal-team-invitation: internal.team-invitation.routing-key
 postgres:
   url: postgresql://localhost:5432/hits
-file:
-  path: "./src/main/resources/files/"
 spring:
   r2dbc:
     pool:
@@ -30,22 +33,11 @@ spring:
       port: 7000
       transport: websocket
       mapping-path: /rs
-  output:
-    ansi:
-      enabled: ALWAYS
-  mail:
-    host: smtp.gmail.com
-    port: 587
-    username: ${MAIL_LOGIN}
-    password: ${MAIL_PASSWORD}
-    properties:
-      mail:
-        debug: true
-        smtp:
-          auth: true
-          starttls:
-            enable: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost
+          jwk-set-uri: http://localhost/oauth2/jwks
 server:
-  port: 80
-jwt:
-  secret: SDJKFKLSDJFSEOPFJSKJCKZXNOIWU289737494723094823
+  port: 8082

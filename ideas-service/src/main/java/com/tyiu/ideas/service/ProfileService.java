@@ -1,5 +1,7 @@
 package com.tyiu.ideas.service;
 
+import com.nimbusds.jose.shaded.gson.Gson;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.dto.TeamExperienceDTO;
@@ -8,77 +10,29 @@ import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.ProfileMapper;
 import com.tyiu.ideas.model.entities.relations.User2Skill;
 import com.tyiu.ideas.model.enums.SkillType;
-import com.tyiu.ideas.model.requests.ProfileUpdateRequest;
 import com.tyiu.ideas.model.responses.ProfileIdeaResponse;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.ResourceLoader;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.http.MediaType;
-import org.springframework.http.codec.multipart.FilePart;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-import static org.springframework.data.relational.core.query.Update.update;
 
 
 @Service
-@Slf4j
 @RequiredArgsConstructor
 public class ProfileService {
-    private static final long MAX_FILE_SIZE_BYTES = 16 * 1024 * 1024;
+
     private final ProfileMapper mapper;
     private final R2dbcEntityTemplate template;
-    private final ResourceLoader loader;
+    private final ModelMapper modelMapper;
 
-    //TODO: SNOS
-    @Value("${file.path}")
-    String path;
-    public Mono<FileSystemResource> uploadAvatar(String userId, FilePart file) {
-        Path basePath = Paths.get(path);
-        Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
-
-        if (!isValidImageFile(file) && file.headers().getContentLength() > MAX_FILE_SIZE_BYTES) {
-            return Mono.error(new RuntimeException("Недопустимый тип или размер файла"));
-        }
-
-        try {
-            Files.createDirectories(basePath);
-
-            return file.transferTo(avatarPath)
-                    .then(Mono.just(new FileSystemResource(avatarPath)))
-                    .doOnError(e -> log.error("Ошибка загрузки аватара: {}", e.getMessage()));
-        } catch (IOException e) {
-            return Mono.error(new RuntimeException("Ошибка загрузки аватара", e));
-        }
-    }
-    //TODO: SNOS
-    private boolean isValidImageFile(FilePart file) {
-        MediaType contentType = file.headers().getContentType();
-        return contentType != null && (contentType.isCompatibleWith(MediaType.IMAGE_JPEG) && contentType.isCompatibleWith(MediaType.IMAGE_PNG));
-    }
-    //TODO: SNOS
-    public Mono<Resource> getAvatar(String userId){
-        Path basePath = Paths.get(path, userId + "_avatar.jpg");
-        try {
-            return Mono.just(new FileSystemResource(basePath));
-        } catch (Exception e) {
-            return null;
-        }
-    }
     public Mono<ProfileDTO> getUserProfile(String userId, String currentUserId) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, u.study_group u_study_group, u.telephone u_telephone, " +
                 "s.id s_id, s.name s_name, s.type s_type, i.id i_id, i.name i_name, i.solution i_solution, i.status i_status, " +
@@ -155,12 +109,16 @@ public class ProfileService {
                         )
                 );
     }
-    //TODO: SNOS
-    public Mono<Void> updateProfile(String userId, ProfileUpdateRequest request){
-        return template.update(query(where("id").is(userId)),
-                update("first_name", request.getFirstName())
-                        .set("last_name", request.getLastName())
-                        .set("study_group", request.getStudyGroup())
-                        .set("telephone", request.getTelephone()), User.class).then();
+    public Mono<Void> checkUser(Jwt jwt) {
+        return template.exists(query(where("id").is(jwt.getId())), User.class)
+                .flatMap(b -> {
+                    if (Boolean.FALSE.equals(b)) {
+                        Gson gson = new Gson();
+                        UserDTO userDTO = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
+                        User user = modelMapper.map(userDTO, User.class);
+                        template.insert(user);
+                    }
+                    return Mono.empty();
+                }).then();
     }
 }

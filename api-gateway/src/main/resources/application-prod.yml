@@ -3,6 +3,10 @@ server:
 spring:
   cloud:
     gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins: ${FRONTEND_URL}
       default-filters:
         - TokenRelay=
       routes:
