@@ -3,12 +3,12 @@ package com.tyiu.ideas.controller
 import com.tyiu.client.exceptions.AccessException
 import com.tyiu.client.models.Role
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.entities.User
 import com.tyiu.ideas.service.TaskService
 import com.tyiu.ideas.util.roleCheck
 import kotlinx.coroutines.flow.Flow
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -18,8 +18,8 @@ class TaskController (private val taskService: TaskService) {
     private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_OWNER, Role.TEAM_LEADER, Role.ADMIN)
 
     @GetMapping("/project/all/{projectId}")
-    fun getAllTaskByProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User): Flow<TaskDTO> {
-        return if (user.roles.roleCheck(roles)) {
+    fun getAllTaskByProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt): Flow<TaskDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             taskService.getAllTasksByProject(projectId)
         }
         else {
@@ -28,8 +28,8 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @GetMapping("/project/backlog/{projectId}")
-    fun getAllTasksInBackLog(@PathVariable projectId: String, @AuthenticationPrincipal user: User): Flow<TaskDTO> {
-        return if (user.roles.roleCheck(roles)) {
+    fun getAllTasksInBackLog(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt): Flow<TaskDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             taskService.getAllTasksInBacklog(projectId)
         }
         else {
@@ -38,8 +38,8 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @GetMapping("/project/sprint/{sprintId}")
-    fun getAllTasksInSprint(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): Flow<TaskDTO> {
-        return if (user.roles.roleCheck(roles)) {
+    fun getAllTasksInSprint(@PathVariable sprintId: String, @AuthenticationPrincipal jwt: Jwt): Flow<TaskDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             taskService.getAllTasksInSprint(sprintId)
         }
         else {
@@ -48,8 +48,8 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @GetMapping("/{taskId}")
-    suspend fun getOneTaskById(@PathVariable taskId: String, @AuthenticationPrincipal user: User): TaskDTO? {
-        return if (user.roles.roleCheck(roles)) {
+    suspend fun getOneTaskById(@PathVariable taskId: String, @AuthenticationPrincipal jwt: Jwt): TaskDTO? {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             taskService.getOneTaskById(taskId)
         }
         else {
@@ -58,9 +58,9 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @PostMapping("/add")
-    suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO, @AuthenticationPrincipal user: User): TaskDTO {
-        return if (user.roles.roleCheck(roles)) {
-            taskService.createTask(taskDTO, user.id)
+    suspend fun postCreateTask(@RequestBody taskDTO: TaskDTO, @AuthenticationPrincipal jwt: Jwt): TaskDTO {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
+            taskService.createTask(taskDTO, jwt.id)
         }
         else {
             throw AccessException("Нет прав")
@@ -70,8 +70,8 @@ class TaskController (private val taskService: TaskService) {
     @PutMapping("/update/{taskId}")
     suspend fun putUpdateTask (@PathVariable taskId: String,
                                @RequestBody taskDTO: TaskDTO,
-                               @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles)) {
+                               @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             try {
                 taskService.putUpdateTask(taskId, taskDTO)
                 InfoResponse(HttpStatus.OK,"Задача успешно изменена")
@@ -88,8 +88,8 @@ class TaskController (private val taskService: TaskService) {
     @PutMapping("/executor/{taskId}/{executorId}")
     suspend fun putUpdateExecutorTask(@PathVariable taskId: String,
                                       @PathVariable executorId: String,
-                                      @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles)) {
+                                      @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             try {
                 taskService.putUpdateExecutorTask(taskId, executorId)
                 InfoResponse(HttpStatus.OK,"Новый исполнитель успешно назначен")
@@ -119,8 +119,8 @@ class TaskController (private val taskService: TaskService) {
     }
 
     @DeleteMapping("/delete/{taskId}")
-    suspend fun deleteTask(@PathVariable taskId: String, @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles)) {
+    suspend fun deleteTask(@PathVariable taskId: String, @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             try {
                 taskService.deleteTask(taskId)
                 InfoResponse(HttpStatus.OK,"Задача успешно удалена")

@@ -3,12 +3,12 @@ package com.tyiu.ideas.controller
 import com.tyiu.client.exceptions.AccessException
 import com.tyiu.client.models.Role
 import com.tyiu.ideas.model.*
-import com.tyiu.ideas.model.entities.User
 import com.tyiu.ideas.service.SprintService
 import com.tyiu.ideas.util.roleCheck
 import kotlinx.coroutines.flow.Flow
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
 
 @RestController
@@ -21,8 +21,8 @@ class SprintController(private val sprintService: SprintService)
     private val roles3 = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.ADMIN)
 
     @GetMapping("/{projectId}/all")
-    fun getAllSprintsByProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User): Flow<SprintDTO> {
-        return if (user.roles.roleCheck(roles)) {
+    fun getAllSprintsByProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt): Flow<SprintDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             sprintService.getAllSprintsByProject(projectId)
         }
         else {
@@ -31,8 +31,8 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/{id}")
-    suspend fun getSprintById(@PathVariable id: String, @AuthenticationPrincipal user: User): SprintDTO? {
-        return if (user.roles.roleCheck(roles)) {
+    suspend fun getSprintById(@PathVariable id: String, @AuthenticationPrincipal jwt: Jwt): SprintDTO? {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             sprintService.getSprintById(id)
         }
         else {
@@ -41,8 +41,8 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/{projectId}/active")
-    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal user: User): SprintDTO? {
-        return if (user.roles.roleCheck(roles)) {
+    suspend fun getActiveSprint(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt): SprintDTO? {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             sprintService.getActiveSprint(projectId)
         }
         else {
@@ -51,8 +51,8 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @GetMapping("/marks/{sprintId}/all")
-    fun getAllSprintMarks(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): Flow<SprintMarkDTO> {
-        return if (user.roles.roleCheck(roles)) {
+    fun getAllSprintMarks(@PathVariable sprintId: String, @AuthenticationPrincipal jwt: Jwt): Flow<SprintMarkDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles)) {
             sprintService.getAllSprintMarks(sprintId)
         }
         else {
@@ -61,9 +61,9 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @PostMapping("/add")
-    suspend fun createSprint(@RequestBody sprintDTO: SprintDTO, @AuthenticationPrincipal user: User): SprintDTO {
-        return if (user.roles.roleCheck(roles2)) {
-            sprintService.createSprint(sprintDTO, user)
+    suspend fun createSprint(@RequestBody sprintDTO: SprintDTO, @AuthenticationPrincipal jwt: Jwt): SprintDTO {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles2)) {
+            sprintService.createSprint(sprintDTO, jwt.id)
         }
         else {
             throw AccessException("Нет прав")
@@ -74,8 +74,8 @@ class SprintController(private val sprintService: SprintService)
     suspend fun addSprintMarks(@PathVariable sprintId: String,
                                 @PathVariable projectId: String,
                                 @RequestBody sprintMarks: Flow<SprintMarkRequest>,
-                                @AuthenticationPrincipal user: User) {
-        return if (user.roles.roleCheck(roles3)) {
+                                @AuthenticationPrincipal jwt: Jwt) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles3)) {
             sprintService.addSprintMarks(sprintId, projectId, sprintMarks)
         }
         else {
@@ -86,10 +86,10 @@ class SprintController(private val sprintService: SprintService)
     @PutMapping("/{sprintId}/update")
     suspend fun updateSprintInfo(@PathVariable sprintId: String,
                                  @RequestBody sprintDTO: SprintDTO,
-                                 @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles2)) {
+                                 @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles2)) {
             try {
-                sprintService.updateSprintInfo(sprintId, sprintDTO, user.id)
+                sprintService.updateSprintInfo(sprintId, sprintDTO, jwt.id)
                 InfoResponse(HttpStatus.OK,"Успешное изменение спринта")
             }
             catch(e: Exception){
@@ -104,10 +104,10 @@ class SprintController(private val sprintService: SprintService)
     @PutMapping("/finish/{sprintId}")
     suspend fun finishSprint(@PathVariable sprintId: String,
                              @RequestBody report: String,
-                             @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles3)) {
+                             @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles3)) {
             try {
-                sprintService.putSprintFinish(sprintId, report, user.id)
+                sprintService.putSprintFinish(sprintId, report, jwt.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
             }
             catch(e: Exception){
@@ -120,10 +120,10 @@ class SprintController(private val sprintService: SprintService)
     }
 
     @DeleteMapping("/{sprintId}/delete")
-    suspend fun deleteSprint(@PathVariable sprintId: String, @AuthenticationPrincipal user: User): InfoResponse {
-        return if (user.roles.roleCheck(roles2)) {
+    suspend fun deleteSprint(@PathVariable sprintId: String, @AuthenticationPrincipal jwt: Jwt): InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(roles2)) {
             try {
-                sprintService.deleteSprint(sprintId, user.id)
+                sprintService.deleteSprint(sprintId, jwt.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно удалён")
             }
             catch(e: Exception){

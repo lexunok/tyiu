@@ -180,6 +180,7 @@ public class SecurityConfig {
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())
                         .email(user.getEmail())
+                        .roles(user.getRoles())
                         .studyGroup(user.getStudyGroup())
                         .telephone(user.getTelephone())
                         .build();

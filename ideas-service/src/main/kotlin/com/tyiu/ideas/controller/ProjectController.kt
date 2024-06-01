@@ -4,21 +4,22 @@ import com.tyiu.client.exceptions.AccessException
 import com.tyiu.client.models.Role
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
-import com.tyiu.ideas.model.entities.User
 import com.tyiu.ideas.service.ProjectService
 import com.tyiu.ideas.util.roleCheck
 import kotlinx.coroutines.flow.Flow
 import org.springframework.http.HttpStatus
 import org.springframework.security.core.annotation.AuthenticationPrincipal
+import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api/v1/scrum-service/project")
 class ProjectController (private val projectService: ProjectService) {
 
+
     @GetMapping("/all")
-    fun getAllProjects(@AuthenticationPrincipal user: User): Flow<ProjectDTO> {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
+    fun getAllProjects(@AuthenticationPrincipal jwt: Jwt): Flow<ProjectDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
             projectService.getAllProjects()
         }
         else {
@@ -27,9 +28,9 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @GetMapping("/private/all")
-    fun getYourProjects(@AuthenticationPrincipal user: User): Flow<ProjectDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
-            projectService.getYourProjects(user.id)
+    fun getYourProjects(@AuthenticationPrincipal jwt: Jwt): Flow<ProjectDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+            projectService.getYourProjects(jwt.id)
         }
         else {
             throw AccessException("Нет прав")
@@ -37,9 +38,9 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @GetMapping("/active/all")
-    fun getYourActiveProjects(@AuthenticationPrincipal user: User): Flow<ProjectDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
-            projectService.getYourActiveProjects(user.id)
+    fun getYourActiveProjects(@AuthenticationPrincipal jwt: Jwt): Flow<ProjectDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+            projectService.getYourActiveProjects(jwt.id)
         }
         else {
             throw AccessException("Нет прав")
@@ -47,8 +48,8 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @GetMapping("/{projectId}")
-    suspend fun getOneProject(@PathVariable projectId: String,@AuthenticationPrincipal user: User): ProjectDTO? {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+    suspend fun getOneProject(@PathVariable projectId: String,@AuthenticationPrincipal jwt: Jwt): ProjectDTO? {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getOneProject(projectId)
         }
         else {
@@ -57,8 +58,8 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @GetMapping("/members/{projectId}/all")
-    fun getProjectMembers(@PathVariable projectId: String,@AuthenticationPrincipal user: User): Flow<ProjectMemberDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+    fun getProjectMembers(@PathVariable projectId: String,@AuthenticationPrincipal jwt: Jwt): Flow<ProjectMemberDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getProjectMembers(projectId)
         }
         else {
@@ -67,8 +68,8 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @GetMapping("/marks/{projectId}/all")
-    fun getProjectMarks(@PathVariable projectId: String,@AuthenticationPrincipal user: User): Flow<ProjectMarksDTO> {
-        return if (user.roles.roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+    fun getProjectMarks(@PathVariable projectId: String,@AuthenticationPrincipal jwt: Jwt): Flow<ProjectMarksDTO> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getProjectMarks(projectId)
         }
         else {
@@ -77,8 +78,8 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @PostMapping("/send")
-    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO,@AuthenticationPrincipal user: User): ProjectDTO {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
+    suspend fun createProject(@RequestBody ideaMarketDTO: IdeaMarketDTO,@AuthenticationPrincipal jwt: Jwt): ProjectDTO {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
             projectService.createProject(ideaMarketDTO)
         }
         else {
@@ -88,8 +89,8 @@ class ProjectController (private val projectService: ProjectService) {
 
     @PostMapping("/{projectId}/add/members")
     suspend fun addMembersInProject(@PathVariable projectId: String, @RequestBody addToProjectRequest: AddToProjectRequest,
-                                    @AuthenticationPrincipal user: User): ProjectMemberDTO {
-        return if (user.roles.roleCheck(listOf(Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+                                    @AuthenticationPrincipal jwt: Jwt): ProjectMemberDTO {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.addMembersInProject(projectId,addToProjectRequest)
         }
         else {
@@ -98,8 +99,8 @@ class ProjectController (private val projectService: ProjectService) {
     }
 
     @PutMapping("/{projectId}/status/change")
-    suspend fun pauseProject(@PathVariable projectId: String, @AuthenticationPrincipal user: User) : InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
+    suspend fun pauseProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt) : InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
             try {
                 projectService.pauseProject(projectId)
                 InfoResponse(HttpStatus.OK, "Проект успешно приостановлен")
@@ -116,8 +117,8 @@ class ProjectController (private val projectService: ProjectService) {
     @PutMapping("/finish/{projectId}")
     suspend fun putFinishProject(@PathVariable projectId: String,
                                  @RequestBody report: String,
-                                 @AuthenticationPrincipal user: User) : InfoResponse {
-        return if (user.roles.roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
+                                 @AuthenticationPrincipal jwt: Jwt) : InfoResponse {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
             try {
                 projectService.putFinishProject(projectId, report)
                 InfoResponse(HttpStatus.OK,"Проект успешно завершён")

@@ -203,7 +203,7 @@ class SprintService (val template: R2dbcEntityTemplate)
             .thenMany(fromIterable(map.values)).asFlow()
     }
 
-    suspend fun createSprint(sprintDTO: SprintDTO, user: User): SprintDTO {
+    suspend fun createSprint(sprintDTO: SprintDTO, userId: String): SprintDTO {
         sprintDTO.projectId?.let {
             template.update(query(where("status").`is`(SprintStatus.ACTIVE.name)
                 .and("project_id").`is`(it)),
@@ -237,7 +237,7 @@ class SprintService (val template: R2dbcEntityTemplate)
                 TaskMovementLog(
                     taskId = it.id,
                     executorId = it.executor?.id,
-                    userId = user.id,
+                    userId = userId,
                     startDate = LocalDateTime.now(),
                     status = TaskStatus.NewTask
                 )
