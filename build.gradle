@@ -11,10 +11,6 @@ ext {
 allprojects {
     group = 'com.tyiu'
     version = '1'
-    java {
-        sourceCompatibility(17)
-        targetCompatibility(17)
-    }
     configurations {
         compileOnly.extendsFrom(annotationProcessor)
     }
