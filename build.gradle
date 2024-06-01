@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 plugins {
     id 'java'
     id 'org.springframework.boot' version '3.1.2'
@@ -11,6 +13,16 @@ ext {
 allprojects {
     group = 'com.tyiu'
     version = '1'
+    tasks.withType(KotlinCompile).configureEach {
+        kotlinOptions {
+            freeCompilerArgs += "-Xjsr305=strict"
+            jvmTarget = "17"
+        }
+    }
+    java{
+        sourceCompatibility(17)
+        targetCompatibility(17)
+    }
     configurations {
         compileOnly.extendsFrom(annotationProcessor)
     }
@@ -37,3 +49,4 @@ subprojects {
         annotationProcessor 'org.projectlombok:lombok'
     }
 }
+
