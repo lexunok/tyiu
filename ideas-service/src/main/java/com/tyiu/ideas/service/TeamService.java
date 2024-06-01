@@ -1,7 +1,9 @@
 package com.tyiu.ideas.service;
 
+import com.tyiu.amqp.RabbitMQMessageProducer;
 import com.tyiu.client.exceptions.AccessException;
 import com.tyiu.client.models.Role;
+import com.tyiu.client.models.TeamInvitationRequest;
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.*;
 import com.tyiu.ideas.model.dto.*;
@@ -13,6 +15,7 @@ import com.tyiu.ideas.model.entities.mappers.TeamMapper;
 
 import io.r2dbc.spi.Row;
 import io.r2dbc.spi.Batch;
+import org.springframework.beans.factory.annotation.Value;
 import reactor.core.publisher.Mono;
 import reactor.core.publisher.Flux;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
@@ -32,24 +35,30 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 @RequiredArgsConstructor
 public class TeamService {
 
+    @Value("${rabbitmq.exchanges.internal}")
+    private String internalExchange;
+    @Value("${rabbitmq.routing-keys.internal-team-invitation}")
+    private String internalTeamInvitationRoutingKey;
+
     private final R2dbcEntityTemplate template;
-//TODO:
-//    private Mono<Void> sendMailToInviteUserInTeam(String userId, User userInviter, String teamId) {
-//        return template.selectOne(query(where("id").is(teamId)), Team.class)
-//                .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
-//                        .flatMap(u -> {
-//                            String message = String.format("Вас пригласил(-а) %s %s в команду \"%s\" в качестве участника.",
-//                                    userInviter.getFirstName(), userInviter.getLastName(), t.getName());
-//                            return Mono.just(NotificationEmailRequest.builder()
-//                                    .to(u.getEmail())
-//                                    .title("Приглашение в команду")
-//                                    .message(message)
-//                                    .link("teams/list/" + t.getId())
-//                                    .buttonName("Перейти в команду")
-//                                    .build());
-//                        })
-//                        .flatMap(emailService::sendMailNotification));
-//    }
+    private final RabbitMQMessageProducer rabbitProducer;
+
+
+    private Mono<Void> sendMailToInviteUserInTeam(String userId, UserDTO userInviter, String teamId) {
+        return template.selectOne(query(where("id").is(teamId)), Team.class)
+                .flatMap(t -> template.selectOne(query(where("id").is(userId)), User.class)
+                        .flatMap(u -> {
+                            TeamInvitationRequest request = TeamInvitationRequest.builder()
+                                    .teamId(teamId)
+                                    .teamName(t.getName())
+                                    .receiver(u.getEmail())
+                                    .senderFirstName(userInviter.getFirstName())
+                                    .senderLastName(userInviter.getLastName())
+                                    .build();
+                            rabbitProducer.publish(request, internalExchange, internalTeamInvitationRoutingKey);
+                            return Mono.empty();
+                        }));
+    }
 
     private Flux<SkillDTO> getSkillsByList(List<String> skills) {
         String QUERY = "SELECT user_skill.*, skill.id, skill.name, skill.type " +
@@ -454,15 +463,15 @@ public class TeamService {
 
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
-//TODO
-//    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, User userInviter) {
-//        return users.flatMap(user -> {
-//            user.setStatus(RequestStatus.NEW);
-//            return template.insert(user)
-//                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, user.getTeamId())
-//                            .thenReturn(teamInvitation));
-//        });
-//    }
+
+    public Flux<TeamInvitation> sendInvitesToUsers(Flux<TeamInvitation> users, UserDTO userInviter) {
+        return users.flatMap(user -> {
+            user.setStatus(RequestStatus.NEW);
+            return template.insert(user)
+                    .flatMap(teamInvitation -> sendMailToInviteUserInTeam(user.getUserId(), userInviter, user.getTeamId())
+                            .thenReturn(teamInvitation));
+        });
+    }
 
     public Mono<TeamRequest> sendTeamRequest(String teamId, UserDTO user) {
         return template.insert(TeamRequest.builder()

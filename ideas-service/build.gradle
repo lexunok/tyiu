@@ -19,6 +19,7 @@ dependencies {
 	implementation "org.jetbrains.kotlin:kotlin-reflect"
 	implementation "io.projectreactor.kotlin:reactor-kotlin-extensions:1.0.2.RELEASE"
 	implementation project(path: ':client')
+	implementation project(path: ':amqp')
 
 	runtimeOnly 'org.postgresql:postgresql:42.6.0'
 	runtimeOnly 'org.postgresql:r2dbc-postgresql:1.0.2.RELEASE'

@@ -3,6 +3,11 @@ logging:
     org:
       springframework:
         r2dbc: DEBUG
+rabbitmq:
+  exchanges:
+    internal: internal.exchange
+  routing-keys:
+    internal-team-invitation: internal.team-invitation.routing-key
 postgres:
   url: postgresql://db-ideas:5432/hits
 spring:

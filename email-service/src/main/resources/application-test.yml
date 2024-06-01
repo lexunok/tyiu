@@ -21,8 +21,10 @@ rabbitmq:
     internal: internal.exchange
   queues:
     invitation: invitation.queue
+    team-invitation: team-invitation.queue
   routing-keys:
     internal-invitation: internal.invitation.routing-key
+    internal-team-invitation: internal.team-invitation.routing-key
 
 
 

@@ -16,10 +16,16 @@ public class EmailConfig {
 
     @Value("${rabbitmq.exchanges.internal}")
     private String internalExchange;
+
     @Value("${rabbitmq.queues.invitation}")
     private String invitationQueue;
     @Value("${rabbitmq.routing-keys.internal-invitation}")
     private String internalInvitationRoutingKey;
+
+    @Value("${rabbitmq.queues.team-invitation}")
+    private String teamInvitationQueue;
+    @Value("${rabbitmq.routing-keys.internal-team-invitation}")
+    private String internalTeamInvitationRoutingKey;
 
     @Bean
     public TopicExchange internalTopicExchange(){
@@ -30,11 +36,23 @@ public class EmailConfig {
         return new Queue(invitationQueue);
     }
     @Bean
+    public Queue teamInvitationQueue() {
+        return new Queue(teamInvitationQueue);
+    }
+    @Bean
     public Binding internalInvitationBinding(){
         return BindingBuilder
                 .bind(invitationQueue())
                 .to(internalTopicExchange())
                 .with(internalInvitationRoutingKey);
+    }
+
+    @Bean
+    public Binding internalTeamInvitationBinding(){
+        return BindingBuilder
+                .bind(teamInvitationQueue())
+                .to(internalTopicExchange())
+                .with(internalTeamInvitationRoutingKey);
     }
 
     @Bean

@@ -116,12 +116,14 @@ public class TeamController {
         return teamService.sendTeamRequest(teamId, user)
                 .switchIfEmpty(Mono.error(new NotFoundException("Ошибка при подачи заявки")));
     }
-//TODO
-//    @PostMapping("/send-invites")
-//    @PreAuthorize("hasRole('TEAM_OWNER') || hasRole('ADMIN')")
-//    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal User user) {
-//        return teamService.sendInvitesToUsers(users, user);
-//    }
+
+    @PostMapping("/send-invites")
+    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
+    public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal Jwt jwt) {
+        Gson gson = new Gson();
+        UserDTO user = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
+        return teamService.sendInvitesToUsers(users, user);
+    }
 
     @PostMapping("/invite/{teamId}/{userId}")
     public Mono<TeamMemberDTO> inviteInTeam(@PathVariable String teamId, @PathVariable String userId) {
