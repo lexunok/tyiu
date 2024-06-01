@@ -23,6 +23,11 @@ public class ProfileController {
         return profileService.getUserProfile(userId, user.getId());
     }
 
+    @PostMapping
+    public Mono<Void> checkUser(@AuthenticationPrincipal Jwt jwt) {
+        return profileService.checkUser(jwt);
+    }
+
     @PostMapping("/skills/save")
     public Flux<SkillDTO> saveUserSkills(@AuthenticationPrincipal Jwt user, @RequestBody Flux<SkillDTO> skills) {
         return profileService.saveSkills(user.getId(), skills);

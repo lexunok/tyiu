@@ -176,6 +176,8 @@ public class SecurityConfig {
                     template.opsForHash().put("user", email, user);
                 }
                 UserDTO userDTO = UserDTO.builder()
+                        .createdAt(user.getCreatedAt().toString())
+                        .isDeleted(user.getIsDeleted())
                         .id(user.getId())
                         .firstName(user.getFirstName())
                         .lastName(user.getLastName())

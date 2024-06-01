@@ -1,15 +1,20 @@
 package com.tyiu.ideas.service;
 
+import com.nimbusds.jose.shaded.gson.Gson;
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.model.dto.TeamExperienceDTO;
 import com.tyiu.ideas.model.entities.Idea;
+import com.tyiu.ideas.model.entities.User;
 import com.tyiu.ideas.model.entities.mappers.ProfileMapper;
 import com.tyiu.ideas.model.entities.relations.User2Skill;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.responses.ProfileIdeaResponse;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -26,6 +31,7 @@ public class ProfileService {
 
     private final ProfileMapper mapper;
     private final R2dbcEntityTemplate template;
+    private final ModelMapper modelMapper;
 
     public Mono<ProfileDTO> getUserProfile(String userId, String currentUserId) {
         String query = "SELECT u.id u_id, u.roles u_roles, u.email u_email, u.last_name u_last_name, u.first_name u_first_name, u.created_at u_created_at, u.study_group u_study_group, u.telephone u_telephone, " +
@@ -102,5 +108,17 @@ public class ProfileService {
                                 .then().thenReturn(s)
                         )
                 );
+    }
+    public Mono<Void> checkUser(Jwt jwt) {
+        return template.exists(query(where("id").is(jwt.getId())), User.class)
+                .flatMap(b -> {
+                    if (Boolean.FALSE.equals(b)) {
+                        Gson gson = new Gson();
+                        UserDTO userDTO = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
+                        User user = modelMapper.map(userDTO, User.class);
+                        template.insert(user);
+                    }
+                    return Mono.empty();
+                }).then();
     }
 }
