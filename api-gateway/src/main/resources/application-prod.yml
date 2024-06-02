@@ -6,7 +6,7 @@ spring:
       globalcors:
         cors-configurations:
           '[/**]':
-            allowedOrigins: ${FRONTEND_URL}
+            allowedOrigins: http://localhost:3000, http://localhost, https://hits.tyuiu.ru, https://hits1.tyuiu.ru
       default-filters:
         - TokenRelay=
       routes:
