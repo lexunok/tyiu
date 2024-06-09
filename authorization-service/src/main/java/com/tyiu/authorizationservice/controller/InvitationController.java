@@ -28,10 +28,4 @@ public class InvitationController {
         invitationService.sendManyInvitations(request, user);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
-    @DeleteMapping("/delete/{id}")
-    public void deleteInvitation(@PathVariable String id) {
-        invitationService.deleteInvitation(id);
-    }
-
 }

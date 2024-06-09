@@ -37,7 +37,6 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${AUTH_URL}
           jwk-set-uri: ${AUTH_URL}/oauth2/jwks
 server:
   port: 8082

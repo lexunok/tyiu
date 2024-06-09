@@ -48,10 +48,6 @@ public class InvitationService {
         rabbitProducer.publish(linkRequest, internalExchange, internalInvitationRoutingKey);
     }
 
-    public void deleteInvitation(String id){
-        invitationRepository.deleteById(id);
-    }
-
     public void sendManyInvitations(ManyInvitationsRequest request, User user) {
         request.getEmail().forEach(email -> {
             Boolean userIsExists = userRepository.existsByEmail(email);
