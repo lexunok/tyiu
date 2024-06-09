@@ -26,6 +26,8 @@ spring:
           uri: http://authorization-service:7777
           predicates:
             - Path=/api/v1/authorization-service/**, /auth/**, /oauth2/**
+          filters:
+            - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ,
   security:
     oauth2:
       client:
