@@ -33,6 +33,6 @@ rabbitmq:
         internal-invitation: internal.invitation.routing-key
 oauth:
     secret: ${SERVICE_PASSWORD}
-    redirect: ${REDIRECT_URL}/login/oauth2/code/hits
+    redirect: ${REDIRECT_URL}/code
     issuer: ${AUTH_URL}
 
