@@ -26,8 +26,6 @@ public class IdeaController {
     
     private final IdeaService ideaService;
 
-    //    Gson gson = new Gson();
-    //    UserDTO user = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
     @GetMapping("/{ideaId}")
     @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'PROJECT_OFFICE', 'EXPERT', 'ADMIN')")
     public Mono<IdeaDTO> getIdeaWithAuthorities(@PathVariable String ideaId, @AuthenticationPrincipal Jwt user) {

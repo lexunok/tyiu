@@ -3,8 +3,17 @@ server:
 spring:
   cloud:
     gateway:
-      default-filters:
-        - TokenRelay=
+      globalcors:
+        corsConfigurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:7777"
+              - "http://localhost:3000"
+              - "https://hits.tyiu.ru"
+              - "http://authorization-service:7777"
+            allowedMethods: "*"
+            allowedHeaders: "*"
+            allowCredentials: true
       routes:
         - id: ideas-service
           uri: http://ideas-service:8082
@@ -26,21 +35,3 @@ spring:
           uri: http://authorization-service:7777
           predicates:
             - Path=/api/v1/authorization-service/**, /auth/**, /oauth2/**
-          filters:
-            - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ,
-  security:
-    oauth2:
-      client:
-        registration:
-          hits:
-            provider: spring
-            client-id: hits
-            client-secret: ${SERVICE_PASSWORD}
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
-            scope: openid
-        provider:
-          spring:
-            authorization-uri: ${AUTH_URL}/oauth2/authorize
-            token-uri: ${AUTH_URL}/oauth2/token
-            jwk-set-uri: ${AUTH_URL}/oauth2/jwks
