@@ -36,4 +36,4 @@ spring:
           predicates:
             - Path=/api/v1/authorization-service/**, /auth/**, /oauth2/**
           filters:
-            - RewriteLocationResponseHeader=AS_IN_REQUEST, Location, ,
+            - RewriteResponseHeader=Location, , authorization-service:7777, ${GATEWAY}
