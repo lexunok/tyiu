@@ -12,6 +12,7 @@ import com.tyiu.ideas.model.entities.relations.User2Skill;
 import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.responses.ProfileIdeaResponse;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -26,6 +27,7 @@ import static org.springframework.data.relational.core.query.Query.query;
 
 
 @Service
+@Slf4j
 @RequiredArgsConstructor
 public class ProfileService {
 
@@ -114,9 +116,10 @@ public class ProfileService {
                 .flatMap(b -> {
                     if (Boolean.FALSE.equals(b)) {
                         Gson gson = new Gson();
-                        UserDTO userDTO = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
+                        UserDTO userDTO = gson.fromJson(jwt.getClaimAsString("user"), UserDTO.class);
                         User user = modelMapper.map(userDTO, User.class);
-                        template.insert(user);
+                        user.setPassword("");
+                        return template.insert(user).then();
                     }
                     return Mono.empty();
                 }).then();
