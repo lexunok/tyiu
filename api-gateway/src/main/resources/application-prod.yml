@@ -22,7 +22,7 @@ spring:
         - id: quest-service
           uri: http://quest-service:5000
           predicates:
-            - Path=/api/v1/quest-service/**
+            - Path=/quest-service/**
         - id: scrum-service
           uri: http://ideas-service:8082
           predicates:
