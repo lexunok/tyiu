@@ -19,6 +19,10 @@ spring:
           uri: http://ideas-service:8082
           predicates:
             - Path=/api/v1/ideas-service/**
+        - id: quest-service
+          uri: http://quest-service:5000
+          predicates:
+            - Path=/api/v1/quest-service/**
         - id: scrum-service
           uri: http://ideas-service:8082
           predicates:
