@@ -1,7 +1,5 @@
 package com.tyiu.authorizationservice.controller;
 
-
-import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.ProfileUpdateRequest;
 import com.tyiu.authorizationservice.service.ProfileService;
 import com.tyiu.client.exceptions.ServerProcessException;
@@ -13,6 +11,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Base64;
@@ -24,11 +23,6 @@ import java.util.List;
 public class ProfileController {
 
     private final ProfileService profileService;
-
-    @GetMapping
-    public User getJwt(@AuthenticationPrincipal User user){
-        return user;
-    }
 
     @GetMapping("/users/all")
     public List<UserDTO> getAllUsers() {
@@ -49,7 +43,7 @@ public class ProfileController {
     }
 
     @PostMapping("/avatar/upload")
-    public ResponseEntity<FileSystemResource> uploadAvatar(@AuthenticationPrincipal User user,
+    public ResponseEntity<FileSystemResource> uploadAvatar(@AuthenticationPrincipal Jwt user,
                                                            @RequestPart("file") Part file) {
         return ResponseEntity
                 .ok()
@@ -58,17 +52,17 @@ public class ProfileController {
     }
 
     @PutMapping("/{id}")
-    public void updateProfile(@RequestBody ProfileUpdateRequest request, @AuthenticationPrincipal User user) {
+    public void updateProfile(@RequestBody ProfileUpdateRequest request, @AuthenticationPrincipal Jwt user) {
         profileService.updateProfile(user.getId(), request);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/user/{id}")
     public UserDTO updateUserByAdmin(@RequestBody UserDTO user) {
         return profileService.updateUserByAdmin(user);
     }
 
-    @PreAuthorize("hasAuthority('ADMIN')")
+    @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/user/{id}")
     public void deleteUser(@PathVariable String id) {
         profileService.deleteUser(id);
