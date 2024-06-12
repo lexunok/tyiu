@@ -35,4 +35,5 @@ oauth:
     secret: ${SERVICE_PASSWORD}
     redirect: ${REDIRECT_URL}/code
     issuer: ${AUTH_URL}
+    jwk-uri: ${JWK_URI}
 

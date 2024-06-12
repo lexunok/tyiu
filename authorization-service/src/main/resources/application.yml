@@ -35,4 +35,5 @@ oauth:
     secret: secret
     redirect: http://localhost:3000/code
     issuer: http://localhost
+    jwk-uri: http://localhost
 

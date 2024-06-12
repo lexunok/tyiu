@@ -75,6 +75,8 @@ public class SecurityConfig {
     String redirect;
     @Value("${oauth.issuer}")
     String issuer;
+    @Value("${oauth.jwk-uri}")
+    String jwkUri;
     @Bean
     @Order(1)
     public SecurityFilterChain authorizationServerSecurityFilterChain(HttpSecurity http) throws Exception {
@@ -105,7 +107,7 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt -> jwt
-                                        .jwkSetUri(issuer + "/oauth2/jwks")
+                                        .jwkSetUri(jwkUri + "/oauth2/jwks")
                                         .jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .formLogin(formLogin ->
                         formLogin
