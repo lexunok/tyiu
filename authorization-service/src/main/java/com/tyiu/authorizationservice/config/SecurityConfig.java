@@ -84,19 +84,13 @@ public class SecurityConfig {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .oidc(Customizer.withDefaults());
         http
-                .csrf(AbstractHttpConfigurer::disable)
-                .cors(AbstractHttpConfigurer::disable)
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint(issuer + "/auth/login"),
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
-                .oauth2ResourceServer(resource -> resource
-                        .jwt(jwt -> jwt
-                                .jwkSetUri(jwkUri + "/oauth2/jwks")
-                                .jwtAuthenticationConverter(jwtAuthenticationConverter())));
-
+                .oauth2ResourceServer(resource -> resource.jwt(Customizer.withDefaults()));
         return http.build();
     }
 
@@ -108,7 +102,6 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( "/auth/**").permitAll()
                         .anyRequest().authenticated())
-                .cors(AbstractHttpConfigurer::disable)
                 .csrf(AbstractHttpConfigurer::disable)
                 .formLogin(formLogin ->
                         formLogin
@@ -117,6 +110,10 @@ public class SecurityConfig {
                                 .loginPage(issuer + "/auth/login")
                                 .permitAll()
                 );
+//                .oauth2ResourceServer(resource -> resource
+//                        .jwt(jwt -> jwt
+//                                .jwkSetUri(jwkUri + "/oauth2/jwks")
+//                                .jwtAuthenticationConverter(jwtAuthenticationConverter())));
         return http.build();
     }
     @Bean
