@@ -90,8 +90,13 @@ public class SecurityConfig {
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
-                .oauth2ResourceServer(resourceServer -> resourceServer
-                        .jwt(Customizer.withDefaults()));
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers( "/auth/**").permitAll()
+                        .anyRequest().authenticated())
+                .oauth2ResourceServer(resource -> resource
+                        .jwt(jwt -> jwt
+                                .jwkSetUri(jwkUri + "/oauth2/jwks")
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())));
 
         return http.build();
     }
@@ -105,10 +110,6 @@ public class SecurityConfig {
                         .requestMatchers( "/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
-                .oauth2ResourceServer(resource -> resource
-                        .jwt(jwt -> jwt
-                                        .jwkSetUri(jwkUri + "/oauth2/jwks")
-                                        .jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .formLogin(formLogin ->
                         formLogin
                                 .defaultSuccessUrl(issuer + "/api/v1/authorization-service/profile")
