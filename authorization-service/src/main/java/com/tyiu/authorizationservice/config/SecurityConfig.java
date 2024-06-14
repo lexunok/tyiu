@@ -90,9 +90,6 @@ public class SecurityConfig {
                                 new MediaTypeRequestMatcher(MediaType.TEXT_HTML)
                         )
                 )
-                .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers( "/auth/**").permitAll()
-                        .anyRequest().authenticated())
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt -> jwt
                                 .jwkSetUri(jwkUri + "/oauth2/jwks")
