@@ -48,7 +48,9 @@ public class ProfileService {
     }
 
     public Resource getAvatar(String userId){
-        Path avatarPath = Paths.get(path, userId + "_avatar.jpg");
+        //Path avatarPath = Paths.get(path, userId + "_avatar.jpg");
+        String volumePath = System.getProperty("user.home") + "/avatars";
+        Path avatarPath = Paths.get(volumePath, userId + "_avatar.jpg");
         if (!Files.exists(avatarPath)){
             throw new NotFoundException("Аватар не найден");
         }
@@ -56,8 +58,11 @@ public class ProfileService {
     }
 
     public FileSystemResource uploadAvatar(String userId, Part file) {
-        Path basePath = Paths.get(path);
-        Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
+        //Path basePath = Paths.get(path);
+        //Path avatarPath = basePath.resolve(userId + "_avatar.jpg");
+
+        String volumePath = System.getProperty("user.home") + "/avatars";
+        Path avatarPath = Paths.get(volumePath).resolve(userId + "_avatar.jpg");
 
         if (!(MediaType.IMAGE_JPEG_VALUE.equals(file.getContentType()) || MediaType.IMAGE_PNG_VALUE.equals(file.getContentType()))
                 || file.getSize() > MAX_FILE_SIZE_BYTES) {
@@ -65,7 +70,9 @@ public class ProfileService {
         }
 
         try (InputStream fileStream = file.getInputStream()) {
-            Files.createDirectories(basePath);
+            //Files.createDirectories(basePath);
+            Files.createDirectories(avatarPath.getParent());
+            //Files.copy(fileStream, avatarPath, StandardCopyOption.REPLACE_EXISTING);
             Files.copy(fileStream, avatarPath, StandardCopyOption.REPLACE_EXISTING);
             return new FileSystemResource(avatarPath);
         } catch (Exception e) {

@@ -38,7 +38,11 @@ public class ProfileController {
                     .body(Base64.getEncoder().encodeToString(profileService.getAvatar(userId).getContentAsByteArray()));
         }
         catch (Exception e) {
-            throw new ServerProcessException("Ошибка при получении аватара");
+            return ResponseEntity
+                    .ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body("");
+            //throw new ServerProcessException("Ошибка при получении аватара");
         }
     }
 
