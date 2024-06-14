@@ -10,6 +10,7 @@ spring:
               - "http://localhost:7777"
               - "http://localhost:3000"
               - "https://hits.tyiu.ru"
+              - "https://hits1.tyiu.ru"
               - "http://authorization-service:7777"
             allowedMethods: "*"
             allowedHeaders: "*"
