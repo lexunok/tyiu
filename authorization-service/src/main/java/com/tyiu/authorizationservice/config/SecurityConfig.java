@@ -52,6 +52,9 @@ import org.springframework.security.oauth2.server.resource.authentication.JwtGra
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.util.matcher.MediaTypeRequestMatcher;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
@@ -60,6 +63,7 @@ import java.security.interfaces.RSAPublicKey;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 
+import java.util.List;
 import java.util.UUID;
 
 @Configuration
@@ -84,6 +88,7 @@ public class SecurityConfig {
         http.getConfigurer(OAuth2AuthorizationServerConfigurer.class)
                 .oidc(Customizer.withDefaults());
         http
+                .cors(Customizer.withDefaults())
                 .exceptionHandling(exceptions -> exceptions
                         .defaultAuthenticationEntryPointFor(
                                 new LoginUrlAuthenticationEntryPoint(issuer + "/auth/login"),
@@ -99,10 +104,15 @@ public class SecurityConfig {
     public SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
             throws Exception {
         http
+                .cors(Customizer.withDefaults())
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers( "/auth/**").permitAll()
                         .anyRequest().authenticated())
                 .csrf(AbstractHttpConfigurer::disable)
+                .oauth2ResourceServer(resource -> resource
+                        .jwt(jwt -> jwt
+                                .jwkSetUri(jwkUri + "/oauth2/jwks")
+                                .jwtAuthenticationConverter(jwtAuthenticationConverter())))
                 .formLogin(formLogin ->
                         formLogin
                                 .defaultSuccessUrl(issuer + "/api/v1/authorization-service/profile")
@@ -110,11 +120,18 @@ public class SecurityConfig {
                                 .loginPage(issuer + "/auth/login")
                                 .permitAll()
                 );
-//                .oauth2ResourceServer(resource -> resource
-//                        .jwt(jwt -> jwt
-//                                .jwkSetUri(jwkUri + "/oauth2/jwks")
-//                                .jwtAuthenticationConverter(jwtAuthenticationConverter())));
         return http.build();
+    }
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        CorsConfiguration config = new CorsConfiguration();
+        config.addAllowedHeader("*");
+        config.addAllowedMethod("*");
+        config.setAllowedOrigins(List.of("https://hits.tyuiu.ru","https://hits1.tyuiu.ru"));
+        config.setAllowCredentials(true);
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
