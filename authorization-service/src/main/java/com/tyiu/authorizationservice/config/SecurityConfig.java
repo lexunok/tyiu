@@ -193,7 +193,7 @@ public class SecurityConfig {
 
     @Bean
     public AuthorizationServerSettings authorizationServerSettings() {
-        return AuthorizationServerSettings.builder().issuer(issuer).build();
+        return AuthorizationServerSettings.builder().issuer(issuer).oidcLogoutEndpoint("/oauth2/logout").build();
     }
     @Bean
     public OAuth2TokenCustomizer<JwtEncodingContext> tokenCustomizer() {
