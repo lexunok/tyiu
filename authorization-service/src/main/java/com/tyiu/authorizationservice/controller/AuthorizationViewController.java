@@ -3,13 +3,14 @@ package com.tyiu.authorizationservice.controller;
 import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.PasswordChangeRequest;
 import com.tyiu.authorizationservice.service.AccountService;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.ModelAndView;
-import javax.servlet.http.HttpServletRequest;
+
 
 @Controller
 @RequestMapping("/auth")
