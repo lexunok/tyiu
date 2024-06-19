@@ -24,6 +24,7 @@ public class AuthorizationViewController {
     }
     
     @PostMapping("/logout")
+    @ResponseBody
     public void logout(HttpServletRequest request) {
         request.getSession().invalidate();
     }
