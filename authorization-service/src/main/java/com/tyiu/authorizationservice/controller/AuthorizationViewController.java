@@ -20,6 +20,11 @@ public class AuthorizationViewController {
     public String login() {
         return "login";
     }
+    
+    @PostMapping("/logout")
+    public void logout(HttpServletRequest request) {
+        request.getSession().invalidate();
+    }
 
     @GetMapping("/registration")
     public String showRegistration(@RequestParam(name = "code") String code, Model model) {
