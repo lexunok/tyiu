@@ -6,12 +6,7 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins:
-              - "http://localhost:7777"
-              - "http://localhost:3000"
-              - "https://hits.tyuiu.ru"
-              - "https://hits1.tyuiu.ru"
-              - "http://authorization-service:7777"
+            allowedOrigins: "*"
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
