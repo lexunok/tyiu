@@ -29,7 +29,7 @@ public class InvitationService {
     private final UserRepository userRepository;
     private final RabbitMQMessageProducer rabbitProducer;
     private final ModelMapper mapper;
-
+    //TODO: NE NADO! DELETE!
     public void sendInvitationToEmail(InvitationRequest invitationRequest, UserDTO user) {
         Boolean userIsExists = userRepository.existsByEmail(invitationRequest.getEmail());
         if (Boolean.TRUE.equals(userIsExists)) {
