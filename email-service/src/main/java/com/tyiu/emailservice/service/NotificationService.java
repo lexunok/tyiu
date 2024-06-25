@@ -53,7 +53,7 @@ public class NotificationService {
     }
 
 
-    @RabbitListener(queues = "${rabbitmq.queues.team-invitation}")
+    @RabbitListener(queues = "${rabbitmq.queues.team-invitation}", ackMode = "MANUAL")
     public Mono<Void> sendTeamInvitation(TeamInvitationRequest request) {
         return Mono.fromCallable(() -> {
             String message = String.format("Вас пригласил(-а) %s %s в команду \"%s\" в качестве участника.",
