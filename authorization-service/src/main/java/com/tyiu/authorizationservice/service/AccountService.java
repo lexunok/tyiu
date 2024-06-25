@@ -142,7 +142,7 @@ public class AccountService {
         } else {
             throw new NotFoundException("Приглашение не найдено");
         }
-        return "login";
+        return "redirect:https://hits.tyuiu.ru";
     }
 
     public void registerForAdmin(UserDTO userDTO) {
