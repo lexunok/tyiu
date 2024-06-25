@@ -29,6 +29,11 @@ public class ProfileController {
         return profileService.getAllUsers();
     }
 
+    @GetMapping("/{id}")
+    public UserDTO getProfile(@PathVariable String id) {
+        return profileService.getUser(id);
+    }
+
     @GetMapping("/avatar/get/{userId}")
     public ResponseEntity<String> getAvatar(@PathVariable String userId) {
         try {

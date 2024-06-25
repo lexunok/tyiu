@@ -47,6 +47,20 @@ public class ProfileService {
                 .toList();
     }
 
+    public UserDTO getUser(String id){
+        User u = userRepository.findById(id).orElseThrow(() -> new NotFoundException("Not found"));
+        return UserDTO.builder()
+                .id(u.getId())
+                .roles(u.getRoles())
+                .email(u.getEmail())
+                .telephone(u.getTelephone())
+                .studyGroup(u.getStudyGroup())
+                .firstName(u.getFirstName())
+                .lastName(u.getLastName())
+                .createdAt(u.getCreatedAt().toString())
+                .build();
+    }
+
     public Resource getAvatar(String userId){
         //Path avatarPath = Paths.get(path, userId + "_avatar.jpg");
         String volumePath = System.getProperty("user.home") + "/avatars";
