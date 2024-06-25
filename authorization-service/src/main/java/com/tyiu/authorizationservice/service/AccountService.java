@@ -17,9 +17,9 @@ import com.tyiu.client.models.Role;
 import com.tyiu.client.models.UserDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.cache.annotation.Cacheable;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,6 +35,7 @@ import java.util.Optional;
 @RequiredArgsConstructor
 @Service
 @EnableScheduling
+@Slf4j
 public class AccountService {
 
     @Value("${server.admin.username}")
@@ -58,7 +59,7 @@ public class AccountService {
         emailChangeRepository.deleteByDateExpiredLessThan(now);
         invitationRepository.deleteByDateExpiredLessThan(now);
     }
-    @Cacheable(value = "password", key = "#email")
+
     public ModelAndView generateAndSendCode(String email) {
         Boolean isUserExists = userRepository.existsByEmail(email);
         if (Boolean.FALSE.equals(isUserExists)) {
@@ -110,13 +111,14 @@ public class AccountService {
         });
         return "login";
     }
-    @Cacheable(value = "registration", key = "#code")
+
     public String showRegistration(String code, Model model) {
         Optional<Invitation> invitation = invitationRepository.findById(code);
         if (invitation.isPresent()) {
             Invitation data = invitation.get();
             data.setDateExpired(LocalDateTime.now().plusHours(3));
             invitationRepository.save(data);
+            log.info(data.toString());
             model.addAttribute("email", data.getEmail());
             model.addAttribute("user", new User());
             model.addAttribute("code", code);
