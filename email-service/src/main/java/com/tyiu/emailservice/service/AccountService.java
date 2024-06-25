@@ -48,7 +48,7 @@ public class AccountService {
                 .map(this::sendMailCodeToChangeData).then();
     }
 
-    @RabbitListener(queues = "${rabbitmq.queues.invitation}")
+    @RabbitListener(queues = "${rabbitmq.queues.invitation}", ackMode = "MANUAL")
     public Mono<Void> sendInvitation(InvitationLinkRequest request) {
         return Mono.fromCallable(() -> {
             log.info("Consume link for invitation");
