@@ -213,8 +213,8 @@ public class SecurityConfig {
                         .lastName(user.getLastName())
                         .email(user.getEmail())
                         .roles(user.getRoles())
-                        .studyGroup(user.getStudyGroup())
-                        .telephone(user.getTelephone())
+                        .studyGroup(user.getStudyGroup().replaceAll("\\s+",""))
+                        .telephone(user.getTelephone().replaceAll("\\s+",""))
                         .build();
                 context.getClaims().id(user.getId());
                 context.getClaims().claim("user", userDTO);

@@ -112,16 +112,16 @@ public class ProfileService {
                 );
     }
     public Mono<Void> checkUser(Jwt jwt) {
-        return template.exists(query(where("id").is(jwt.getId())), User.class)
+        Gson gson = new Gson();
+        UserDTO userDTO = gson.fromJson(jwt.getClaimAsString("user"), UserDTO.class);
+        User user = modelMapper.map(userDTO, User.class);
+        user.setPassword("");
+        return template.exists(query(where("id").is(user.getId())), User.class)
                 .flatMap(b -> {
                     if (Boolean.FALSE.equals(b)) {
-                        Gson gson = new Gson();
-                        UserDTO userDTO = gson.fromJson(jwt.getClaimAsString("user"), UserDTO.class);
-                        User user = modelMapper.map(userDTO, User.class);
-                        user.setPassword("");
-                        return template.insert(user).then();
+                        return template.insert(user);
                     }
-                    return Mono.empty();
+                    return template.update(user);
                 }).then();
     }
 }
