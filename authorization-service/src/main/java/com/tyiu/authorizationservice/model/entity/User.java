@@ -30,8 +30,6 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private List<Role> roles;
     @Column(unique = true)
-    @NotBlank(message = "Почта не может быть пустым полем")
-    @Email
     private String email;
     @Length(min = 8, message = "Пароль должен быть больше 8 символов")
     @NotBlank(message = "Пароль не может быть пустым полем")
