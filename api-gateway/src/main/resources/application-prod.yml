@@ -6,9 +6,15 @@ spring:
       globalcors:
         corsConfigurations:
           '[/**]':
-            allowedOrigins: "*"
+            allowedOrigins:
+              - "http://localhost:7777"
+              - "http://localhost:3000"
+              - "https://hits.tyuiu.ru"
+              - "https://hits1.tyuiu.ru"
+              - "http://authorization-service:7777"
             allowedMethods: "*"
             allowedHeaders: "*"
+            allowCredentials: true
       routes:
         - id: ideas-service
           uri: http://ideas-service:8082
