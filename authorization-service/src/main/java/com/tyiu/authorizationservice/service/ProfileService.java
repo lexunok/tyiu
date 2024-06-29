@@ -101,8 +101,9 @@ public class ProfileService {
 
     public UserDTO updateUserByAdmin(UserDTO userDTO){
         if (userRepository.existsById(userDTO.getId())) {
-            User user = userRepository.save(mapper.map(userDTO, User.class));
-            return mapper.map(user, UserDTO.class);
+            userRepository.updateProfileForAdminById(userDTO.getFirstName(), userDTO.getLastName(),
+                    userDTO.getEmail(), userDTO.getRoles(), userDTO.getId());
+            return userDTO;
         }
         else throw new NotFoundException("Пользователя не существует");
     }
