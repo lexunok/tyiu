@@ -11,6 +11,8 @@ rabbitmq:
 postgres:
   url: postgresql://db-ideas:5432/hits
 spring:
+  rabbitmq:
+    addresses: rabbitmq
   r2dbc:
     pool:
       enabled: true
