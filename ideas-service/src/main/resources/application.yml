@@ -11,6 +11,8 @@ rabbitmq:
 postgres:
   url: postgresql://localhost:5432/hits
 spring:
+  rabbitmq:
+    addresses: localhost:5672
   r2dbc:
     pool:
       enabled: true
