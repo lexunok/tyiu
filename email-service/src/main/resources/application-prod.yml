@@ -6,14 +6,16 @@ spring:
   rabbitmq:
     addresses: rabbitmq:5672
   mail:
-    host: smtp.tsogu.ru
-    port: 25
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
     properties:
       mail:
         smtp:
-          auth: false
+          auth: true
           starttls:
-            enable: false
+            enable: true
 rabbitmq:
   exchanges:
     internal: internal.exchange
