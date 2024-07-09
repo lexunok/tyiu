@@ -13,6 +13,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 
@@ -30,6 +31,7 @@ public class ProfileService {
     private static final long MAX_FILE_SIZE_BYTES = 16 * 1024 * 1024;
     private final UserRepository userRepository;
     private final ModelMapper mapper;
+    private final RedisTemplate<String, Object> template;
 
     @Value("${file.path}")
     String path;
@@ -90,12 +92,17 @@ public class ProfileService {
     }
 
     public void updateProfile(String id, ProfileUpdateRequest request){
+        userRepository.findById(id)
+                .ifPresent(u -> template.opsForHash().delete("user", u.getEmail().toLowerCase()));
         userRepository.updateProfileById(request.getFirstName(), request.getLastName(),
                 request.getTelephone(), request.getStudyGroup(), id);
     }
 
     public UserDTO updateUserByAdmin(UserDTO userDTO){
         if (userRepository.existsById(userDTO.getId())) {
+            userRepository.findById(userDTO.getId())
+                            .ifPresent(u -> template.opsForHash().delete("user", u.getEmail().toLowerCase()));
+
             userRepository.updateProfileForAdminById(userDTO.getFirstName(), userDTO.getLastName(),
                     userDTO.getEmail(), userDTO.getRoles(), userDTO.getId());
             return userDTO;
