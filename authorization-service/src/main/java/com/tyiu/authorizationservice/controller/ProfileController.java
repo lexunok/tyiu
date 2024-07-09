@@ -2,7 +2,6 @@ package com.tyiu.authorizationservice.controller;
 
 import com.tyiu.authorizationservice.model.request.ProfileUpdateRequest;
 import com.tyiu.authorizationservice.service.ProfileService;
-import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
 import jakarta.servlet.http.Part;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +59,7 @@ public class ProfileController {
                 .body(profileService.uploadAvatar(user.getId(),file));
     }
 
-    @PutMapping("/{id}")
+    @PutMapping("/update")
     public void updateProfile(@RequestBody ProfileUpdateRequest request, @AuthenticationPrincipal Jwt user) {
         profileService.updateProfile(user.getId(), request);
     }
