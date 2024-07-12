@@ -77,7 +77,7 @@ public class AccountService {
             helper.setSubject(changeRequest.getSubject());
             helper.setTo(changeRequest.getTo());
             helper.setText(html, true);
-            helper.setFrom("user2@mail.tyuiu.ru");
+            helper.setFrom("hist@tyuiu.ru");
             javaMailSender.send(message);
             return html;
         }
