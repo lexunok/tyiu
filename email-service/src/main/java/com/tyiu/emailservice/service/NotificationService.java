@@ -42,7 +42,7 @@ public class NotificationService {
             helper.setSubject(notificationRequest.getTitle());
             helper.setTo(notificationRequest.getConsumerEmail());
             helper.setText(html, true);
-            helper.setFrom("user2@mail.tyuiu.ru");
+            helper.setFrom("hist@tyuiu.ru");
             javaMailSender.send(message);
         }
         catch (Exception e) {
