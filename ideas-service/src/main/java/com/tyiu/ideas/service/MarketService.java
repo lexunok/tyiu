@@ -27,26 +27,36 @@ public class MarketService {
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
 
+    private final String QUERY_CLOSE = """
+        UPDATE idea SET status = 'CONFIRMED', is_active = false
+                WHERE id IN (
+                    SELECT idea_id FROM idea_market
+                    WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
+                )
+    """;
+
+    private final String QUERY_TEAM_UPDATE = """
+        UPDATE team SET has_active_project = false
+            WHERE id IN (
+                SELECT team_id FROM team_market_request
+                WHERE market_id = :marketId AND status <> 'ACCEPTED'
+            )
+    """;
+
     @Scheduled(cron = "0 0 0 * * *", zone = "Asia/Yekaterinburg")
     private void checkFinalDate(){
         template.select(query(where("finish_date").is(LocalDate.now())), Market.class)
                 .flatMap(m -> {
                     m.setStatus(MarketStatus.DONE);
-                    String QUERY = """
-                        UPDATE idea SET status = 'CONFIRMED', is_active = false
-                                WHERE id IN (
-                                    SELECT idea_id FROM idea_market
-                                    WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
-                                )
-                        """;
                     return template.getDatabaseClient()
-                            .sql(QUERY)
+                            .sql(QUERY_CLOSE)
                             .bind("marketId", m.getId())
                             .map((row, rowMetadata) -> Mono.empty())
                             .all()
                             .then(template.update(m))
                             .then(template.delete(query(where("market_id").is(m.getId())
-                                    .and("status").is(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)), IdeaMarket.class));
+                                    .and("status").is(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)), IdeaMarket.class))
+                            .then(template.getDatabaseClient().sql(QUERY_TEAM_UPDATE).bind("marketId", m.getId()).then());
                 }).subscribe();
     }
 
@@ -99,21 +109,15 @@ public class MarketService {
                                 .thenReturn(mapper.map(m, MarketDTO.class));
                     }
                     else if (status == MarketStatus.DONE) {
-                        String QUERY = """
-                                UPDATE idea SET status = 'CONFIRMED', is_active = false
-                                        WHERE id IN (
-                                            SELECT idea_id FROM idea_market
-                                            WHERE market_id = :marketId AND status = 'RECRUITMENT_IS_OPEN'
-                                        )
-                                """;
                         return template.getDatabaseClient()
-                                .sql(QUERY)
+                                .sql(QUERY_CLOSE)
                                 .bind("marketId", id)
                                 .map((row, rowMetadata) -> Mono.empty())
                                 .all()
                                 .then(template.update(m))
                                 .then(template.delete(query(where("market_id").is(m.getId())
                                         .and("status").is(IdeaMarketStatusType.RECRUITMENT_IS_OPEN)), IdeaMarket.class))
+                                .then(template.getDatabaseClient().sql(QUERY_TEAM_UPDATE).bind("marketId", m.getId()).then())
                                 .thenReturn(mapper.map(m, MarketDTO.class));
                     }
                     else if (status == MarketStatus.NEW && user.getRoles().contains(Role.ADMIN)) {

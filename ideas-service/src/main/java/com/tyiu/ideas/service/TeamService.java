@@ -133,6 +133,11 @@ public class TeamService {
                 .and("owner_id").is(userId)), Team.class);
     }
 
+    private Mono<Boolean> checkOwnerOrLeader(String teamId, String userId){
+        return template.exists(query(where("id").is(teamId)
+                .and(where("owner_id").is(userId).or("leader_id").is(userId))), Team.class);
+    }
+
     private Mono<Boolean> checkInitiator(String invitationId, String userId){
         return template.exists(query(where("id").is(invitationId)
                 .and("user_id").is(userId)), TeamInvitation.class);
@@ -610,7 +615,7 @@ public class TeamService {
     }
 
     public Mono<TeamDTO> updateTeam(String teamId, TeamDTO teamDTO, UserDTO user) {
-        return checkOwner(teamId, user.getId())
+        return checkOwnerOrLeader(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
                         return template.update(query(where("id").is(teamId)),
@@ -625,7 +630,7 @@ public class TeamService {
     }
 
     public Mono<Void> updateTeamSkills(String teamId, Flux<SkillDTO> wantedSkills, UserDTO user) {
-        return checkOwner(teamId, user.getId())
+        return checkOwnerOrLeader(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)) {
                         return template.delete(query(where("team_id").is(teamId)), Team2WantedSkill.class)
@@ -699,7 +704,7 @@ public class TeamService {
                                 });
                     }
                     else if (newStatus.equals(RequestStatus.WITHDRAWN)) {
-                        return checkOwner(invitation.getTeamId(), user.getId())
+                        return checkOwnerOrLeader(invitation.getTeamId(), user.getId())
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(invitation).thenReturn(invitation);
@@ -720,7 +725,7 @@ public class TeamService {
                 .flatMap(request -> {
                     request.setStatus(newStatus);
                     if (newStatus.equals(RequestStatus.CANCELED)){
-                        return checkOwner(request.getTeamId(), user.getId())
+                        return checkOwnerOrLeader(request.getTeamId(), user.getId())
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.insert(new Team2Refused(request.getTeamId(), request.getUserId()))
@@ -731,7 +736,7 @@ public class TeamService {
                                 });
                     }
                     else if (newStatus.equals(RequestStatus.ACCEPTED)){
-                        return checkOwner(request.getTeamId(), user.getId())
+                        return checkOwnerOrLeader(request.getTeamId(), user.getId())
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return annul(request.getUserId())

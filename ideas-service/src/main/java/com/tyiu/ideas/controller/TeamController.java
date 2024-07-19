@@ -60,19 +60,19 @@ public class TeamController {
     }
 
     @GetMapping("/users/requests/{teamId}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamRequest> getTeamRequests(@PathVariable String teamId) {
         return teamService.getTeamRequests(teamId);
     }
 
     @GetMapping("/invitations/{teamId}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamInvitation> getInvitationByTeam(@PathVariable String teamId) {
         return teamService.getInvitationByTeam(teamId);
     }
 
     @GetMapping("/idea/requests/{teamId}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'INITIATOR', 'PROJECT_OFFICE', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'INITIATOR', 'PROJECT_OFFICE', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamMarketRequestDTO> getTeamMarketRequests(@PathVariable String teamId){
         return teamService.getTeamMarketRequests(teamId);
     }
@@ -83,7 +83,7 @@ public class TeamController {
     }
 
     @GetMapping("/projects/{teamId}")
-    @PreAuthorize("hasAnyRole('MEMBER','TEACHER','INITIATOR','PROJECT_OFFICE','TEAM_OWNER','ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER','TEACHER','INITIATOR','PROJECT_OFFICE', 'TEAM_LEADER', 'TEAM_OWNER','ADMIN')")
     public Flux<ProjectDTO> getAllProjectsForTeam(@PathVariable String teamId){
         return teamService.getAllProjectsForTeam(teamId);
     }
@@ -97,13 +97,13 @@ public class TeamController {
     }
 
     @PostMapping("/skill-filter/{role}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'INITIATOR', 'PROJECT_OFFICE', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'INITIATOR', 'PROJECT_OFFICE', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamDTO> getTeamsBySkills(@RequestBody List<SkillDTO> checkedSkills, @PathVariable Role role, @AuthenticationPrincipal Jwt user) {
         return teamService.getTeamsBySkills(checkedSkills, role, user.getId());
     }
 
     @PostMapping("/vacancy-filter")
-    @PreAuthorize("hasAnyRole('MEMBER', 'INITIATOR', 'PROJECT_OFFICE', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'INITIATOR', 'PROJECT_OFFICE', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamDTO> getTeamsByVacancies(@RequestBody List<SkillDTO> checkedSkills, @AuthenticationPrincipal Jwt user) {
         return teamService.getTeamsByVacancies(checkedSkills, user.getId());
     }
@@ -118,7 +118,7 @@ public class TeamController {
     }
 
     @PostMapping("/send-invites")
-    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamInvitation> sendInvites(@RequestBody Flux<TeamInvitation> users, @AuthenticationPrincipal Jwt jwt) {
         Gson gson = new Gson();
         UserDTO user = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
@@ -184,7 +184,7 @@ public class TeamController {
     }
 
     @PutMapping("/update/{teamId}")
-    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Mono<TeamDTO> updateTeam(@PathVariable String teamId, @RequestBody TeamDTO team, @AuthenticationPrincipal Jwt jwt) {
         Gson gson = new Gson();
         UserDTO user = gson.fromJson(jwt.getClaim("user").toString(), UserDTO.class);
@@ -193,7 +193,7 @@ public class TeamController {
     }
 
     @PutMapping("/skills/update/{teamId}")
-    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Mono<InfoResponse> updateTeamSkills(@PathVariable String teamId,
                                                @RequestBody Flux<SkillDTO> wantedSkills,
                                                @AuthenticationPrincipal Jwt jwt) {
