@@ -39,7 +39,7 @@ public class MarketService {
         UPDATE team SET has_active_project = false
             WHERE id IN (
                 SELECT team_id FROM team_market_request
-                WHERE market_id = :marketId AND status <> 'ACCEPTED'
+                WHERE market_id = :marketId
             )
     """;
 
