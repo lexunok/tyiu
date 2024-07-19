@@ -70,6 +70,13 @@ public class ProfileController {
         return profileService.updateUserByAdmin(user);
     }
 
+    @PreAuthorize("hasAnyRole('TEAM_OWNER','ADMIN')")
+    @PutMapping("/leader/{teamLeaderId}/{userId}")
+    public void updateTeamLeader(@PathVariable String teamLeaderId,
+                                 @PathVariable String userId) {
+        profileService.changeTeamLeader(teamLeaderId, userId);
+    }
+
     @PreAuthorize("hasRole('ADMIN')")
     @DeleteMapping("/user/{id}")
     public void deleteUser(@PathVariable String id) {

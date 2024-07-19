@@ -6,6 +6,7 @@ import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.exceptions.MediaException;
 import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.exceptions.ServerProcessException;
+import com.tyiu.client.models.Role;
 import com.tyiu.client.models.UserDTO;
 import jakarta.servlet.http.Part;
 import lombok.RequiredArgsConstructor;
@@ -108,6 +109,15 @@ public class ProfileService {
             return userDTO;
         }
         else throw new NotFoundException("Пользователя не существует");
+    }
+
+    public void changeTeamLeader(String teamLeaderId, String userId){
+        User oldTeamLeader = userRepository.findById(teamLeaderId).orElseThrow(() -> new NotFoundException("Not found"));
+        oldTeamLeader.getRoles().remove(Role.TEAM_LEADER);
+        userRepository.save(oldTeamLeader);
+        User newTeamLeader = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Not found"));
+        newTeamLeader.getRoles().add(Role.TEAM_LEADER);
+        userRepository.save(newTeamLeader);
     }
 
     public void deleteUser(String id){

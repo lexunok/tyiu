@@ -649,17 +649,9 @@ public class TeamService {
                                     if (Objects.equals(userId, t.getLeaderId())){
                                         return Mono.empty();
                                     }
-                                    return template.getDatabaseClient()
-                                            .sql("UPDATE users SET roles = ARRAY_REMOVE(roles, 'TEAM_LEADER') WHERE id = :userId")
-                                            .bind("userId", t.getLeaderId() != null ? t.getLeaderId() : t.getOwnerId())
-                                            .then()
-                                            .then(template.getDatabaseClient()
-                                                    .sql("UPDATE users SET roles = ARRAY_APPEND(roles, 'TEAM_LEADER') WHERE id = :userId")
-                                                    .bind("userId", userId)
-                                                    .then())
-                                            .then(template.update(query(where("id").is(teamId)),
+                                    return template.update(query(where("id").is(teamId)),
                                                     update("leader_id", userId),
-                                                    Team.class))
+                                                    Team.class)
                                             .then(template.exists(query(where("team_id").is(t.getId())), Project.class)
                                                     .flatMap(thisExists -> {
                                                         if (Boolean.TRUE.equals(thisExists)){
