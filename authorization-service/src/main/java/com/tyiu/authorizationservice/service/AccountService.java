@@ -137,6 +137,8 @@ public class AccountService {
             user.setIsDeleted(false);
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
+            if (user.getStudyGroup() == null || !user.getStudyGroup().equals("")) { user.setStudyGroup("-"); }
+            if (user.getTelephone() == null || !user.getTelephone().equals("")) { user.setTelephone("-"); }
             userRepository.save(user);
             invitationRepository.deleteById(data.getId());
         } else {
