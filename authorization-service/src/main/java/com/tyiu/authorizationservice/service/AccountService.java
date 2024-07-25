@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -46,6 +47,7 @@ public class AccountService {
     private final PasswordEncoder encoder;
     private final EmailClient emailClient;
     private final ModelMapper mapper;
+    private final RedisTemplate<String, Object> template;
 
     private final UserRepository userRepository;
     private final InvitationRepository invitationRepository;
@@ -95,6 +97,7 @@ public class AccountService {
                     String password = encoder.encode(request.getPassword());
                     userRepository.setUserPasswordByEmail(password, passwordChangeData.getEmail());
                     passwordChangeRepository.delete(passwordChangeData);
+                    template.opsForHash().delete("user", passwordChangeData.getEmail().toLowerCase());
                 }
             }
             else {
@@ -192,6 +195,7 @@ public class AccountService {
             if (encoder.matches(code, data.getCode())) {
                 userRepository.setUserEmailByEmail(data.getNewEmail(), data.getOldEmail());
                 emailChangeRepository.deleteByOldEmail(data.getOldEmail());
+                template.opsForHash().delete("user", data.getOldEmail().toLowerCase());
             }
             else {
                 if (data.getWrongTries()>=3) {

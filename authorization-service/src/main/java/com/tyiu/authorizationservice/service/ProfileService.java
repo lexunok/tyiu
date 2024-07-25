@@ -115,9 +115,11 @@ public class ProfileService {
         User oldTeamLeader = userRepository.findById(teamLeaderId).orElseThrow(() -> new NotFoundException("Not found"));
         oldTeamLeader.getRoles().remove(Role.TEAM_LEADER);
         userRepository.save(oldTeamLeader);
+        template.opsForHash().delete("user", oldTeamLeader.getEmail().toLowerCase());
         User newTeamLeader = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Not found"));
         newTeamLeader.getRoles().add(Role.TEAM_LEADER);
         userRepository.save(newTeamLeader);
+        template.opsForHash().delete("user", newTeamLeader.getEmail().toLowerCase());
     }
 
     public void deleteUser(String id){
