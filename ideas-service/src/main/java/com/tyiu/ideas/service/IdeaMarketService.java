@@ -142,9 +142,9 @@ public class IdeaMarketService {
                 .first();
     }
 
-    private Mono<Boolean> checkOwner(String teamId, String userId){
+    private Mono<Boolean> checkOwnerOrLeader(String teamId, String userId){
         return template.exists(query(where("id").is(teamId)
-                .and("owner_id").is(userId)), Team.class);
+                .and(where("owner_id").is(userId).or("leader_id").is(userId))), Team.class);
     }
 
 
@@ -417,7 +417,7 @@ public class IdeaMarketService {
     }
 
     public Mono<TeamMarketRequestDTO> declareTeam(TeamMarketRequestDTO teamMarketRequestDTO, String userId){
-        return checkOwner(teamMarketRequestDTO.getTeamId(), userId)
+        return checkOwnerOrLeader(teamMarketRequestDTO.getTeamId(), userId)
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists)){
                         return template.selectOne(query(where("id").is(teamMarketRequestDTO.getIdeaMarketId())), IdeaMarket.class)
@@ -539,7 +539,7 @@ public class IdeaMarketService {
                                 });
                     }
                     else if (status.equals(RequestStatus.WITHDRAWN)){
-                        return checkOwner(r.getTeamId(), userId)
+                        return checkOwnerOrLeader(r.getTeamId(), userId)
                                 .flatMap(isExists -> {
                                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                                         return template.update(r).then();

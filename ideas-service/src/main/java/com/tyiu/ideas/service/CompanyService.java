@@ -2,6 +2,7 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.CompanyDTO;
+import com.tyiu.ideas.model.entities.Company;
 import com.tyiu.ideas.model.entities.mappers.CompanyMapper;
 import com.tyiu.ideas.model.entities.relations.Company2User;
 import lombok.RequiredArgsConstructor;
@@ -11,13 +12,11 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
-import com.tyiu.ideas.model.entities.Company;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
-
-import reactor.core.publisher.Flux;
-import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
@@ -29,14 +28,17 @@ public class CompanyService {
     private final CompanyMapper companyMapper;
 
     private Mono<CompanyDTO> getCompany(String companyId) {
-        String query = "SELECT company.*, " +
-                "owner.id owner_id, owner.email owner_email, owner.first_name owner_first_name, owner.last_name owner_last_name, " +
-                "member.id member_id, member.email member_email, member.first_name member_first_name, member.last_name member_last_name " +
-                "FROM company " +
-                "LEFT JOIN users owner ON company.owner_id = owner.id " +
-                "LEFT JOIN company_user ON company.id = company_user.company_id " +
-                "LEFT JOIN users member ON company_user.user_id = member.id " +
-                "WHERE company.id = :companyId";
+        String query = """
+            SELECT 
+                c.id c_id, c.name c_name, c.owner_id c_owner_id,
+                o.id o_id, o.email o_email, o.first_name o_first_name, o.last_name o_last_name,
+                m.id m_id, m.email m_email, m.first_name m_first_name, m.last_name m_last_name
+            FROM company c
+                LEFT JOIN users o ON c.owner_id = o.id
+                LEFT JOIN company_user cu ON c.id = cu.company_id
+                LEFT JOIN users m ON cu.user_id = m.id
+            WHERE c.id = :companyId
+        """;
 
         return template.getDatabaseClient()
                 .sql(query)

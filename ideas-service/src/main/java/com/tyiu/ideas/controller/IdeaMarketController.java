@@ -30,7 +30,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/market/{marketId}/all")
-    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'PROJECT_OFFICE', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'PROJECT_OFFICE', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<IdeaMarketDTO> getAllMarketIdeasForMarket(@AuthenticationPrincipal Jwt user, @PathVariable String marketId) {
         return ideaMarketService.getAllMarketIdeasForMarket(user.getId(), marketId);
     }
@@ -53,7 +53,7 @@ public class IdeaMarketController {
     }
 
     @GetMapping("/requests/{ideaMarketId}")
-    @PreAuthorize("hasAnyRole('INITIATOR', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Flux<TeamMarketRequestDTO> getAllTeamMarketIdeaRequests(@PathVariable String ideaMarketId) {
         return ideaMarketService.getAllTeamsRequests(ideaMarketId);
     }
@@ -77,7 +77,7 @@ public class IdeaMarketController {
     }
 
     @PostMapping("/declare")
-    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_LEADER','TEAM_OWNER', 'ADMIN')")
     public Mono<TeamMarketRequestDTO> createTeamMarketRequest(@RequestBody TeamMarketRequestDTO teamMarketRequestDTO,
                                                               @AuthenticationPrincipal Jwt user) {
         return ideaMarketService.declareTeam(teamMarketRequestDTO, user.getId())
@@ -137,7 +137,7 @@ public class IdeaMarketController {
     }
 
     @PutMapping("/change-status/request/{teamMarketId}/{status}")
-    @PreAuthorize("hasAnyRole('INITIATOR', 'TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('INITIATOR', 'TEAM_LEADER', 'TEAM_OWNER', 'ADMIN')")
     public Mono<Void> changeRequestStatus(@PathVariable String teamMarketId, @PathVariable RequestStatus status,
                                           @AuthenticationPrincipal Jwt jwt) {
         Gson gson = new Gson();

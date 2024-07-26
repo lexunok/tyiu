@@ -31,13 +31,13 @@ public class MarketController {
     }
 
     @GetMapping("/active")
-    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'INITIATOR', 'TEAM_OWNER', 'PROJECT_OFFICE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'INITIATOR', 'TEAM_LEADER', 'TEAM_OWNER', 'PROJECT_OFFICE', 'ADMIN')")
     public Flux<MarketDTO> getActiveMarket(){
         return marketService.getActiveMarkets();
     }
 
     @GetMapping("/{marketId}")
-    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'INITIATOR', 'TEAM_OWNER', 'PROJECT_OFFICE', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MEMBER', 'TEACHER', 'INITIATOR', 'TEAM_LEADER', 'TEAM_OWNER', 'PROJECT_OFFICE', 'ADMIN')")
     public Mono<MarketDTO> getMarket(@PathVariable String marketId){
         return marketService.getMarket(marketId);
     }
