@@ -209,7 +209,7 @@ public class TeamService {
                 "LEFT JOIN idea_market_refused imr ON imr.team_id = t.id AND imr.idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "WHERE t.owner_id = :userId";
+                "WHERE t.owner_id = :userId OR t.leader_id = :userId";
 
         return template.getDatabaseClient()
                 .sql(QUERY)
