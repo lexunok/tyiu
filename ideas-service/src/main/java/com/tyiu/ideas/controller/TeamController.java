@@ -44,7 +44,7 @@ public class TeamController {
     }
 
     @GetMapping("/owner/all/{ideaMarketId}")
-    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('TEAM_OWNER', 'ADMIN', 'TEAM_LEADER')")
     public Flux<TeamDTO> getOwnerTeams(@AuthenticationPrincipal Jwt user, @PathVariable String ideaMarketId) {
         return teamService.getOwnerTeams(user.getId(), ideaMarketId);
     }
