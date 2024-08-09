@@ -31,9 +31,9 @@ public class TestController {
         return testService.getTest(testName);
     }
 
-    @GetMapping("/{testName}")
-    public Flux<TestQuestionDTO> getTestQuestions(@PathVariable String testName){
-        return testService.getTestQuestions(testName);
+    @GetMapping("/{testName}/questions/{moduleNumber}")
+    public Flux<TestQuestionDTO> getTestQuestions(@PathVariable String testName, @PathVariable Integer moduleNumber){
+        return testService.getTestQuestions(testName, moduleNumber);
     }
 
     @GetMapping("/{testName}/answers")
