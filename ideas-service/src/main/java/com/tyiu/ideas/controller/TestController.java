@@ -2,6 +2,7 @@ package com.tyiu.ideas.controller;
 
 import com.tyiu.ideas.model.dto.TestAnswerDTO;
 import com.tyiu.ideas.model.dto.TestDTO;
+import com.tyiu.ideas.model.dto.TestQuestionDTO;
 import com.tyiu.ideas.model.dto.TestResultDTO;
 import com.tyiu.ideas.service.TestService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ public class TestController {
     @GetMapping("/{testName}")
     public Mono<TestDTO> getTest(@PathVariable String testName){
         return testService.getTest(testName);
+    }
+
+    @GetMapping("/{testName}")
+    public Flux<TestQuestionDTO> getTestQuestions(@PathVariable String testName){
+        return testService.getTestQuestions(testName);
     }
 
     @GetMapping("/{testName}/answers")

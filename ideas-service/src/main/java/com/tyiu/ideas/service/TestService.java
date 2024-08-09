@@ -3,6 +3,7 @@ package com.tyiu.ideas.service;
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.TestAnswerDTO;
 import com.tyiu.ideas.model.dto.TestDTO;
+import com.tyiu.ideas.model.dto.TestQuestionDTO;
 import com.tyiu.ideas.model.dto.TestResultDTO;
 import com.tyiu.ideas.model.entities.Test;
 import com.tyiu.ideas.model.entities.TestQuestion;
@@ -516,6 +517,22 @@ public class TestService {
                         .description(row.get("description", String.class))
                         .build())
                 .first();
+    }
+
+    public Flux<TestQuestionDTO> getTestQuestions(String testName){
+        return template.getDatabaseClient()
+                .sql("SELECT * FROM test_question WHERE test_name =:testName")
+                .bind("testName", testName)
+                .map((row, rowMetadata) -> TestQuestionDTO.builder()
+                        .id(row.get("id", String.class))
+                        .testName(row.get("test_name", String.class))
+                        .questionNumber(row.get("question_number", Integer.class))
+                        .questionName(row.get("question_name", String.class))
+                        .questionModuleNumber(row.get("question_module_number", Integer.class))
+                        .questionModule(row.get("question_module", String.class))
+                        .question(row.get("question", String.class))
+                        .build())
+                .all();
     }
 
     public Flux<TestAnswerDTO> getAnswers(String testName){
