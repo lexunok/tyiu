@@ -36,14 +36,19 @@ public class TestController {
         return testService.getTestQuestions(testName, moduleNumber);
     }
 
-    @GetMapping("/{testName}/answers")
-    public Flux<TestAnswerDTO> getTestAnswers(@PathVariable String testName){
-        return testService.getAnswers(testName);
+    @GetMapping("/{testName}/result/all")
+    public Flux<TestResultDTO> getAllTestResult(@PathVariable String testName){
+        return testService.getAllResult(testName);
     }
 
-    @GetMapping("/{testName}/result")
-    public Mono<TestResultDTO> getTestResult(@PathVariable String testName){
-        return testService.getResult(testName);
+    @GetMapping("/{testName}/answers/{userId}")
+    public Flux<TestAnswerDTO> getTestAnswers(@PathVariable String testName, @PathVariable String userId){
+        return testService.getAnswers(testName, userId);
+    }
+
+    @GetMapping("/{testName}/result/{userId}")
+    public Mono<TestResultDTO> getTestResult(@PathVariable String testName, @PathVariable String userId){
+        return testService.getResult(testName, userId);
     }
 
     //post

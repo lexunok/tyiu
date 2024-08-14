@@ -1,5 +1,6 @@
 package com.tyiu.ideas.service;
 
+import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.Test;
@@ -666,7 +667,33 @@ public class TestService {
                 .sort(Comparator.comparing(TestQuestionDTO::getQuestionNumber));
     }
 
-    public Flux<TestAnswerDTO> getAnswers(String testName){
+    public Flux<TestResultDTO> getAllResult(String testName){
+        String query = """
+                SELECT
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result,
+                    u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
+                FROM test_result tr
+                LEFT JOIN users u ON u.id = tr.user_id
+                WHERE tr.test_name = :testName
+                """;
+        return template.getDatabaseClient()
+                .sql(query)
+                .bind("testName", testName)
+                .map((row, rowMetadata) -> TestResultDTO.builder()
+                        .id(row.get("tr_id", String.class))
+                        .testName(row.get("tr_test_name", String.class))
+                        .user(UserDTO.builder()
+                                .id(row.get("u_id", String.class))
+                                .email(row.get("u_email", String.class))
+                                .firstName(row.get("u_first_name", String.class))
+                                .lastName(row.get("u_last_name", String.class))
+                                .build())
+                        .result(row.get("tr_test_result", String.class))
+                        .build())
+                .all();
+    }
+
+    public Flux<TestAnswerDTO> getAnswers(String testName, String userId){
         String query = """
                 SELECT
                     ta.id AS ta_id, ta.test_name AS ta_test_name, ta.user_id AS ta_user_id, ta.question_name AS ta_question_name,
@@ -674,11 +701,12 @@ public class TestService {
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
                 FROM test_answer ta
                 LEFT JOIN users u ON u.id = ta.user_id
-                WHERE ta.test_name = :testName
+                WHERE ta.test_name = :testName AND ta.user_id = :userId
                 """;
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("testName", testName)
+                .bind("userId", userId)
                 .map((row, rowMetadata) -> TestAnswerDTO.builder()
                         .id(row.get("ta_id", String.class))
                         .testName(row.get("ta_test_name", String.class))
@@ -697,18 +725,19 @@ public class TestService {
                 .sort(Comparator.comparing(TestAnswerDTO::getQuestionNumber));
     }
 
-    public Mono<TestResultDTO> getResult(String testName){
+    public Mono<TestResultDTO> getResult(String testName, String userId){
         String query = """
                 SELECT
                     tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result,
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
-                WHERE tr.test_name = :testName
+                WHERE tr.test_name = :testName AND tr.user_id = :userId
                 """;
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("testName", testName)
+                .bind("userId", userId)
                 .map((row, rowMetadata) -> TestResultDTO.builder()
                         .id(row.get("tr_id", String.class))
                         .testName(row.get("tr_test_name", String.class))
@@ -743,6 +772,9 @@ public class TestService {
                             case 14, 27, 31, 45, 56, 63, 72 -> testResult.getScore().set(7, testResult.getScore().get(7) + Integer.parseInt(r.getAnswer()));
                         }
                     });
+                    if (testResult.getScore().stream().mapToInt(Integer::intValue).sum() != 70) {
+                        return Mono.error(new ServerProcessException("Сумма ответов не равна 70"));
+                    }
                     testResult.setTestResult(sumBelbinResult(testResult.getScore().indexOf(Collections.max(testResult.getScore()))));
                     return saveResult(l, testResult, Boolean.TRUE);
                 });
@@ -776,22 +808,22 @@ public class TestService {
                         }
                     });
                     testResult.setTestResult("Ваш уровень Экстраверсии: (" + testResult.getScore().get(0) + ") ");
-                    if (testResult.getScore().get(0) > 19) testResult.setTestResult(testResult.getTestResult() + "яркий экстраверт");
-                    else if (testResult.getScore().get(0) <= 19 && testResult.getScore().get(0) > 15) testResult.setTestResult(testResult.getTestResult() + "экстраверт");
-                    else if (testResult.getScore().get(0) == 12) testResult.setTestResult(testResult.getTestResult() + "среднее значение");
-                    else if (testResult.getScore().get(0) < 9 && testResult.getScore().get(0) >= 5) testResult.setTestResult(testResult.getTestResult() + "интроверт");
-                    else if (testResult.getScore().get(0) < 5) testResult.setTestResult(testResult.getTestResult() + "глубокий интроверт");
+                    if (testResult.getScore().get(0) < 5) testResult.setTestResult(testResult.getTestResult() + "глубокий интроверт");
+                    else if (testResult.getScore().get(0) < 9) testResult.setTestResult(testResult.getTestResult() + "интроверт");
+                    else if (testResult.getScore().get(0) <= 15) testResult.setTestResult(testResult.getTestResult() + "среднее значение");
+                    else if (testResult.getScore().get(0) <= 19) testResult.setTestResult(testResult.getTestResult() + "экстраверт");
+                    else if (testResult.getScore().get(0) > 19) testResult.setTestResult(testResult.getTestResult() + "яркий экстраверт");
 
                     testResult.setTestResult(testResult.getTestResult() + "\nВаш уровень Нейротизма: (" + testResult.getScore().get(1) + ") ");
-                    if (testResult.getScore().get(1) > 19) testResult.setTestResult(testResult.getTestResult() + "очень высокий уровень нейротизма");
-                    else if (testResult.getScore().get(1) > 14 && testResult.getScore().get(1) <= 19) testResult.setTestResult(testResult.getTestResult() + "высокий уровень нейротизма");
-                    else if (testResult.getScore().get(1) >= 9 && testResult.getScore().get(1) <= 13) testResult.setTestResult(testResult.getTestResult() + "среднее значение");
-                    else if (testResult.getScore().get(1) < 7) testResult.setTestResult(testResult.getTestResult() + "низкий уровень нейротизма");
+                    if (testResult.getScore().get(1) < 7) testResult.setTestResult(testResult.getTestResult() + "низкий уровень нейротизма");
+                    else if (testResult.getScore().get(1) <= 14) testResult.setTestResult(testResult.getTestResult() + "среднее значение");
+                    else if (testResult.getScore().get(1) <= 19) testResult.setTestResult(testResult.getTestResult() + "высокий уровень нейротизма");
+                    else if (testResult.getScore().get(1) > 19) testResult.setTestResult(testResult.getTestResult() + "очень высокий уровень нейротизма");
 
-                    testResult.setTestResult(testResult.getTestResult() + "\nВаш уровень Лжи: " + testResult.getScore().get(2) + ") ");
-                    if (testResult.getScore().get(2) > 4) testResult.setTestResult(testResult.getTestResult() + "неискренность в ответах, " +
+                    testResult.setTestResult(testResult.getTestResult() + "\nВаш уровень Лжи: (" + testResult.getScore().get(2) + ") ");
+                    if (testResult.getScore().get(2) <= 4) testResult.setTestResult(testResult.getTestResult() + "норма");
+                    else if (testResult.getScore().get(2) > 4) testResult.setTestResult(testResult.getTestResult() + "неискренность в ответах, " +
                             "свидетельствующая также о некоторой демонстративности поведения и ориентированности испытуемого на социальное одобрение");
-                    else if (testResult.getScore().get(2) < 4) testResult.setTestResult(testResult.getTestResult() + "норма");
                     return saveResult(l, testResult, Boolean.FALSE);
                 });
     }
@@ -863,10 +895,10 @@ public class TestService {
                         }
                     });
                     testResult.setTestResult(sumMindResult(testResult.getScore().get(0), "Синтетический стиль: (" + testResult.getScore().get(0)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(1), "Идеалистический стиль: (" + testResult.getScore().get(1)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(2), "Прагматический стиль: (" + testResult.getScore().get(2)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(3), "Аналитический стиль: (" + testResult.getScore().get(3)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(4), "Реалистический стиль: (" + testResult.getScore().get(4)));
+                    testResult.setTestResult(sumMindResult(testResult.getScore().get(1), testResult.getTestResult() + "Идеалистический стиль: (" + testResult.getScore().get(1)));
+                    testResult.setTestResult(sumMindResult(testResult.getScore().get(2), testResult.getTestResult() + "Прагматический стиль: (" + testResult.getScore().get(2)));
+                    testResult.setTestResult(sumMindResult(testResult.getScore().get(3), testResult.getTestResult() + "Аналитический стиль: (" + testResult.getScore().get(3)));
+                    testResult.setTestResult(sumMindResult(testResult.getScore().get(4), testResult.getTestResult() + "Реалистический стиль: (" + testResult.getScore().get(4)));
                     return saveResult(l, testResult, Boolean.TRUE);
                 });
     }
