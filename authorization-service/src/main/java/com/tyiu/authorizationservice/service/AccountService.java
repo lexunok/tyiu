@@ -167,6 +167,8 @@ public class AccountService {
                     .password(encoder.encode(adminPassword))
                     .roles(List.of(Role.values()))
                     .createdAt(LocalDateTime.now())
+                    .studyGroup("админчики")
+                    .telephone("xiaomi")
                     .build();
             userRepository.save(user);
         }
