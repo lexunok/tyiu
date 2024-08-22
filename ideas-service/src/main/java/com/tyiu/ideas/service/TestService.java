@@ -12,6 +12,7 @@ import com.tyiu.ideas.model.entities.TestResult;
 import com.tyiu.ideas.model.responses.TestAllResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -19,6 +20,9 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -422,6 +426,28 @@ public class TestService {
         return null;
     }
 
+    private String sumTemperTest(List<Integer> score){
+        String result = "Ваш уровень Экстраверсии: (" + score.get(0) + ") ";
+        if (score.get(0) < 5) result += "глубокий интроверт";
+        else if (score.get(0) < 9) result += "интроверт";
+        else if (score.get(0) <= 15) result += "среднее значение";
+        else if (score.get(0) <= 19) result += "экстраверт";
+        else if (score.get(0) > 19) result += "яркий экстраверт";
+
+        result += "\nВаш уровень Нейротизма: (" + score.get(1) + ") ";
+        if (score.get(1) < 7) result += "низкий уровень нейротизма";
+        else if (score.get(1) <= 14) result += "среднее значение";
+        else if (score.get(1) <= 19) result += "высокий уровень нейротизма";
+        else if (score.get(1) > 19) result += "очень высокий уровень нейротизма";
+
+        result += "\nВаш уровень Лжи: (" + score.get(2) + ") ";
+        if (score.get(2) <= 4) result += "норма";
+        else if (score.get(2) > 4) result += "неискренность в ответах, " +
+                "свидетельствующая также о некоторой демонстративности поведения и ориентированности испытуемого на социальное одобрение";
+
+        return result;
+    }
+
     private String sumMindResult(Integer score, String style){
         if (score <= 36){
             return style + ") этот стиль абсолютно чужд испытуемому," +
@@ -717,6 +743,51 @@ public class TestService {
                 .first();
     }
 
+    public Mono<InputStreamResource> generateFile(String testName) {
+        String query = """
+                SELECT
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score,
+                    u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name, u.study_group AS u_study_group
+                FROM test_result tr
+                LEFT JOIN users u ON u.id = tr.user_id
+                WHERE tr.test_name = :testName
+                """;
+        return template.getDatabaseClient()
+                .sql(query)
+                .bind("testName", testName)
+                .map((row, rowMetadata) -> {
+                    TestResultDTO testResultDTO = TestResultDTO.builder()
+                            .id(row.get("tr_id", String.class))
+                            .testName(row.get("tr_test_name", String.class))
+                            .user(UserDTO.builder()
+                                    .id(row.get("u_id", String.class))
+                                    .email(row.get("u_email", String.class))
+                                    .firstName(row.get("u_first_name", String.class))
+                                    .lastName(row.get("u_last_name", String.class))
+                                    .studyGroup(row.get("u_study_group", String.class))
+                                    .build())
+                            .build();
+                    if (Objects.equals(testResultDTO.getTestName(), mindTest)){
+                        testResultDTO.setTestResult(sumMindResult(List.of(row.get("tr_score", Integer[].class))).replace("\n", " "));
+                    } else {
+                        testResultDTO.setResult(row.get("tr_test_result", String.class).replace("\n", " "));
+                    }
+                    return testResultDTO;
+                })
+                .all()
+                .collectList()
+                .flatMap(l -> {
+                    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                    try (PrintWriter writer = new PrintWriter(byteArrayOutputStream)) {
+                        l.forEach(r -> writer.println(r.getUser().getFirstName() + " "
+                                + r.getUser().getLastName() + "\t"
+                                + r.getUser().getStudyGroup() + "\t"
+                                + r.getResult()));
+                    }
+                    return Mono.just(new InputStreamResource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())));
+                });
+    }
+
     //post
     public Mono<TestResultDTO> testBelbinResult(String userId, Flux<TestAnswerDTO> answers){
         TestResult testResult = new TestResult();
@@ -772,23 +843,7 @@ public class TestService {
                             }
                         }
                     });
-                    testResult.setTestResult("Ваш уровень Экстраверсии: (" + testResult.getScore().get(0) + ") ");
-                    if (testResult.getScore().get(0) < 5) testResult.setTestResult(testResult.getTestResult() + "глубокий интроверт");
-                    else if (testResult.getScore().get(0) < 9) testResult.setTestResult(testResult.getTestResult() + "интроверт");
-                    else if (testResult.getScore().get(0) <= 15) testResult.setTestResult(testResult.getTestResult() + "среднее значение");
-                    else if (testResult.getScore().get(0) <= 19) testResult.setTestResult(testResult.getTestResult() + "экстраверт");
-                    else if (testResult.getScore().get(0) > 19) testResult.setTestResult(testResult.getTestResult() + "яркий экстраверт");
-
-                    testResult.setTestResult(testResult.getTestResult() + "\nВаш уровень Нейротизма: (" + testResult.getScore().get(1) + ") ");
-                    if (testResult.getScore().get(1) < 7) testResult.setTestResult(testResult.getTestResult() + "низкий уровень нейротизма");
-                    else if (testResult.getScore().get(1) <= 14) testResult.setTestResult(testResult.getTestResult() + "среднее значение");
-                    else if (testResult.getScore().get(1) <= 19) testResult.setTestResult(testResult.getTestResult() + "высокий уровень нейротизма");
-                    else if (testResult.getScore().get(1) > 19) testResult.setTestResult(testResult.getTestResult() + "очень высокий уровень нейротизма");
-
-                    testResult.setTestResult(testResult.getTestResult() + "\nВаш уровень Лжи: (" + testResult.getScore().get(2) + ") ");
-                    if (testResult.getScore().get(2) <= 4) testResult.setTestResult(testResult.getTestResult() + "норма");
-                    else if (testResult.getScore().get(2) > 4) testResult.setTestResult(testResult.getTestResult() + "неискренность в ответах, " +
-                            "свидетельствующая также о некоторой демонстративности поведения и ориентированности испытуемого на социальное одобрение");
+                    testResult.setTestResult(sumTemperTest(testResult.getScore()));
                     return saveResult(l, testResult, Boolean.FALSE);
                 });
     }
@@ -797,7 +852,6 @@ public class TestService {
         TestResult testResult = new TestResult();
         testResult.setTestName(mindTest);
         testResult.setUserId(userId);
-        testResult.setTestResult("Оценка стилей:\n");
         testResult.setScore(new ArrayList<>(List.of(0, 0, 0, 0, 0)));
         return answers.collectList()
                 .flatMap(l -> {

@@ -1,5 +1,6 @@
 package com.tyiu.ideas.controller;
 
+import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.ideas.model.dto.TestAnswerDTO;
 import com.tyiu.ideas.model.dto.TestDTO;
 import com.tyiu.ideas.model.dto.TestQuestionDTO;
@@ -7,6 +8,10 @@ import com.tyiu.ideas.model.dto.TestResultDTO;
 import com.tyiu.ideas.model.responses.TestAllResponse;
 import com.tyiu.ideas.service.TestService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.InputStreamResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -27,6 +32,11 @@ public class TestController {
         return testService.getAllTest();
     }
 
+    @GetMapping("/general")
+    public Flux<TestAllResponse> getTestGeneral(){
+        return testService.getTestGeneral();
+    }
+
     @GetMapping("/{testName}")
     public Mono<TestDTO> getTest(@PathVariable String testName){
         return testService.getTest(testName);
@@ -42,19 +52,28 @@ public class TestController {
         return testService.getAllResult(testName);
     }
 
-    @GetMapping("/general")
-    public Flux<TestAllResponse> getTestGeneral(){
-        return testService.getTestGeneral();
-    }
+    @GetMapping("/{testName}/result/download")
+    public Mono<ResponseEntity<InputStreamResource>> downloadResults(@PathVariable String testName){
+        try {
+            return testService.generateFile(testName).flatMap(r -> {
+                HttpHeaders headers = new HttpHeaders();
+                headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + testName + ".txt");
 
-    @GetMapping("/{testName}/answers/{userId}")
-    public Flux<TestAnswerDTO> getTestAnswers(@PathVariable String testName, @PathVariable String userId){
-        return testService.getAnswers(testName, userId);
+                return Mono.just(new ResponseEntity<>(r, headers, HttpStatus.OK));
+            });
+        } catch (NotFoundException e) {
+            return Mono.just(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
+        }
     }
 
     @GetMapping("/{testName}/result/{userId}")
     public Mono<TestResultDTO> getTestResult(@PathVariable String testName, @PathVariable String userId){
         return testService.getResult(testName, userId);
+    }
+
+    @GetMapping("/{testName}/answers/{userId}")
+    public Flux<TestAnswerDTO> getTestAnswers(@PathVariable String testName, @PathVariable String userId){
+        return testService.getAnswers(testName, userId);
     }
 
     //post
