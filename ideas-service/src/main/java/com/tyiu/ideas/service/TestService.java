@@ -560,7 +560,7 @@ public class TestService {
     public Flux<TestResultDTO> getAllResult(String testName){
         String query = """
                 SELECT
-                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score,
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
