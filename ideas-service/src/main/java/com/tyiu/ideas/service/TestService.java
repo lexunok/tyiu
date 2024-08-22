@@ -2,13 +2,16 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
-import com.tyiu.ideas.model.dto.*;
+import com.tyiu.ideas.model.dto.TestAnswerDTO;
+import com.tyiu.ideas.model.dto.TestDTO;
+import com.tyiu.ideas.model.dto.TestQuestionDTO;
+import com.tyiu.ideas.model.dto.TestResultDTO;
 import com.tyiu.ideas.model.entities.Test;
 import com.tyiu.ideas.model.entities.TestQuestion;
 import com.tyiu.ideas.model.entities.TestResult;
+import com.tyiu.ideas.model.responses.TestAllResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -17,6 +20,7 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
@@ -24,7 +28,6 @@ import static org.springframework.data.relational.core.query.Query.query;
 @Service
 @RequiredArgsConstructor
 @EnableScheduling
-@Slf4j
 public class TestService {
 
     private final R2dbcEntityTemplate template;
@@ -406,133 +409,15 @@ public class TestService {
     }
 
     private String sumBelbinResult(Integer score){
-        log.info(String.valueOf(score));
         switch (score){
-            case 0 -> {
-                return "Вы РЕАЛИЗАТОР\n" +
-                        "Характеристика.\n" +
-                        "Реализаторам присущи практический здравый смысл и  хорошее чувство самоконтроля и дисциплины. " +
-                        "Они любят тяжелую работу и преодоление проблем в системном режиме. " +
-                        "В большей степени Реализаторы являются типичными личностями, чья верность и интерес совпадают с ценностями Компании. " +
-                        "Они менее сконцентрированы  на преследовании собственных интересов. " +
-                        "Тем не менее, им может не хватать спонтанности и они могут проявлять жесткость и непреклонность.\n" +
-                        "Функциональность.\n" +
-                        "Они очень полезны компании благодаря своей надежности и прилежанию. " +
-                        "Они добиваются успеха, потому что очень работоспособны и могут четко определить то, что выполнимо и имеет отношение к делу. " +
-                        "Говорят, что многие исполнители делают только ту работу, которую хотят делать и пренебрегают заданиями, которые находят неприятными. " +
-                        "Реализаторы, наоборот, будут делать то, что необходимо делу. " +
-                        "Хорошие Реализаторы часто продвигаются до высоких должностных позиций в управлении благодаря своим хорошим организаторским способностям и компетентности в решении всех важных вопросов.";
-            }
-            case 1 -> {
-                return "Вы КООРДИНАТОР\n" +
-                        "Характеристика.\n" +
-                        "Отличительной чертой Координаторов является способность заставлять других работать над распределенными целями. " +
-                        "Зрелый, опытный и уверенный, Координатор охотно раздает поручения. " +
-                        "В межличностных отношениях они быстро раскрывают индивидуальные наклонности и таланты и мудро их  используют для достижения целей команды. " +
-                        "Они не обязательно самые умные члены команды, это люди с большим кругозором и опытом, пользующиеся общим уважением команды.\n" +
-                        "Функциональность.\n" +
-                        "Они хорошо себя проявляют, находясь во главе команды людей с различными навыками и характерами. " +
-                        "Они лучше работают совместно с коллегами равными по рангу или позиции, чем с сотрудниками более низких  уровней. " +
-                        "Их девизом может быть «консультация с контролем». Они верят, что проблему можно решить мирным путем. " +
-                        "В некоторых компаниях Координаторы могут вступать в конфликты из-за разности во взглядах с Творцами.";
-            }
-            case 2 -> {
-                return "Вы МОТИВАТОР\n" +
-                        "Характеристика.\n" +
-                        "Это люди с высоким уровнем мотивации, неисчерпаемой энергией и великой жаждой достижений. " +
-                        "Обычно, это ярко выраженные экстраверты, обладающие сильной напористостью. " +
-                        "Им нравится бросать вызов другим, их цель – победа. " +
-                        "Им нравиться вести других и подталкивать к действиям. " +
-                        "Если возникают препятствия, они быстро находят обходные пути. " +
-                        "Своевольные и упрямые, уверенные и напористые, они имеют склонность эмоционально отвечать на любую форму разочарования или крушения планов. " +
-                        "Целеустремленные, любящие поспорить. Но им часто не хватает простого человеческого понимания. Их роль самая конкурентная в команде\n" +
-                        "Функционирование.\n" +
-                        "Они, обычно, становятся хорошими руководителями, благодаря тому, что умеют генерировать действия и успешно работать под давлением. " +
-                        "Они умеют легко воодушевлять команду, и очень полезны в группах с разными взглядами, так как способны укротить страсти. " +
-                        "Творцы способны парить над проблемами такого рода, продолжая лидировать, не считаясь с ними. " +
-                        "Они могут легко провести необходимые изменения и не отказываются от нестандартных решений. " +
-                        "Отвечая названию, они пытаются навязывать группе  некоторые образцы или формы поведения и деятельности. " +
-                        "Они являются самыми эффективными членами команды, способными гарантировать позитивные действия.";
-            }
-            case 3 -> {
-                return "Вы ГЕНЕРАТОР ИДЕЙ\n" +
-                        "Характеристика.\n" +
-                        "Генераторы идей являются инноваторами и изобретателями, могут быть очень креативными. " +
-                        "Они сеют зерно и идеи, из которых  прорастают большинство разработок и проектов. " +
-                        "Обычно они предпочитают работать самостоятельно, отделившись от других членов команды, используя свое воображение и часто следуя  нетрадиционным путем. " +
-                        "Имеют склонность быть интровертами и сильно реагируют  как на критику, так и на похвалу. " +
-                        "Часто их идеи имеют радикальный характер, и им  не хватает практических усилий. " +
-                        "Они независимы, умны и оригинальны, но могут быть слабыми в общении с людьми другого уровня или направления.\n" +
-                        "Функциональность.\n" +
-                        "Основная функция Генераторов идей – создание новых предложений и решение сложных комплексных проблем. " +
-                        "Они очень необходимы на начальных стадиях проектов или когда проект находится под угрозой срыва. " +
-                        "Они обычно являются основателями компаний или организаторами новых производств. " +
-                        "Тем не менее, большое количество Генераторов идей в одной компании может привести к контр-продуктивности, так как они имеют тенденцию проводить время, укрепляя свои собственные идеи и вступая друг с другом в конфликт.";
-            }
-            case 4 -> {
-                return "Вы ИССЛЕДОВАТЕЛЬ\n" +
-                        "Характеристика.\n" +
-                        "Исследователи - часто энтузиасты и яркие экстраверты. " +
-                        "Они умеют общаться с людьми в компании и за ее пределами. " +
-                        "Они рождены для ведения переговоров, исследования новых возможностей и налаживания контактов. " +
-                        "Хотя и не являясь генераторами оригинальных идей, они очень легко подхватывают идеи других и развивают их. " +
-                        "Они очень легко распознают, что есть в наличии и что еще можно сделать. " +
-                        "Их обычно очень тепло принимают в команде благодаря их открытой натуре. " +
-                        "Они всегда открыты и любознательны, готовы найти возможности во всем новом. " +
-                        "Но, если они не стимулируются другими, их энтузиазм быстро снижается.\n" +
-                        "Функциональность.\n" +
-                        "Они очень хорошо реагируют и отвечают на новые идеи  и разработки, могут найти ресурсы и вне группы. " +
-                        "Они самые подходящие люди для установки внешних контактов и проведения последующих переговоров. " +
-                        "Они умеют самостоятельно думать, получая информацию от других.";
-            }
-            case 5 -> {
-                return "Вы АНАЛИТИК-ЭКСПЕРТ\n" +
-                        "Характеристика.\n" +
-                        "Это очень серьезные и предусмотрительные люди с врожденным иммунитетом против чрезмерного энтузиазма. " +
-                        "Медлительны в принятии решения, предпочитают хорошо все обдумать. " +
-                        "Они способны критически мыслить. Они умеют быть проницательными в суждениях, принимая во внимания все факторы. " +
-                        "Эксперты редко ошибаются.\n" +
-                        "Функциональность.\n" +
-                        "Эксперты наиболее подходят для анализа проблем и оценки идей и предложений. " +
-                        "Они хорошо умеют взвешивать все «за» и «против» предложенных вариантов. " +
-                        "По сравнению с другими, Эксперты кажутся черствыми, занудными и чрезмерно критичными. " +
-                        "Некоторые удивляются, как им удается стать руководителями. " +
-                        "Тем не менее, многие Эксперты занимают стратегические посты и преуспевают на должностях высшего ранга. " +
-                        "Очень редко удача или срыв дела зависит от принятия спешных решений. " +
-                        "Это идеальная «сфера» для Экспертов, людей, которые редко ошибаются и, в конце концов, выигрывают.";
-            }
-            case 6 -> {
-                return "Вы ВДОХНОВИТЕЛЬ\n" +
-                        "Характеристика.\n" +
-                        "Это люди, пользующиеся наибольшей поддержкой команды. " +
-                        "Они очень вежливы, обходительны и общительны. " +
-                        "Они умеют быть гибкими и адаптироваться к любой ситуации и разным людям. " +
-                        "Вдохновители  очень дипломатичны и восприимчивы. " +
-                        "Они умеют слушать других и сопереживать, очень популярны в команде. " +
-                        "В работе они полагаются на чувствительность, но могут столкнуться с трудностью при принятии решений в срочных и неотложных ситуациях.\n" +
-                        "Функциональность.\n" +
-                        "Роль Вдохновителей состоит в  предотвращение межличностных проблем, появляющихся в команде, и поэтому это позволяет эффективно работать всем ее членам.  " +
-                        "Избегая трений, они будут идти длинной дорогой, ради того чтобы обойти их стороной. " +
-                        "Они не часто становятся руководителями, тем более, если их непосредственный начальник подчиняется Творцу. " +
-                        "Это создает климат, в котором дипломатия и восприимчивость людей этого типа является настоящей находкой для команды, особенно при управленческом стиле, где конфликты могут возникать и должны искусственно пресекаться. " +
-                        "Такие люди в качестве руководителя не представляют угрозу не для кого и поэтому всегда желанны для подчиненных. " +
-                        "Вдохновители служат своего рода «смазкой» для команды, а люди в такой обстановке сотрудничают лучше.";
-            }
-            case 7 -> {
-                return "Вы КОНТРОЛЕР\n" +
-                        "Характеристика\n" +
-                        "Обладают огромной способностью доводить дело до завершения и обращать внимание на детали. " +
-                        "Они никогда не начинают то, что не могут довести до конца. " +
-                        "Они мотивируются внутренним беспокойством, хотя часто внешне выглядят спокойными и невозмутимыми. " +
-                        "Представители этого типа часто являются интровертами. " +
-                        "Им обычно не требуется стимулирование из вне, или побуждения. " +
-                        "Они не терпят случайностей.  " +
-                        "Не склонны к делегированию, предпочитают  выполнять задания самостоятельно.\n" +
-                        "Функциональность.\n" +
-                        "Являются незаменимыми в ситуациях, когда задания требуют сильной концентрированности и высокого уровня аккуратности. " +
-                        "Они несут чувство срочности и неотложности в команду и хорошо проводят различные митинги. " +
-                        "Хорошо справляются с управлением, благодаря своему стремлению к высшим стандартам, своей аккуратности, точности, вниманию к деталям и умению завершать начатое дело.";
-            }
+            case 0 -> { return "Вы РЕАЛИЗАТОР"; }
+            case 1 -> { return "Вы КООРДИНАТОР"; }
+            case 2 -> { return "Вы МОТИВАТОР"; }
+            case 3 -> { return "Вы ГЕНЕРАТОР ИДЕЙ"; }
+            case 4 -> { return "Вы ИССЛЕДОВАТЕЛЬ"; }
+            case 5 -> { return "Вы АНАЛИТИК-ЭКСПЕРТ"; }
+            case 6 -> { return "Вы ВДОХНОВИТЕЛЬ"; }
+            case 7 -> { return "Вы КОНТРОЛЕР"; }
         }
         return null;
     }
@@ -567,6 +452,11 @@ public class TestService {
                     "Другими словами, он чрезмерно фиксирован на нем, использует его практически во всех ситуациях, " +
                     "следовательно, и в таких, где этот стиль является далеко не лучшим (или даже неприемлемым) подходом к проблеме\n";
         }
+    }
+
+    private String sumMindResult(List<Integer> score){
+        return "Синтетический стиль: (" + score.get(0) + ")\nИдеалистический стиль: (" + score.get(1) + ")\nПрагматический стиль: ("
+                + score.get(2) + ")\nАналитический стиль: (" + score.get(3) + ")\nРеалистический стиль: (" + score.get(4) + ")";
     }
 
     private Mono<TestResultDTO> saveResult(List<TestAnswerDTO> answers, TestResult testResult, Boolean needQuestionModuleNumber){
@@ -670,7 +560,7 @@ public class TestService {
     public Flux<TestResultDTO> getAllResult(String testName){
         String query = """
                 SELECT
-                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result,
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
@@ -679,18 +569,93 @@ public class TestService {
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("testName", testName)
-                .map((row, rowMetadata) -> TestResultDTO.builder()
-                        .id(row.get("tr_id", String.class))
-                        .testName(row.get("tr_test_name", String.class))
-                        .user(UserDTO.builder()
-                                .id(row.get("u_id", String.class))
-                                .email(row.get("u_email", String.class))
-                                .firstName(row.get("u_first_name", String.class))
-                                .lastName(row.get("u_last_name", String.class))
-                                .build())
-                        .result(row.get("tr_test_result", String.class))
-                        .build())
+                .map((row, rowMetadata) -> {
+                    TestResultDTO testResultDTO = TestResultDTO.builder()
+                            .id(row.get("tr_id", String.class))
+                            .testName(row.get("tr_test_name", String.class))
+                            .user(UserDTO.builder()
+                                    .id(row.get("u_id", String.class))
+                                    .email(row.get("u_email", String.class))
+                                    .firstName(row.get("u_first_name", String.class))
+                                    .lastName(row.get("u_last_name", String.class))
+                                    .build())
+                            .build();
+                    if (Objects.equals(testResultDTO.getTestName(), mindTest)){
+                        testResultDTO.setTestResult(sumMindResult(List.of(row.get("tr_score", Integer[].class))));
+                    } else { testResultDTO.setResult(row.get("tr_test_result", String.class)); }
+                    return testResultDTO;
+                })
                 .all();
+    }
+
+    public Flux<TestAllResponse> getTestGeneral(){
+        String query = """
+                SELECT
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score
+                    u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name, u.study_group AS u_study_group
+                FROM test_result tr
+                LEFT JOIN users u ON u.id = tr.user_id
+                """;
+
+        ConcurrentHashMap<String, TestAllResponse> map = new ConcurrentHashMap<>();
+
+        return template.getDatabaseClient()
+                .sql(query)
+                .map((row, rowMetadata) -> {
+                    String userId = row.get("u_id", String.class);
+                    String testName = row.get("tr_test_name", String.class);
+                    TestAllResponse testAllResponse = map.getOrDefault(userId, TestAllResponse.builder()
+                            .user(UserDTO.builder()
+                                    .id(row.get("u_id", String.class))
+                                    .email(row.get("u_email", String.class))
+                                    .firstName(row.get("u_first_name", String.class))
+                                    .lastName(row.get("u_last_name", String.class))
+                                    .studyGroup(row.get("u_study_group", String.class))
+                                    .build())
+                            .belbinTest(Objects.equals(testName, belbinTest) ?
+                                    TestResultDTO.builder()
+                                            .id(row.get("tr_id", String.class))
+                                            .testName(testName)
+                                            .result(row.get("tr_test_result", String.class))
+                                            .build() : null)
+                            .mindTest(Objects.equals(testName, mindTest) ?
+                                    TestResultDTO.builder()
+                                            .id(row.get("tr_id", String.class))
+                                            .testName(testName)
+                                            .result(sumMindResult(List.of(row.get("tr_score", Integer[].class))))
+                                            .build() : null)
+                            .temperTest(Objects.equals(testName, temperTest) ?
+                                    TestResultDTO.builder()
+                                            .id(row.get("tr_id", String.class))
+                                            .testName(testName)
+                                            .result(row.get("tr_test_result", String.class))
+                                            .build() : null)
+                            .build());
+                    if (Objects.equals(testName, belbinTest) && testAllResponse.getBelbinTest() == null){
+                        testAllResponse.setBelbinTest(TestResultDTO.builder()
+                                .id(row.get("tr_id", String.class))
+                                .testName(testName)
+                                .result(row.get("tr_test_result", String.class))
+                                .build());
+                    }
+                    else if (Objects.equals(testName, mindTest) && testAllResponse.getMindTest() == null){
+                        testAllResponse.setMindTest(TestResultDTO.builder()
+                                .id(row.get("tr_id", String.class))
+                                .testName(testName)
+                                .result(sumMindResult(List.of(row.get("tr_score", Integer[].class))))
+                                .build());
+                    }
+                    else if (Objects.equals(testName, temperTest) && testAllResponse.getTemperTest() == null){
+                        testAllResponse.setTemperTest(TestResultDTO.builder()
+                                .id(row.get("tr_id", String.class))
+                                .testName(testName)
+                                .result(row.get("tr_test_result", String.class))
+                                .build());
+                    }
+                    map.put(userId,testAllResponse);
+                    return testAllResponse;
+                })
+                .all().thenMany(Flux.fromIterable(map.values()));
     }
 
     public Flux<TestAnswerDTO> getAnswers(String testName, String userId){

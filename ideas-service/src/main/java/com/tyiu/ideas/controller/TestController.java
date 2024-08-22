@@ -4,6 +4,7 @@ import com.tyiu.ideas.model.dto.TestAnswerDTO;
 import com.tyiu.ideas.model.dto.TestDTO;
 import com.tyiu.ideas.model.dto.TestQuestionDTO;
 import com.tyiu.ideas.model.dto.TestResultDTO;
+import com.tyiu.ideas.model.responses.TestAllResponse;
 import com.tyiu.ideas.service.TestService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -39,6 +40,11 @@ public class TestController {
     @GetMapping("/{testName}/result/all")
     public Flux<TestResultDTO> getAllTestResult(@PathVariable String testName){
         return testService.getAllResult(testName);
+    }
+
+    @GetMapping("/general")
+    public Flux<TestAllResponse> getTestGeneral(){
+        return testService.getTestGeneral();
     }
 
     @GetMapping("/{testName}/answers/{userId}")
