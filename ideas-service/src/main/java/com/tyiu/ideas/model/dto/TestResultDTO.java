@@ -14,7 +14,5 @@ public class TestResultDTO {
     private String id;
     private UserDTO user;
     private String testName;
-    private String result;
-
-    public void setTestResult(String result) { this.result = result; }
+    private String testResult;
 }

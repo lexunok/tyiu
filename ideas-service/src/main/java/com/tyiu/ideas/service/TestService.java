@@ -12,6 +12,7 @@ import com.tyiu.ideas.model.entities.TestResult;
 import com.tyiu.ideas.model.responses.TestAllResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
+import org.modelmapper.ModelMapper;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.scheduling.annotation.EnableScheduling;
@@ -22,7 +23,9 @@ import reactor.core.publisher.Mono;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -35,6 +38,7 @@ import static org.springframework.data.relational.core.query.Query.query;
 public class TestService {
 
     private final R2dbcEntityTemplate template;
+    private final ModelMapper mapper;
 
     private final String belbinTest = "BelbinTest";
     private final String temperTest = "TemperTest";
@@ -412,21 +416,154 @@ public class TestService {
         return template.insert(Test.builder().testName(testName).name(name).description(description).build());
     }
 
-    private String sumBelbinResult(Integer score){
-        switch (score){
-            case 0 -> { return "Вы РЕАЛИЗАТОР"; }
-            case 1 -> { return "Вы КООРДИНАТОР"; }
-            case 2 -> { return "Вы МОТИВАТОР"; }
-            case 3 -> { return "Вы ГЕНЕРАТОР ИДЕЙ"; }
-            case 4 -> { return "Вы ИССЛЕДОВАТЕЛЬ"; }
-            case 5 -> { return "Вы АНАЛИТИК-ЭКСПЕРТ"; }
-            case 6 -> { return "Вы ВДОХНОВИТЕЛЬ"; }
-            case 7 -> { return "Вы КОНТРОЛЕР"; }
+    ////////////////////////////////////////////////////////////////////
+
+    private String sumBelbinLittleResult(List<Integer> score){
+        switch (score.indexOf(Collections.max(score))){
+            case 0 -> { return "РЕАЛИЗАТОР"; }
+            case 1 -> { return "КООРДИНАТОР"; }
+            case 2 -> { return "МОТИВАТОР"; }
+            case 3 -> { return "ГЕНЕРАТОР ИДЕЙ"; }
+            case 4 -> { return "ИССЛЕДОВАТЕЛЬ"; }
+            case 5 -> { return "АНАЛИТИК-ЭКСПЕРТ"; }
+            case 6 -> { return "ВДОХНОВИТЕЛЬ"; }
+            case 7 -> { return "КОНТРОЛЕР"; }
         }
         return null;
     }
 
-    private String sumTemperTest(List<Integer> score){
+    private String sumBelbinResult(List<Integer> score){
+        switch (score.indexOf(Collections.max(score))) {
+            case 0 -> {
+                return "Вы РЕАЛИЗАТОР\n" +
+                        "Характеристика.\n" +
+                        "Реализаторам присущи практический здравый смысл и  хорошее чувство самоконтроля и дисциплины. " +
+                        "Они любят тяжелую работу и преодоление проблем в системном режиме. " +
+                        "В большей степени Реализаторы являются типичными личностями, чья верность и интерес совпадают с ценностями Компании. " +
+                        "Они менее сконцентрированы  на преследовании собственных интересов. " +
+                        "Тем не менее, им может не хватать спонтанности и они могут проявлять жесткость и непреклонность.\n" +
+                        "Функциональность.\n" +
+                        "Они очень полезны компании благодаря своей надежности и прилежанию. " +
+                        "Они добиваются успеха, потому что очень работоспособны и могут четко определить то, что выполнимо и имеет отношение к делу. " +
+                        "Говорят, что многие исполнители делают только ту работу, которую хотят делать и пренебрегают заданиями, которые находят неприятными. " +
+                        "Реализаторы, наоборот, будут делать то, что необходимо делу. " +
+                        "Хорошие Реализаторы часто продвигаются до высоких должностных позиций в управлении благодаря своим хорошим организаторским способностям и компетентности в решении всех важных вопросов.";
+            }
+            case 1 -> {
+                return "Вы КООРДИНАТОР\n" +
+                        "Характеристика.\n" +
+                        "Отличительной чертой Координаторов является способность заставлять других работать над распределенными целями. " +
+                        "Зрелый, опытный и уверенный, Координатор охотно раздает поручения. " +
+                        "В межличностных отношениях они быстро раскрывают индивидуальные наклонности и таланты и мудро их  используют для достижения целей команды. " +
+                        "Они не обязательно самые умные члены команды, это люди с большим кругозором и опытом, пользующиеся общим уважением команды.\n" +
+                        "Функциональность.\n" +
+                        "Они хорошо себя проявляют, находясь во главе команды людей с различными навыками и характерами. " +
+                        "Они лучше работают совместно с коллегами равными по рангу или позиции, чем с сотрудниками более низких  уровней. " +
+                        "Их девизом может быть «консультация с контролем». Они верят, что проблему можно решить мирным путем. " +
+                        "В некоторых компаниях Координаторы могут вступать в конфликты из-за разности во взглядах с Творцами.";
+            }
+            case 2 -> {
+                return "Вы МОТИВАТОР\n" +
+                        "Характеристика.\n" +
+                        "Это люди с высоким уровнем мотивации, неисчерпаемой энергией и великой жаждой достижений. " +
+                        "Обычно, это ярко выраженные экстраверты, обладающие сильной напористостью. " +
+                        "Им нравится бросать вызов другим, их цель – победа. " +
+                        "Им нравиться вести других и подталкивать к действиям. " +
+                        "Если возникают препятствия, они быстро находят обходные пути. " +
+                        "Своевольные и упрямые, уверенные и напористые, они имеют склонность эмоционально отвечать на любую форму разочарования или крушения планов. " +
+                        "Целеустремленные, любящие поспорить. Но им часто не хватает простого человеческого понимания. Их роль самая конкурентная в команде\n" +
+                        "Функционирование.\n" +
+                        "Они, обычно, становятся хорошими руководителями, благодаря тому, что умеют генерировать действия и успешно работать под давлением. " +
+                        "Они умеют легко воодушевлять команду, и очень полезны в группах с разными взглядами, так как способны укротить страсти. " +
+                        "Творцы способны парить над проблемами такого рода, продолжая лидировать, не считаясь с ними. " +
+                        "Они могут легко провести необходимые изменения и не отказываются от нестандартных решений. " +
+                        "Отвечая названию, они пытаются навязывать группе  некоторые образцы или формы поведения и деятельности. " +
+                        "Они являются самыми эффективными членами команды, способными гарантировать позитивные действия.";
+            }
+            case 3 -> {
+                return "Вы ГЕНЕРАТОР ИДЕЙ\n" +
+                        "Характеристика.\n" +
+                        "Генераторы идей являются инноваторами и изобретателями, могут быть очень креативными. " +
+                        "Они сеют зерно и идеи, из которых  прорастают большинство разработок и проектов. " +
+                        "Обычно они предпочитают работать самостоятельно, отделившись от других членов команды, используя свое воображение и часто следуя  нетрадиционным путем. " +
+                        "Имеют склонность быть интровертами и сильно реагируют  как на критику, так и на похвалу. " +
+                        "Часто их идеи имеют радикальный характер, и им  не хватает практических усилий. " +
+                        "Они независимы, умны и оригинальны, но могут быть слабыми в общении с людьми другого уровня или направления.\n" +
+                        "Функциональность.\n" +
+                        "Основная функция Генераторов идей – создание новых предложений и решение сложных комплексных проблем. " +
+                        "Они очень необходимы на начальных стадиях проектов или когда проект находится под угрозой срыва. " +
+                        "Они обычно являются основателями компаний или организаторами новых производств. " +
+                        "Тем не менее, большое количество Генераторов идей в одной компании может привести к контр-продуктивности, так как они имеют тенденцию проводить время, укрепляя свои собственные идеи и вступая друг с другом в конфликт.";
+            }
+            case 4 -> {
+                return "Вы ИССЛЕДОВАТЕЛЬ\n" +
+                        "Характеристика.\n" +
+                        "Исследователи - часто энтузиасты и яркие экстраверты. " +
+                        "Они умеют общаться с людьми в компании и за ее пределами. " +
+                        "Они рождены для ведения переговоров, исследования новых возможностей и налаживания контактов. " +
+                        "Хотя и не являясь генераторами оригинальных идей, они очень легко подхватывают идеи других и развивают их. " +
+                        "Они очень легко распознают, что есть в наличии и что еще можно сделать. " +
+                        "Их обычно очень тепло принимают в команде благодаря их открытой натуре. " +
+                        "Они всегда открыты и любознательны, готовы найти возможности во всем новом. " +
+                        "Но, если они не стимулируются другими, их энтузиазм быстро снижается.\n" +
+                        "Функциональность.\n" +
+                        "Они очень хорошо реагируют и отвечают на новые идеи  и разработки, могут найти ресурсы и вне группы. " +
+                        "Они самые подходящие люди для установки внешних контактов и проведения последующих переговоров. " +
+                        "Они умеют самостоятельно думать, получая информацию от других.";
+            }
+            case 5 -> {
+                return "Вы АНАЛИТИК-ЭКСПЕРТ\n" +
+                        "Характеристика.\n" +
+                        "Это очень серьезные и предусмотрительные люди с врожденным иммунитетом против чрезмерного энтузиазма. " +
+                        "Медлительны в принятии решения, предпочитают хорошо все обдумать. " +
+                        "Они способны критически мыслить. Они умеют быть проницательными в суждениях, принимая во внимания все факторы. " +
+                        "Эксперты редко ошибаются.\n" +
+                        "Функциональность.\n" +
+                        "Эксперты наиболее подходят для анализа проблем и оценки идей и предложений. " +
+                        "Они хорошо умеют взвешивать все «за» и «против» предложенных вариантов. " +
+                        "По сравнению с другими, Эксперты кажутся черствыми, занудными и чрезмерно критичными. " +
+                        "Некоторые удивляются, как им удается стать руководителями. " +
+                        "Тем не менее, многие Эксперты занимают стратегические посты и преуспевают на должностях высшего ранга. " +
+                        "Очень редко удача или срыв дела зависит от принятия спешных решений. " +
+                        "Это идеальная «сфера» для Экспертов, людей, которые редко ошибаются и, в конце концов, выигрывают.";
+            }
+            case 6 -> {
+                return "Вы ВДОХНОВИТЕЛЬ\n" +
+                        "Характеристика.\n" +
+                        "Это люди, пользующиеся наибольшей поддержкой команды. " +
+                        "Они очень вежливы, обходительны и общительны. " +
+                        "Они умеют быть гибкими и адаптироваться к любой ситуации и разным людям. " +
+                        "Вдохновители  очень дипломатичны и восприимчивы. " +
+                        "Они умеют слушать других и сопереживать, очень популярны в команде. " +
+                        "В работе они полагаются на чувствительность, но могут столкнуться с трудностью при принятии решений в срочных и неотложных ситуациях.\n" +
+                        "Функциональность.\n" +
+                        "Роль Вдохновителей состоит в  предотвращение межличностных проблем, появляющихся в команде, и поэтому это позволяет эффективно работать всем ее членам.  " +
+                        "Избегая трений, они будут идти длинной дорогой, ради того чтобы обойти их стороной. " +
+                        "Они не часто становятся руководителями, тем более, если их непосредственный начальник подчиняется Творцу. " +
+                        "Это создает климат, в котором дипломатия и восприимчивость людей этого типа является настоящей находкой для команды, особенно при управленческом стиле, где конфликты могут возникать и должны искусственно пресекаться. " +
+                        "Такие люди в качестве руководителя не представляют угрозу не для кого и поэтому всегда желанны для подчиненных. " +
+                        "Вдохновители служат своего рода «смазкой» для команды, а люди в такой обстановке сотрудничают лучше.";
+            }
+            case 7 -> {
+                return "Вы КОНТРОЛЕР\n" +
+                        "Характеристика\n" +
+                        "Обладают огромной способностью доводить дело до завершения и обращать внимание на детали. " +
+                        "Они никогда не начинают то, что не могут довести до конца. " +
+                        "Они мотивируются внутренним беспокойством, хотя часто внешне выглядят спокойными и невозмутимыми. " +
+                        "Представители этого типа часто являются интровертами. " +
+                        "Им обычно не требуется стимулирование из вне, или побуждения. " +
+                        "Они не терпят случайностей.  " +
+                        "Не склонны к делегированию, предпочитают  выполнять задания самостоятельно.\n" +
+                        "Функциональность.\n" +
+                        "Являются незаменимыми в ситуациях, когда задания требуют сильной концентрированности и высокого уровня аккуратности. " +
+                        "Они несут чувство срочности и неотложности в команду и хорошо проводят различные митинги. " +
+                        "Хорошо справляются с управлением, благодаря своему стремлению к высшим стандартам, своей аккуратности, точности, вниманию к деталям и умению завершать начатое дело.";
+            }
+        }
+        return null;
+    }
+
+    private String sumTemperResult(List<Integer> score){
         String result = "Ваш уровень Экстраверсии: (" + score.get(0) + ") ";
         if (score.get(0) < 5) result += "глубокий интроверт";
         else if (score.get(0) < 9) result += "интроверт";
@@ -448,39 +585,61 @@ public class TestService {
         return result;
     }
 
-    private String sumMindResult(Integer score, String style){
+    private String sumTemperLittleResult(List<Integer> score){
+        String result = "Уровень Экстраверсии: (" + score.get(0) + ") ";
+        if (score.get(0) < 5) result += "глубокий интроверт";
+        else if (score.get(0) < 9) result += "интроверт";
+        else if (score.get(0) <= 15) result += "среднее значение";
+        else if (score.get(0) <= 19) result += "экстраверт";
+        else if (score.get(0) > 19) result += "яркий экстраверт";
+
+        result += "\nУровень Нейротизма: (" + score.get(1) + ") ";
+        if (score.get(1) < 7) result += "низкий уровень нейротизма";
+        else if (score.get(1) <= 14) result += "среднее значение";
+        else if (score.get(1) <= 19) result += "высокий уровень нейротизма";
+        else if (score.get(1) > 19) result += "очень высокий уровень нейротизма";
+
+        result += "\nУровень Лжи: (" + score.get(2) + ") ";
+        if (score.get(2) <= 4) result += "норма";
+        else if (score.get(2) > 4) result += "неискренность в ответах, " +
+                "свидетельствующая также о некоторой демонстративности поведения и ориентированности испытуемого на социальное одобрение";
+
+        return result;
+    }
+
+    private String sumMindResult(Integer score){
         if (score <= 36){
-            return style + ") этот стиль абсолютно чужд испытуемому," +
+            return ") этот стиль абсолютно чужд испытуемому," +
                     " он, вероятно, не пользуется им практически нигде и никогда, " +
                     "даже если этот стиль является лучшим подходом к проблеме при данных обстоятельствах\n";
         }
-        else if (score <= 42){ return style + ") вероятно стойкое игнорирование данного стиля\n"; }
+        else if (score <= 42){ return ") вероятно стойкое игнорирование данного стиля\n"; }
         else if (score <= 48){
-            return style + ") для испытуемого характерно умеренное пренебрежение этим стилем мышления, " +
+            return ") для испытуемого характерно умеренное пренебрежение этим стилем мышления, " +
                     "то есть, при прочих равных условиях, он, по возможности, " +
                     "будет избегать использования данного стиля при решении значимых проблем\n";
         }
-        else if (score <= 59){ return style + ") зона неопределенности. Данный стиль следует исключить из рассмотрения\n"; }
+        else if (score <= 59){ return ") зона неопределенности. Данный стиль следует исключить из рассмотрения\n"; }
         else if (score <= 65){
-            return style + ") испытуемый отдает умеренное предпочтение этому стилю. " +
+            return ") испытуемый отдает умеренное предпочтение этому стилю. " +
                     "Иначе говоря, при прочих равных условиях, " +
                     "он будет предрасположен использовать этот стиль больше или чаще других\n";
         }
         else if (score <= 71){
-            return style + ") испытуемый оказывает сильное предпочтение такому стилю мышления. " +
+            return ") испытуемый оказывает сильное предпочтение такому стилю мышления. " +
                     "Вероятно, он пользуется данным стилем систематически, последовательно и в большинстве ситуаций. " +
                     "Возможно даже, что время от времени испытуемый злоупотребляет им, " +
                     "то есть использует тогда, стиль не обеспечивает лучший подход к проблеме. " +
                     "Чаще это может происходить в напряженных ситуациях (дефицит времени, конфликт и т.п.)\n";
         }
         else {
-            return style + ") у испытуемого очень сильное предпочтение этого стиля мышления. " +
+            return ") у испытуемого очень сильное предпочтение этого стиля мышления. " +
                     "Другими словами, он чрезмерно фиксирован на нем, использует его практически во всех ситуациях, " +
                     "следовательно, и в таких, где этот стиль является далеко не лучшим (или даже неприемлемым) подходом к проблеме\n";
         }
     }
 
-    private String sumMindResult(List<Integer> score){
+    private String sumMindLittleResult(List<Integer> score){
         return "Синтетический стиль: (" + score.get(0) + ")\nИдеалистический стиль: (" + score.get(1) + ")\nПрагматический стиль: ("
                 + score.get(2) + ")\nАналитический стиль: (" + score.get(3) + ")\nРеалистический стиль: (" + score.get(4) + ")";
     }
@@ -510,7 +669,7 @@ public class TestService {
                                 .id(r.getId())
                                 .testName(r.getTestName())
                                 .user(answers.get(0).getUser())
-                                .result(r.getTestResult())
+                                .testResult(r.getTestResult())
                                 .build())));
     }
 
@@ -542,44 +701,19 @@ public class TestService {
     //get
 
     public Flux<TestDTO> getAllTest(){
-        return template.getDatabaseClient()
-                .sql("SELECT * FROM test")
-                .map((row, rowMetadata) -> TestDTO.builder()
-                        .id(row.get("id", String.class))
-                        .testName(row.get("test_name", String.class))
-                        .name(row.get("name", String.class))
-                        .build())
-                .all();
+        return template.select(Test.class).all()
+                .flatMap(t -> Flux.just(mapper.map(t, TestDTO.class)));
     }
 
     public Mono<TestDTO> getTest(String testName){
-        return template.getDatabaseClient()
-                .sql("SELECT * FROM test WHERE test_name =:testName")
-                .bind("testName", testName)
-                .map((row, rowMetadata) -> TestDTO.builder()
-                        .id(row.get("id", String.class))
-                        .testName(row.get("test_name", String.class))
-                        .name(row.get("name", String.class))
-                        .description(row.get("description", String.class))
-                        .build())
-                .first();
+        return template.selectOne(query(where("test_name").is(testName)), Test.class)
+                .flatMap(t -> Mono.just(mapper.map(t, TestDTO.class)));
     }
 
     public Flux<TestQuestionDTO> getTestQuestions(String testName, Integer moduleNumber){
-        return template.getDatabaseClient()
-                .sql("SELECT * FROM test_question WHERE test_name =:testName AND question_module_number = :moduleNumber")
-                .bind("testName", testName)
-                .bind("moduleNumber", moduleNumber)
-                .map((row, rowMetadata) -> TestQuestionDTO.builder()
-                        .id(row.get("id", String.class))
-                        .testName(row.get("test_name", String.class))
-                        .questionNumber(row.get("question_number", Integer.class))
-                        .questionName(row.get("question_name", String.class))
-                        .questionModuleNumber(row.get("question_module_number", Integer.class))
-                        .questionModule(row.get("question_module", String.class))
-                        .question(row.get("question", String.class))
-                        .build())
-                .all()
+        return template.select(query(where("test_name").is(testName)
+                        .and("question_module_number").is(moduleNumber)), TestQuestion.class)
+                .flatMap(q -> Flux.just(mapper.map(q, TestQuestionDTO.class)))
                 .sort(Comparator.comparing(TestQuestionDTO::getQuestionNumber));
     }
 
@@ -606,9 +740,13 @@ public class TestService {
                                     .lastName(row.get("u_last_name", String.class))
                                     .build())
                             .build();
-                    if (Objects.equals(testResultDTO.getTestName(), mindTest)){
-                        testResultDTO.setTestResult(sumMindResult(List.of(row.get("tr_score", Integer[].class))));
-                    } else { testResultDTO.setResult(row.get("tr_test_result", String.class)); }
+                    if (Objects.equals(testResultDTO.getTestName(), belbinTest)){
+                        testResultDTO.setTestResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                    } else if (Objects.equals(testResultDTO.getTestName(), mindTest)){
+                        testResultDTO.setTestResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                    } else if (Objects.equals(testResultDTO.getTestName(), temperTest)) {
+                        testResultDTO.setTestResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                    }
                     return testResultDTO;
                 })
                 .all();
@@ -642,40 +780,40 @@ public class TestService {
                                     TestResultDTO.builder()
                                             .id(row.get("tr_id", String.class))
                                             .testName(testName)
-                                            .result(row.get("tr_test_result", String.class))
+                                            .testResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))))
                                             .build() : null)
                             .mindTest(Objects.equals(testName, mindTest) ?
                                     TestResultDTO.builder()
                                             .id(row.get("tr_id", String.class))
                                             .testName(testName)
-                                            .result(sumMindResult(List.of(row.get("tr_score", Integer[].class))))
+                                            .testResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))))
                                             .build() : null)
                             .temperTest(Objects.equals(testName, temperTest) ?
                                     TestResultDTO.builder()
                                             .id(row.get("tr_id", String.class))
                                             .testName(testName)
-                                            .result(row.get("tr_test_result", String.class))
+                                            .testResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))))
                                             .build() : null)
                             .build());
                     if (Objects.equals(testName, belbinTest) && testAllResponse.getBelbinTest() == null){
                         testAllResponse.setBelbinTest(TestResultDTO.builder()
                                 .id(row.get("tr_id", String.class))
                                 .testName(testName)
-                                .result(row.get("tr_test_result", String.class))
+                                .testResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))))
                                 .build());
                     }
                     else if (Objects.equals(testName, mindTest) && testAllResponse.getMindTest() == null){
                         testAllResponse.setMindTest(TestResultDTO.builder()
                                 .id(row.get("tr_id", String.class))
                                 .testName(testName)
-                                .result(sumMindResult(List.of(row.get("tr_score", Integer[].class))))
+                                .testResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))))
                                 .build());
                     }
                     else if (Objects.equals(testName, temperTest) && testAllResponse.getTemperTest() == null){
                         testAllResponse.setTemperTest(TestResultDTO.builder()
                                 .id(row.get("tr_id", String.class))
                                 .testName(testName)
-                                .result(row.get("tr_test_result", String.class))
+                                .testResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))))
                                 .build());
                     }
                     map.put(userId,testAllResponse);
@@ -738,7 +876,7 @@ public class TestService {
                                 .firstName(row.get("u_first_name", String.class))
                                 .lastName(row.get("u_last_name", String.class))
                                 .build())
-                        .result(row.get("tr_test_result", String.class))
+                        .testResult(row.get("tr_test_result", String.class))
                         .build())
                 .first();
     }
@@ -767,10 +905,12 @@ public class TestService {
                                     .studyGroup(row.get("u_study_group", String.class))
                                     .build())
                             .build();
-                    if (Objects.equals(testResultDTO.getTestName(), mindTest)){
-                        testResultDTO.setTestResult(sumMindResult(List.of(row.get("tr_score", Integer[].class))).replace("\n", " "));
-                    } else {
-                        testResultDTO.setResult(row.get("tr_test_result", String.class).replace("\n", " "));
+                    if (Objects.equals(testResultDTO.getTestName(), belbinTest)){
+                        testResultDTO.setTestResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                    } else if (Objects.equals(testResultDTO.getTestName(), mindTest)){
+                        testResultDTO.setTestResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))).replace("\n", " "));
+                    } else if (Objects.equals(testResultDTO.getTestName(), temperTest)) {
+                        testResultDTO.setTestResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))).replace("\n", " "));
                     }
                     return testResultDTO;
                 })
@@ -778,11 +918,11 @@ public class TestService {
                 .collectList()
                 .flatMap(l -> {
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-                    try (PrintWriter writer = new PrintWriter(byteArrayOutputStream)) {
+                    try (PrintWriter writer = new PrintWriter(new OutputStreamWriter(byteArrayOutputStream, StandardCharsets.UTF_8), true)) {
                         l.forEach(r -> writer.println(r.getUser().getFirstName() + " "
                                 + r.getUser().getLastName() + "\t"
                                 + r.getUser().getStudyGroup() + "\t"
-                                + r.getResult()));
+                                + r.getTestResult()));
                     }
                     return Mono.just(new InputStreamResource(new ByteArrayInputStream(byteArrayOutputStream.toByteArray())));
                 });
@@ -811,7 +951,7 @@ public class TestService {
                     if (testResult.getScore().stream().mapToInt(Integer::intValue).sum() != 70) {
                         return Mono.error(new ServerProcessException("Сумма ответов не равна 70"));
                     }
-                    testResult.setTestResult(sumBelbinResult(testResult.getScore().indexOf(Collections.max(testResult.getScore()))));
+                    testResult.setTestResult(sumBelbinResult(testResult.getScore()));
                     return saveResult(l, testResult, Boolean.TRUE);
                 });
     }
@@ -843,7 +983,7 @@ public class TestService {
                             }
                         }
                     });
-                    testResult.setTestResult(sumTemperTest(testResult.getScore()));
+                    testResult.setTestResult(sumTemperResult(testResult.getScore()));
                     return saveResult(l, testResult, Boolean.FALSE);
                 });
     }
@@ -913,11 +1053,11 @@ public class TestService {
                             }
                         }
                     });
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(0), "Синтетический стиль: (" + testResult.getScore().get(0)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(1), testResult.getTestResult() + "Идеалистический стиль: (" + testResult.getScore().get(1)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(2), testResult.getTestResult() + "Прагматический стиль: (" + testResult.getScore().get(2)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(3), testResult.getTestResult() + "Аналитический стиль: (" + testResult.getScore().get(3)));
-                    testResult.setTestResult(sumMindResult(testResult.getScore().get(4), testResult.getTestResult() + "Реалистический стиль: (" + testResult.getScore().get(4)));
+                    testResult.setTestResult("Синтетический стиль: (" + testResult.getScore().get(0) + sumMindResult(testResult.getScore().get(0)));
+                    testResult.setTestResult(testResult.getTestResult() + "Идеалистический стиль: (" + testResult.getScore().get(1) + sumMindResult(testResult.getScore().get(1)));
+                    testResult.setTestResult(testResult.getTestResult() + "Прагматический стиль: (" + testResult.getScore().get(2) + sumMindResult(testResult.getScore().get(2)));
+                    testResult.setTestResult(testResult.getTestResult() + "Аналитический стиль: (" + testResult.getScore().get(3) + sumMindResult(testResult.getScore().get(3)));
+                    testResult.setTestResult(testResult.getTestResult() + "Реалистический стиль: (" + testResult.getScore().get(4) + sumMindResult(testResult.getScore().get(4)));
                     return saveResult(l, testResult, Boolean.TRUE);
                 });
     }

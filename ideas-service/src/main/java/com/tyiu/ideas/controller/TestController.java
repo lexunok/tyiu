@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -58,6 +59,7 @@ public class TestController {
             return testService.generateFile(testName).flatMap(r -> {
                 HttpHeaders headers = new HttpHeaders();
                 headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + testName + ".txt");
+                headers.setContentType(MediaType.TEXT_PLAIN);
 
                 return Mono.just(new ResponseEntity<>(r, headers, HttpStatus.OK));
             });
