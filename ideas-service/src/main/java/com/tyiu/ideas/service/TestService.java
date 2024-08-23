@@ -721,7 +721,7 @@ public class TestService {
         String query = """
                 SELECT
                     tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score,
-                    u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name
+                    u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name, u.study_group AS u_study_group
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
                 WHERE tr.test_name = :testName
@@ -738,6 +738,7 @@ public class TestService {
                                     .email(row.get("u_email", String.class))
                                     .firstName(row.get("u_first_name", String.class))
                                     .lastName(row.get("u_last_name", String.class))
+                                    .studyGroup(row.get("u_study_group", String.class))
                                     .build())
                             .build();
                     if (Objects.equals(testResultDTO.getTestName(), belbinTest)){
