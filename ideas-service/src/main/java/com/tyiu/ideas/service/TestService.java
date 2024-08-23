@@ -720,7 +720,7 @@ public class TestService {
     public Flux<TestResultDTO> getAllResult(String testName){
         String query = """
                 SELECT
-                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score,
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.score AS tr_score,
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name, u.study_group AS u_study_group
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
@@ -756,7 +756,7 @@ public class TestService {
     public Flux<TestAllResponse> getTestGeneral(){
         String query = """
                 SELECT
-                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score,
+                    tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.score AS tr_score,
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name, u.study_group AS u_study_group
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
@@ -777,45 +777,21 @@ public class TestService {
                                     .lastName(row.get("u_last_name", String.class))
                                     .studyGroup(row.get("u_study_group", String.class))
                                     .build())
-                            .belbinTest(Objects.equals(testName, belbinTest) ?
-                                    TestResultDTO.builder()
-                                            .id(row.get("tr_id", String.class))
-                                            .testName(testName)
-                                            .testResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))))
-                                            .build() : null)
-                            .mindTest(Objects.equals(testName, mindTest) ?
-                                    TestResultDTO.builder()
-                                            .id(row.get("tr_id", String.class))
-                                            .testName(testName)
-                                            .testResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))))
-                                            .build() : null)
-                            .temperTest(Objects.equals(testName, temperTest) ?
-                                    TestResultDTO.builder()
-                                            .id(row.get("tr_id", String.class))
-                                            .testName(testName)
-                                            .testResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))))
-                                            .build() : null)
+                            .belbinResult(Objects.equals(testName, belbinTest) ?
+                                    sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))) : "-")
+                            .mindResult(Objects.equals(testName, mindTest) ?
+                                    sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))) : "-")
+                            .temperResult(Objects.equals(testName, temperTest) ?
+                                    sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))) : "-")
                             .build());
-                    if (Objects.equals(testName, belbinTest) && testAllResponse.getBelbinTest() == null){
-                        testAllResponse.setBelbinTest(TestResultDTO.builder()
-                                .id(row.get("tr_id", String.class))
-                                .testName(testName)
-                                .testResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))))
-                                .build());
+                    if (Objects.equals(testName, belbinTest) && Objects.equals(testAllResponse.getBelbinResult(), "-")){
+                        testAllResponse.setBelbinResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))));
                     }
-                    else if (Objects.equals(testName, mindTest) && testAllResponse.getMindTest() == null){
-                        testAllResponse.setMindTest(TestResultDTO.builder()
-                                .id(row.get("tr_id", String.class))
-                                .testName(testName)
-                                .testResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))))
-                                .build());
+                    else if (Objects.equals(testName, mindTest) && Objects.equals(testAllResponse.getMindResult(), "-")){
+                        testAllResponse.setMindResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))));
                     }
-                    else if (Objects.equals(testName, temperTest) && testAllResponse.getTemperTest() == null){
-                        testAllResponse.setTemperTest(TestResultDTO.builder()
-                                .id(row.get("tr_id", String.class))
-                                .testName(testName)
-                                .testResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))))
-                                .build());
+                    else if (Objects.equals(testName, temperTest) && Objects.equals(testAllResponse.getTemperResult(), "-")){
+                        testAllResponse.setTemperResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))));
                     }
                     map.put(userId,testAllResponse);
                     return testAllResponse;
@@ -885,7 +861,7 @@ public class TestService {
     public Mono<InputStreamResource> generateFile(String testName) {
         String query = """
                 SELECT
-                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.test_result AS tr_test_result, tr.score AS tr_score,
+                    tr.id AS tr_id, tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.score AS tr_score,
                     u.id AS u_id, u.email AS u_email, u.first_name AS u_first_name, u.last_name AS u_last_name, u.study_group AS u_study_group
                 FROM test_result tr
                 LEFT JOIN users u ON u.id = tr.user_id
