@@ -59,7 +59,7 @@ public class TestController {
             return testService.generateFile(testName).flatMap(r -> {
                 HttpHeaders headers = new HttpHeaders();
                 headers.add(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=" + testName + ".txt");
-                headers.setContentType(MediaType.TEXT_PLAIN);
+                headers.setContentType(MediaType.valueOf(MediaType.TEXT_PLAIN_VALUE + "; charset=UTF-8"));
 
                 return Mono.just(new ResponseEntity<>(r, headers, HttpStatus.OK));
             });
