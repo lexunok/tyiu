@@ -1,6 +1,7 @@
 package com.tyiu.authorizationservice.controller;
 
 import com.nimbusds.jose.shaded.gson.Gson;
+import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.service.AccountService;
 import com.tyiu.client.models.UserDTO;
 import lombok.RequiredArgsConstructor;
@@ -31,8 +32,8 @@ public class AccountController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PostMapping("/register")
-    public void register(@RequestBody UserDTO userDTO){
-        service.registerForAdmin(userDTO);
+    public void register(@RequestBody User user){
+        service.registerForAdmin(user);
     }
 
 }

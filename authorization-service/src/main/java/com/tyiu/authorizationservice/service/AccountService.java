@@ -14,7 +14,6 @@ import com.tyiu.client.exceptions.AccessException;
 import com.tyiu.client.exceptions.ExistException;
 import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.models.Role;
-import com.tyiu.client.models.UserDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -150,8 +149,7 @@ public class AccountService {
         return "redirect:https://hits.tyuiu.ru";
     }
 
-    public void registerForAdmin(UserDTO userDTO) {
-        User user = mapper.map(userDTO,User.class);
+    public void registerForAdmin(User user) {
         user.setPassword(encoder.encode(user.getPassword()));
         user.setIsDeleted(false);
         userRepository.save(user);
