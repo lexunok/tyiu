@@ -807,59 +807,42 @@ public class TestService {
                                     if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 0){
                                         testAllResponse.setMindResult("Синтетический стиль: (" + temp.getScore().get(0) + ")");
                                         map.put(userId,testAllResponse);
-                                        return testAllResponse;
-                                    } else {
-                                        map.remove(userId);
-                                        return null;
-                                    }
+                                    } else { map.remove(userId); }
+                                    return testAllResponse;
                                 }
                                 case IDEALISTIC -> {
                                     if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 1){
                                         testAllResponse.setMindResult("Идеалистический стиль: (" + temp.getScore().get(1) + ")");
                                         map.put(userId,testAllResponse);
-                                        return testAllResponse;
-                                    } else {
-                                        map.remove(userId);
-                                        return null;
-                                    }
+                                    } else { map.remove(userId); }
+                                    return testAllResponse;
                                 }
                                 case PRAGMATIC -> {
                                     if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 2){
                                         testAllResponse.setMindResult("Прагматический стиль: (" + temp.getScore().get(2) + ")");
                                         map.put(userId,testAllResponse);
-                                        return testAllResponse;
-                                    } else {
-                                        map.remove(userId);
-                                        return null;
-                                    }
+                                    } else { map.remove(userId); }
+                                    return testAllResponse;
                                 }
                                 case ANALYTICAL -> {
                                     if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 3){
                                         testAllResponse.setMindResult("Аналитический стиль: (" + temp.getScore().get(3) + ")");
                                         map.put(userId,testAllResponse);
-                                        return testAllResponse;
-                                    } else {
-                                        map.remove(userId);
-                                        return null;
-                                    }
+                                    } else { map.remove(userId); }
+                                    return testAllResponse;
                                 }
                                 case REALISTIC -> {
                                     if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 4){
                                         testAllResponse.setMindResult("Реалистический стиль: (" + temp.getScore().get(4) + ")");
                                         map.put(userId,testAllResponse);
-                                        return testAllResponse;
-                                    } else {
-                                        map.remove(userId);
-                                        return null;
-                                    }
+                                    } else { map.remove(userId); }
+                                    return testAllResponse;
                                 }
                             }
                         }
-                    } else {
-                        map.put(userId,testAllResponse);
-                        return testAllResponse;
                     }
-                    return null;
+                    map.put(userId,testAllResponse);
+                    return testAllResponse;
                 })
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
