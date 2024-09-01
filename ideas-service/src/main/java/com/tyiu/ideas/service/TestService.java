@@ -855,9 +855,11 @@ public class TestService {
                                 }
                             }
                         }
+                    } else {
+                        map.put(userId,testAllResponse);
+                        return testAllResponse;
                     }
-                    map.put(userId,testAllResponse);
-                    return testAllResponse;
+                    return null;
                 })
                 .all().thenMany(Flux.fromIterable(map.values()));
     }
