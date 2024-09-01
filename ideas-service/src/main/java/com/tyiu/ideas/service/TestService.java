@@ -642,6 +642,29 @@ public class TestService {
                 + score.get(2) + ")\nАналитический стиль: (" + score.get(3) + ")\nРеалистический стиль: (" + score.get(4) + ")";
     }
 
+    //в баллах за тест могут быть одинаковые значения
+    //нужно сделать проверку (также проверить в других функциях)
+    private String filterTestGeneral(TestFilter target, List<Integer> score){
+        return switch (target){
+            case ALL -> sumMindLittleResult(score);
+            case SYNTHETIC -> score.indexOf(Collections.max(score)) == 0
+                    ? "Синтетический стиль: (" + score.get(0) + ")"
+                    : "!";
+            case IDEALISTIC -> score.indexOf(Collections.max(score)) == 1 || Objects.equals(Collections.max(score), score.get(1))
+                    ? "Идеалистический стиль: (" + score.get(1) + ")"
+                    : "!";
+            case PRAGMATIC -> score.indexOf(Collections.max(score)) == 2 || Objects.equals(Collections.max(score), score.get(2))
+                    ? "Прагматический стиль: (" + score.get(2) + ")"
+                    : "!";
+            case ANALYTICAL -> score.indexOf(Collections.max(score)) == 3 || Objects.equals(Collections.max(score), score.get(3))
+                    ? "Аналитический стиль: (" + score.get(3) + ")"
+                    : "!";
+            case REALISTIC -> score.indexOf(Collections.max(score)) == 4 || Objects.equals(Collections.max(score), score.get(4))
+                    ? "Реалистический стиль: (" + score.get(4) + ")"
+                    : "!";
+        };
+    }
+
     private Mono<TestResultDTO> saveResult(List<TestAnswerDTO> answers, TestResult testResult, Boolean needQuestionModuleNumber){
         return template.getDatabaseClient().inConnection(connection -> {
                     Batch batch = connection.createBatch();
@@ -776,35 +799,21 @@ public class TestService {
                                     .lastName(row.get("u_last_name", String.class))
                                     .studyGroup(row.get("u_study_group", String.class))
                                     .build())
-                            .belbinResult(Objects.equals(testName, belbinTest) ?
-                                    sumBelbinLittleResult(score) : "-")
-                            .mindResult(Objects.equals(testName, mindTest) ?
-                                    sumMindLittleResult(score) : "-")
-                            .temperResult(Objects.equals(testName, temperTest) ?
-                                    sumTemperLittleResult(score) : "-")
+                            .belbinResult(Objects.equals(testName, belbinTest)
+                                    ? sumBelbinLittleResult(score)
+                                    : "-")
+                            .mindResult(Objects.equals(testName, mindTest)
+                                    ? filterTestGeneral(target, score)
+                                    : "-")
+                            .temperResult(Objects.equals(testName, temperTest)
+                                    ? sumTemperLittleResult(score)
+                                    : "-")
                             .build());
                     if (Objects.equals(testName, belbinTest) && Objects.equals(testAllResponse.getBelbinResult(), "-")){
                         testAllResponse.setBelbinResult(sumBelbinLittleResult(score));
                     }
                     else if (Objects.equals(testName, mindTest) && Objects.equals(testAllResponse.getMindResult(), "-")){
-                        switch (target){
-                            case ALL -> testAllResponse.setMindResult(sumMindLittleResult(score));
-                            case SYNTHETIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 0
-                                    ? "Синтетический стиль: (" + score.get(0) + ")"
-                                    : "!");
-                            case IDEALISTIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 1
-                                    ? "Идеалистический стиль: (" + score.get(1) + ")"
-                                    : "!");
-                            case PRAGMATIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 2
-                                    ? "Прагматический стиль: (" + score.get(2) + ")"
-                                    : "!");
-                            case ANALYTICAL -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 3
-                                    ? "Аналитический стиль: (" + score.get(3) + ")"
-                                    : "!");
-                            case REALISTIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 4
-                                    ? "Реалистический стиль: (" + score.get(4) + ")"
-                                    : "!");
-                        }
+                        testAllResponse.setMindResult(filterTestGeneral(target, score));
                     }
                     else if (Objects.equals(testName, temperTest) && Objects.equals(testAllResponse.getTemperResult(), "-")){
                         testAllResponse.setTemperResult(sumTemperLittleResult(score));
