@@ -34,9 +34,9 @@ public class TestController {
         return testService.getAllTest();
     }
 
-    @GetMapping("/general")
-    public Flux<TestAllResponse> getTestGeneral(){
-        return testService.getTestGeneral();
+    @GetMapping("/general/{target}")
+    public Flux<TestAllResponse> getTestGeneral(@PathVariable TestFilter target){
+        return testService.getTestGeneral(target);
     }
 
     @GetMapping("/{testName}")

@@ -2,13 +2,11 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
-import com.tyiu.ideas.model.dto.TestAnswerDTO;
-import com.tyiu.ideas.model.dto.TestDTO;
-import com.tyiu.ideas.model.dto.TestQuestionDTO;
-import com.tyiu.ideas.model.dto.TestResultDTO;
+import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.Test;
 import com.tyiu.ideas.model.entities.TestQuestion;
 import com.tyiu.ideas.model.entities.TestResult;
+import com.tyiu.ideas.model.enums.TestFilter;
 import com.tyiu.ideas.model.responses.TestAllResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
@@ -753,7 +751,7 @@ public class TestService {
                 .all();
     }
 
-    public Flux<TestAllResponse> getTestGeneral(){
+    public Flux<TestAllResponse> getTestGeneral(TestFilter target){
         String query = """
                 SELECT
                     tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.score AS tr_score,
@@ -789,7 +787,24 @@ public class TestService {
                         testAllResponse.setBelbinResult(sumBelbinLittleResult(score));
                     }
                     else if (Objects.equals(testName, mindTest) && Objects.equals(testAllResponse.getMindResult(), "-")){
-                        testAllResponse.setMindResult(sumMindLittleResult(score));
+                        switch (target){
+                            case ALL -> testAllResponse.setMindResult(sumMindLittleResult(score));
+                            case SYNTHETIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 0
+                                    ? "Синтетический стиль: (" + score.get(0) + ")"
+                                    : "!");
+                            case IDEALISTIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 1
+                                    ? "Идеалистический стиль: (" + score.get(1) + ")"
+                                    : "!");
+                            case PRAGMATIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 2
+                                    ? "Прагматический стиль: (" + score.get(2) + ")"
+                                    : "!");
+                            case ANALYTICAL -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 3
+                                    ? "Аналитический стиль: (" + score.get(3) + ")"
+                                    : "!");
+                            case REALISTIC -> testAllResponse.setMindResult(score.indexOf(Collections.max(score)) == 4
+                                    ? "Реалистический стиль: (" + score.get(4) + ")"
+                                    : "!");
+                        }
                     }
                     else if (Objects.equals(testName, temperTest) && Objects.equals(testAllResponse.getTemperResult(), "-")){
                         testAllResponse.setTemperResult(sumTemperLittleResult(score));
@@ -797,7 +812,7 @@ public class TestService {
                     map.put(userId,testAllResponse);
                     return testAllResponse;
                 })
-                .all().thenMany(Flux.fromIterable(map.values()));
+                .all().thenMany(Flux.fromIterable(map.values()).filter(t -> !t.getMindResult().equals("!")));
     }
 
     public Flux<TestAnswerDTO> getAnswers(String testName, String userId){
