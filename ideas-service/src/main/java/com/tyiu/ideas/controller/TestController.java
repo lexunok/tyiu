@@ -5,6 +5,7 @@ import com.tyiu.ideas.model.dto.TestAnswerDTO;
 import com.tyiu.ideas.model.dto.TestDTO;
 import com.tyiu.ideas.model.dto.TestQuestionDTO;
 import com.tyiu.ideas.model.dto.TestResultDTO;
+import com.tyiu.ideas.model.enums.TestFilter;
 import com.tyiu.ideas.model.responses.TestAllResponse;
 import com.tyiu.ideas.service.TestService;
 import lombok.RequiredArgsConstructor;
@@ -33,9 +34,9 @@ public class TestController {
         return testService.getAllTest();
     }
 
-    @GetMapping("/general")
-    public Flux<TestAllResponse> getTestGeneral(){
-        return testService.getTestGeneral();
+    @GetMapping("/general/{target}")
+    public Flux<TestAllResponse> getTestGeneral(@PathVariable TestFilter target){
+        return testService.getTestGeneral(target);
     }
 
     @GetMapping("/{testName}")

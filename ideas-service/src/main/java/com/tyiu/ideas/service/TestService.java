@@ -9,6 +9,7 @@ import com.tyiu.ideas.model.dto.TestResultDTO;
 import com.tyiu.ideas.model.entities.Test;
 import com.tyiu.ideas.model.entities.TestQuestion;
 import com.tyiu.ideas.model.entities.TestResult;
+import com.tyiu.ideas.model.enums.TestFilter;
 import com.tyiu.ideas.model.responses.TestAllResponse;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
@@ -753,7 +754,7 @@ public class TestService {
                 .all();
     }
 
-    public Flux<TestAllResponse> getTestGeneral(){
+    public Flux<TestAllResponse> getTestGeneral(TestFilter target){
         String query = """
                 SELECT
                     tr.user_id AS tr_user_id, tr.test_name AS tr_test_name, tr.score AS tr_score,
@@ -764,11 +765,15 @@ public class TestService {
 
         ConcurrentHashMap<String, TestAllResponse> map = new ConcurrentHashMap<>();
 
+        TestResult temp = TestResult.builder().testName(mindTest).build();
+
         return template.getDatabaseClient()
                 .sql(query)
                 .map((row, rowMetadata) -> {
                     String userId = row.get("u_id", String.class);
                     String testName = row.get("tr_test_name", String.class);
+                    List<Integer> score = List.of(row.get("tr_score", Integer[].class));
+                    if (Objects.equals(testName, temp.getTestName())) { temp.setScore(score); }
                     TestAllResponse testAllResponse = map.getOrDefault(userId, TestAllResponse.builder()
                             .user(UserDTO.builder()
                                     .id(row.get("u_id", String.class))
@@ -778,20 +783,78 @@ public class TestService {
                                     .studyGroup(row.get("u_study_group", String.class))
                                     .build())
                             .belbinResult(Objects.equals(testName, belbinTest) ?
-                                    sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))) : "-")
+                                    sumBelbinLittleResult(score) : "-")
                             .mindResult(Objects.equals(testName, mindTest) ?
-                                    sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))) : "-")
+                                    sumMindLittleResult(score) : "-")
                             .temperResult(Objects.equals(testName, temperTest) ?
-                                    sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))) : "-")
+                                    sumTemperLittleResult(score) : "-")
                             .build());
                     if (Objects.equals(testName, belbinTest) && Objects.equals(testAllResponse.getBelbinResult(), "-")){
-                        testAllResponse.setBelbinResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                        testAllResponse.setBelbinResult(sumBelbinLittleResult(score));
                     }
                     else if (Objects.equals(testName, mindTest) && Objects.equals(testAllResponse.getMindResult(), "-")){
-                        testAllResponse.setMindResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                        testAllResponse.setMindResult(sumMindLittleResult(score));
                     }
                     else if (Objects.equals(testName, temperTest) && Objects.equals(testAllResponse.getTemperResult(), "-")){
-                        testAllResponse.setTemperResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                        testAllResponse.setTemperResult(sumTemperLittleResult(score));
+                    }
+                    if (target != TestFilter.ALL){
+                        if (!Objects.equals(testAllResponse.getBelbinResult(), "-")
+                                && !Objects.equals(testAllResponse.getTemperResult(), "-")
+                                && !Objects.equals(testAllResponse.getMindResult(), "-")){
+                            switch (target){
+                                case SYNTHETIC -> {
+                                    if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 0){
+                                        testAllResponse.setMindResult("Синтетический стиль: (" + temp.getScore().get(0) + ")");
+                                        map.put(userId,testAllResponse);
+                                        return testAllResponse;
+                                    } else {
+                                        map.remove(userId);
+                                        return null;
+                                    }
+                                }
+                                case IDEALISTIC -> {
+                                    if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 1){
+                                        testAllResponse.setMindResult("Идеалистический стиль: (" + temp.getScore().get(1) + ")");
+                                        map.put(userId,testAllResponse);
+                                        return testAllResponse;
+                                    } else {
+                                        map.remove(userId);
+                                        return null;
+                                    }
+                                }
+                                case PRAGMATIC -> {
+                                    if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 2){
+                                        testAllResponse.setMindResult("Прагматический стиль: (" + temp.getScore().get(2) + ")");
+                                        map.put(userId,testAllResponse);
+                                        return testAllResponse;
+                                    } else {
+                                        map.remove(userId);
+                                        return null;
+                                    }
+                                }
+                                case ANALYTICAL -> {
+                                    if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 3){
+                                        testAllResponse.setMindResult("Аналитический стиль: (" + temp.getScore().get(3) + ")");
+                                        map.put(userId,testAllResponse);
+                                        return testAllResponse;
+                                    } else {
+                                        map.remove(userId);
+                                        return null;
+                                    }
+                                }
+                                case REALISTIC -> {
+                                    if (temp.getScore().indexOf(Collections.max(temp.getScore())) == 4){
+                                        testAllResponse.setMindResult("Реалистический стиль: (" + temp.getScore().get(4) + ")");
+                                        map.put(userId,testAllResponse);
+                                        return testAllResponse;
+                                    } else {
+                                        map.remove(userId);
+                                        return null;
+                                    }
+                                }
+                            }
+                        }
                     }
                     map.put(userId,testAllResponse);
                     return testAllResponse;
