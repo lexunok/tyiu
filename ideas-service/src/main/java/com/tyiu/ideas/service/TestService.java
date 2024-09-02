@@ -795,7 +795,8 @@ public class TestService {
                     map.put(userId,testAllResponse);
                     return testAllResponse;
                 })
-                .all().thenMany(Flux.fromIterable(map.values()).filter(t -> !t.getMindResult().equals("!")));
+                .all().thenMany(Flux.fromIterable(map.values())
+                        .filter(t -> !t.getMindResult().equals("!") && (target == TestFilter.ALL || !t.getMindResult().equals("-"))));
     }
 
     public Flux<TestAnswerDTO> getAnswers(String testName, String userId){
