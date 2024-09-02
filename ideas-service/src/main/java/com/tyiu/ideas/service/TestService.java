@@ -2,7 +2,10 @@ package com.tyiu.ideas.service;
 
 import com.tyiu.client.exceptions.ServerProcessException;
 import com.tyiu.client.models.UserDTO;
-import com.tyiu.ideas.model.dto.*;
+import com.tyiu.ideas.model.dto.TestAnswerDTO;
+import com.tyiu.ideas.model.dto.TestDTO;
+import com.tyiu.ideas.model.dto.TestQuestionDTO;
+import com.tyiu.ideas.model.dto.TestResultDTO;
 import com.tyiu.ideas.model.entities.Test;
 import com.tyiu.ideas.model.entities.TestQuestion;
 import com.tyiu.ideas.model.entities.TestResult;
@@ -417,23 +420,22 @@ public class TestService {
     ////////////////////////////////////////////////////////////////////
 
     private String sumBelbinLittleResult(List<Integer> score){
-        switch (score.indexOf(Collections.max(score))){
-            case 0 -> { return "РЕАЛИЗАТОР"; }
-            case 1 -> { return "КООРДИНАТОР"; }
-            case 2 -> { return "МОТИВАТОР"; }
-            case 3 -> { return "ГЕНЕРАТОР ИДЕЙ"; }
-            case 4 -> { return "ИССЛЕДОВАТЕЛЬ"; }
-            case 5 -> { return "АНАЛИТИК-ЭКСПЕРТ"; }
-            case 6 -> { return "ВДОХНОВИТЕЛЬ"; }
-            case 7 -> { return "КОНТРОЛЕР"; }
-        }
-        return null;
+        return switch (score.indexOf(Collections.max(score))){
+            case 0 -> "РЕАЛИЗАТОР";
+            case 1 -> "КООРДИНАТОР";
+            case 2 -> "МОТИВАТОР";
+            case 3 -> "ГЕНЕРАТОР ИДЕЙ";
+            case 4 -> "ИССЛЕДОВАТЕЛЬ";
+            case 5 -> "АНАЛИТИК-ЭКСПЕРТ";
+            case 6 -> "ВДОХНОВИТЕЛЬ";
+            case 7 -> "КОНТРОЛЕР";
+            default -> throw new ServerProcessException("Ошибка при подсчете результата");
+        };
     }
 
     private String sumBelbinResult(List<Integer> score){
-        switch (score.indexOf(Collections.max(score))) {
-            case 0 -> {
-                return "Вы РЕАЛИЗАТОР\n" +
+        return switch (score.indexOf(Collections.max(score))) {
+            case 0 -> "Вы РЕАЛИЗАТОР\n" +
                         "Характеристика.\n" +
                         "Реализаторам присущи практический здравый смысл и  хорошее чувство самоконтроля и дисциплины. " +
                         "Они любят тяжелую работу и преодоление проблем в системном режиме. " +
@@ -446,9 +448,7 @@ public class TestService {
                         "Говорят, что многие исполнители делают только ту работу, которую хотят делать и пренебрегают заданиями, которые находят неприятными. " +
                         "Реализаторы, наоборот, будут делать то, что необходимо делу. " +
                         "Хорошие Реализаторы часто продвигаются до высоких должностных позиций в управлении благодаря своим хорошим организаторским способностям и компетентности в решении всех важных вопросов.";
-            }
-            case 1 -> {
-                return "Вы КООРДИНАТОР\n" +
+            case 1 -> "Вы КООРДИНАТОР\n" +
                         "Характеристика.\n" +
                         "Отличительной чертой Координаторов является способность заставлять других работать над распределенными целями. " +
                         "Зрелый, опытный и уверенный, Координатор охотно раздает поручения. " +
@@ -459,9 +459,7 @@ public class TestService {
                         "Они лучше работают совместно с коллегами равными по рангу или позиции, чем с сотрудниками более низких  уровней. " +
                         "Их девизом может быть «консультация с контролем». Они верят, что проблему можно решить мирным путем. " +
                         "В некоторых компаниях Координаторы могут вступать в конфликты из-за разности во взглядах с Творцами.";
-            }
-            case 2 -> {
-                return "Вы МОТИВАТОР\n" +
+            case 2 -> "Вы МОТИВАТОР\n" +
                         "Характеристика.\n" +
                         "Это люди с высоким уровнем мотивации, неисчерпаемой энергией и великой жаждой достижений. " +
                         "Обычно, это ярко выраженные экстраверты, обладающие сильной напористостью. " +
@@ -477,9 +475,7 @@ public class TestService {
                         "Они могут легко провести необходимые изменения и не отказываются от нестандартных решений. " +
                         "Отвечая названию, они пытаются навязывать группе  некоторые образцы или формы поведения и деятельности. " +
                         "Они являются самыми эффективными членами команды, способными гарантировать позитивные действия.";
-            }
-            case 3 -> {
-                return "Вы ГЕНЕРАТОР ИДЕЙ\n" +
+            case 3 -> "Вы ГЕНЕРАТОР ИДЕЙ\n" +
                         "Характеристика.\n" +
                         "Генераторы идей являются инноваторами и изобретателями, могут быть очень креативными. " +
                         "Они сеют зерно и идеи, из которых  прорастают большинство разработок и проектов. " +
@@ -492,9 +488,7 @@ public class TestService {
                         "Они очень необходимы на начальных стадиях проектов или когда проект находится под угрозой срыва. " +
                         "Они обычно являются основателями компаний или организаторами новых производств. " +
                         "Тем не менее, большое количество Генераторов идей в одной компании может привести к контр-продуктивности, так как они имеют тенденцию проводить время, укрепляя свои собственные идеи и вступая друг с другом в конфликт.";
-            }
-            case 4 -> {
-                return "Вы ИССЛЕДОВАТЕЛЬ\n" +
+            case 4 -> "Вы ИССЛЕДОВАТЕЛЬ\n" +
                         "Характеристика.\n" +
                         "Исследователи - часто энтузиасты и яркие экстраверты. " +
                         "Они умеют общаться с людьми в компании и за ее пределами. " +
@@ -508,9 +502,7 @@ public class TestService {
                         "Они очень хорошо реагируют и отвечают на новые идеи  и разработки, могут найти ресурсы и вне группы. " +
                         "Они самые подходящие люди для установки внешних контактов и проведения последующих переговоров. " +
                         "Они умеют самостоятельно думать, получая информацию от других.";
-            }
-            case 5 -> {
-                return "Вы АНАЛИТИК-ЭКСПЕРТ\n" +
+            case 5 -> "Вы АНАЛИТИК-ЭКСПЕРТ\n" +
                         "Характеристика.\n" +
                         "Это очень серьезные и предусмотрительные люди с врожденным иммунитетом против чрезмерного энтузиазма. " +
                         "Медлительны в принятии решения, предпочитают хорошо все обдумать. " +
@@ -524,9 +516,7 @@ public class TestService {
                         "Тем не менее, многие Эксперты занимают стратегические посты и преуспевают на должностях высшего ранга. " +
                         "Очень редко удача или срыв дела зависит от принятия спешных решений. " +
                         "Это идеальная «сфера» для Экспертов, людей, которые редко ошибаются и, в конце концов, выигрывают.";
-            }
-            case 6 -> {
-                return "Вы ВДОХНОВИТЕЛЬ\n" +
+            case 6 -> "Вы ВДОХНОВИТЕЛЬ\n" +
                         "Характеристика.\n" +
                         "Это люди, пользующиеся наибольшей поддержкой команды. " +
                         "Они очень вежливы, обходительны и общительны. " +
@@ -541,9 +531,7 @@ public class TestService {
                         "Это создает климат, в котором дипломатия и восприимчивость людей этого типа является настоящей находкой для команды, особенно при управленческом стиле, где конфликты могут возникать и должны искусственно пресекаться. " +
                         "Такие люди в качестве руководителя не представляют угрозу не для кого и поэтому всегда желанны для подчиненных. " +
                         "Вдохновители служат своего рода «смазкой» для команды, а люди в такой обстановке сотрудничают лучше.";
-            }
-            case 7 -> {
-                return "Вы КОНТРОЛЕР\n" +
+            case 7 -> "Вы КОНТРОЛЕР\n" +
                         "Характеристика\n" +
                         "Обладают огромной способностью доводить дело до завершения и обращать внимание на детали. " +
                         "Они никогда не начинают то, что не могут довести до конца. " +
@@ -556,9 +544,8 @@ public class TestService {
                         "Являются незаменимыми в ситуациях, когда задания требуют сильной концентрированности и высокого уровня аккуратности. " +
                         "Они несут чувство срочности и неотложности в команду и хорошо проводят различные митинги. " +
                         "Хорошо справляются с управлением, благодаря своему стремлению к высшим стандартам, своей аккуратности, точности, вниманию к деталям и умению завершать начатое дело.";
-            }
-        }
-        return null;
+            default -> throw new ServerProcessException("Ошибка при подсчете результата");
+        };
     }
 
     private String sumTemperResult(List<Integer> score){
@@ -642,8 +629,6 @@ public class TestService {
                 + score.get(2) + ")\nАналитический стиль: (" + score.get(3) + ")\nРеалистический стиль: (" + score.get(4) + ")";
     }
 
-    //в баллах за тест могут быть одинаковые значения
-    //нужно сделать проверку (также проверить в других функциях)
     private String filterTestGeneral(TestFilter target, List<Integer> score){
         return switch (target){
             case ALL -> sumMindLittleResult(score);
@@ -668,21 +653,11 @@ public class TestService {
     private Mono<TestResultDTO> saveResult(List<TestAnswerDTO> answers, TestResult testResult, Boolean needQuestionModuleNumber){
         return template.getDatabaseClient().inConnection(connection -> {
                     Batch batch = connection.createBatch();
-                    answers.forEach(r -> {
-                                if (Boolean.TRUE.equals(needQuestionModuleNumber)) {
-                                    batch.add(
-                                            String.format("INSERT INTO test_answer (test_name, user_id, question_name, question_module_number, question_number, answer) VALUES ('%s', '%s', '%s', '%s', '%s', '%s');",
-                                                    r.getTestName(), r.getUser().getId(), r.getQuestionName(), r.getQuestionModuleNumber(), r.getQuestionNumber(), r.getAnswer())
-                                    );
-                                }
-                                else {
-                                    batch.add(
-                                            String.format("INSERT INTO test_answer (test_name, user_id, question_name, question_number, answer) VALUES ('%s', '%s', '%s', '%s', '%s');",
-                                                    r.getTestName(), r.getUser().getId(), r.getQuestionName(), r.getQuestionNumber(), r.getAnswer())
-                                    );
-                                }
-                            }
-                    );
+                    answers.forEach(r -> batch.add(Boolean.TRUE.equals(needQuestionModuleNumber)
+                            ? String.format("INSERT INTO test_answer (test_name, user_id, question_name, question_module_number, question_number, answer) VALUES ('%s', '%s', '%s', '%s', '%s', '%s');",
+                                r.getTestName(), r.getUser().getId(), r.getQuestionName(), r.getQuestionModuleNumber(), r.getQuestionNumber(), r.getAnswer())
+                            : String.format("INSERT INTO test_answer (test_name, user_id, question_name, question_number, answer) VALUES ('%s', '%s', '%s', '%s', '%s');",
+                                r.getTestName(), r.getUser().getId(), r.getQuestionName(), r.getQuestionNumber(), r.getAnswer())));
                     return Mono.from(batch.execute());
                 })
                 .then(template.insert(testResult)
@@ -751,6 +726,7 @@ public class TestService {
                 .sql(query)
                 .bind("testName", testName)
                 .map((row, rowMetadata) -> {
+                    List<Integer> score = List.of(row.get("tr_score", Integer[].class));
                     TestResultDTO testResultDTO = TestResultDTO.builder()
                             .id(row.get("tr_id", String.class))
                             .testName(row.get("tr_test_name", String.class))
@@ -762,12 +738,10 @@ public class TestService {
                                     .studyGroup(row.get("u_study_group", String.class))
                                     .build())
                             .build();
-                    if (Objects.equals(testResultDTO.getTestName(), belbinTest)){
-                        testResultDTO.setTestResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))));
-                    } else if (Objects.equals(testResultDTO.getTestName(), mindTest)){
-                        testResultDTO.setTestResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))));
-                    } else if (Objects.equals(testResultDTO.getTestName(), temperTest)) {
-                        testResultDTO.setTestResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))));
+                    switch (testName){
+                        case belbinTest -> testResultDTO.setTestResult(sumBelbinLittleResult(score));
+                        case mindTest -> testResultDTO.setTestResult(sumMindLittleResult(score));
+                        case temperTest -> testResultDTO.setTestResult(sumTemperLittleResult(score));
                     }
                     return testResultDTO;
                 })
@@ -896,6 +870,7 @@ public class TestService {
                 .sql(query)
                 .bind("testName", testName)
                 .map((row, rowMetadata) -> {
+                    List<Integer> score = List.of(row.get("tr_score", Integer[].class));
                     TestResultDTO testResultDTO = TestResultDTO.builder()
                             .id(row.get("tr_id", String.class))
                             .testName(row.get("tr_test_name", String.class))
@@ -907,12 +882,10 @@ public class TestService {
                                     .studyGroup(row.get("u_study_group", String.class))
                                     .build())
                             .build();
-                    if (Objects.equals(testResultDTO.getTestName(), belbinTest)){
-                        testResultDTO.setTestResult(sumBelbinLittleResult(List.of(row.get("tr_score", Integer[].class))));
-                    } else if (Objects.equals(testResultDTO.getTestName(), mindTest)){
-                        testResultDTO.setTestResult(sumMindLittleResult(List.of(row.get("tr_score", Integer[].class))).replace("\n", " "));
-                    } else if (Objects.equals(testResultDTO.getTestName(), temperTest)) {
-                        testResultDTO.setTestResult(sumTemperLittleResult(List.of(row.get("tr_score", Integer[].class))).replace("\n", " "));
+                    switch (testName){
+                        case belbinTest -> testResultDTO.setTestResult(sumBelbinLittleResult(score));
+                        case mindTest -> testResultDTO.setTestResult(sumMindLittleResult(score).replace("\n", " "));
+                        case temperTest -> testResultDTO.setTestResult(sumTemperLittleResult(score).replace("\n", " "));
                     }
                     return testResultDTO;
                 })
