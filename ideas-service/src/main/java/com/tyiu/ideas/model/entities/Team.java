@@ -23,6 +23,7 @@ public class Team {
     private LocalDate createdAt;
     private String ownerId;
     private String leaderId;
+    private Boolean isDeleted;
 
     public String getId() { return id; }
     public String getName() {

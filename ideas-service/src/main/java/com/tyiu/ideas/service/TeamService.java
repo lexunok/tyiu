@@ -190,7 +190,8 @@ public class TeamService {
                 "FROM team t " +
                 "LEFT JOIN team_refused tr ON tr.user_id = :userId AND tr.team_id = t.id " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
-                "LEFT JOIN users l ON t.leader_id = l.id";
+                "LEFT JOIN users l ON t.leader_id = l.id " +
+                "WHERE t.is_deleted = false";
 
         return template.getDatabaseClient()
                 .sql(QUERY)
@@ -209,7 +210,7 @@ public class TeamService {
                 "LEFT JOIN idea_market_refused imr ON imr.team_id = t.id AND imr.idea_id = (SELECT idea_id FROM idea_market WHERE id = :ideaMarketId) " +
                 "LEFT JOIN users o ON t.owner_id = o.id " +
                 "LEFT JOIN users l ON t.leader_id = l.id " +
-                "WHERE t.owner_id = :userId OR t.leader_id = :userId";
+                "WHERE (t.owner_id = :userId OR t.leader_id = :userId) AND t.is_deleted = false";
 
         return template.getDatabaseClient()
                 .sql(QUERY)
@@ -380,6 +381,7 @@ public class TeamService {
                 .ownerId(teamDTO.getOwner().getId())
                 .leaderId(teamDTO.getLeader() != null && teamDTO.getLeader().getId() != null ? teamDTO.getLeader().getId() : null)
                 .createdAt(LocalDate.now())
+                .isDeleted(Boolean.FALSE)
                 .build();
 
         return template.insert(team)
@@ -439,11 +441,11 @@ public class TeamService {
                 """;
         if (role == Role.INITIATOR)
         {
-            QUERY = QUERY + "WHERE us.skill_id IN (:skills)";
+            QUERY = QUERY + "WHERE us.skill_id IN (:skills) AND t.is_deleted = false";
         }
         else {
             QUERY = QUERY + "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
-                    "WHERE us.skill_id IN (:skills) OR tws.skill_id IN (:skills)";
+                    "WHERE (us.skill_id IN (:skills) OR tws.skill_id IN (:skills)) AND t.is_deleted = false";
         }
 
         return getFilteredTeam(QUERY, selectedSkills, userId);
@@ -464,7 +466,7 @@ public class TeamService {
                 "LEFT JOIN team_member tm ON tm.team_id = t.id AND tm.finish_date IS NULL " +
                 "LEFT JOIN user_skill us ON us.user_id = tm.member_id " +
                 "LEFT JOIN team_wanted_skill tws ON tws.team_id = t.id " +
-                "WHERE tws.skill_id IN (:skills) AND us.skill_id NOT IN (:skills)";
+                "WHERE tws.skill_id IN (:skills) AND us.skill_id NOT IN (:skills) AND t.is_deleted = false";
 
         return getFilteredTeam(QUERY, selectedSkills, userId);
     }
@@ -580,7 +582,9 @@ public class TeamService {
         return checkOwner(teamId, user.getId())
                 .flatMap(isExists -> {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
-                        return template.delete(query(where("id").is(teamId)), Team.class);
+                        return template.update(query(where("id").is(teamId)),
+                                update("is_deleted", Boolean.TRUE),
+                                Team.class);
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();

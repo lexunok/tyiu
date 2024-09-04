@@ -1,0 +1,1 @@
+ALTER TABLE team ADD COLUMN is_deleted BOOLEAN;
