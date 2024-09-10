@@ -139,8 +139,12 @@ public class AccountService {
             user.setIsDeleted(false);
             user.setPassword(encoder.encode(user.getPassword()));
             user.setCreatedAt(LocalDateTime.now());
-            if (user.getStudyGroup() == null || !user.getStudyGroup().equals("")) { user.setStudyGroup("-"); }
-            if (user.getTelephone() == null || !user.getTelephone().equals("")) { user.setTelephone("-"); }
+            if (user.getStudyGroup() == null
+                    || user.getStudyGroup().equals("")
+                    || user.getStudyGroup().trim().isEmpty()) { user.setStudyGroup("-"); }
+            if (user.getTelephone() == null
+                    || user.getTelephone().equals("")
+                    || user.getTelephone().trim().isEmpty()) { user.setTelephone("-"); }
             userRepository.save(user);
             invitationRepository.deleteById(data.getId());
         } else {
@@ -152,6 +156,7 @@ public class AccountService {
     public void registerForAdmin(User user) {
         user.setPassword(encoder.encode(user.getPassword()));
         user.setIsDeleted(false);
+        user.setCreatedAt(LocalDateTime.now());
         userRepository.save(user);
     }
 
