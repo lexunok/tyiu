@@ -102,10 +102,10 @@ public class ProfileService {
     public UserDTO updateUserByAdmin(UserDTO userDTO){
         if (userRepository.existsById(userDTO.getId())) {
             userRepository.findById(userDTO.getId())
-                            .ifPresent(u -> template.opsForHash().delete("user", u.getEmail().toLowerCase()));
+                    .ifPresent(u -> template.opsForHash().delete("user", u.getEmail().toLowerCase()));
 
             userRepository.updateProfileForAdminById(userDTO.getFirstName(), userDTO.getLastName(),
-                    userDTO.getEmail(), userDTO.getRoles(), userDTO.getId());
+                    userDTO.getEmail(), userDTO.getRoles(), userDTO.getTelephone(), userDTO.getStudyGroup(), userDTO.getId());
             return userDTO;
         }
         else throw new NotFoundException("Пользователя не существует");

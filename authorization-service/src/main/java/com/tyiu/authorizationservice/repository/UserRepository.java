@@ -37,9 +37,9 @@ public interface UserRepository extends JpaRepository<User,String> {
     void updateProfileById(String firstName, String lastName, String telephone, String studyGroup, String id);
 
     @Modifying
-    @Query("update User u set u.firstName = ?1, u.lastName = ?2, u.email = ?3, u.roles = ?4 where u.id = ?5")
+    @Query("update User u set u.firstName = ?1, u.lastName = ?2, u.email = ?3, u.roles = ?4, u.telephone = ?5, u.studyGroup = ?6 where u.id = ?7")
     @Transactional
-    void updateProfileForAdminById(String firstName, String lastName, String email, List<Role> roles, String id);
+    void updateProfileForAdminById(String firstName, String lastName, String email, List<Role> roles, String telephone, String studyGroup, String id);
 
     List<User> findByIsDeletedFalse();
 }
