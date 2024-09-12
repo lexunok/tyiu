@@ -46,6 +46,8 @@ public class ProfileService {
                         .firstName(u.getFirstName())
                         .lastName(u.getLastName())
                         .createdAt(u.getCreatedAt().toString())
+                        .studyGroup(u.getStudyGroup())
+                        .telephone(u.getTelephone())
                         .build())
                 .toList();
     }
