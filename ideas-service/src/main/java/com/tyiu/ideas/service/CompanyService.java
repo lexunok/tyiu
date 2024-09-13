@@ -6,7 +6,6 @@ import com.tyiu.ideas.model.entities.Company;
 import com.tyiu.ideas.model.entities.relations.Company2User;
 import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -23,7 +22,6 @@ import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
 
-@Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "companies")
@@ -51,12 +49,8 @@ public class CompanyService {
                 .sql(query)
                 .bind("companyId", companyId)
                 .map((row, rowMetadata) -> {
-                    log.info("Начало mapper");
                     String id = row.get("c_id", String.class);
                     String memberId = row.get("m_id", String.class);
-                    log.info("Id компании: " + id);
-                    log.info("Взялся id");
-                    log.info("Сборка CompanyDTO");
                     CompanyDTO companyDTO = map.getOrDefault(companyId, CompanyDTO.builder()
                             .id(companyId)
                             .name(row.get("c_name", String.class))
@@ -68,20 +62,14 @@ public class CompanyService {
                                     .build())
                             .users(new ArrayList<>())
                             .build());
-                    log.info("Владелец команды: " + companyDTO.getOwner().getFirstName() + " " + companyDTO.getOwner().getLastName());
-                    log.info("Сборка CompanyDTO завершена");
                     if (memberId != null) {
-                        log.info("Сборка UserDTO участника началась");
-                        log.info("Id участника: " + memberId);
                         companyDTO.getUsers().add(UserDTO.builder()
                                 .id(id)
                                 .email(row.get("m_email", String.class))
                                 .firstName(row.get("m_first_name", String.class))
                                 .lastName(row.get("m_last_name", String.class))
                                 .build());
-                        log.info("Сборка UserDTO участника завершилась");
                     }
-                    log.info("Возврат CompanyDTO");
                     map.put(companyId, companyDTO);
                     return companyDTO;
                 })
@@ -170,17 +158,17 @@ public class CompanyService {
         return template.update(query(where("id").is(companyId)),
                 update("owner_id", companyDTO.getOwner().getId()),
                 Company.class)
-                .then(template.delete(query(where("company_id").is(companyId)), Company2User.class))
-                .then(template.getDatabaseClient().inConnection(connection -> {
-                    Batch batch = connection.createBatch();
-                    companyDTO.getUsers().forEach(u -> batch.add(
-                            String.format(
-                                    "INSERT INTO company_user (user_id, company_id) VALUES ('%s', '%s');",
-                                    u.getId(), companyId
-                            ))
-                    );
-                    return Mono.from(batch.execute());
-                }).then())
+                .then(template.delete(query(where("company_id").is(companyId)), Company2User.class)
+                        .then(template.getDatabaseClient().inConnection(connection -> {
+                            Batch batch = connection.createBatch();
+                            companyDTO.getUsers().forEach(u -> batch.add(
+                                    String.format(
+                                            "INSERT INTO company_user (user_id, company_id) VALUES ('%s', '%s');",
+                                            u.getId(), companyId
+                                    ))
+                            );
+                            return Mono.from(batch.execute());
+                        }).then()))
                 .thenReturn(companyDTO);
     }
 }
