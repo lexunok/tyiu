@@ -3,9 +3,10 @@ package com.tyiu.ideas.service;
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.CompanyDTO;
 import com.tyiu.ideas.model.entities.Company;
-import com.tyiu.ideas.model.entities.mappers.CompanyMapper;
 import com.tyiu.ideas.model.entities.relations.Company2User;
+import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
@@ -15,9 +16,14 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
+
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
+import static org.springframework.data.relational.core.query.Update.update;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "companies")
@@ -25,7 +31,6 @@ public class CompanyService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
-    private final CompanyMapper companyMapper;
 
     private Mono<CompanyDTO> getCompany(String companyId) {
         String query = """
@@ -40,13 +45,47 @@ public class CompanyService {
             WHERE c.id = :companyId
         """;
 
+        ConcurrentHashMap<String, CompanyDTO> map = new ConcurrentHashMap<>();
+
         return template.getDatabaseClient()
                 .sql(query)
                 .bind("companyId", companyId)
-                .map(companyMapper::apply)
-                .all()
-                .collectList()
-                .map(c -> c.get(0));
+                .map((row, rowMetadata) -> {
+                    log.info("Начало mapper");
+                    String id = row.get("c_id", String.class);
+                    String memberId = row.get("m_id", String.class);
+                    log.info("Id компании: " + id);
+                    log.info("Взялся id");
+                    log.info("Сборка CompanyDTO");
+                    CompanyDTO companyDTO = map.getOrDefault(companyId, CompanyDTO.builder()
+                            .id(companyId)
+                            .name(row.get("c_name", String.class))
+                            .owner(UserDTO.builder()
+                                    .id(row.get("o_id", String.class))
+                                    .email(row.get("o_email", String.class))
+                                    .firstName(row.get("o_first_name", String.class))
+                                    .lastName(row.get("o_last_name", String.class))
+                                    .build())
+                            .users(new ArrayList<>())
+                            .build());
+                    log.info("Владелец команды: " + companyDTO.getOwner().getFirstName() + " " + companyDTO.getOwner().getLastName());
+                    log.info("Сборка CompanyDTO завершена");
+                    if (memberId != null) {
+                        log.info("Сборка UserDTO участника началась");
+                        log.info("Id участника: " + memberId);
+                        companyDTO.getUsers().add(UserDTO.builder()
+                                .id(id)
+                                .email(row.get("m_email", String.class))
+                                .firstName(row.get("m_first_name", String.class))
+                                .lastName(row.get("m_last_name", String.class))
+                                .build());
+                        log.info("Сборка UserDTO участника завершилась");
+                    }
+                    log.info("Возврат CompanyDTO");
+                    map.put(companyId, companyDTO);
+                    return companyDTO;
+                })
+                .all().then(Flux.fromIterable(map.values()).next());
     }
 
     public Mono<CompanyDTO> getCompanyById(String companyId){
@@ -128,14 +167,20 @@ public class CompanyService {
 
     @CacheEvict(allEntries = true)
     public Mono<CompanyDTO> updateCompany(String companyId, CompanyDTO companyDTO) {
-        Company company = mapper.map(companyDTO, Company.class);
-        company.setId(companyId);
-        company.setOwnerId(companyDTO.getOwner().getId());
-        return template.update(company).flatMap(c ->
-                template.delete(query(where("company_id").is(companyId)), Company2User.class)
-                        .thenReturn(companyDTO.getUsers()).mapNotNull(list -> {
-                            list.forEach(member -> template.insert(new Company2User(member.getId(), companyId)).subscribe());
-                            return list;
-                        }).thenReturn(companyDTO));
+        return template.update(query(where("id").is(companyId)),
+                update("owner_id", companyDTO.getOwner().getId()),
+                Company.class)
+                .then(template.delete(query(where("company_id").is(companyId)), Company2User.class))
+                .then(template.getDatabaseClient().inConnection(connection -> {
+                    Batch batch = connection.createBatch();
+                    companyDTO.getUsers().forEach(u -> batch.add(
+                            String.format(
+                                    "INSERT INTO company_user (user_id, company_id) VALUES ('%s', '%s');",
+                                    u.getId(), companyId
+                            ))
+                    );
+                    return Mono.from(batch.execute());
+                }).then())
+                .thenReturn(companyDTO);
     }
 }
