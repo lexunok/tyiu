@@ -49,7 +49,6 @@ public class CompanyService {
                 .map(c -> c.get(0));
     }
 
-    @Cacheable
     public Mono<CompanyDTO> getCompanyById(String companyId){
         return getCompany(companyId);
     }
@@ -94,7 +93,6 @@ public class CompanyService {
                                 .build()).all();
     }
 
-    @Cacheable
     public Flux<UserDTO> getListStaff(String id) {
         String QUERY = "SELECT company_user.*, users.id, users.email, users.first_name, users.last_name " +
                 "FROM company_user " +
