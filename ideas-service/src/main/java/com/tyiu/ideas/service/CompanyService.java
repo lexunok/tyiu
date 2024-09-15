@@ -4,7 +4,6 @@ import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.CompanyDTO;
 import com.tyiu.ideas.model.entities.Company;
 import com.tyiu.ideas.model.entities.relations.Company2User;
-import io.r2dbc.spi.Batch;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
@@ -155,20 +154,15 @@ public class CompanyService {
 
     @CacheEvict(allEntries = true)
     public Mono<CompanyDTO> updateCompany(String companyId, CompanyDTO companyDTO) {
-        return template.update(query(where("id").is(companyId)),
-                update("owner_id", companyDTO.getOwner().getId()),
-                Company.class)
-                .then(template.delete(query(where("company_id").is(companyId)), Company2User.class)
-                        .then(template.getDatabaseClient().inConnection(connection -> {
-                            Batch batch = connection.createBatch();
-                            companyDTO.getUsers().forEach(u -> batch.add(
-                                    String.format(
-                                            "INSERT INTO company_user (user_id, company_id) VALUES ('%s', '%s');",
-                                            u.getId(), companyId
-                                    ))
-                            );
-                            return Mono.from(batch.execute());
-                        }).then()))
+        return Mono.just(companyDTO)
+                .flatMap(c -> template.delete(query(where("company_id").is(companyId)), Company2User.class)
+                        .thenReturn(c))
+                .flatMap(c -> Flux.fromIterable(c.getUsers())
+                        .flatMap(m -> template.insert(new Company2User(m.getId(), companyId)))
+                        .then().thenReturn(c))
+                .flatMap(c -> template.update(query(where("id").is(companyId)),
+                        update("owner_id", c.getOwner().getId()),
+                        Company.class))
                 .thenReturn(companyDTO);
     }
 }
