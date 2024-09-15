@@ -154,14 +154,11 @@ public class CompanyService {
 
     @CacheEvict(allEntries = true)
     public Mono<CompanyDTO> updateCompany(String companyId, CompanyDTO companyDTO) {
-        return Mono.just(companyDTO)
-                .flatMap(c -> template.delete(query(where("company_id").is(companyId)), Company2User.class)
-                        .thenReturn(c))
-                .flatMap(c -> Flux.fromIterable(c.getUsers())
-                        .flatMap(m -> template.insert(new Company2User(m.getId(), companyId)))
-                        .then().thenReturn(c))
-                .flatMap(c -> template.update(query(where("id").is(companyId)),
-                        update("owner_id", c.getOwner().getId()),
+        return template.delete(query(where("company_id").is(companyId)), Company2User.class)
+                .thenMany(Flux.fromIterable(companyDTO.getUsers())
+                        .flatMap(u -> template.insert(new Company2User(u.getId(), companyId))))
+                .then(template.update(query(where("id").is(companyId)),
+                        update("owner_id", companyDTO.getOwner().getId()),
                         Company.class))
                 .thenReturn(companyDTO);
     }
