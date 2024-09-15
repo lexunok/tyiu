@@ -50,8 +50,8 @@ public class CompanyService {
                 .map((row, rowMetadata) -> {
                     String id = row.get("c_id", String.class);
                     String memberId = row.get("m_id", String.class);
-                    CompanyDTO companyDTO = map.getOrDefault(companyId, CompanyDTO.builder()
-                            .id(companyId)
+                    CompanyDTO companyDTO = map.getOrDefault(id, CompanyDTO.builder()
+                            .id(id)
                             .name(row.get("c_name", String.class))
                             .owner(UserDTO.builder()
                                     .id(row.get("o_id", String.class))
@@ -63,7 +63,7 @@ public class CompanyService {
                             .build());
                     if (memberId != null) {
                         companyDTO.getUsers().add(UserDTO.builder()
-                                .id(id)
+                                .id(memberId)
                                 .email(row.get("m_email", String.class))
                                 .firstName(row.get("m_first_name", String.class))
                                 .lastName(row.get("m_last_name", String.class))
