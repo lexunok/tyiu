@@ -10,10 +10,12 @@ import com.tyiu.authorizationservice.repository.InvitationRepository;
 import com.tyiu.authorizationservice.repository.PasswordChangeDataRepository;
 import com.tyiu.authorizationservice.repository.UserRepository;
 import com.tyiu.client.connections.EmailClient;
+import com.tyiu.client.connections.ProfileClient;
 import com.tyiu.client.exceptions.AccessException;
 import com.tyiu.client.exceptions.ExistException;
 import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.models.Role;
+import com.tyiu.client.models.UserDTO;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -45,6 +47,7 @@ public class AccountService {
 
     private final PasswordEncoder encoder;
     private final EmailClient emailClient;
+    private final ProfileClient profileClient;
     private final ModelMapper mapper;
     private final RedisTemplate<String, Object> template;
 
@@ -145,7 +148,7 @@ public class AccountService {
             if (user.getTelephone() == null
                     || user.getTelephone().equals("")
                     || user.getTelephone().trim().isEmpty()) { user.setTelephone("-"); }
-            userRepository.save(user);
+            profileClient.checkUser(mapper.map(userRepository.save(user), UserDTO.class));
             invitationRepository.deleteById(data.getId());
         } else {
             throw new NotFoundException("Приглашение не найдено");
@@ -157,7 +160,7 @@ public class AccountService {
         user.setPassword(encoder.encode(user.getPassword()));
         user.setIsDeleted(false);
         user.setCreatedAt(LocalDateTime.now());
-        userRepository.save(user);
+        profileClient.checkUser(mapper.map(userRepository.save(user), UserDTO.class));
     }
 
     @PostConstruct
@@ -173,7 +176,7 @@ public class AccountService {
                     .studyGroup("админчики")
                     .telephone("xiaomi")
                     .build();
-            userRepository.save(user);
+            profileClient.checkUser(mapper.map(userRepository.save(user), UserDTO.class));
         }
     }
 
@@ -199,6 +202,7 @@ public class AccountService {
             EmailChangeData data = emailChangeData.get();
             if (encoder.matches(code, data.getCode())) {
                 userRepository.setUserEmailByEmail(data.getNewEmail(), data.getOldEmail());
+                profileClient.checkUser(mapper.map(userRepository.findByEmail(data.getNewEmail()), UserDTO.class));
                 emailChangeRepository.deleteByOldEmail(data.getOldEmail());
                 template.opsForHash().delete("user", data.getOldEmail().toLowerCase());
             }

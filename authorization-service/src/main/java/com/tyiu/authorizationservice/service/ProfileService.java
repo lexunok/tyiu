@@ -3,6 +3,7 @@ package com.tyiu.authorizationservice.service;
 import com.tyiu.authorizationservice.model.entity.User;
 import com.tyiu.authorizationservice.model.request.ProfileUpdateRequest;
 import com.tyiu.authorizationservice.repository.UserRepository;
+import com.tyiu.client.connections.ProfileClient;
 import com.tyiu.client.exceptions.MediaException;
 import com.tyiu.client.exceptions.NotFoundException;
 import com.tyiu.client.exceptions.ServerProcessException;
@@ -31,6 +32,7 @@ public class ProfileService {
 
     private static final long MAX_FILE_SIZE_BYTES = 16 * 1024 * 1024;
     private final UserRepository userRepository;
+    private final ProfileClient profileClient;
     private final ModelMapper mapper;
     private final RedisTemplate<String, Object> template;
 
@@ -99,6 +101,7 @@ public class ProfileService {
                 .ifPresent(u -> template.opsForHash().delete("user", u.getEmail().toLowerCase()));
         userRepository.updateProfileById(request.getFirstName(), request.getLastName(),
                 request.getTelephone(), request.getStudyGroup(), id);
+        profileClient.checkUser(mapper.map(userRepository.findById(id), UserDTO.class));
     }
 
     public UserDTO updateUserByAdmin(UserDTO userDTO){
@@ -108,6 +111,7 @@ public class ProfileService {
 
             userRepository.updateProfileForAdminById(userDTO.getFirstName(), userDTO.getLastName(),
                     userDTO.getEmail(), userDTO.getRoles(), userDTO.getTelephone(), userDTO.getStudyGroup(), userDTO.getId());
+            profileClient.checkUser(mapper.map(userRepository.findById(userDTO.getId()), UserDTO.class));
             return userDTO;
         }
         else throw new NotFoundException("Пользователя не существует");

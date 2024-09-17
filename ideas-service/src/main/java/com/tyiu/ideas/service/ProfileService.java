@@ -1,6 +1,5 @@
 package com.tyiu.ideas.service;
 
-import com.nimbusds.jose.shaded.gson.Gson;
 import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
@@ -15,10 +14,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 import java.time.LocalDate;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -111,9 +110,7 @@ public class ProfileService {
                         )
                 );
     }
-    public Mono<Void> checkUser(Jwt jwt) {
-        Gson gson = new Gson();
-        UserDTO userDTO = gson.fromJson(jwt.getClaimAsString("user"), UserDTO.class);
+    public Mono<Void> checkUser(UserDTO userDTO) {
         User user = modelMapper.map(userDTO, User.class);
         user.setPassword("");
         return template.exists(query(where("id").is(user.getId())), User.class)

@@ -1,5 +1,6 @@
 package com.tyiu.ideas.controller;
 
+import com.tyiu.client.models.UserDTO;
 import com.tyiu.ideas.model.dto.ProfileDTO;
 import com.tyiu.ideas.model.dto.SkillDTO;
 import com.tyiu.ideas.service.ProfileService;
@@ -24,8 +25,8 @@ public class ProfileController {
     }
 
     @PostMapping
-    public Mono<Void> checkUser(@AuthenticationPrincipal Jwt jwt) {
-        return profileService.checkUser(jwt);
+    public Mono<Void> checkUser(@RequestBody UserDTO userDTO) {
+        return profileService.checkUser(userDTO);
     }
 
     @PostMapping("/skills/save")

@@ -33,6 +33,7 @@ public class SecurityConfig {
                 .formLogin(ServerHttpSecurity.FormLoginSpec::disable)
                 .cors(Customizer.withDefaults())
                 .authorizeExchange(authorize -> authorize
+                        .pathMatchers("/api/v1/ideas-service/profile").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt ->
