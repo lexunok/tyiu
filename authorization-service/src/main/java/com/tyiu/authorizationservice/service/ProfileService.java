@@ -120,16 +120,17 @@ public class ProfileService {
     public void changeTeamLeader(String teamLeaderId, String userId){
         User oldTeamLeader = userRepository.findById(teamLeaderId).orElseThrow(() -> new NotFoundException("Not found"));
         oldTeamLeader.getRoles().remove(Role.TEAM_LEADER);
-        userRepository.save(oldTeamLeader);
+        profileClient.checkUser(mapper.map(userRepository.save(oldTeamLeader), UserDTO.class));
         template.opsForHash().delete("user", oldTeamLeader.getEmail().toLowerCase());
         User newTeamLeader = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Not found"));
         newTeamLeader.getRoles().add(Role.TEAM_LEADER);
-        userRepository.save(newTeamLeader);
+        profileClient.checkUser(mapper.map(userRepository.save(newTeamLeader), UserDTO.class));
         template.opsForHash().delete("user", newTeamLeader.getEmail().toLowerCase());
     }
 
     public void deleteUser(String id){
         userRepository.setUserIsDeletedById(Boolean.TRUE, id);
+        profileClient.checkUser(mapper.map(userRepository.findById(id), UserDTO.class));
     }
 
 }
