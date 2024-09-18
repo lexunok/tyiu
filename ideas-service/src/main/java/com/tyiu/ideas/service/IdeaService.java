@@ -168,6 +168,7 @@ public class IdeaService {
                             .lastName(row.get("initiator_last_name",String.class))
                             .id(row.get("initiator_id",String.class))
                             .build());
+                    log.info("Вывод идеи " + ideaDTO.getName() + " с id инициатора " + ideaDTO.getInitiator().getId());
                     return ideaDTO;
                 })
                 .all()
