@@ -29,6 +29,7 @@ import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import java.time.LocalDateTime;
+import java.util.Objects;
 
 import static com.tyiu.ideas.model.entities.Idea.*;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -169,7 +170,8 @@ public class IdeaService {
                             .build());
                     return ideaDTO;
                 })
-                .all();
+                .all()
+                .filter(idea -> Objects.equals(idea.getInitiator().getId(), userId));
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
