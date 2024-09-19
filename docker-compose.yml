@@ -1,41 +1,43 @@
+name: localhits
 services:
-  db_ideas:
-    container_name: db-ideas
+  db-auth:
+    container_name: db-auth-localhost
     image: postgres
     restart: always
     environment:
-      POSTGRES_PASSWORD: admin
-      POSTGRES_USER: admin
-      POSTGRES_DB: hits
-    ports:
-      - 5432:5432
-    volumes:
-      - db-ideas:/data/db-ideas
-  db_auth:
-    container_name: db-auth
-    image: postgres
-    restart: always
-    environment:
+      TZ: Europe/Yekaterinburg
       POSTGRES_PASSWORD: admin
       POSTGRES_USER: admin
       POSTGRES_DB: hits
     ports:
       - 5433:5432
     volumes:
-      - db-auth:/data/db-auth
+      - db-auth-localhost:/data
+  db-ideas:
+    container_name: db-ideas-localhost
+    image: postgres
+    environment:
+      TZ: Europe/Yekaterinburg
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: hits
+    ports:
+      - 5432:5432
+    volumes:
+      - db-ideas-localhost:/data
   rabbitmq:
-    container_name: rabbitmq
+    container_name: rabbitmq-localhost
     image: rabbitmq:3.12.12-management-alpine
-    restart: always
     ports:
       - 5672:5672
       - 15672:15672
   redis:
-    container_name: redis
+    container_name: redis-localhost
     image: redis:latest
-    restart: always
     ports:
       - 6379:6379
 volumes:
-  db-ideas:
-  db-auth:
+  db-auth-localhost:
+  db-ideas-localhost:
+  auth:
+  db-quest:

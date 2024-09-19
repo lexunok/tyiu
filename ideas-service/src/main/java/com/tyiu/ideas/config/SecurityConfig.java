@@ -34,6 +34,11 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .authorizeExchange(authorize -> authorize
                         .pathMatchers("/api/v1/ideas-service/profile").permitAll()
+                        .pathMatchers("/v3/api-docs/**").permitAll()
+                        .pathMatchers("/swagger-ui/**").permitAll()
+                        .pathMatchers("/swagger-ui.html").permitAll()
+                        .pathMatchers("/webjars/swagger-ui/**").permitAll()
+                        .pathMatchers("/swagger-resources/**").permitAll()
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(resource -> resource
                         .jwt(jwt ->

@@ -9,6 +9,7 @@ spring:
             allowedOrigins:
               - "http://localhost:7777"
               - "http://localhost:3000"
+              - "http://localhost"
             allowedMethods: "*"
             allowedHeaders: "*"
             allowCredentials: true
