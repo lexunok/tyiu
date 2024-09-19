@@ -5,7 +5,6 @@ import com.tyiu.ideas.model.dto.CompanyDTO;
 import com.tyiu.ideas.model.entities.Company;
 import com.tyiu.ideas.model.entities.relations.Company2User;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -27,9 +26,8 @@ import static org.springframework.data.relational.core.query.Update.update;
 public class CompanyService {
 
     private final R2dbcEntityTemplate template;
-    private final ModelMapper mapper;
 
-    private Mono<CompanyDTO> getCompany(String companyId) {
+    public Mono<CompanyDTO> getCompanyById(String companyId){
         String query = """
             SELECT 
                 c.id c_id, c.name c_name, c.owner_id c_owner_id,
@@ -72,11 +70,8 @@ public class CompanyService {
                     map.put(companyId, companyDTO);
                     return companyDTO;
                 })
-                .all().then(Flux.fromIterable(map.values()).next());
-    }
-
-    public Mono<CompanyDTO> getCompanyById(String companyId){
-        return getCompany(companyId);
+                .all()
+                .then(Flux.fromIterable(map.values()).next());
     }
 
     public Flux<CompanyDTO> getMembersListCompany(String userId) {
@@ -103,20 +98,25 @@ public class CompanyService {
 
     @Cacheable
     public Flux<CompanyDTO> getListCompany() {
+        String QUERY = """
+                SELECT
+                    company.*, users.id user_id, users.email, users.first_name, users.last_name
+                FROM company
+                    LEFT JOIN users ON company.owner_id = users.id
+                """;
         return template.getDatabaseClient()
-                .sql("SELECT company.*, users.id user_id, users.email, users.first_name, users.last_name " +
-                        "FROM company " +
-                        "LEFT JOIN users ON company.owner_id = users.id")
+                .sql(QUERY)
                 .map((row, rowMetadata) -> CompanyDTO.builder()
-                                .id(row.get("id", String.class))
-                                .name(row.get("name", String.class))
-                                .owner(UserDTO.builder()
-                                        .id(row.get("user_id", String.class))
-                                        .firstName(row.get("first_name", String.class))
-                                        .lastName(row.get("last_name", String.class))
-                                        .email(row.get("email", String.class))
-                                        .build())
-                                .build()).all();
+                        .id(row.get("id", String.class))
+                        .name(row.get("name", String.class))
+                        .owner(UserDTO.builder()
+                                .id(row.get("user_id", String.class))
+                                .firstName(row.get("first_name", String.class))
+                                .lastName(row.get("last_name", String.class))
+                                .email(row.get("email", String.class))
+                                .build())
+                        .build())
+                .all();
     }
 
     public Flux<UserDTO> getListStaff(String id) {
@@ -132,19 +132,20 @@ public class CompanyService {
                         .email(row.get("email", String.class))
                         .firstName(row.get("first_name", String.class))
                         .lastName(row.get("last_name", String.class))
-                        .build()).all();
+                        .build())
+                .all();
     }
 
     @CacheEvict(allEntries = true)
     public Mono<CompanyDTO> createCompany(CompanyDTO companyDTO) {
-        Company company = mapper.map(companyDTO, Company.class);
-        company.setOwnerId(companyDTO.getOwner().getId());
-        return template.insert(company).flatMap(c -> {
-            companyDTO.setId(c.getId());
-            return Flux.fromIterable(companyDTO.getUsers()).flatMap(u ->
-                    template.insert(new Company2User(u.getId(), c.getId())
-                    )).next().flatMap(co -> getCompany(c.getId()));
-        });
+        return template.insert(Company.builder().name(companyDTO.getName()).ownerId(companyDTO.getOwner().getId()).build())
+                .flatMap(c -> {
+                    companyDTO.setId(c.getId());
+                    return Flux.fromIterable(companyDTO.getUsers())
+                            .flatMap(u -> template.insert(new Company2User(u.getId(), c.getId())))
+                            .then()
+                            .thenReturn(companyDTO);
+                });
     }
 
     @CacheEvict(allEntries = true)

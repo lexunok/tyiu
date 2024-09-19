@@ -16,7 +16,6 @@ import com.tyiu.ideas.model.enums.SkillType;
 import com.tyiu.ideas.model.requests.IdeaSkillRequest;
 import com.tyiu.ideas.model.requests.StatusIdeaRequest;
 import io.r2dbc.spi.Batch;
-import io.r2dbc.spi.Row;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -25,13 +24,13 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate;
 import org.springframework.stereotype.Service;
-
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
+
 import java.time.LocalDateTime;
 import java.util.Objects;
 
-import static com.tyiu.ideas.model.entities.Idea.*;
+import static com.tyiu.ideas.model.entities.Idea.Status;
 import static org.springframework.data.relational.core.query.Criteria.where;
 import static org.springframework.data.relational.core.query.Query.query;
 import static org.springframework.data.relational.core.query.Update.update;
@@ -44,34 +43,6 @@ public class IdeaService {
 
     private final R2dbcEntityTemplate template;
     private final ModelMapper mapper;
-
-    private IdeaDTO buildIdeaDTO(Row row){
-        IdeaDTO ideaDTO = IdeaDTO.builder()
-                .id(row.get("id", String.class))
-                .name(row.get("name", String.class))
-                .isActive(row.get("is_active", Boolean.class))
-                .createdAt(row.get("created_at", LocalDateTime.class))
-                .modifiedAt(row.get("modified_at", LocalDateTime.class))
-                .maxTeamSize(row.get("max_team_size", Short.class))
-                .minTeamSize(row.get("min_team_size", Short.class))
-                .problem(row.get("problem", String.class))
-                .solution(row.get("solution", String.class))
-                .result(row.get("result", String.class))
-                .customer(row.get("customer", String.class))
-                .contactPerson(row.get("contact_person", String.class))
-                .description(row.get("description", String.class))
-                .suitability(row.get("suitability", Long.class))
-                .budget(row.get("budget", Long.class))
-                .preAssessment(row.get("pre_assessment", Double.class))
-                .rating(row.get("rating", Double.class))
-                .isChecked(row.get("is_checked", Boolean.class))
-                .build();
-        String status = row.get("status", String.class);
-        if (status != null){
-            ideaDTO.setStatus(Status.valueOf(status));
-        }
-        return ideaDTO;
-    }
 
     @Cacheable
     public Mono<IdeaDTO> getIdea(String ideaId, String userId) {
@@ -91,22 +62,42 @@ public class IdeaService {
                 .bind("ideaId", ideaId)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
-                    IdeaDTO idea = buildIdeaDTO(row);
-                    idea.setProjectOffice(GroupDTO.builder()
-                            .id(row.get("project_office_id", String.class))
-                            .name(row.get("project_office_name",String.class))
-                            .build());
-                    idea.setExperts(GroupDTO.builder()
-                            .id(row.get("experts_id", String.class))
-                            .name(row.get("experts_name",String.class))
-                            .build());
-                    idea.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
-                    return idea;
+                    String status = row.get("status", String.class);
+                    return IdeaDTO.builder()
+                            .id(row.get("id", String.class))
+                            .name(row.get("name", String.class))
+                            .isActive(row.get("is_active", Boolean.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
+                            .modifiedAt(row.get("modified_at", LocalDateTime.class))
+                            .maxTeamSize(row.get("max_team_size", Short.class))
+                            .minTeamSize(row.get("min_team_size", Short.class))
+                            .problem(row.get("problem", String.class))
+                            .solution(row.get("solution", String.class))
+                            .result(row.get("result", String.class))
+                            .customer(row.get("customer", String.class))
+                            .contactPerson(row.get("contact_person", String.class))
+                            .description(row.get("description", String.class))
+                            .suitability(row.get("suitability", Long.class))
+                            .budget(row.get("budget", Long.class))
+                            .preAssessment(row.get("pre_assessment", Double.class))
+                            .rating(row.get("rating", Double.class))
+                            .isChecked(row.get("is_checked", Boolean.class))
+                            .status(status != null ? Status.valueOf(status) : null)
+                            .projectOffice(GroupDTO.builder()
+                                    .id(row.get("project_office_id", String.class))
+                                    .name(row.get("project_office_name",String.class))
+                                    .build())
+                            .experts(GroupDTO.builder()
+                                    .id(row.get("experts_id", String.class))
+                                    .name(row.get("experts_name",String.class))
+                                    .build())
+                            .initiator(UserDTO.builder()
+                                    .email(row.get("initiator_email",String.class))
+                                    .firstName(row.get("initiator_first_name",String.class))
+                                    .lastName(row.get("initiator_last_name",String.class))
+                                    .id(row.get("initiator_id",String.class))
+                                    .build())
+                            .build();
                 })
                 .first()
                 .flatMap(i -> template.exists(query(where("user_id").is(userId)
@@ -133,14 +124,34 @@ public class IdeaService {
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
-                    IdeaDTO ideaDTO = buildIdeaDTO(row);
-                    ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
-                    return ideaDTO;
+                    String status = row.get("status", String.class);
+                    return IdeaDTO.builder()
+                            .id(row.get("id", String.class))
+                            .name(row.get("name", String.class))
+                            .isActive(row.get("is_active", Boolean.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
+                            .modifiedAt(row.get("modified_at", LocalDateTime.class))
+                            .maxTeamSize(row.get("max_team_size", Short.class))
+                            .minTeamSize(row.get("min_team_size", Short.class))
+                            .problem(row.get("problem", String.class))
+                            .solution(row.get("solution", String.class))
+                            .result(row.get("result", String.class))
+                            .customer(row.get("customer", String.class))
+                            .contactPerson(row.get("contact_person", String.class))
+                            .description(row.get("description", String.class))
+                            .suitability(row.get("suitability", Long.class))
+                            .budget(row.get("budget", Long.class))
+                            .preAssessment(row.get("pre_assessment", Double.class))
+                            .rating(row.get("rating", Double.class))
+                            .isChecked(row.get("is_checked", Boolean.class))
+                            .status(status != null ? Status.valueOf(status) : null)
+                            .initiator(UserDTO.builder()
+                                    .email(row.get("initiator_email",String.class))
+                                    .firstName(row.get("initiator_first_name",String.class))
+                                    .lastName(row.get("initiator_last_name",String.class))
+                                    .id(row.get("initiator_id",String.class))
+                                    .build())
+                            .build();
                 })
                 .all();
     }
@@ -155,19 +166,39 @@ public class IdeaService {
                             WHERE idea_checked.user_id = :userId AND idea_checked.idea_id = idea.id
                         ) as is_checked
                 FROM idea LEFT JOIN users i ON idea.initiator_id = i.id
-                WHERE idea.initiator_id = :id
+                WHERE idea.initiator_id = :userId
                 """;
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
-                .bind("id", userId)
                 .map((row, rowMetadata) -> {
-                    IdeaDTO ideaDTO = buildIdeaDTO(row);
-                    ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
+                    String status = row.get("status", String.class);
+                    IdeaDTO ideaDTO = IdeaDTO.builder()
+                            .id(row.get("id", String.class))
+                            .name(row.get("name", String.class))
+                            .isActive(row.get("is_active", Boolean.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
+                            .modifiedAt(row.get("modified_at", LocalDateTime.class))
+                            .maxTeamSize(row.get("max_team_size", Short.class))
+                            .minTeamSize(row.get("min_team_size", Short.class))
+                            .problem(row.get("problem", String.class))
+                            .solution(row.get("solution", String.class))
+                            .result(row.get("result", String.class))
+                            .customer(row.get("customer", String.class))
+                            .contactPerson(row.get("contact_person", String.class))
+                            .description(row.get("description", String.class))
+                            .suitability(row.get("suitability", Long.class))
+                            .budget(row.get("budget", Long.class))
+                            .preAssessment(row.get("pre_assessment", Double.class))
+                            .rating(row.get("rating", Double.class))
+                            .isChecked(row.get("is_checked", Boolean.class))
+                            .status(status != null ? Status.valueOf(status) : null)
+                            .initiator(UserDTO.builder()
+                                    .email(row.get("initiator_email",String.class))
+                                    .firstName(row.get("initiator_first_name",String.class))
+                                    .lastName(row.get("initiator_last_name",String.class))
+                                    .id(row.get("initiator_id",String.class))
+                                    .build())
+                            .build();
                     log.info("Вывод идеи " + ideaDTO.getName() + " с id инициатора " + ideaDTO.getInitiator().getId());
                     return ideaDTO;
                 })
@@ -191,14 +222,34 @@ public class IdeaService {
         return template.getDatabaseClient().sql(query)
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
-                    IdeaDTO ideaDTO = buildIdeaDTO(row);
-                    ideaDTO.setInitiator(UserDTO.builder()
-                            .email(row.get("initiator_email",String.class))
-                            .firstName(row.get("initiator_first_name",String.class))
-                            .lastName(row.get("initiator_last_name",String.class))
-                            .id(row.get("initiator_id",String.class))
-                            .build());
-                    return ideaDTO;
+                    String status = row.get("status", String.class);
+                    return IdeaDTO.builder()
+                            .id(row.get("id", String.class))
+                            .name(row.get("name", String.class))
+                            .isActive(row.get("is_active", Boolean.class))
+                            .createdAt(row.get("created_at", LocalDateTime.class))
+                            .modifiedAt(row.get("modified_at", LocalDateTime.class))
+                            .maxTeamSize(row.get("max_team_size", Short.class))
+                            .minTeamSize(row.get("min_team_size", Short.class))
+                            .problem(row.get("problem", String.class))
+                            .solution(row.get("solution", String.class))
+                            .result(row.get("result", String.class))
+                            .customer(row.get("customer", String.class))
+                            .contactPerson(row.get("contact_person", String.class))
+                            .description(row.get("description", String.class))
+                            .suitability(row.get("suitability", Long.class))
+                            .budget(row.get("budget", Long.class))
+                            .preAssessment(row.get("pre_assessment", Double.class))
+                            .rating(row.get("rating", Double.class))
+                            .isChecked(row.get("is_checked", Boolean.class))
+                            .status(status != null ? Status.valueOf(status) : null)
+                            .initiator(UserDTO.builder()
+                                    .email(row.get("initiator_email",String.class))
+                                    .firstName(row.get("initiator_first_name",String.class))
+                                    .lastName(row.get("initiator_last_name",String.class))
+                                    .id(row.get("initiator_id",String.class))
+                                    .build())
+                            .build();
                 })
                 .all();
     }
