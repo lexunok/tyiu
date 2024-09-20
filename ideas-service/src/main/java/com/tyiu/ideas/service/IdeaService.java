@@ -28,7 +28,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
-import java.util.Objects;
 
 import static com.tyiu.ideas.model.entities.Idea.Status;
 import static org.springframework.data.relational.core.query.Criteria.where;
@@ -110,7 +109,7 @@ public class IdeaService {
                 .switchIfEmpty(Mono.error(new NotFoundException("Не найдена!")));
     }
 
-    @Cacheable
+    @Cacheable("_getAll")
     public Flux<IdeaDTO> getListIdea(String userId) {
         String query = """
                 SELECT idea.*, i.first_name initiator_first_name,
@@ -125,7 +124,7 @@ public class IdeaService {
                 .bind("userId", userId)
                 .map((row, rowMetadata) -> {
                     String status = row.get("status", String.class);
-                    return IdeaDTO.builder()
+                    IdeaDTO newIdea = IdeaDTO.builder()
                             .id(row.get("id", String.class))
                             .name(row.get("name", String.class))
                             .isActive(row.get("is_active", Boolean.class))
@@ -152,6 +151,8 @@ public class IdeaService {
                                     .id(row.get("initiator_id",String.class))
                                     .build())
                             .build();
+                    log.info(newIdea.getInitiator().getFirstName());
+                    return newIdea;
                 })
                 .all();
     }
@@ -203,7 +204,7 @@ public class IdeaService {
                     return ideaDTO;
                 })
                 .all()
-                .filter(idea -> Objects.equals(idea.getInitiator().getId(), userId));
+                .filter(idea -> userId.equals(idea.getInitiator().getId()));
     }
 
     public Flux<IdeaDTO> getListIdeaOnConfirmation(String userId) {
