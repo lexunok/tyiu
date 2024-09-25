@@ -1,6 +1,5 @@
 package com.tyiu.ideas.model.dto;
 
-import com.tyiu.ideas.model.entities.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +21,7 @@ public class TeamDTO {
 
     private Boolean closed;
     private Boolean hasActiveProject;
+    private Boolean isAcceptedToIdea;
     private Boolean isRefused;
     private Integer membersCount;
     private LocalDate createdAt;

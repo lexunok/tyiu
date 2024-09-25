@@ -244,7 +244,15 @@ public class TeamService {
                                 .build());
                     }
                     return teamDTO;
-                }).all();
+                }).all().flatMap(team -> template.exists(query(where("team_id").is(team.getId())), IdeaMarket.class)
+                        .flatMap(isExist -> {
+                            team.setIsAcceptedToIdea(isExist);
+                            return Mono.just(isExist);
+                        }).thenReturn(team)
+                ).sort(Comparator.comparing(TeamDTO::getHasActiveProject)
+                        .reversed()
+                        .thenComparing(TeamDTO::getHasActiveProject)
+                        .reversed());
     }
 
     public Flux<TeamMemberDTO> getAllUsersWithSkills() {
