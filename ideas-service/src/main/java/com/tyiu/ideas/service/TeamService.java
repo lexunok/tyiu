@@ -251,7 +251,7 @@ public class TeamService {
                         }).thenReturn(team)
                 ).sort(Comparator.comparing(TeamDTO::getHasActiveProject)
                         .reversed()
-                        .thenComparing(TeamDTO::getHasActiveProject)
+                        .thenComparing(TeamDTO::getIsAcceptedToIdea)
                         .reversed());
     }
 
