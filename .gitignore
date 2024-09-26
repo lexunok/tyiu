@@ -43,3 +43,4 @@ docker-compose-prod.yml
 build
 /tgbot-service/src/test/resources/application.yml
 /tgbot-service/src/main/resources/application.yml
+/email-service/src/main/resources/application.yml
