@@ -1,5 +1,7 @@
 package com.tyiu.ideas.service
 
+import com.tyiu.client.exceptions.AccessException
+import com.tyiu.client.models.Role
 import com.tyiu.ideas.model.*
 import com.tyiu.ideas.model.dto.IdeaMarketDTO
 import com.tyiu.ideas.model.dto.TeamDTO
@@ -20,6 +22,8 @@ import reactor.core.publisher.Flux.fromIterable
 import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import com.tyiu.client.models.UserDTO
+import com.tyiu.ideas.model.entities.Idea
+import com.tyiu.ideas.util.roleCheck
 
 @Service
 class ProjectService(val template: R2dbcEntityTemplate) {
@@ -405,16 +409,31 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             Project::class.java).awaitSingle()
     }
 
-    suspend fun putFinishProject(projectId: String, report: String) {
+    suspend fun putFinishProject(projectId: String, report: String, userId: String, roles: List<String>) {
         template.selectOne(query(where("id").`is`(projectId)), Project::class.java)
             .awaitSingle()
-            .let {
-                template.update(query(where("id").`is`(it.teamId!!)),
-                    update("has_active_project", false),
-                    Team::class.java).awaitSingle()
-                it.status = ProjectStatus.DONE
-                it.report = report
-                template.update(it)
+            .let { project ->
+                template.selectOne(query(where("id").`is`(project.ideaId!!)), Idea::class.java)
+                    .awaitSingle()
+                    .let { idea ->
+                        template.selectOne(query(where("id").`is`(project.teamId!!)), Team::class.java)
+                            .awaitSingle()
+                            .let { team ->
+                                if (roles.roleCheck(listOf(Role.ADMIN, Role.PROJECT_OFFICE))
+                                    || team.leaderId.equals(userId)
+                                    || idea.initiatorId.equals(userId)) {
+                                    template.update(query(where("id").`is`(project.teamId)),
+                                        update("has_active_project", false),
+                                        Team::class.java).awaitSingle()
+                                    project.status = ProjectStatus.DONE
+                                    project.report = report
+                                    template.update(project).awaitSingle()
+                                } else {
+                                    println("вызвался")
+                                    throw AccessException("Доступ запрещен")
+                                }
+                            }
+                    }
             }
     }
 }

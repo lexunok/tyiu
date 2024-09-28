@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html
+        lang="ru"
+        xmlns="http://www.w3.org/1999/xhtml"
+        xmlns:th="https://www.thymeleaf.org"
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <link rel="stylesheet" th:href="@{/gateway/css/style.css}" />
+    <title>Ошибка 404</title>
+  </head>
+  <body>
+    <div class="error-view__content">
+      <img
+        th:src="@{/gateway/css/develop.png}"
+        alt="Ошибка"
+        class="error-view__img"
+      />
+      <h1 class="fs-2">Ошибка 404</h1>
+      <p class="error-view__text fs-5">
+        Кажется что-то пошло не так! Страница, которую вы запрашиваете, не
+        существует. Возможна она устарела, была удалена, или был введен неверный
+        адрес в поисковой строке.
+      </p>
+      <button
+        class="primary-btn"
+        onclick="navigateToHomePage()"
+      >
+        Вернуться на страницу авторизации
+      </button>
+    </div>
+
+    <script>
+      function navigateToHomePage() {
+        window.location.href = '/auth/login'
+      }
+    </script>
+  </body>
+</html>

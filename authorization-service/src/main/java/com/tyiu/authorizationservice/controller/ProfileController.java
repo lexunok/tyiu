@@ -66,7 +66,7 @@ public class ProfileController {
 
     @PreAuthorize("hasRole('ADMIN')")
     @PutMapping("/user/{id}")
-    public UserDTO updateUserByAdmin(@RequestBody UserDTO user) {
+    public UserDTO updateUserByAdmin(@PathVariable String id, @RequestBody UserDTO user) {
         return profileService.updateUserByAdmin(user);
     }
 

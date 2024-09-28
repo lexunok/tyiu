@@ -118,17 +118,20 @@ class ProjectController (private val projectService: ProjectService) {
     suspend fun putFinishProject(@PathVariable projectId: String,
                                  @RequestBody report: String,
                                  @AuthenticationPrincipal jwt: Jwt) : InfoResponse {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR))) {
-            try {
-                projectService.putFinishProject(projectId, report)
-                InfoResponse(HttpStatus.OK,"Проект успешно завершён")
-            }
-            catch(e: Exception){
-                InfoResponse(HttpStatus.BAD_REQUEST,"Проект не был завершён")
-            }
+        try {
+            projectService.putFinishProject(
+                projectId,
+                report,
+                jwt.id,
+                jwt.getClaimAsStringList("roles").toList()
+            )
+            return InfoResponse(HttpStatus.OK,"Проект успешно завершён")
         }
-        else {
-            throw AccessException("Нет прав")
+        catch (e: AccessException) {
+            throw e
+        }
+        catch(e: Exception){
+            return InfoResponse(HttpStatus.BAD_REQUEST,"Проект не был завершён")
         }
     }
 }

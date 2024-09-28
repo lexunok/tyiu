@@ -30,7 +30,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler
-    public Mono<ResponseEntity<ErrorResponse>> serverProccessException(ServerProcessException ex){
+    public Mono<ResponseEntity<ErrorResponse>> serverProcessException(ServerProcessException ex){
         log.error(ex.getMessage(), ex);
         return Mono.just(ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR.value())

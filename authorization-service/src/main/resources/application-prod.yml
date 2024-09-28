@@ -36,4 +36,8 @@ oauth:
     redirect: ${REDIRECT_URL}/code
     issuer: ${AUTH_URL}
     jwk-uri: ${JWK_URI}
-
+springdoc:
+    swagger-ui:
+        enabled: false
+    api-docs:
+        enabled: false
