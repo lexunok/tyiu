@@ -592,7 +592,8 @@ public class TeamService {
                     if (Boolean.TRUE.equals(isExists) || user.getRoles().contains(Role.ADMIN)){
                         return template.update(query(where("id").is(teamId)),
                                 update("is_deleted", Boolean.TRUE),
-                                Team.class);
+                                Team.class).then(template.update(query(where("team_id").is(teamId)),
+                                update("finish_date", LocalDate.now()), Team2Member.class));
                     }
                     return Mono.error(new AccessException("Нет Прав"));
                 }).then();
