@@ -30,4 +30,5 @@ public class Team {
         return name;
     }
     public String getLeaderId() { return leaderId; }
+    public Boolean getHasActiveProject() { return hasActiveProject; }
 }
