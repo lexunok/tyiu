@@ -19,6 +19,7 @@ class SprintController(private val sprintService: SprintService)
     private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_LEADER, Role.TEAM_OWNER, Role.ADMIN)
     private val roles2 = listOf(Role.PROJECT_OFFICE, Role.TEAM_LEADER, Role.ADMIN)
     private val roles3 = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.ADMIN)
+    private val rolesForFinishSprint = listOf(Role.INITIATOR, Role.TEAM_LEADER, Role.ADMIN)
 
     @GetMapping("/{projectId}/all")
     fun getAllSprintsByProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt): Flow<SprintDTO> {
@@ -105,7 +106,7 @@ class SprintController(private val sprintService: SprintService)
     suspend fun finishSprint(@PathVariable sprintId: String,
                              @RequestBody report: String,
                              @AuthenticationPrincipal jwt: Jwt): InfoResponse {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(roles3)) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(rolesForFinishSprint)) {
             try {
                 sprintService.putSprintFinish(sprintId, report, jwt.id)
                 InfoResponse(HttpStatus.OK,"Спринт успешно завершён")
