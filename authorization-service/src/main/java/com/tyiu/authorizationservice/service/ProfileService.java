@@ -123,9 +123,11 @@ public class ProfileService {
         profileClient.checkUser(mapper.map(userRepository.save(oldTeamLeader), UserDTO.class));
         template.opsForHash().delete("user", oldTeamLeader.getEmail().toLowerCase());
         User newTeamLeader = userRepository.findById(userId).orElseThrow(() -> new NotFoundException("Not found"));
-        newTeamLeader.getRoles().add(Role.TEAM_LEADER);
-        profileClient.checkUser(mapper.map(userRepository.save(newTeamLeader), UserDTO.class));
-        template.opsForHash().delete("user", newTeamLeader.getEmail().toLowerCase());
+        if (newTeamLeader.getRoles().stream().noneMatch(role -> role.equals(Role.TEAM_LEADER))) {
+            newTeamLeader.getRoles().add(Role.TEAM_LEADER);
+            profileClient.checkUser(mapper.map(userRepository.save(newTeamLeader), UserDTO.class));
+            template.opsForHash().delete("user", newTeamLeader.getEmail().toLowerCase());
+        }
     }
 
     public void deleteUser(String id){

@@ -8,6 +8,7 @@ import com.tyiu.ideas.service.ProjectService
 import com.tyiu.ideas.util.roleCheck
 import kotlinx.coroutines.flow.Flow
 import org.springframework.http.HttpStatus
+import org.springframework.http.ResponseEntity
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
@@ -19,7 +20,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/all")
     fun getAllProjects(@AuthenticationPrincipal jwt: Jwt): Flow<ProjectDTO> {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN))) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN, Role.TEACHER))) {
             projectService.getAllProjects()
         }
         else {
@@ -98,6 +99,24 @@ class ProjectController (private val projectService: ProjectService) {
         }
     }
 
+    @PutMapping("/kick/{projectId}/{userId}")
+    suspend fun kickMemberFromProject(@PathVariable projectId: String,
+                                      @PathVariable userId: String,
+                                      @AuthenticationPrincipal jwt: Jwt): ResponseEntity<InfoResponse> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+            try {
+                projectService.kickMemberFromProjectAndTeam(projectId, userId)
+                ResponseEntity.ok().body(InfoResponse(HttpStatus.OK, "Участник успешно удалён"))
+            } catch (e: Exception) {
+                ResponseEntity.badRequest().body(InfoResponse(HttpStatus.BAD_REQUEST, "Участник успешно удалён"))
+            } catch (ae: AccessException){
+                throw ae
+            }
+        } else {
+            throw AccessException("Нет прав")
+        }
+    }
+
     @PutMapping("/{projectId}/status/change")
     suspend fun pauseProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt) : InfoResponse {
         return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.PROJECT_OFFICE,Role.ADMIN,Role.INITIATOR,Role.TEAM_LEADER))) {
@@ -132,6 +151,42 @@ class ProjectController (private val projectService: ProjectService) {
         }
         catch(e: Exception){
             return InfoResponse(HttpStatus.BAD_REQUEST,"Проект не был завершён")
+        }
+    }
+
+    @PutMapping("/change-team/{projectId}/{teamId}")
+    suspend fun changeTeamInProject(@PathVariable teamId: String,
+                                    @PathVariable projectId: String,
+                                    @AuthenticationPrincipal jwt: Jwt): ResponseEntity<InfoResponse> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.ADMIN))) {
+            try {
+                projectService.changeTeamInProject(projectId, teamId)
+                ResponseEntity.ok().body(InfoResponse(HttpStatus.OK, "Команда успешно изменена"))
+            } catch (e: AccessException) {
+                ResponseEntity.internalServerError().body(InfoResponse(HttpStatus.INTERNAL_SERVER_ERROR, e.message))
+            }
+            catch (e: Exception) {
+                println(e.message)
+                ResponseEntity.badRequest().body(InfoResponse(HttpStatus.BAD_REQUEST, "Ошибка удаления"))
+            }
+        } else {
+           throw AccessException("Нет прав")
+        }
+    }
+
+    @PutMapping("/delete/{projectId}")
+    suspend fun deleteProject(@PathVariable projectId: String,
+                              @AuthenticationPrincipal jwt: Jwt): ResponseEntity<InfoResponse> {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.ADMIN))) {
+            try {
+                projectService.deleteProject(projectId)
+                ResponseEntity.ok().body(InfoResponse(HttpStatus.OK, "Проект успешно удалён"))
+            } catch (e: Exception) {
+                println(e.message)
+                ResponseEntity.badRequest().body(InfoResponse(HttpStatus.BAD_REQUEST, "Ошибка удаления"))
+            }
+        } else {
+            ResponseEntity.status(403).body(InfoResponse(HttpStatus.FORBIDDEN, "Доступ запрещён"))
         }
     }
 }

@@ -122,6 +122,13 @@ public class IdeaMarketController {
                 .onErrorReturn(new InfoResponse(HttpStatus.BAD_REQUEST,"Не удалось удалить заявку"));
     }
 
+    @DeleteMapping("/delete/request/{teamMarketRequestId}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
+    public Mono<InfoResponse> deleteAnnulledMarketRequest(@PathVariable String teamMarketRequestId) {
+        return ideaMarketService.deleteAnnulledTeamMarketRequest(teamMarketRequestId)
+                .thenReturn(new InfoResponse(HttpStatus.OK, "Успешное удаление"));
+    }
+
 
     @PutMapping("/favorite/{ideaMarketId}")
     public Mono<InfoResponse> makeMarketIdeaFavorite(@AuthenticationPrincipal Jwt user, @PathVariable String ideaMarketId) {

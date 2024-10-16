@@ -10,7 +10,7 @@ import java.time.LocalDate
 @Table
 data class Project(
     @Id
-        val id:String? = null,
+    val id:String? = null,
     val ideaId:String? = null,
     val teamId:String? = null,
     var report: String?= null,
@@ -35,7 +35,7 @@ data class ProjectDTO (
 )
 
 enum class ProjectStatus{
-        ACTIVE, DONE, PAUSED
+        ACTIVE, DONE, PAUSED, DELETED
 }
 
 data class InfoResponse(

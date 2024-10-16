@@ -23,7 +23,12 @@ import java.time.LocalDate
 import java.util.concurrent.ConcurrentHashMap
 import com.tyiu.client.models.UserDTO
 import com.tyiu.ideas.model.entities.Idea
+import com.tyiu.ideas.model.entities.IdeaMarket
+import com.tyiu.ideas.model.entities.TeamMarketRequest
+import com.tyiu.ideas.model.enums.IdeaMarketStatusType
+import com.tyiu.ideas.model.enums.RequestStatus
 import com.tyiu.ideas.util.roleCheck
+import reactor.core.publisher.Mono
 
 @Service
 class ProjectService(val template: R2dbcEntityTemplate) {
@@ -175,7 +180,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id
                 JOIN project_member ON p.id = project_member.project_id 
-            WHERE project_member.user_id = :userId
+            WHERE project_member.user_id = :userId AND p.status != 'DELETED'
             ORDER BY p.start_date ASC
         """.trimIndent()
 
@@ -274,7 +279,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                 pm.start_date AS start_date, pm.finish_date AS finish_date
             FROM project_member pm
                 LEFT JOIN users u ON u.id = pm.user_id
-            WHERE pm.project_id = :projectId
+            WHERE pm.project_id = :projectId AND pm.finish_date IS null
         """.trimIndent()
 
         return template.databaseClient
@@ -402,6 +407,22 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             ).awaitSingle().toDTO()
     }
 
+    suspend fun kickMemberFromProjectAndTeam(projectId: String, userId: String) {
+        val projectMember: ProjectMember = template.selectOne(query(where("user_id").`is`(userId)
+            .and(where("project_id").`is`(projectId))), ProjectMember::class.java).awaitSingle()
+        if (projectMember.projectRole!!.name.equals(Role.TEAM_LEADER.name)
+                .or(projectMember.projectRole!!.name.equals(Role.INITIATOR.name)
+                    .or(projectMember.projectRole!!.name.equals(Role.TEAM_OWNER.name))))
+            throw AccessException("Этого участника запрещено кикать")
+        template.update(query(where("user_id").`is`(userId)
+            .and(where("project_id").`is`(projectId))),
+            update("finish_date", LocalDate.now()), ProjectMember::class.java)
+            .then(template.update(query(where("member_id").`is`(userId)
+                .and(where("team_id").`is`(projectMember.teamId!!))),
+                update("is_active", false).set("finish_date", LocalDate.now()), Team2Member::class.java))
+            .awaitSingle()
+    }
+
 
     suspend fun pauseProject(projectId: String) {
         template.update(query(where("id").`is`(projectId)),
@@ -435,6 +456,68 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                             }
                     }
             }
+    }
+
+    suspend fun changeTeamInProject(projectId: String, teamId: String){
+        val currentTime: LocalDate = LocalDate.now()
+        val team: Team = template.selectOne(query(where("id").`is`(teamId)), Team::class.java)
+            .awaitSingle()
+        val project: Project = template.selectOne(query(where("id").`is`(projectId)), Project::class.java).awaitSingle()
+        if (team.hasActiveProject){
+            throw AccessException("Команда занята")
+        }
+        template.select(query(where("project_id").`is`(projectId)), Sprint::class.java).flatMap { sprint ->
+            if (sprint.status == SprintStatus.ACTIVE) throw AccessException("В проекте есть незавершенный спринт")
+            Mono.empty<Void>()
+        }.then(template.update(query(where("project_id").`is`(projectId)
+            .and(where("finish_date").isNull()).and(where("project_role").not(ProjectRole.INITIATOR.name))),
+            update("finish_date", currentTime), ProjectMember::class.java))
+            .thenMany(template.select(query(where("team_id").`is`(teamId)), Team2Member::class.java)
+                .flatMap { teamMember ->
+                    val projectMember: ProjectMember = ProjectMember(
+                        projectId = projectId,
+                        userId = teamMember.memberId,
+                        teamId = teamId,
+                        projectRole = ProjectRole.MEMBER,
+                        startDate = currentTime,
+                        finishDate = null
+                        )
+                    if (teamMember.memberId.equals(team.leaderId)) projectMember.projectRole = ProjectRole.TEAM_LEADER
+                    template.insert(projectMember)
+                })
+            .then(template.update(query(where("id").`is`(project.teamId!!)),
+                update("has_active_project", false), Team::class.java))
+            .then(template.update(query(where("id").`is`(teamId)),
+                update("has_active_project", true), Team::class.java))
+            .then(template.update(query(where("idea_id").`is`(project.ideaId!!)),
+                update("team_id", teamId), IdeaMarket::class.java))
+            .then(template.update(query(where("idea_id").`is`(project.ideaId)
+                .and("team_id").`is`(project.teamId)),
+                update("status", RequestStatus.ANNULLED), TeamMarketRequest::class.java))
+            .then(template.update(query(where("id").`is`(projectId)),
+                update("team_id", teamId), Project::class.java))
+            .awaitSingle()
+    }
+
+    suspend fun deleteProject(projectId: String) {
+        val currentTime: LocalDate = LocalDate.now()
+        template.update(query(where("id").`is`(projectId)),
+            update("status", ProjectStatus.DELETED.name), Project::class.java)
+            .then(template.update(query(where("project_id").`is`(projectId)
+                .and(where("finish_date").isNull())),
+                    update("finish_date", currentTime), ProjectMember::class.java))
+            .then(template.selectOne(query(where("id").`is`(projectId)), Project::class.java)
+                .flatMap { project ->
+                    template.update(query(where("idea_id").`is`(project.ideaId!!)),
+                        update("team_id", null)
+                            .set("status", IdeaMarketStatusType.RECRUITMENT_IS_OPEN.name), IdeaMarket::class.java)
+                        .then(template.update(query(where("id").`is`(project.teamId!!)),
+                            update("has_active_project", false), Team::class.java))
+                        .then(template.update(query(where("idea_id").`is`(project.ideaId)
+                            .and("team_id").`is`(project.teamId)),
+                            update("status", RequestStatus.ANNULLED.name),TeamMarketRequest::class.java))
+                }
+            ).awaitSingle()
     }
 }
 

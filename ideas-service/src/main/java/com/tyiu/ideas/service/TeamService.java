@@ -602,13 +602,23 @@ public class TeamService {
     }
 
     public Mono<Void> kickFromTeam(String teamId, String userId) {
+        LocalDate currentTime = LocalDate.now();
         return template.update(query(where("team_id").is(teamId)
                                 .and("member_id").is(userId)),
                         update("is_active", Boolean.FALSE)
-                                .set("finish_date", LocalDate.now()),
+                                .set("finish_date", currentTime),
                         Team2Member.class)
                 .then(template.insert(new Team2Refused(teamId, userId)))
-                .then();
+                .then(template.exists(query(where("user_id").is(userId)
+                        .and(where("team_id").is(teamId))), ProjectMember.class).flatMap(isExist -> {
+                            if (isExist) {
+                                return template.update(query(where("user_id").is(userId)
+                                        .and(where("team_id").is(teamId))),
+                                        update("finish_date", currentTime), ProjectMember.class)
+                                        .then();
+                            }
+                            return Mono.empty();
+                }));
     }
 
     public Mono<Void> leaveFromTeam(String teamId, String userId) {

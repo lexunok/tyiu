@@ -490,6 +490,16 @@ public class IdeaMarketService {
                 }).then();
     }
 
+    public Mono<Void> deleteAnnulledTeamMarketRequest(String teamMarketRequestId) {
+        return template.selectOne(query(where("id").is(teamMarketRequestId)), TeamMarketRequest.class)
+                .flatMap(teamMarketRequest -> {
+                    if (teamMarketRequest.getStatus().equals(RequestStatus.ANNULLED)) {
+                        Mono.error(new AccessException("Заявка не аннулирована"));
+                    }
+                    return template.delete(query(where("id").is(teamMarketRequestId))).then();
+                });
+    }
+
 
     public Mono<Void> makeMarketIdeaFavorite(String userId, String ideaMarketId){
         return template.insert(new Favorite2Idea(userId,ideaMarketId)).then();
