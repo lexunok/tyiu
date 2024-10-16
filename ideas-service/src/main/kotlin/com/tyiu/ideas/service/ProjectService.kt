@@ -139,7 +139,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                 LEFT JOIN users pms ON pms.id = pm.user_id
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
-                LEFT JOIN project_member pmms ON pmms.user_id = mms.id
+                LEFT JOIN project_member pmms ON pmms.user_id = mms.id AND pmms.finish_date IS NULL
                 LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id
@@ -377,7 +377,6 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                         userId = it.memberId,
                         teamId = ideaMarketDTO.team.id,
                         projectRole = if (it.memberId == leaderId) ProjectRole.TEAM_LEADER else ProjectRole.MEMBER,
-                        finishDate = createdProject.finishDate
                     )
                 ).awaitSingle()
             }
@@ -387,7 +386,6 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                 projectId = createdProject.id,
                 userId = ideaMarketDTO.initiator.id,
                 projectRole = ProjectRole.INITIATOR,
-                finishDate = createdProject.finishDate
             )
         ).awaitSingle()
 
@@ -402,7 +400,6 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                     projectId = projectId,
                     userId = addToProjectRequest.userId,
                     teamId = addToProjectRequest.teamId,
-                    finishDate = template.selectOne(query(where("id").`is`(projectId)),Project::class.java).awaitSingle().finishDate
                 )
             ).awaitSingle().toDTO()
     }
@@ -448,7 +445,10 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                                         Team::class.java).awaitSingle()
                                     project.status = ProjectStatus.DONE
                                     project.report = report
-                                    template.update(project).awaitSingle()
+                                    template.update(project)
+                                        .then(template.update(query(where("project_id").`is`(projectId)),
+                                            update("finish_date", LocalDate.now()), ProjectMember::class.java))
+                                        .awaitSingle()
                                 } else {
                                     println("вызвался")
                                     throw AccessException("Доступ запрещен")
@@ -474,13 +474,12 @@ class ProjectService(val template: R2dbcEntityTemplate) {
             update("finish_date", currentTime), ProjectMember::class.java))
             .thenMany(template.select(query(where("team_id").`is`(teamId)), Team2Member::class.java)
                 .flatMap { teamMember ->
-                    val projectMember: ProjectMember = ProjectMember(
+                    val projectMember = ProjectMember(
                         projectId = projectId,
                         userId = teamMember.memberId,
                         teamId = teamId,
                         projectRole = ProjectRole.MEMBER,
                         startDate = currentTime,
-                        finishDate = null
                         )
                     if (teamMember.memberId.equals(team.leaderId)) projectMember.projectRole = ProjectRole.TEAM_LEADER
                     template.insert(projectMember)
