@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*
 class SprintController(private val sprintService: SprintService)
 {
 
-    private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_LEADER, Role.TEAM_OWNER, Role.ADMIN)
+    private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_LEADER, Role.TEAM_OWNER, Role.ADMIN, Role.TEACHER)
     private val roles2 = listOf(Role.PROJECT_OFFICE, Role.TEAM_LEADER, Role.ADMIN)
     private val roles3 = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.ADMIN)
     private val rolesForFinishSprint = listOf(Role.INITIATOR, Role.TEAM_LEADER, Role.ADMIN)
