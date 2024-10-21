@@ -368,7 +368,8 @@ class ProjectService(val template: R2dbcEntityTemplate) {
 
         val leaderId = template.selectOne(query(where("id").`is`(ideaMarketDTO.team.id)), Team::class.java).awaitSingle().leaderId
 
-        template.select(query(where("team_id").`is`(ideaMarketDTO.team.id)),Team2Member::class.java)
+        template.select(query(where("team_id").`is`(ideaMarketDTO.team.id)
+            .and(where("is_active").`is`(true))), Team2Member::class.java)
             .asFlow()
             .collect {
                 template.insert(
