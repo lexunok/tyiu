@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.*
 @RequestMapping("/api/v1/scrum-service/task")
 class TaskController (private val taskService: TaskService) {
 
-    private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_OWNER, Role.TEAM_LEADER, Role.ADMIN)
+    private val roles = listOf(Role.INITIATOR, Role.PROJECT_OFFICE, Role.MEMBER, Role.TEAM_OWNER, Role.TEAM_LEADER, Role.ADMIN, Role.TEACHER)
 
     @GetMapping("/project/all/{projectId}")
     fun getAllTaskByProject(@PathVariable projectId: String, @AuthenticationPrincipal jwt: Jwt): Flow<TaskDTO> {

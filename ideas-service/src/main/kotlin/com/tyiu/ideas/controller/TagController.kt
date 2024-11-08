@@ -19,7 +19,7 @@ class TagController(private val tagService: TagService) {
 
     @GetMapping("/all")
     fun getAllTags(@AuthenticationPrincipal jwt: Jwt): Flow<TagDTO> {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.TEACHER,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN))) {
             tagService.getAllTags()
         }
         else {

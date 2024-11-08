@@ -50,7 +50,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/{projectId}")
     suspend fun getOneProject(@PathVariable projectId: String,@AuthenticationPrincipal jwt: Jwt): ProjectDTO? {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER, Role.TEACHER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getOneProject(projectId)
         }
         else {
@@ -60,7 +60,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/members/{projectId}/all")
     fun getProjectMembers(@PathVariable projectId: String,@AuthenticationPrincipal jwt: Jwt): Flow<ProjectMemberDTO> {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR, Role.TEACHER, Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getProjectMembers(projectId)
         }
         else {
@@ -70,7 +70,7 @@ class ProjectController (private val projectService: ProjectService) {
 
     @GetMapping("/marks/{projectId}/all")
     fun getProjectMarks(@PathVariable projectId: String,@AuthenticationPrincipal jwt: Jwt): Flow<ProjectMarksDTO> {
-        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR,Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
+        return if (jwt.getClaimAsStringList("roles").roleCheck(listOf(Role.INITIATOR, Role.TEACHER, Role.PROJECT_OFFICE,Role.MEMBER,Role.TEAM_OWNER,Role.ADMIN,Role.TEAM_LEADER))) {
             projectService.getProjectMarks(projectId)
         }
         else {
