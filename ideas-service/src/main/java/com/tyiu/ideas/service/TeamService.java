@@ -244,16 +244,13 @@ public class TeamService {
                                 .build());
                     }
                     return teamDTO;
-                }).all().flatMap(team -> template.select(query(where("team_id").is(team.getId())), IdeaMarket.class)
-                        .flatMap(ideaMarket -> template
-                                .selectOne(query(where("idea_id").is(ideaMarket.getIdeaId())), Project.class)
-                                .flatMap(project -> {
-                                    if (Objects.equals(project.getStatus(), ProjectStatus.ACTIVE)){
-                                        team.setIsAcceptedToIdea(Boolean.TRUE);
-                                    }
-                                    return Mono.just(project);
-                                })
-                        ).then().thenReturn(team)
+                }).all().flatMap(team -> template.exists(query(where("team_id").is(team.getId())
+                                .and(where("status").in(ProjectStatus.ACTIVE, ProjectStatus.PAUSED))), Project.class)
+                        .flatMap(isExist -> {
+                            team.setIsAcceptedToIdea(isExist);
+                            return Mono.empty();
+                        })
+                        .thenReturn(team)
                 ).sort(Comparator.comparing(TeamDTO::getHasActiveProject)
                         .reversed()
                         .thenComparing(TeamDTO::getIsAcceptedToIdea)

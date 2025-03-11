@@ -3,6 +3,8 @@ package com.tyiu.ideas.service;
 import com.tyiu.client.exceptions.AccessException;
 import com.tyiu.client.models.Role;
 import com.tyiu.client.models.UserDTO;
+import com.tyiu.ideas.model.Project;
+import com.tyiu.ideas.model.ProjectStatus;
 import com.tyiu.ideas.model.dto.*;
 import com.tyiu.ideas.model.entities.*;
 import com.tyiu.ideas.model.entities.mappers.IdeaMarketMapper;
@@ -567,7 +569,8 @@ public class IdeaMarketService {
     }
 
     public Mono<TeamDTO> setAcceptedTeam(String ideaMarketId, String teamId, UserDTO user){
-        return template.exists(query(where("team_id").is(teamId)), IdeaMarket.class)
+        return template.exists(query(where("team_id").is(teamId).and(where("status")
+                        .in(ProjectStatus.ACTIVE, ProjectStatus.PAUSED))), Project.class)
                 .flatMap(isExistsTeam -> {
                     if (Boolean.FALSE.equals(isExistsTeam)) {
                         String QUERY = "SELECT " +
