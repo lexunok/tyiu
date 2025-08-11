@@ -139,7 +139,7 @@ class ProjectService(val template: R2dbcEntityTemplate) {
                 LEFT JOIN users pms ON pms.id = pm.user_id
                 LEFT JOIN project_marks m ON m.project_id = p.id
                 LEFT JOIN users mms ON mms.id = m.user_id
-                LEFT JOIN project_member pmms ON pmms.user_id = mms.id AND pmms.finish_date IS NULL
+                LEFT JOIN project_member pmms ON pmms.user_id = mms.id
                 LEFT JOIN task tk ON tk.project_id = p.id AND tk.executor_id = m.user_id
                 LEFT JOIN task_tag tg ON tg.task_id = tk.id
                 LEFT JOIN tag ON tag.id = tg.tag_id
