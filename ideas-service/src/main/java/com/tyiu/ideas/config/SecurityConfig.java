@@ -26,7 +26,6 @@ import java.util.Collection;
 @EnableReactiveMethodSecurity
 @RequiredArgsConstructor
 public class SecurityConfig {
-    private final ReactiveJwtDecoder reactiveJwtDecoder;
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
         http
