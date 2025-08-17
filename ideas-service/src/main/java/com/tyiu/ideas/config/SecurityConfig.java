@@ -8,7 +8,6 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableReactiveMethodSecurity;
-import org.springframework.security.config.annotation.rsocket.RSocketSecurity;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,8 +15,6 @@ import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
-import org.springframework.security.oauth2.server.resource.authentication.JwtReactiveAuthenticationManager;
-import org.springframework.security.rsocket.core.PayloadSocketAcceptorInterceptor;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import reactor.core.publisher.Mono;
 
@@ -49,23 +46,6 @@ public class SecurityConfig {
                         .jwt(jwt ->
                                 jwt.jwtAuthenticationConverter(getJwtAuthenticationConverter())));
         return http.build();
-    }
-
-    @Bean
-    public PayloadSocketAcceptorInterceptor rsocketInterceptor(RSocketSecurity rsocket) {
-        JwtReactiveAuthenticationManager authenticationManager =
-                new JwtReactiveAuthenticationManager(reactiveJwtDecoder);
-
-        authenticationManager.setJwtAuthenticationConverter(getJwtAuthenticationConverter()::convert);
-        rsocket
-                .authenticationManager(authenticationManager)
-                .jwt(jwt -> jwt.authenticationManager(authenticationManager))
-                .authorizePayload(authorize -> authorize
-                        .setup().permitAll() // Разрешаем установку соединения
-                        .anyRequest().authenticated() // Требуем аутентификацию для запросов
-                        .anyExchange().permitAll()
-                );
-        return rsocket.build();
     }
 
     private Converter<Jwt, Mono<AbstractAuthenticationToken>> getJwtAuthenticationConverter(){
