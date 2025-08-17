@@ -22,6 +22,12 @@ spring:
           uri: http://localhost:8082
           predicates:
             - Path=/api/v1/scrum-service/**
+        - id: rsocket-comment-route
+          uri: http://localhost:8082
+          predicates:
+              - Path=/rs/**
+          metadata:
+            protocol: ws
         - id: email-service
           uri: http://localhost:8084
           predicates:
