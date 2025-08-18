@@ -2,29 +2,22 @@ package com.tyiu.ideas.service
 
 import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.reactive.asFlow
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
 import org.springframework.stereotype.Service
-import reactor.core.publisher.Sinks
-import java.util.concurrent.ConcurrentHashMap
 
 
 @Service
 class CommentService(private val commentRepository: CommentRepository,
                      private val userRepository: UserRepository, val template: R2dbcEntityTemplate) {
 
-    private val connections = ConcurrentHashMap<String, Sinks.Many<Comment>>();
+    private val connections: MutableMap<String, MutableSharedFlow<Comment>> = mutableMapOf()
 
-    private fun getOrCreateConnection(ideaId: String): Sinks.Many<Comment> {
-        return connections.computeIfAbsent(ideaId) {
-            Sinks.many().multicast().onBackpressureBuffer()
-        }
-    }
 
     fun getNewComments(ideaId: String): Flow<CommentDTO> =
-            getOrCreateConnection(ideaId).asFlux().asFlow().map { c ->
+            connections.getOrDefault(ideaId, MutableSharedFlow()).map { c ->
                 val comment = c.toDTO()
                 comment.sender = c.senderId?.let { userRepository.findById(it) }?.toDTO()
                 return@map comment
@@ -46,7 +39,7 @@ class CommentService(private val commentRepository: CommentRepository,
         )
 
         val commentToDTO = commentRepository.save(comment).toDTO()
-        commentDTO.ideaId?.let { getOrCreateConnection(ideaId = it) }?.tryEmitNext(comment)
+        connections.getOrDefault(commentDTO.ideaId!!, MutableSharedFlow()).tryEmit(comment)
         commentToDTO.sender = comment.senderId?.let { userRepository.findById(it) }?.toDTO()
         return commentToDTO
     }
