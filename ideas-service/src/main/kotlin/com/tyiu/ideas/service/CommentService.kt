@@ -6,10 +6,13 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
+import org.springframework.scheduling.annotation.EnableScheduling
+import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 
 @Service
+@EnableScheduling
 class CommentService(private val commentRepository: CommentRepository,
                      private val userRepository: UserRepository, val template: R2dbcEntityTemplate) {
 
@@ -39,7 +42,7 @@ class CommentService(private val commentRepository: CommentRepository,
         )
 
         val commentToDTO = commentRepository.save(comment).toDTO()
-        connections.getOrDefault(commentDTO.ideaId!!, MutableSharedFlow()).tryEmit(comment)
+        connections.getOrPut(comment.ideaId?:throw Error()) {MutableSharedFlow()}.tryEmit(comment)
         commentToDTO.sender = comment.senderId?.let { userRepository.findById(it) }?.toDTO()
         return commentToDTO
     }
@@ -51,5 +54,14 @@ class CommentService(private val commentRepository: CommentRepository,
         template.databaseClient.sql(query)
                 .bind("userId", userId)
                 .bind("commentId", commentId).await()
+    }
+
+    @Scheduled(fixedDelay = 300_000L)
+    fun clearUnusedSubscriptions(){
+        val iter = connections.iterator()
+        while (iter.hasNext()) {
+            val (_, flow) = iter.next()
+            if (flow.subscriptionCount.value == 0) iter.remove()
+        }
     }
 }
