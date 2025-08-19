@@ -3,24 +3,21 @@ package com.tyiu.ideas.service
 import com.tyiu.ideas.model.*
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import org.springframework.data.r2dbc.core.R2dbcEntityTemplate
 import org.springframework.r2dbc.core.await
-import org.springframework.scheduling.annotation.EnableScheduling
-import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Service
 
 
 @Service
-@EnableScheduling
 class CommentService(private val commentRepository: CommentRepository,
                      private val userRepository: UserRepository, val template: R2dbcEntityTemplate) {
 
-    private val connections: MutableMap<String, MutableSharedFlow<Comment>> = mutableMapOf()
+    private val comments: MutableSharedFlow<Comment> = MutableSharedFlow()
 
 
-    fun getNewComments(ideaId: String): Flow<CommentDTO> =
-            connections.getOrDefault(ideaId, MutableSharedFlow()).map { c ->
+    fun getNewComments(ideaId: String): Flow<CommentDTO> = comments.filter { it -> it.ideaId == ideaId }.map { c ->
                 val comment = c.toDTO()
                 comment.sender = c.senderId?.let { userRepository.findById(it) }?.toDTO()
                 return@map comment
@@ -42,7 +39,7 @@ class CommentService(private val commentRepository: CommentRepository,
         )
 
         val commentToDTO = commentRepository.save(comment).toDTO()
-        connections.getOrPut(comment.ideaId?:throw Error()) {MutableSharedFlow()}.tryEmit(comment)
+        comments.emit(comment)
         commentToDTO.sender = comment.senderId?.let { userRepository.findById(it) }?.toDTO()
         return commentToDTO
     }
@@ -54,14 +51,5 @@ class CommentService(private val commentRepository: CommentRepository,
         template.databaseClient.sql(query)
                 .bind("userId", userId)
                 .bind("commentId", commentId).await()
-    }
-
-    @Scheduled(fixedDelay = 300_000L)
-    fun clearUnusedSubscriptions(){
-        val iter = connections.iterator()
-        while (iter.hasNext()) {
-            val (_, flow) = iter.next()
-            if (flow.subscriptionCount.value == 0) iter.remove()
-        }
     }
 }
