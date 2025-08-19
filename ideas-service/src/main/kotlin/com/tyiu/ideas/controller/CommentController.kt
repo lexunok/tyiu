@@ -3,7 +3,6 @@ package com.tyiu.ideas.controller
 import com.tyiu.ideas.model.CommentDTO
 import com.tyiu.ideas.service.CommentService
 import kotlinx.coroutines.flow.Flow
-import org.springframework.messaging.handler.annotation.MessageMapping
 import org.springframework.security.core.annotation.AuthenticationPrincipal
 import org.springframework.security.oauth2.jwt.Jwt
 import org.springframework.web.bind.annotation.*
@@ -11,9 +10,6 @@ import org.springframework.web.bind.annotation.*
 @RestController
 @RequestMapping("/api/v1/ideas-service/comment")
 class CommentController (private val commentService: CommentService) {
-
-    @MessageMapping("comment.receive")
-    fun receiveNewComments(ideaId: String): Flow<CommentDTO> = commentService.getNewComments(ideaId)
 
     @GetMapping("/all/{ideaId}")
     fun getAllComments(@PathVariable ideaId: String): Flow<CommentDTO> = commentService.getAllComments(ideaId)
